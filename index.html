@@ -3875,19 +3875,20 @@
             ease: "power3.out"
         });
 
-        // Hero Parallax on Scroll
-        gsap.to('.hero-content', {
-            scrollTrigger: {
-                trigger: '.hero',
-                start: 'top top',
-                end: 'bottom top',
-                scrub: true
-            },
-            y: 200,
-            opacity: 0,
-            scale: 0.9
-        });
-
+        // Hero Parallax on Scroll - disable fade out on mobile
+        if (window.innerWidth > 768) {
+            gsap.to('.hero-content', {
+                scrollTrigger: {
+                    trigger: '.hero',
+                    start: 'top top',
+                    end: 'bottom top',
+                    scrub: true
+                },
+                y: 200,
+                opacity: 0,
+                scale: 0.9
+            });
+        }
         // Register ScrollToPlugin for smooth anchor scrolling
         gsap.registerPlugin(ScrollToPlugin);
 
