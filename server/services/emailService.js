@@ -1,4 +1,4 @@
-const { ApiClient, TransactionalEmailsApi, SendSmtpEmail } = require('@getbrevo/brevo');
+const SibApiV3Sdk = require('sib-api-v3-sdk');
 
 // ═══════════════════════════════════════════════════════════
 // EMAIL SERVICE FOR BOOKING NOTIFICATIONS
@@ -7,9 +7,8 @@ const { ApiClient, TransactionalEmailsApi, SendSmtpEmail } = require('@getbrevo/
 let apiInstance;
 
 const initializeEmailService = () => {
-    const apiKey = ApiClient.instance.authentications['api-key'];
-    apiKey.apiKey = process.env.BREVO_API_KEY;
-    apiInstance = new TransactionalEmailsApi();
+    SibApiV3Sdk.ApiClient.instance.authentications['api-key'].apiKey = process.env.BREVO_API_KEY;
+    apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
 };
 
 // Format booking details for email
@@ -112,7 +111,7 @@ const sendBusinessBookingNotification = async (booking, customer) => {
         </html>
     `;
 
-    const sendSmtpEmail = new SendSmtpEmail();
+    const sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail();
     sendSmtpEmail.sender = { name: 'Emerald Pearland Events', email: process.env.ADMIN_EMAIL };
     sendSmtpEmail.to = [{ email: process.env.ADMIN_EMAIL }];
     sendSmtpEmail.subject = `🎉 NEW EVENT BOOKING REQUEST - ${booking.bookingReference}`;
@@ -199,7 +198,7 @@ const sendClientBookingConfirmation = async (booking, customer) => {
         </html>
     `;
 
-    const sendSmtpEmail = new SendSmtpEmail();
+    const sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail()
     sendSmtpEmail.sender = { name: 'Emerald Pearland Events', email: process.env.ADMIN_EMAIL };
     sendSmtpEmail.to = [{ email: customer.email, name: customer.name }];
     sendSmtpEmail.subject = `✨ Booking Request Received - Reference: ${booking.bookingReference}`;
@@ -239,7 +238,7 @@ const sendFollowUpEmail = async (booking, customer) => {
         </html>
     `;
 
-    const sendSmtpEmail = new SendSmtpEmail();
+    const sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail()
     sendSmtpEmail.sender = { name: 'Emerald Pearland Events', email: process.env.ADMIN_EMAIL };
     sendSmtpEmail.to = [{ email: customer.email, name: customer.name }];
     sendSmtpEmail.subject = `Follow-up: Your ${booking.eventType} - Reference: ${booking.bookingReference}`;
@@ -293,7 +292,7 @@ const sendEventReminderEmail = async (booking, customer) => {
         </html>
     `;
 
-    const sendSmtpEmail = new SendSmtpEmail();
+    const sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail()
     sendSmtpEmail.sender = { name: 'Emerald Pearland Events', email: process.env.ADMIN_EMAIL };
     sendSmtpEmail.to = [{ email: customer.email, name: customer.name }];
     sendSmtpEmail.subject = `🎉 Reminder: Your ${booking.eventType} is in 2 Days!`;
