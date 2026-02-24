@@ -280,6 +280,22 @@
                 radial-gradient(ellipse at center, rgba(10, 47, 28, 0.35) 0%, transparent 70%);
         }
 
+        /* Mobile fix */
+        @media (max-width: 768px) {
+            .hero-video-wrap {
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                transform: none;
+            }
+
+            .hero-video-wrap video {
+                object-fit: cover;
+                object-position: center center;
+            }
+        }
+
         .hero-content {
             position: relative;
             z-index: 10;
@@ -2130,6 +2146,25 @@
             transform: translateY(30px);
         }
 
+        /* Mobile fix */
+        @media (max-width: 768px) {
+            .services-video-showcase {
+                height: 50vh;
+            }
+
+            .services-showcase-video {
+                object-position: center center;
+            }
+
+            .video-headline {
+                font-size: clamp(1.8rem, 7vw, 2.5rem);
+            }
+
+            .video-subheading {
+                font-size: 1rem;
+            }
+        }
+
         /* ═══════════════════════════════════════════════
            SERVICES — CINEMATIC PRESENTATION FLOW
         ═════════════════════════════════════════════ */
@@ -2971,32 +3006,31 @@
     <!-- Hero Section -->
     <section class="hero">
         <!-- 3D Video Background -->
-        <div class="hero-video-wrap" id="hero-video-wrap">
-            <video autoplay muted loop playsinline preload="auto">
-                <source src="veo.mp4" type="video/mp4">
-            </video>
+        <video autoplay muted loop playsinline preload="metadata">
+            <source src="veo.mp4" type="video/mp4">
+        </video>
+    </section>
+
+    <div class="hero-content">
+        <div class="emerald-container">
+            <img src="./images/logo 2.png" alt="Emerald Gemstone" class="emerald-logo" id="emerald-logo">
         </div>
 
-        <div class="hero-content">
-            <div class="emerald-container">
-                <img src="./images/logo 2.png" alt="Emerald Gemstone" class="emerald-logo" id="emerald-logo">
-            </div>
+        <h1 class="hero-title">
+            <span class="line">Luxury Events</span>
+            <span class="line">Crafted to Perfection</span>
+        </h1>
 
-            <h1 class="hero-title">
-                <span class="line">Luxury Events</span>
-                <span class="line">Crafted to Perfection</span>
-            </h1>
+        <p class="hero-subtitle">Bespoke experiences designed to inspire, impress, and endure.</p>
 
-            <p class="hero-subtitle">Bespoke experiences designed to inspire, impress, and endure.</p>
-
-            <a href="#about" class="cta-button">
-                <svg class="arrow-icon" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor"
-                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <line x1="12" y1="5" x2="12" y2="19"></line>
-                    <polyline points="19 12 12 19 5 12"></polyline>
-                </svg>
-            </a>
-        </div>
+        <a href="#about" class="cta-button">
+            <svg class="arrow-icon" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor"
+                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <polyline points="19 12 12 19 5 12"></polyline>
+            </svg>
+        </a>
+    </div>
     </section>
 
     <!-- About Section -->
@@ -3237,7 +3271,7 @@
          SERVICES SHOWCASE VIDEO
     ═════════════════════════════════════════════ -->
     <section class="services-video-showcase">
-        <video class="services-showcase-video" autoplay muted loop playsinline preload="auto">
+        <video class="services-showcase-video" autoplay muted loop playsinline preload="metadata">
             <source src="services.mp4" type="video/mp4">
         </video>
         <div class="services-video-overlay">
