@@ -2,7 +2,7 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <!-- Homepage -->
     <url>
-        <loc>https://live.themewild.com/emerald/index.html</loc>
+        <loc>https://emeraldpearlandevents.netlify.app/</loc>
         <lastmod>2026-02-23</lastmod>
         <changefreq>monthly</changefreq>
         <priority>1.0</priority>
@@ -10,17 +10,9 @@
     
     <!-- Booking Page -->
     <url>
-        <loc>https://live.themewild.com/emerald/booking.html</loc>
+        <loc>https://emeraldpearlandevents.netlify.app/booking.html</loc>
         <lastmod>2026-02-23</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.9</priority>
     </url>
-    
-    <!-- Gallery/Images (optional - add if you have dedicated image pages) -->
-    <url>
-        <loc>https://live.themewild.com/emerald/images/gallery/</loc>
-        <lastmod>2026-02-23</lastmod>
-        <changefreq>monthly</changefreq>
-        <priority>0.7</priority>
-    </url>
-</urlset>
+</urlset>   
