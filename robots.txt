@@ -23,7 +23,7 @@ User-agent: Bingbot
 Allow: /
 
 # Sitemap location
-Sitemap: https://live.themewild.com/emerald/sitemap.xml
+Sitemap:https://emeraldpearlandevents.netlify.app/sitemap.xmls
 
 # Crawl delay (in seconds) - adjust if needed
 Crawl-delay: 1
