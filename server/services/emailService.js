@@ -1,19 +1,14 @@
-const nodemailer = require('nodemailer');
+const SibApiV3Sdk = require('sib-api-v3-sdk');
 
 // ═══════════════════════════════════════════════════════════
 // EMAIL SERVICE FOR BOOKING NOTIFICATIONS
 // ═══════════════════════════════════════════════════════════
 
-let transporter;
+let apiInstance;
 
 const initializeEmailService = () => {
-    transporter = nodemailer.createTransport({
-        service: 'gmail',
-        auth: {
-            user: process.env.EMAIL_USER,
-            pass: process.env.EMAIL_PASS
-        }
-    });
+    SibApiV3Sdk.ApiClient.instance.authentications['api-key'].apiKey = process.env.BREVO_API_KEY;
+    apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
 };
 
 // Format booking details for email
@@ -80,7 +75,7 @@ const formatBookingDetailsHTML = (booking, customer) => {
 
 // Email 1: Send to business
 const sendBusinessBookingNotification = async (booking, customer) => {
-    if (!transporter) {
+    if (!apiInstance) {
         throw new Error('Email service not initialized');
     }
 
