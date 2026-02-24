@@ -1,4 +1,4 @@
-const Brevo = require('@getbrevo/brevo');
+const { ApiClient, TransactionalEmailsApi, SendSmtpEmail } = require('@getbrevo/brevo');
 
 // ═══════════════════════════════════════════════════════════
 // EMAIL SERVICE FOR BOOKING NOTIFICATIONS
@@ -7,10 +7,9 @@ const Brevo = require('@getbrevo/brevo');
 let apiInstance;
 
 const initializeEmailService = () => {
-    const defaultClient = Brevo.ApiClient.instance;
-    const apiKey = defaultClient.authentications['api-key'];
+    const apiKey = ApiClient.instance.authentications['api-key'];
     apiKey.apiKey = process.env.BREVO_API_KEY;
-    apiInstance = new Brevo.TransactionalEmailsApi();
+    apiInstance = new TransactionalEmailsApi();
 };
 
 // Format booking details for email
@@ -113,7 +112,7 @@ const sendBusinessBookingNotification = async (booking, customer) => {
         </html>
     `;
 
-    const sendSmtpEmail = new Brevo.SendSmtpEmail();
+    const sendSmtpEmail = new SendSmtpEmail();
     sendSmtpEmail.sender = { name: 'Emerald Pearland Events', email: process.env.ADMIN_EMAIL };
     sendSmtpEmail.to = [{ email: process.env.ADMIN_EMAIL }];
     sendSmtpEmail.subject = `🎉 NEW EVENT BOOKING REQUEST - ${booking.bookingReference}`;
@@ -200,7 +199,7 @@ const sendClientBookingConfirmation = async (booking, customer) => {
         </html>
     `;
 
-    const sendSmtpEmail = new Brevo.SendSmtpEmail();
+    const sendSmtpEmail = new SendSmtpEmail();
     sendSmtpEmail.sender = { name: 'Emerald Pearland Events', email: process.env.ADMIN_EMAIL };
     sendSmtpEmail.to = [{ email: customer.email, name: customer.name }];
     sendSmtpEmail.subject = `✨ Booking Request Received - Reference: ${booking.bookingReference}`;
@@ -240,7 +239,7 @@ const sendFollowUpEmail = async (booking, customer) => {
         </html>
     `;
 
-    const sendSmtpEmail = new Brevo.SendSmtpEmail();
+    const sendSmtpEmail = new SendSmtpEmail();
     sendSmtpEmail.sender = { name: 'Emerald Pearland Events', email: process.env.ADMIN_EMAIL };
     sendSmtpEmail.to = [{ email: customer.email, name: customer.name }];
     sendSmtpEmail.subject = `Follow-up: Your ${booking.eventType} - Reference: ${booking.bookingReference}`;
@@ -294,7 +293,7 @@ const sendEventReminderEmail = async (booking, customer) => {
         </html>
     `;
 
-    const sendSmtpEmail = new Brevo.SendSmtpEmail();
+    const sendSmtpEmail = new SendSmtpEmail();
     sendSmtpEmail.sender = { name: 'Emerald Pearland Events', email: process.env.ADMIN_EMAIL };
     sendSmtpEmail.to = [{ email: customer.email, name: customer.name }];
     sendSmtpEmail.subject = `🎉 Reminder: Your ${booking.eventType} is in 2 Days!`;
