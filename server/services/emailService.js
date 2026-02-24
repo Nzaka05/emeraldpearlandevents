@@ -1,21 +1,16 @@
-const nodemailer = require('nodemailer');
+const Brevo = require('@getbrevo/brevo');
 
 // ═══════════════════════════════════════════════════════════
 // EMAIL SERVICE FOR BOOKING NOTIFICATIONS
 // ═══════════════════════════════════════════════════════════
 
-let transporter;
+let apiInstance;
 
 const initializeEmailService = () => {
-    transporter = nodemailer.createTransport({
-        host: process.env.EMAIL_HOST,
-        port: parseInt(process.env.EMAIL_PORT),
-        secure: false,
-        auth: {
-            user: process.env.EMAIL_USER,
-            pass: process.env.EMAIL_PASSWORD
-        }
-    });
+    const defaultClient = Brevo.ApiClient.instance;
+    const apiKey = defaultClient.authentications['api-key'];
+    apiKey.apiKey = process.env.BREVO_API_KEY;
+    apiInstance = new Brevo.TransactionalEmailsApi();
 };
 
 // Format booking details for email
