@@ -390,6 +390,12 @@
             }
         }
 
+        @media (max-width: 768px) {
+            .emerald-container {
+                display: none;
+            }
+        }
+
         .hero-title {
             font-size: clamp(3rem, 8vw, 6rem);
             line-height: 1;
@@ -2983,6 +2989,11 @@
                 right: 1.5rem;
             }
         }
+
+        /* Fallback: ensure service cards are visible if GSAP fails */
+        .service-card {
+            opacity: 1;
+        }
     </style>
 </head>
 
@@ -3286,11 +3297,6 @@
          SERVICES — CINEMATIC PRESENTATION FLOW
     ═════════════════════════════════════════════ -->
     <section class="services-cinematic">
-        <div class="services-intro">
-            <h2 class="services-title">Our Services</h2>
-            <p class="services-subtitle">Comprehensive event solutions delivered with precision and style.</p>
-        </div>
-
         <div class="services-grid-cinematic">
             <!-- Event Staffing -->
             <div class="service-card-cinematic staffing">
@@ -3937,18 +3943,21 @@
         });
 
         // Services Animation
-        gsap.from('.service-card', {
-            scrollTrigger: {
-                trigger: '.services-grid',
-                start: 'top 70%',
-                toggleActions: 'play none none reverse'
-            },
-            y: 50,
-            opacity: 0,
-            duration: 0.8,
-            stagger: 0.15,
-            ease: "power2.out"
-        });
+        gsap.fromTo('.service-card',
+            { y: 50, opacity: 0 },
+            {
+                scrollTrigger: {
+                    trigger: '.services-grid',
+                    start: 'top 80%',
+                    toggleActions: 'play none none none'
+                },
+                y: 0,
+                opacity: 1,
+                duration: 0.8,
+                stagger: 0.15,
+                ease: "power2.out"
+            }
+        );
 
         // Process Steps Animation
         gsap.to('.process-step', {
