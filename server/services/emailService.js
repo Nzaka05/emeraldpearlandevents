@@ -1,14 +1,19 @@
-const SibApiV3Sdk = require('sib-api-v3-sdk');
+const nodemailer = require('nodemailer');
 
 // ═══════════════════════════════════════════════════════════
 // EMAIL SERVICE FOR BOOKING NOTIFICATIONS
 // ═══════════════════════════════════════════════════════════
 
-let apiInstance;
+let transporter;
 
 const initializeEmailService = () => {
-    SibApiV3Sdk.ApiClient.instance.authentications['api-key'].apiKey = process.env.BREVO_API_KEY;
-    apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
+    transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+            user: process.env.EMAIL_USER,
+            pass: process.env.EMAIL_PASS
+        }
+    });
 };
 
 // Format booking details for email
@@ -75,7 +80,7 @@ const formatBookingDetailsHTML = (booking, customer) => {
 
 // Email 1: Send to business
 const sendBusinessBookingNotification = async (booking, customer) => {
-    if (!apiInstance) {
+    if (!transporter) {
         throw new Error('Email service not initialized');
     }
 
@@ -111,17 +116,17 @@ const sendBusinessBookingNotification = async (booking, customer) => {
         </html>
     `;
 
-    const sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail();
-    sendSmtpEmail.sender = { name: 'Emerald Pearland Events', email: process.env.ADMIN_EMAIL };
-    sendSmtpEmail.to = [{ email: process.env.ADMIN_EMAIL }];
-    sendSmtpEmail.subject = `🎉 NEW EVENT BOOKING REQUEST - ${booking.bookingReference}`;
-    sendSmtpEmail.htmlContent = emailHTML;
-    return apiInstance.sendTransacEmail(sendSmtpEmail);
+    return transporter.sendMail({
+        from: `"Emerald Pearland Events" <${process.env.EMAIL_USER}>`,
+        to: process.env.ADMIN_EMAIL,
+        subject: `🎉 NEW EVENT BOOKING REQUEST - ${booking.bookingReference}`,
+        html: emailHTML
+    });
 };
 
 // Email 2: Send to client
 const sendClientBookingConfirmation = async (booking, customer) => {
-    if (!apiInstance) {
+    if (!transporter) {
         throw new Error('Email service not initialized');
     }
 
@@ -198,17 +203,17 @@ const sendClientBookingConfirmation = async (booking, customer) => {
         </html>
     `;
 
-    const sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail()
-    sendSmtpEmail.sender = { name: 'Emerald Pearland Events', email: process.env.ADMIN_EMAIL };
-    sendSmtpEmail.to = [{ email: customer.email, name: customer.name }];
-    sendSmtpEmail.subject = `✨ Booking Request Received - Reference: ${booking.bookingReference}`;
-    sendSmtpEmail.htmlContent = emailHTML;
-    return apiInstance.sendTransacEmail(sendSmtpEmail);
+    return transporter.sendMail({
+        from: `"Emerald Pearland Events" <${process.env.EMAIL_USER}>`,
+        to: customer.email,
+        subject: `✨ Booking Request Received - Reference: ${booking.bookingReference}`,
+        html: emailHTML
+    });
 };
 
 // Send follow-up email (24 hours after booking)
 const sendFollowUpEmail = async (booking, customer) => {
-    if (!apiInstance) {
+    if (!transporter) {
         throw new Error('Email service not initialized');
     }
 
@@ -238,17 +243,17 @@ const sendFollowUpEmail = async (booking, customer) => {
         </html>
     `;
 
-    const sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail()
-    sendSmtpEmail.sender = { name: 'Emerald Pearland Events', email: process.env.ADMIN_EMAIL };
-    sendSmtpEmail.to = [{ email: customer.email, name: customer.name }];
-    sendSmtpEmail.subject = `Follow-up: Your ${booking.eventType} - Reference: ${booking.bookingReference}`;
-    sendSmtpEmail.htmlContent = emailHTML;
-    return apiInstance.sendTransacEmail(sendSmtpEmail);
+    return transporter.sendMail({
+        from: `"Emerald Pearland Events" <${process.env.EMAIL_USER}>`,
+        to: customer.email,
+        subject: `Follow-up: Your ${booking.eventType} - Reference: ${booking.bookingReference}`,
+        html: emailHTML
+    });
 };
 
 // Send event reminder (48 hours before event)
 const sendEventReminderEmail = async (booking, customer) => {
-    if (!apiInstance) {
+    if (!transporter) {
         throw new Error('Email service not initialized');
     }
 
@@ -292,12 +297,12 @@ const sendEventReminderEmail = async (booking, customer) => {
         </html>
     `;
 
-    const sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail()
-    sendSmtpEmail.sender = { name: 'Emerald Pearland Events', email: process.env.ADMIN_EMAIL };
-    sendSmtpEmail.to = [{ email: customer.email, name: customer.name }];
-    sendSmtpEmail.subject = `🎉 Reminder: Your ${booking.eventType} is in 2 Days!`;
-    sendSmtpEmail.htmlContent = emailHTML;
-    return apiInstance.sendTransacEmail(sendSmtpEmail);
+    return transporter.sendMail({
+        from: `"Emerald Pearland Events" <${process.env.EMAIL_USER}>`,
+        to: customer.email,
+        subject: `🎉 Reminder: Your ${booking.eventType} is in 2 Days!`,
+        html: emailHTML
+    });
 };
 
 module.exports = {
