@@ -1336,7 +1336,7 @@
         const submitBtn = document.getElementById('submitBtn');
         const btnText = document.getElementById('btnText');
         const successOverlay = document.getElementById('successOverlay');
-        const API_URL = 'http://127.0.0.1:3000/api/book-event';
+        const API_URL = 'https://emeraldpearlandevents.onrender.com/api/book-event';
 
         // Set min date on event date picker to today (no past dates)
         const eventDateInput = document.getElementById('eventDate');
@@ -1465,7 +1465,7 @@
                 }
 
                 // Track in custom analytics endpoint
-                fetch('http://127.0.0.1:3000/api/analytics/event', {
+                fetch('https://emeraldpearlandevents.onrender.com/api/analytics/event', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
