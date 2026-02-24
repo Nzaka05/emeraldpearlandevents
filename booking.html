@@ -1,0 +1,1598 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Premium Event Booking - Emerald Pearland Events</title>
+
+    <!-- SEO Meta Tags -->
+    <meta name="description"
+        content="Book your luxury event with Emerald Pearland Events. Professional event planning and coordination services for weddings, corporate events, and special occasions.">
+    <meta name="keywords" content="event booking, luxury events, wedding booking, event planner, Pearland">
+    <meta name="author" content="Emerald Pearland Events">
+    <meta name="robots" content="index, follow">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="images/logo 2.png">
+
+    <!-- Open Graph Tags (Social Media) -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Premium Event Booking - Emerald Pearland Events">
+    <meta property="og:description"
+        content="Book your luxury event with Emerald Pearland Events. Professional event planning for weddings, corporate events, and special occasions.">
+    <meta property="og:url" content="https://live.themewild.com/emerald/booking.html">
+    <meta property="og:image" content="https://live.themewild.com/emerald/images/og-image.jpg">
+    <meta property="og:site_name" content="Emerald Pearland Events">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Premium Event Booking - Emerald Pearland Events">
+    <meta name="twitter:description"
+        content="Book your luxury event with Emerald Pearland Events. Professional event planning services.">
+    <meta name="twitter:image" content="https://live.themewild.com/emerald/images/og-image.jpg">
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=Montserrat:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+
+    <!-- Google Analytics 4 -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-6E63LVFG40"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+        gtag('config', 'G-6E63LVFG40');
+    </script>
+
+    <!-- Schema Structured Data - Event Booking Service -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "LocalBusiness",
+      "name": "Emerald Pearland Events",
+      "description": "Premium luxury event planning and booking services",
+      "url": "https://live.themewild.com/emerald",
+      "telephone": "+254722446937",
+      "email": "emeraldpearlandevents@gmail.com",
+      "address": {
+        "@type": "PostalAddress",
+        "addressLocality": "Pearland",
+        "addressRegion": "TX",
+        "postalCode": "77581",
+        "addressCountry": "US"
+      },
+      "image": "https://live.themewild.com/emerald/images/og-image.jpg",
+      "priceRange": "$$$",
+      "serviceArea": ["Pearland", "Houston", "Texas"],
+      "hasOfferCatalog": {
+        "@type": "OfferCatalog",
+        "name": "Event Planning Services",
+        "itemListElement": [
+          {
+            "@type": "Offer",
+            "itemOffered": {
+              "@type": "Service",
+              "name": "Wedding Planning"
+            }
+          },
+          {
+            "@type": "Offer",
+            "itemOffered": {
+              "@type": "Service",
+              "name": "Corporate Events"
+            }
+          },
+          {
+            "@type": "Offer",
+            "itemOffered": {
+              "@type": "Service",
+              "name": "Special Occasions"
+            }
+          }
+        ]
+      }
+    }
+    </script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --midnight: #050508;
+            --emerald-deep: #0a2f1c;
+            --emerald: #2d8a5e;
+            --pearl: #f5f1e8;
+            --pearl-soft: #e8e4da;
+            --gold: #d4af37;
+            --gold-light: #e8c547;
+        }
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background: var(--midnight);
+            color: var(--pearl);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* ═══════════════════════════════════════════════════════
+           HEADER / NAVIGATION
+        ═══════════════════════════════════════════════════════ */
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            padding: 1rem 2rem;
+            background: linear-gradient(to bottom, rgba(5, 5, 8, 0.95), transparent);
+            backdrop-filter: blur(10px);
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.5rem;
+            color: var(--gold);
+            text-decoration: none;
+            font-weight: 300;
+            letter-spacing: 0.1em;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--pearl);
+            text-decoration: none;
+            font-size: 0.85rem;
+            transition: color 0.3s ease;
+        }
+
+        .nav-links a:hover {
+            color: var(--gold);
+        }
+
+        /* ═══════════════════════════════════════════════════════
+           CINEMATIC BACKGROUND
+        ═══════════════════════════════════════════════════════ */
+        .cinematic-bg {
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            background-image: url('./images/open.png');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            background-color: var(--midnight);
+        }
+
+        .cinematic-bg::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg,
+                    rgba(5, 5, 8, 0.7) 0%,
+                    rgba(10, 47, 28, 0.6) 25%,
+                    rgba(5, 5, 8, 0.7) 50%,
+                    rgba(10, 47, 28, 0.6) 75%,
+                    rgba(5, 5, 8, 0.7) 100%),
+                radial-gradient(ellipse 1400px 700px at center,
+                    rgba(45, 138, 94, 0.15) 0%,
+                    rgba(212, 175, 55, 0.05) 40%,
+                    transparent 100%);
+            animation: pulseGlow 8s ease-in-out infinite;
+        }
+
+        @keyframes pulseGlow {
+
+            0%,
+            100% {
+                opacity: 0.5;
+            }
+
+            50% {
+                opacity: 1;
+            }
+        }
+
+        /* Light beams */
+        .light-beam {
+            position: absolute;
+            filter: blur(80px);
+            mix-blend-mode: screen;
+            pointer-events: none;
+        }
+
+        .beam-1 {
+            top: 10%;
+            left: -200px;
+            width: 600px;
+            height: 400px;
+            background: radial-gradient(ellipse, rgba(45, 138, 94, 0.35), transparent);
+            animation: beamFloat 15s ease-in-out infinite;
+        }
+
+        .beam-2 {
+            top: 50%;
+            right: -150px;
+            width: 500px;
+            height: 350px;
+            background: radial-gradient(ellipse, rgba(212, 175, 55, 0.25), transparent);
+            animation: beamFloat 18s ease-in-out infinite 2s;
+        }
+
+        .beam-3 {
+            bottom: -100px;
+            left: 10%;
+            width: 550px;
+            height: 300px;
+            background: radial-gradient(ellipse, rgba(45, 138, 94, 0.3), transparent);
+            animation: beamFloat 20s ease-in-out infinite 1s;
+        }
+
+        @keyframes beamFloat {
+
+            0%,
+            100% {
+                opacity: 0.3;
+                transform: translateX(0) rotateX(0deg);
+            }
+
+            50% {
+                opacity: 0.7;
+                transform: translateX(30px) rotateX(5deg);
+            }
+        }
+
+        /* Particles */
+        .particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: radial-gradient(circle, rgba(212, 175, 55, 0.8), rgba(45, 138, 94, 0.4));
+            border-radius: 50%;
+            box-shadow: 0 0 12px rgba(212, 175, 55, 0.5);
+        }
+
+        .particle {
+            animation: float 12s ease-in-out infinite;
+        }
+
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translate(0, 0) scale(0.8);
+                opacity: 0.2;
+            }
+
+            50% {
+                transform: translate(40px, -60px) scale(1.2);
+                opacity: 0.8;
+            }
+        }
+
+        /* ═══════════════════════════════════════════════════════
+           MAIN CONTAINER
+        ═══════════════════════════════════════════════════════ */
+        .booking-page {
+            position: relative;
+            z-index: 1;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding-top: 60px;
+        }
+
+        /* ═══════════════════════════════════════════════════════
+           HERO SECTION
+        ═══════════════════════════════════════════════════════ */
+        .hero {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 4rem 2rem;
+            text-align: center;
+            min-height: 60vh;
+        }
+
+        .hero-content {
+            animation: fadeInUp 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .hero h1 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: clamp(2.5rem, 7vw, 4.5rem);
+            font-weight: 300;
+            color: var(--pearl);
+            margin-bottom: 1rem;
+            letter-spacing: 0.02em;
+            background: linear-gradient(135deg, var(--pearl) 0%, var(--gold-light) 50%, var(--pearl) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero p {
+            font-size: 1.2rem;
+            color: var(--pearl-soft);
+            max-width: 600px;
+            margin: 0 auto 2rem;
+            font-weight: 300;
+            line-height: 1.8;
+            animation: fadeInUp 1.2s cubic-bezier(0.4, 0, 0.2, 1) 0.2s both;
+        }
+
+        /* ═══════════════════════════════════════════════════════
+           BOOKING FORM SECTION
+        ═══════════════════════════════════════════════════════ */
+        .booking-section {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 4rem 2rem;
+            min-height: 100vh;
+        }
+
+        .booking-container {
+            width: 100%;
+            max-width: 650px;
+            animation: slideUp 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.3s both;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(50px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Glass Card */
+        .booking-card {
+            background: linear-gradient(135deg,
+                    rgba(255, 255, 255, 0.05) 0%,
+                    rgba(255, 255, 255, 0.01) 100%);
+            border: 1.5px solid rgba(212, 175, 55, 0.15);
+            border-radius: 20px;
+            padding: 3rem;
+            backdrop-filter: blur(20px);
+            box-shadow: 0 25px 100px rgba(0, 0, 0, 0.4),
+                0 0 80px rgba(45, 138, 94, 0.15),
+                inset 0 1px 30px rgba(212, 175, 55, 0.08);
+        }
+
+        .form-header {
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .form-header h2 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 2rem;
+            color: var(--pearl);
+            margin-bottom: 0.5rem;
+            font-weight: 300;
+        }
+
+        .form-header p {
+            font-size: 0.9rem;
+            color: var(--pearl-soft);
+            letter-spacing: 0.05em;
+        }
+
+        /* Form Groups */
+        .form-group {
+            margin-bottom: 1.5rem;
+            animation: slideInForm forwards;
+        }
+
+        @keyframes slideInForm {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+
+        .form-row.full {
+            grid-template-columns: 1fr;
+        }
+
+        label {
+            display: block;
+            font-size: 0.75rem;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: var(--gold);
+            margin-bottom: 0.6rem;
+            font-weight: 600;
+        }
+
+        input,
+        select,
+        textarea {
+            width: 100%;
+            padding: 0.9rem 1rem;
+            background: linear-gradient(135deg,
+                    rgba(255, 255, 255, 0.08) 0%,
+                    rgba(255, 255, 255, 0.03) 100%);
+            border: 1.5px solid rgba(212, 175, 55, 0.2);
+            border-radius: 8px;
+            color: var(--pearl);
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.95rem;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        input::placeholder {
+            color: rgba(232, 228, 218, 0.4);
+        }
+
+        input:focus,
+        select:focus,
+        textarea:focus {
+            outline: none;
+            background: linear-gradient(135deg,
+                    rgba(255, 255, 255, 0.12) 0%,
+                    rgba(255, 255, 255, 0.07) 100%);
+            border-color: rgba(212, 175, 55, 0.6);
+            box-shadow: 0 0 25px rgba(212, 175, 55, 0.2),
+                inset 0 0 15px rgba(212, 175, 55, 0.05);
+            transform: translateY(-2px);
+        }
+
+        /* Select dropdown option styling */
+        select {
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23d4af37' stroke-width='2'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 0.75rem center;
+            background-size: 1.2em 1.2em;
+            padding-right: 2.5rem;
+        }
+
+        select option {
+            background: var(--emerald-deep);
+            color: var(--pearl);
+            padding: 0.75rem;
+            border: none;
+            margin: 0.25rem 0;
+        }
+
+        select option:hover {
+            background: var(--emerald);
+        }
+
+        select option:checked {
+            background: linear-gradient(var(--gold), var(--gold));
+            background-color: var(--emerald) !important;
+            color: var(--gold) !important;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        /* ═══════════════════════════════════════════════════════
+           ESTIMATED INVESTMENT LUXURY SELECTOR
+        ═══════════════════════════════════════════════════════ */
+        .investment-label {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .investment-helper {
+            font-size: 0.75rem;
+            font-weight: 400;
+            letter-spacing: 0.08em;
+            color: rgba(232, 228, 218, 0.6);
+            text-transform: none;
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        .budget-selector-container {
+            background: linear-gradient(135deg,
+                    rgba(255, 255, 255, 0.05) 0%,
+                    rgba(255, 255, 255, 0.01) 100%);
+            border: 1.5px solid rgba(212, 175, 55, 0.15);
+            border-radius: 12px;
+            padding: 1.5rem;
+            backdrop-filter: blur(20px);
+            box-shadow: inset 0 1px 20px rgba(212, 175, 55, 0.05);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .budget-selector-container:hover {
+            border-color: rgba(212, 175, 55, 0.3);
+            box-shadow: inset 0 1px 20px rgba(212, 175, 55, 0.08),
+                0 0 30px rgba(45, 138, 94, 0.1);
+        }
+
+        .budget-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 0.8rem;
+        }
+
+        .budget-radio {
+            display: none;
+        }
+
+        .budget-option {
+            display: block;
+            padding: 0.9rem 1rem;
+            text-align: center;
+            background: linear-gradient(135deg,
+                    rgba(255, 255, 255, 0.06) 0%,
+                    rgba(255, 255, 255, 0.02) 100%);
+            border: 1.5px solid rgba(212, 175, 55, 0.2);
+            border-radius: 8px;
+            color: var(--pearl-soft);
+            font-size: 0.85rem;
+            font-weight: 500;
+            letter-spacing: 0.05em;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .budget-option::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.08), transparent 70%);
+            opacity: 0;
+            transform: translateX(-100%);
+            transition: transform 0.5s ease;
+        }
+
+        .budget-option:hover {
+            background: linear-gradient(135deg,
+                    rgba(255, 255, 255, 0.1) 0%,
+                    rgba(255, 255, 255, 0.04) 100%);
+            border-color: rgba(212, 175, 55, 0.5);
+            box-shadow: 0 0 20px rgba(212, 175, 55, 0.2),
+                inset 0 0 15px rgba(45, 138, 94, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .budget-radio:checked+.budget-option {
+            background: linear-gradient(135deg,
+                    rgba(212, 175, 55, 0.25) 0%,
+                    rgba(45, 138, 94, 0.15) 100%);
+            border-color: rgba(212, 175, 55, 0.8);
+            color: var(--gold-light);
+            box-shadow: 0 0 30px rgba(212, 175, 55, 0.4),
+                inset 0 0 20px rgba(212, 175, 55, 0.1),
+                0 0 15px rgba(45, 138, 94, 0.2);
+            transform: translateY(-3px) scale(1.02);
+            animation: budgetShimmer 2s ease-in-out infinite;
+        }
+
+        .budget-radio:checked+.budget-option::before {
+            opacity: 1;
+            transform: translateX(100%);
+        }
+
+        @keyframes budgetShimmer {
+
+            0%,
+            100% {
+                box-shadow: 0 0 30px rgba(212, 175, 55, 0.4),
+                    inset 0 0 20px rgba(212, 175, 55, 0.1);
+            }
+
+            50% {
+                box-shadow: 0 0 40px rgba(212, 175, 55, 0.6),
+                    inset 0 0 25px rgba(212, 175, 55, 0.15);
+            }
+        }
+
+        /* Responsive: Mobile */
+        @media (max-width: 768px) {
+            .budget-options {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 0.7rem;
+            }
+
+            .budget-option {
+                padding: 0.8rem 0.8rem;
+                font-size: 0.8rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .budget-selector-container {
+                padding: 1rem;
+            }
+
+            .budget-options {
+                grid-template-columns: 1fr;
+                gap: 0.6rem;
+            }
+
+            .budget-option {
+                padding: 0.85rem 0.8rem;
+                font-size: 0.8rem;
+            }
+        }
+
+        /* Input Error State */
+        input.error,
+        select.error,
+        textarea.error {
+            border-color: #ff6b6b;
+            background: linear-gradient(135deg,
+                    rgba(255, 107, 107, 0.1) 0%,
+                    rgba(255, 107, 107, 0.05) 100%);
+        }
+
+        .error-message {
+            font-size: 0.75rem;
+            color: #ff6b6b;
+            margin-top: 0.4rem;
+            animation: shake 0.4s ease-in-out;
+        }
+
+        @keyframes shake {
+
+            0%,
+            100% {
+                transform: translateX(0);
+            }
+
+            25% {
+                transform: translateX(-5px);
+            }
+
+            75% {
+                transform: translateX(5px);
+            }
+        }
+
+        /* ═══════════════════════════════════════════════════════
+           SUBMIT BUTTON
+        ═══════════════════════════════════════════════════════ */
+        .button-container {
+            margin-top: 2.5rem;
+            display: flex;
+            gap: 1rem;
+        }
+
+        button {
+            flex: 1;
+            padding: 1.2rem;
+            border: 2px solid var(--gold);
+            background: linear-gradient(135deg,
+                    rgba(45, 138, 94, 0.2) 0%,
+                    rgba(212, 175, 55, 0.1) 100%);
+            color: var(--gold);
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.8rem;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            font-weight: 600;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        button::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg,
+                    rgba(45, 138, 94, 0.5) 0%,
+                    rgba(212, 175, 55, 0.3) 100%);
+            opacity: 0;
+            transition: opacity 0.6s ease;
+            z-index: -1;
+        }
+
+        button:hover {
+            transform: scale(1.08);
+            box-shadow: 0 0 40px rgba(212, 175, 55, 0.5),
+                0 0 80px rgba(45, 138, 94, 0.3),
+                inset 0 1px 20px rgba(212, 175, 55, 0.15);
+            color: var(--gold-light);
+        }
+
+        button:hover::before {
+            opacity: 1;
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Loading spinner */
+        .spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(212, 175, 55, 0.3);
+            border-top: 2px solid var(--gold);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-right: 8px;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* ═══════════════════════════════════════════════════════
+           SUCCESS STATE
+        ═══════════════════════════════════════════════════════ */
+        .success-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(5, 5, 8, 0.95);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .success-overlay.active {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        .success-content {
+            text-align: center;
+            animation: popIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        @keyframes popIn {
+            from {
+                opacity: 0;
+                transform: scale(0.8) rotateX(10deg);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1) rotateX(0);
+            }
+        }
+
+        .whatsapp-icon {
+            width: 100px;
+            height: 100px;
+            margin: 0 auto 2rem;
+            background: linear-gradient(135deg, #25D366, #128C7E);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3.5rem;
+            animation: iconPulse 0.8s cubic-bezier(0.34, 1.56, 0.64, 1), iconGlow 2s ease-in-out 0.8s infinite;
+            box-shadow: 0 0 40px rgba(37, 211, 102, 0.3);
+        }
+
+        @keyframes iconPulse {
+            0% {
+                transform: scale(0) rotateZ(-30deg);
+                opacity: 0;
+            }
+
+            50% {
+                transform: scale(1.1) rotateZ(5deg);
+            }
+
+            100% {
+                transform: scale(1) rotateZ(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes iconGlow {
+
+            0%,
+            100% {
+                box-shadow: 0 0 40px rgba(37, 211, 102, 0.3),
+                    0 0 0 0 rgba(37, 211, 102, 0.5);
+            }
+
+            50% {
+                box-shadow: 0 0 60px rgba(37, 211, 102, 0.5),
+                    0 0 0 20px rgba(37, 211, 102, 0);
+            }
+        }
+
+        .success-content h2 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 2.8rem;
+            color: var(--pearl);
+            margin-bottom: 0.5rem;
+            font-weight: 300;
+            letter-spacing: 0.05em;
+        }
+
+        .success-content p {
+            color: var(--pearl-soft);
+            margin-bottom: 2rem;
+            font-size: 1.15rem;
+            font-weight: 300;
+            line-height: 1.8;
+            letter-spacing: 0.02em;
+        }
+
+        .success-subtext {
+            color: var(--gold-light);
+            font-size: 0.9rem;
+            margin-top: 1rem;
+            animation: fadeInUp 1s ease-out 1s both;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ═══════════════════════════════════════════════════════
+           FLOATING WHATSAPP BUTTON
+        ═══════════════════════════════════════════════════════ */
+        .whatsapp-btn {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #10b981, #059669);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            text-decoration: none;
+            font-size: 1.5rem;
+            box-shadow: 0 4px 20px rgba(16, 185, 129, 0.4);
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            z-index: 500;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                box-shadow: 0 4px 20px rgba(16, 185, 129, 0.4),
+                    0 0 0 0 rgba(16, 185, 129, 0.4);
+            }
+
+            50% {
+                box-shadow: 0 4px 20px rgba(16, 185, 129, 0.4),
+                    0 0 0 15px rgba(16, 185, 129, 0);
+            }
+        }
+
+        .whatsapp-btn:hover {
+            transform: scale(1.15);
+            box-shadow: 0 8px 30px rgba(16, 185, 129, 0.6);
+        }
+
+        /* ═══════════════════════════════════════════════════════
+           RESPONSIVE
+        ═══════════════════════════════════════════════════════ */
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+            }
+
+            .booking-card {
+                padding: 2rem;
+                border-radius: 15px;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .button-container {
+                flex-direction: column;
+            }
+
+            .hero h1 {
+                font-size: clamp(1.8rem, 5vw, 2.8rem);
+            }
+
+            .hero p {
+                font-size: 1rem;
+            }
+
+            .form-header h2 {
+                font-size: 1.5rem;
+            }
+
+            .whatsapp-btn {
+                width: 55px;
+                height: 55px;
+                bottom: 1.5rem;
+                right: 1.5rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            header {
+                padding: 0.8rem 1rem;
+            }
+
+            .booking-card {
+                padding: 1.5rem;
+            }
+
+            input,
+            select,
+            textarea {
+                padding: 0.8rem 0.8rem;
+                font-size: 0.9rem;
+            }
+
+            button {
+                padding: 1rem;
+                font-size: 0.7rem;
+            }
+
+            .whatsapp-btn {
+                width: 50px;
+                height: 50px;
+                font-size: 1.3rem;
+            }
+        }
+
+        /* ═══════════════════════════════════════════════════════
+           HOURS SELECTOR — cinematic premium style
+        ═══════════════════════════════════════════════════════ */
+        .hours-selector-wrap {
+            position: relative;
+            display: none;
+            /* shown via JS */
+        }
+
+        .hours-selector-wrap select {
+            width: 100%;
+            padding: 0.9rem 3rem 0.9rem 1rem;
+            background: linear-gradient(135deg,
+                    rgba(212, 175, 55, 0.08) 0%,
+                    rgba(45, 138, 94, 0.06) 100%);
+            border: 1.5px solid rgba(212, 175, 55, 0.45);
+            border-radius: 8px;
+            color: var(--gold-light);
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.05rem;
+            font-weight: 500;
+            letter-spacing: 0.05em;
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23d4af37' stroke-width='2'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 0.75rem center;
+            background-size: 1.2em;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 0 18px rgba(212, 175, 55, 0.15),
+                inset 0 0 12px rgba(212, 175, 55, 0.04);
+        }
+
+        .hours-selector-wrap select:focus {
+            outline: none;
+            border-color: rgba(212, 175, 55, 0.9);
+            box-shadow: 0 0 30px rgba(212, 175, 55, 0.35),
+                0 0 60px rgba(45, 138, 94, 0.15),
+                inset 0 0 20px rgba(212, 175, 55, 0.08);
+            transform: translateY(-2px);
+        }
+
+        .hours-badge {
+            position: absolute;
+            right: 2.5rem;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 0.65rem;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            color: rgba(212, 175, 55, 0.55);
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 600;
+            pointer-events: none;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Cinematic Background -->
+    <div class="cinematic-bg">
+        <div class="light-beam beam-1"></div>
+        <div class="light-beam beam-2"></div>
+        <div class="light-beam beam-3"></div>
+    </div>
+
+    <!-- Floating Particles -->
+    <div class="particle" style="top: 10%; left: 5%;"></div>
+    <div class="particle" style="top: 20%; right: 8%; animation-delay: 1s;"></div>
+    <div class="particle" style="top: 40%; left: 15%; animation-delay: 2s;"></div>
+    <div class="particle" style="bottom: 20%; right: 10%; animation-delay: 1.5s;"></div>
+    <div class="particle" style="bottom: 30%; left: 10%; animation-delay: 0.5s;"></div>
+
+    <!-- Header -->
+    <header>
+        <div class="nav-container">
+            <a href="index.html" class="logo">Emerald Pearland</a>
+            <ul class="nav-links">
+                <li><a href="index.html#about">About</a></li>
+                <li><a href="index.html#services">Services</a></li>
+                <li><a href="index.html#gallery">Gallery</a></li>
+                <li><a href="#booking">Book Event</a></li>
+            </ul>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="booking-page">
+        <!-- Hero Section -->
+        <section class="hero">
+            <div class="hero-content">
+                <h1>Book Exceptional Event Services</h1>
+                <p>Seamless planning. Professional execution. Unforgettable experiences.</p>
+            </div>
+        </section>
+
+        <!-- Booking Form Section -->
+        <section class="booking-section" id="booking">
+            <div class="booking-container">
+                <div class="booking-card">
+                    <div class="form-header">
+                        <h2>Your Event Details</h2>
+                        <p>Tell us about your vision – we'll handle the magic</p>
+                    </div>
+
+                    <form id="bookingForm">
+                        <!-- Client Details -->
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="fullName">Full Name *</label>
+                                <input type="text" id="fullName" name="fullName" placeholder="Your name" required>
+                                <div class="error-message" id="error-fullName"></div>
+                            </div>
+                            <div class="form-group">
+                                <label for="phone">Phone Number *</label>
+                                <input type="tel" id="phone" name="phone" placeholder="+254 722 446 937" required>
+                                <div class="error-message" id="error-phone"></div>
+                            </div>
+                        </div>
+
+                        <div class="form-row full">
+                            <div class="form-group">
+                                <label for="email">Email Address *</label>
+                                <input type="email" id="email" name="email" placeholder="your@email.com" required>
+                                <div class="error-message" id="error-email"></div>
+                            </div>
+                        </div>
+
+                        <!-- Event Details -->
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="eventType">Event Type *</label>
+                                <select id="eventType" name="eventType" required>
+                                    <option value="">Select event type...</option>
+                                    <option value="Wedding">Wedding</option>
+                                    <option value="Anniversary">Anniversary</option>
+                                    <option value="Birthday Party">Birthday Party</option>
+                                    <option value="Family & House Party">Family & House Party</option>
+                                    <option value="Traditional Ceremony">Traditional Ceremony</option>
+                                    <option value="Memorial Service">Memorial Service</option>
+                                    <option value="Corporate Event">Corporate Event</option>
+                                    <option value="Brand Ambassador Event">Brand Ambassador Event</option>
+                                    <option value="Product Launch">Product Launch</option>
+                                    <option value="Private Celebration">Private Celebration</option>
+                                    <option value="Luxury Decor & Styling">Luxury Décor & Styling</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                                <div class="error-message" id="error-eventType"></div>
+                            </div>
+                            <div class="form-group">
+                                <label for="eventDate">Event Date *</label>
+                                <input type="date" id="eventDate" name="eventDate" required>
+                                <div class="error-message" id="error-eventDate"></div>
+                            </div>
+
+                        </div>
+
+                        <!-- Other Event Type Description -->
+                        <div class="form-row full" id="otherEventDescriptionGroup"
+                            style="display: none; max-height: 0; overflow: hidden; transition: max-height 0.4s ease;">
+                            <div class="form-group">
+                                <label for="otherEventDescription">Please describe your event type *</label>
+                                <input type="text" id="otherEventDescription" name="otherEventDescription"
+                                    placeholder="Describe your unique event..." required>
+                                <div class="error-message" id="error-otherEventDescription"></div>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="durationUnit">Event Duration Unit *</label>
+                                <select id="durationUnit" name="durationUnit" required>
+                                    <option value="">Select duration unit...</option>
+                                    <option value="hours">Hours</option>
+                                    <option value="days">Days</option>
+                                    <option value="weeks">Weeks</option>
+                                </select>
+                                <div class="error-message" id="error-durationUnit"></div>
+                            </div>
+                            <div class="form-group">
+                                <label for="durationValue">Duration *</label>
+                                <select id="durationValue" name="durationValue" style="display: none;">
+                                    <option value="">Select value...</option>
+                                </select>
+                                <!-- Premium hours picker (shown when Hours unit is selected) -->
+                                <div class="hours-selector-wrap" id="hoursPickerWrap">
+                                    <select id="durationHours" name="durationHours">
+                                        <option value="">— Select hours —</option>
+                                        <option value="1Hours">1 Hour</option>
+                                        <option value="2Hours">2 Hours</option>
+                                        <option value="3Hours">3 Hours</option>
+                                        <option value="4Hours">4 Hours</option>
+                                        <option value="5Hours">5 Hours</option>
+                                        <option value="6Hours">6 Hours</option>
+                                        <option value="7Hours">7 Hours</option>
+                                        <option value="8Hours">8 Hours</option>
+                                        <option value="9Hours">9 Hours</option>
+                                        <option value="10Hours">10 Hours</option>
+                                        <option value="11Hours">11 Hours</option>
+                                        <option value="12Hours">12 Hours</option>
+                                        <option value="13Hours">13 Hours</option>
+                                        <option value="14Hours">14 Hours</option>
+                                        <option value="15Hours">15 Hours</option>
+                                        <option value="16Hours">16 Hours</option>
+                                        <option value="17Hours">17 Hours</option>
+                                        <option value="18Hours">18 Hours</option>
+                                        <option value="19Hours">19 Hours</option>
+                                        <option value="20Hours">20 Hours</option>
+                                        <option value="21Hours">21 Hours</option>
+                                        <option value="22Hours">22 Hours</option>
+                                        <option value="23Hours">23 Hours</option>
+                                        <option value="24Hours">24 Hours</option>
+                                    </select>
+                                    <span class="hours-badge">hrs</span>
+                                </div>
+                                <div class="error-message" id="error-durationValue"></div>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="guestCount">Number of Guests *</label>
+                                <input type="number" id="guestCount" name="guestCount" placeholder="50" min="1"
+                                    required>
+                                <div class="error-message" id="error-guestCount"></div>
+                            </div>
+                        </div>
+
+                        <!-- Estimated Investment Selector -->
+                        <div class="form-row full">
+                            <div class="form-group">
+                                <label for="budgetRange" class="investment-label">
+                                    Estimated Investment *
+                                    <span class="investment-helper">We tailor staffing and service levels to match your
+                                        investment.</span>
+                                </label>
+                                <div class="budget-selector-container">
+                                    <div class="budget-options">
+                                        <input type="radio" id="budget-under50" name="budgetRange"
+                                            value="Under KES 50,000" class="budget-radio">
+                                        <label for="budget-under50" class="budget-option">Under KES 50,000</label>
+
+                                        <input type="radio" id="budget-50-100" name="budgetRange"
+                                            value="KES 50,000 – 100,000" class="budget-radio">
+                                        <label for="budget-50-100" class="budget-option">KES 50,000 – 100,000</label>
+
+                                        <input type="radio" id="budget-100-250" name="budgetRange"
+                                            value="KES 100,000 – 250,000" class="budget-radio">
+                                        <label for="budget-100-250" class="budget-option">KES 100,000 – 250,000</label>
+
+                                        <input type="radio" id="budget-250-500" name="budgetRange"
+                                            value="KES 250,000 – 500,000" class="budget-radio">
+                                        <label for="budget-250-500" class="budget-option">KES 250,000 – 500,000</label>
+
+                                        <input type="radio" id="budget-500plus" name="budgetRange" value="KES 500,000+"
+                                            class="budget-radio">
+                                        <label for="budget-500plus" class="budget-option">KES 500,000+</label>
+
+                                        <input type="radio" id="budget-notsure" name="budgetRange" value="Not Sure Yet"
+                                            class="budget-radio">
+                                        <label for="budget-notsure" class="budget-option">Not Sure Yet</label>
+                                    </div>
+                                </div>
+                                <div class="error-message" id="error-budgetRange"></div>
+                            </div>
+                        </div>
+
+                        <div class="form-row full">
+                            <div class="form-group">
+                                <label for="location">Event Location *</label>
+                                <input type="text" id="location" name="location" placeholder="Nairobi, Kenya" required>
+                                <div class="error-message" id="error-location"></div>
+                            </div>
+                        </div>
+
+                        <div class="form-row full">
+                            <div class="form-group">
+                                <label for="specialRequests">Special Requests & Notes</label>
+                                <textarea id="specialRequests" name="specialRequests"
+                                    placeholder="Tell us about any special requirements, preferences, or additional notes..."></textarea>
+                                <div class="error-message" id="error-specialRequests"></div>
+                            </div>
+                        </div>
+
+                        <!-- Buttons -->
+                        <div class="button-container">
+                            <button type="submit" id="submitBtn">
+                                <span id="btnText">Book Your Event</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Success Overlay -->
+    <div class="success-overlay" id="successOverlay">
+        <div class="success-content">
+            <div class="whatsapp-icon">💬</div>
+            <h2>Perfect!</h2>
+            <p>Your request has been received.<br>We will contact you shortly.</p>
+            <p class="success-subtext">Connecting via WhatsApp...</p>
+        </div>
+    </div>
+
+    <!-- Floating WhatsApp Button -->
+    <a href="https://wa.me/254722446937?text=Hi%20Emerald%20Pearland%20Events%2C%20I%27d%20like%20to%20discuss%20an%20event%20booking"
+        target="_blank" class="whatsapp-btn" title="Chat on WhatsApp">
+        💬
+    </a>
+
+    <!-- GSAP for animations (optional but recommended) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+
+    <script>
+        // ═══════════════════════════════════════════════════════
+        // BOOKING FORM HANDLER
+        // ═══════════════════════════════════════════════════════
+
+        const form = document.getElementById('bookingForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const btnText = document.getElementById('btnText');
+        const successOverlay = document.getElementById('successOverlay');
+        const API_URL = 'http://127.0.0.1:3000/api/book-event';
+
+        // Set min date on event date picker to today (no past dates)
+        const eventDateInput = document.getElementById('eventDate');
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        const mm = String(today.getMonth() + 1).padStart(2, '0');
+        const dd = String(today.getDate()).padStart(2, '0');
+        eventDateInput.min = `${yyyy}-${mm}-${dd}`;
+
+        // Clear error messages on input
+        document.querySelectorAll('input, select, textarea').forEach(field => {
+            field.addEventListener('focus', function () {
+                const errorDiv = document.getElementById(`error-${this.id}`);
+                if (errorDiv) {
+                    errorDiv.textContent = '';
+                    this.classList.remove('error');
+                }
+            });
+        });
+
+        // Handle "Other" event type option
+        const eventTypeSelect = document.getElementById('eventType');
+        const otherEventDescriptionGroup = document.getElementById('otherEventDescriptionGroup');
+        const otherEventDescription = document.getElementById('otherEventDescription');
+
+        eventTypeSelect.addEventListener('change', function () {
+            if (this.value === 'Other') {
+                otherEventDescriptionGroup.style.display = 'block';
+                setTimeout(() => {
+                    otherEventDescriptionGroup.style.maxHeight = '200px';
+                }, 10);
+                otherEventDescription.setAttribute('required', 'required');
+            } else {
+                otherEventDescriptionGroup.style.maxHeight = '0';
+                setTimeout(() => {
+                    otherEventDescriptionGroup.style.display = 'none';
+                }, 400);
+                otherEventDescription.removeAttribute('required');
+                otherEventDescription.value = '';
+            }
+        });
+
+        // Handle dynamic duration toggle
+        const durationUnitSelect = document.getElementById('durationUnit');
+        const durationValueSelect = document.getElementById('durationValue');
+        const durationHoursInput = document.getElementById('durationHours'); // the select inside wrap
+        const hoursPickerWrap = document.getElementById('hoursPickerWrap');
+
+        const durationOptions = {
+            days: [
+                { value: '1Days', label: '1 Day' },
+                { value: '2Days', label: '2 Days' },
+                { value: '3Days', label: '3 Days' },
+                { value: '4Days', label: '4 Days' },
+                { value: '5Days', label: '5 Days' },
+                { value: '6Days', label: '6 Days' },
+                { value: '7Days', label: '7 Days (1 Week)' }
+            ],
+            weeks: [
+                { value: '1Weeks', label: '1 Week' },
+                { value: '2Weeks', label: '2 Weeks' },
+                { value: '3Weeks', label: '3 Weeks' },
+                { value: '4Weeks', label: '4 Weeks (1 Month)' }
+            ]
+        };
+
+        durationUnitSelect.addEventListener('change', function () {
+            const selectedUnit = this.value;
+
+            // Hide both controls first
+            durationValueSelect.style.display = 'none';
+            durationValueSelect.removeAttribute('required');
+            hoursPickerWrap.style.display = 'none';
+            durationHoursInput.removeAttribute('required');
+            durationHoursInput.value = '';
+
+            if (!selectedUnit) return;
+
+            if (selectedUnit === 'hours') {
+                // Show premium hours dropdown
+                hoursPickerWrap.style.display = 'block';
+                durationHoursInput.setAttribute('required', 'required');
+                durationHoursInput.focus();
+            } else {
+                // Show dropdown for days / weeks
+                durationValueSelect.innerHTML = '<option value="">Select value...</option>';
+                durationOptions[selectedUnit].forEach(opt => {
+                    const option = document.createElement('option');
+                    option.value = opt.value;
+                    option.textContent = opt.label;
+                    durationValueSelect.appendChild(option);
+                });
+                durationValueSelect.style.display = 'block';
+                durationValueSelect.setAttribute('required', 'required');
+                durationValueSelect.focus();
+            }
+        });
+
+        // Clear error on focus for both duration controls
+        [durationValueSelect, durationHoursInput].forEach(el => {
+            el.addEventListener('focus', function () {
+                const errorDiv = document.getElementById('error-durationValue');
+                if (errorDiv) {
+                    errorDiv.textContent = '';
+                    durationValueSelect.classList.remove('error');
+                    durationHoursInput.classList.remove('error');
+                }
+            });
+        });
+
+        // Handle Budget Selection and Track Analytics
+        const budgetRadios = document.querySelectorAll('input[name="budgetRange"]');
+
+        budgetRadios.forEach(radio => {
+            radio.addEventListener('change', function () {
+                const errorDiv = document.getElementById('error-budgetRange');
+                if (errorDiv) {
+                    errorDiv.textContent = '';
+                }
+
+                // Track budget selection in Google Analytics
+                if (typeof gtag !== 'undefined') {
+                    gtag('event', 'budget_selected', {
+                        'selected_range': this.value
+                    });
+                }
+
+                // Track in custom analytics endpoint
+                fetch('http://127.0.0.1:3000/api/analytics/event', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        eventType: 'budget_selected',
+                        eventName: 'budget_selected',
+                        parameter: this.value,
+                        timestamp: new Date().toISOString()
+                    })
+                }).catch(err => console.log('Analytics tracked'));
+            });
+        });
+
+        // Form submission
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            // Clear previous errors
+            document.querySelectorAll('.error-message').forEach(el => el.textContent = '');
+            document.querySelectorAll('input, select, textarea').forEach(el => el.classList.remove('error'));
+
+            // Disable submit button
+            submitBtn.disabled = true;
+            btnText.innerHTML = '<span class="spinner"></span>Processing...';
+
+            // Collect form data
+            const eventType = document.getElementById('eventType').value.trim();
+            const otherDescription = document.getElementById('otherEventDescription').value.trim();
+            const selectedBudget = document.querySelector('input[name="budgetRange"]:checked');
+
+            // Validate budget selection
+            if (!selectedBudget) {
+                const errorDiv = document.getElementById('error-budgetRange');
+                if (errorDiv) {
+                    errorDiv.textContent = 'Please select an estimated investment range';
+                }
+                submitBtn.disabled = false;
+                btnText.textContent = 'Book Your Event';
+                return;
+            }
+
+            const formData = {
+                fullName: document.getElementById('fullName').value.trim(),
+                phone: document.getElementById('phone').value.trim(),
+                email: document.getElementById('email').value.trim(),
+                eventType: eventType === 'Other' ? 'Other: ' + otherDescription : eventType,
+                eventDate: document.getElementById('eventDate').value,
+                eventDuration: durationUnitSelect.value === 'hours'
+                    ? document.getElementById('durationHours').value
+                    : document.getElementById('durationValue').value,
+                location: document.getElementById('location').value.trim(),
+                guestCount: document.getElementById('guestCount').value,
+                budgetRange: selectedBudget.value,
+                specialRequests: document.getElementById('specialRequests').value.trim()
+            };
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    // Show success overlay
+                    successOverlay.classList.add('active');
+
+                    // Wait 2 seconds then redirect to WhatsApp
+                    setTimeout(() => {
+                        window.open(result.whatsappUrl, '_blank');
+                        // Reset form after redirect
+                        setTimeout(() => {
+                            form.reset();
+                            successOverlay.classList.remove('active');
+                            submitBtn.disabled = false;
+                            btnText.textContent = 'Book Your Event';
+                        }, 1000);
+                    }, 2000);
+                } else {
+                    // Handle validation errors
+                    if (result.errors && Array.isArray(result.errors)) {
+                        result.errors.forEach(error => {
+                            // Try to match error to field
+                            const fieldMatch = error.match(/Full Name|Phone|Email|Event Type|Event Date|Event Duration|Location|Guests/i);
+                            if (fieldMatch) {
+                                const fieldName = fieldMatch[0].toLowerCase().replace(/\s+/g, '');
+                                let fieldId = '';
+
+                                if (fieldName.includes('full')) fieldId = 'fullName';
+                                else if (fieldName.includes('phone')) fieldId = 'phone';
+                                else if (fieldName.includes('email')) fieldId = 'email';
+                                else if (fieldName.includes('type')) fieldId = 'eventType';
+                                else if (fieldName.includes('date')) fieldId = 'eventDate';
+                                else if (fieldName.includes('duration')) fieldId = 'durationValue';
+                                else if (fieldName.includes('location')) fieldId = 'location';
+                                else if (fieldName.includes('guests')) fieldId = 'guestCount';
+
+                                if (fieldId) {
+                                    const field = document.getElementById(fieldId);
+                                    const errorDiv = document.getElementById(`error-${fieldId}`);
+                                    if (field && errorDiv) {
+                                        field.classList.add('error');
+                                        errorDiv.textContent = error;
+                                    }
+                                }
+                            }
+                        });
+                    }
+                    submitBtn.disabled = false;
+                    btnText.textContent = 'Book Your Event';
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Connection error. Please check if the server is running (npm start)');
+                submitBtn.disabled = false;
+                btnText.textContent = 'Book Your Event';
+            }
+        });
+
+        // Animate form inputs on load
+        document.querySelectorAll('.form-group').forEach((el, index) => {
+            el.style.animationDelay = `${index * 0.08}s`;
+        });
+    </script>
+</body>
+
+</html>
