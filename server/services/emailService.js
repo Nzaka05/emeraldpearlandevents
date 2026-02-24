@@ -8,7 +8,9 @@ let transporter;
 
 const initializeEmailService = () => {
     transporter = nodemailer.createTransport({
-        service: 'gmail',
+        host: process.env.EMAIL_HOST,
+        port: parseInt(process.env.EMAIL_PORT),
+        secure: false,
         auth: {
             user: process.env.EMAIL_USER,
             pass: process.env.EMAIL_PASSWORD
@@ -100,7 +102,7 @@ const sendBusinessBookingNotification = async (booking, customer) => {
             <body>
                 <div class="container">
                     <div class="header">
-                        <h1>🎉 NEW EVENT BOOKING REQUEST</h1>
+                        <h1>NEW EVENT BOOKING REQUEST</h1>
                     </div>
                     <div class="content">
                         <p>You have received a new booking request from <span class="highlight">${customer.name}</span>.</p>
