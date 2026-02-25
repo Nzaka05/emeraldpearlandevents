@@ -1571,6 +1571,10 @@
                     : document.getElementById('durationValue').value,
                 location: document.getElementById('location').value.trim(),
                 guestCount: document.getElementById('guestCount').value,
+                needUshers: document.querySelector('input[name="needUshers"]:checked')?.value || 'Not specified',
+                usherCount: document.querySelector('input[name="needUshers"]:checked')?.value === 'Yes'
+                    ? document.getElementById('usherCount').value
+                    : 'N/A',
                 budgetRange: selectedBudget.value,
                 specialRequests: document.getElementById('specialRequests').value.trim()
             };
