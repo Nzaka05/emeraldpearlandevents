@@ -1240,6 +1240,39 @@
                             </div>
                         </div>
 
+                        <!-- Ushers Question -->
+                        <div class="form-row full">
+                            <div class="form-group">
+                                <label>Will you need ushers? *</label>
+                                <div style="display: flex; gap: 1.5rem; margin-top: 0.5rem;">
+                                    <label
+                                        style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: 0.9rem; font-weight: 300; text-transform: none; letter-spacing: 0;">
+                                        <input type="radio" name="needUshers" id="ushersYes" value="Yes"
+                                            style="width: auto; accent-color: var(--emerald-glow);">
+                                        Yes
+                                    </label>
+                                    <label
+                                        style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: 0.9rem; font-weight: 300; text-transform: none; letter-spacing: 0;">
+                                        <input type="radio" name="needUshers" id="ushersNo" value="No"
+                                            style="width: auto; accent-color: var(--emerald-glow);">
+                                        No
+                                    </label>
+                                </div>
+                                <div class="error-message" id="error-needUshers"></div>
+                            </div>
+                        </div>
+
+                        <!-- Number of Ushers (shown only if Yes) -->
+                        <div class="form-row full" id="usherCountGroup"
+                            style="display: none; max-height: 0; overflow: hidden; transition: max-height 0.4s ease, opacity 0.4s ease; opacity: 0;">
+                            <div class="form-group">
+                                <label for="usherCount">How many ushers will you need? *</label>
+                                <input type="number" id="usherCount" name="usherCount" placeholder="e.g. 4" min="1"
+                                    max="50">
+                                <div class="error-message" id="error-usherCount"></div>
+                            </div>
+                        </div>
+
                         <!-- Estimated Investment Selector -->
                         <div class="form-row full">
                             <div class="form-group">
@@ -1433,6 +1466,27 @@
                 durationValueSelect.setAttribute('required', 'required');
                 durationValueSelect.focus();
             }
+        });
+
+        // ── Usher toggle ──────────────────────────────────────────
+        const usherCountGroup = document.getElementById('usherCountGroup');
+        const usherCountInput = document.getElementById('usherCount');
+
+        document.querySelectorAll('input[name="needUshers"]').forEach(radio => {
+            radio.addEventListener('change', function () {
+                if (this.value === 'Yes') {
+                    usherCountGroup.style.display = 'block';
+                    usherCountGroup.style.maxHeight = '200px';
+                    usherCountGroup.style.opacity = '1';
+                    usherCountInput.required = true;
+                } else {
+                    usherCountGroup.style.maxHeight = '0';
+                    usherCountGroup.style.opacity = '0';
+                    usherCountInput.required = false;
+                    usherCountInput.value = '';
+                    setTimeout(() => { usherCountGroup.style.display = 'none'; }, 400);
+                }
+            });
         });
 
         // Clear error on focus for both duration controls
