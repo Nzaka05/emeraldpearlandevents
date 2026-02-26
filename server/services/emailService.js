@@ -60,6 +60,16 @@ const formatBookingDetailsHTML = (booking, customer) => {
                 <td style="padding: 10px; border: 1px solid #ddd;">${booking.guests}</td>
             </tr>
             <tr>
+                <td style="padding: 10px; border: 1px solid #ddd;"><strong>Ushers Required:</strong></td>
+                <td style="padding: 10px; border: 1px solid #ddd;">${booking.needUshers || 'Not specified'}</td>
+            </tr>
+            ${booking.needUshers === 'Yes' ? `
+            <tr style="background-color: #f5f5f5;">
+                <    style="padding: 10px; border: 1px solid #ddd;"><strong>Number of Ushers:</strong></td>
+                <td style="padding: 10px; border: 1px solid #ddd;">${booking.usherCount}</td>
+            </tr>
+            ` : ''}
+            <tr>
                 <td style="padding: 10px; border: 1px solid #ddd;"><strong>Estimated Investment:</strong></td>
                 <td style="padding: 10px; border: 1px solid #ddd;"><span class="highlight">${booking.budgetRange}</span></td>
             </tr>
@@ -170,6 +180,7 @@ const sendClientBookingConfirmation = async (booking, customer) => {
                             <li><strong>Duration:</strong> ${booking.eventDuration}</li>
                             <li><strong>Location:</strong> ${booking.location}</li>
                             <li><strong>Number of Guests:</strong> ${booking.guests}</li>
+                            <li><strong>Ushers Required:</strong> ${booking.needUshers || 'Not specified'}${booking.needUshers === 'Yes' ? ` (${booking.usherCount} ushers)` : ''}</li>
                             <li><strong>Estimated Investment:</strong> ${booking.budgetRange}</li>
                         </ul>
 

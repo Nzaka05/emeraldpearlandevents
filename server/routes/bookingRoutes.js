@@ -114,7 +114,9 @@ router.post('/book-event', bookingLimiter, async (req, res) => {
             eventDuration: sanitizeInput(rawData.eventDuration),
             location: sanitizeInput(rawData.location),
             guestCount: parseInt(rawData.guestCount),
-            budgetRange: sanitizeInput(rawData.budgetRange),  // ✅ Fix: was missing
+            budgetRange: sanitizeInput(rawData.budgetRange),
+            needUshers: sanitizeInput(rawData.needUshers),
+            usherCount: rawData.needUshers === 'Yes' ? parseInt(rawData.usherCount) : null,
             specialRequests: sanitizeInput(rawData.specialRequests)
         };
 
@@ -172,6 +174,8 @@ router.post('/book-event', bookingLimiter, async (req, res) => {
             location: data.location,
             guests: data.guestCount,
             budgetRange: data.budgetRange,
+            needUshers: data.needUshers,
+            usherCount: data.usherCount,
             notes: data.specialRequests,
             status: 'new',
             selectedServices: []
