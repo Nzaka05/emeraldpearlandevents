@@ -49,6 +49,15 @@ const BookingSchema = new mongoose.Schema({
             default: 0
         }
     }],
+    needUshers: {
+        type: String,
+        enum: ['Yes', 'No', 'Not specified'],
+        default: 'Not specified'
+    },
+    usherCount: {
+        type: Number,
+        default: null
+    },
     notes: {
         type: String,
         default: ''
@@ -98,7 +107,7 @@ const BookingSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 // Generate booking reference before save
-BookingSchema.pre('save', function(next) {
+BookingSchema.pre('save', function (next) {
     if (!this.bookingReference) {
         this.bookingReference = `EPE-${Date.now()}`;
     }
@@ -113,7 +122,7 @@ BookingSchema.index({ status: 1 });
 BookingSchema.index({ createdAt: 1 });
 
 // Populate customer by default
-BookingSchema.pre(/^find/, function(next) {
+BookingSchema.pre(/^find/, function (next) {
     if (this.options._recursed) {
         return next();
     }

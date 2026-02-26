@@ -65,7 +65,7 @@ const formatBookingDetailsHTML = (booking, customer) => {
             </tr>
             ${booking.needUshers === 'Yes' ? `
             <tr style="background-color: #f5f5f5;">
-                <    style="padding: 10px; border: 1px solid #ddd;"><strong>Number of Ushers:</strong></td>
+                <td style="padding: 10px; border: 1px solid #ddd;"><strong>Number of Ushers:</strong></td>
                 <td style="padding: 10px; border: 1px solid #ddd;">${booking.usherCount}</td>
             </tr>
             ` : ''}
