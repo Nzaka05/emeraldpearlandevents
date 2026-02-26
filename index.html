@@ -1336,6 +1336,78 @@
             box-shadow: 0 0 30px rgba(212, 175, 55, 0.2);
         }
 
+        /* ── Contact thank-you state ── */
+        .contact-thankyou {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 3rem 2rem;
+            background: var(--glass);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(212, 175, 55, 0.2);
+            border-radius: 4px;
+            min-height: 340px;
+        }
+
+        .thankyou-icon {
+            font-size: 2.8rem;
+            color: var(--gold);
+            margin-bottom: 1.4rem;
+            animation: thankyouPulse 2.5s ease-in-out infinite;
+        }
+
+        @keyframes thankyouPulse {
+
+            0%,
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+
+            50% {
+                opacity: 0.65;
+                transform: scale(1.12);
+            }
+        }
+
+        .thankyou-heading {
+            font-family: 'Cormorant Garamond', 'Playfair Display', serif;
+            font-size: 1.9rem;
+            font-weight: 400;
+            color: var(--pearl);
+            line-height: 1.35;
+            margin-bottom: 0.8rem;
+        }
+
+        .thankyou-heading em {
+            color: var(--gold);
+            font-style: italic;
+        }
+
+        .thankyou-tagline {
+            font-size: 0.85rem;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            color: var(--gold);
+            margin-bottom: 1.6rem;
+            opacity: 0.85;
+        }
+
+        .thankyou-divider {
+            width: 48px;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--gold), transparent);
+            margin: 0 auto 1.6rem;
+        }
+
+        .thankyou-body {
+            font-size: 1rem;
+            color: var(--pearl-soft);
+            line-height: 1.75;
+        }
+
         /* Footer */
         footer {
             background: var(--midnight);
@@ -3648,34 +3720,48 @@
             </div>
         </div>
 
-        <form class="contact-form" name="contact" method="POST" data-netlify="true" data-netlify-honeypot="bot-field">
-            <input type="hidden" name="form-name" value="contact" />
-            <p style="display:none">
-                <input name="bot-field" />
-            </p>
+        <div id="contactFormWrapper">
+            <form id="contactForm" class="contact-form" name="contact" method="POST" data-netlify="true"
+                data-netlify-honeypot="bot-field">
+                <input type="hidden" name="form-name" value="contact" />
+                <p style="display:none">
+                    <input name="bot-field" />
+                </p>
 
-            <div class="form-group">
-                <input type="text" id="name" name="name" placeholder=" " required>
-                <label for="name">Your Name</label>
+                <div class="form-group">
+                    <input type="text" id="name" name="name" placeholder=" " required>
+                    <label for="name">Your Name</label>
+                </div>
+
+                <div class="form-group">
+                    <input type="email" id="email" name="email" placeholder=" " required>
+                    <label for="email">Email Address</label>
+                </div>
+
+                <div class="form-group">
+                    <input type="text" id="event-type" name="event-type" placeholder=" ">
+                    <label for="event-type">Event Type</label>
+                </div>
+
+                <div class="form-group">
+                    <textarea id="message" name="message" placeholder=" " required></textarea>
+                    <label for="message">Tell Us Your Vision</label>
+                </div>
+
+                <button type="submit" class="submit-btn">Send Inquiry</button>
+            </form>
+
+            <!-- Thank-you state (hidden until submission) -->
+            <div id="contactThankYou" style="display:none; opacity:0; transition: opacity 0.8s ease;"
+                class="contact-thankyou">
+                <div class="thankyou-icon">✦</div>
+                <h3 class="thankyou-heading">Thank you for contacting<br><em>Emerald Pearland Events</em></h3>
+                <p class="thankyou-tagline">Where your vision becomes our obsession.</p>
+                <div class="thankyou-divider"></div>
+                <p class="thankyou-body">We will get back to you shortly — or better yet,<br>we will tailor your needs
+                    to reality.</p>
             </div>
-
-            <div class="form-group">
-                <input type="email" id="email" name="email" placeholder=" " required>
-                <label for="email">Email Address</label>
-            </div>
-
-            <div class="form-group">
-                <input type="text" id="event-type" name="event-type" placeholder=" ">
-                <label for="event-type">Event Type</label>
-            </div>
-
-            <div class="form-group">
-                <textarea id="message" name="message" placeholder=" " required></textarea>
-                <label for="message">Tell Us Your Vision</label>
-            </div>
-
-            <button type="submit" class="submit-btn">Send Inquiry</button>
-        </form>
+        </div>
     </section>
 
     <!-- Footer -->
@@ -4819,6 +4905,39 @@
         // GLOBAL SCROLL TRIGGER REFRESH
         // ───────────────────────────────────────────────────────────
         ScrollTrigger.refresh();
+
+        // ───────────────────────────────────────────────────────────
+        // CONTACT FORM — Premium thank-you on submit
+        // ───────────────────────────────────────────────────────────
+        const contactForm = document.getElementById('contactForm');
+        const contactThankYou = document.getElementById('contactThankYou');
+
+        if (contactForm && contactThankYou) {
+            contactForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const data = new FormData(contactForm);
+                try {
+                    await fetch('/', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: new URLSearchParams(data).toString()
+                    });
+                } catch (_) { /* silent — show thank-you regardless */ }
+
+                // Fade form out, reveal thank-you panel
+                contactForm.style.transition = 'opacity 0.5s ease';
+                contactForm.style.opacity = '0';
+                setTimeout(() => {
+                    contactForm.style.display = 'none';
+                    contactThankYou.style.display = 'flex';
+                    requestAnimationFrame(() => {
+                        requestAnimationFrame(() => {
+                            contactThankYou.style.opacity = '1';
+                        });
+                    });
+                }, 500);
+            });
+        }
     </script>
 
     <!-- Floating WhatsApp Button -->
