@@ -93,7 +93,8 @@ const sanitizeInput = (str) => {
 // Generate dynamic WhatsApp message
 const generateWhatsAppMessage = (booking, customer) => {
     const eventDate = new Date(booking.eventDate).toLocaleDateString();
-    const message = `Hi Emerald Pearland Events, I have a booking reference ${booking.bookingReference}. My event is ${booking.eventType} on ${eventDate} at ${booking.location} with ${booking.guests} guests.`;
+    const ushersInfo = booking.needUshers === 'Yes' ? `Yes (${booking.usherCount} ushers)` : (booking.needUshers || 'Not specified');
+    const message = `Hi Emerald Pearland Events, I have a booking reference ${booking.bookingReference}. My event is ${booking.eventType} on ${eventDate} at ${booking.location} with ${booking.guests} guests. Ushers required: ${ushersInfo}.`;
     return message;
 };
 
