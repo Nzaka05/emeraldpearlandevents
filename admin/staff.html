@@ -778,6 +778,7 @@
                                 <select class="filter-select" id="categoryFilter" onchange="filterStaff()">
                                     <option value="">All Categories</option>
                                     <option value="Waiters">Waiters</option>
+                                    <option value="Ushers">Ushers</option>
                                     <option value="Protocol">Protocol</option>
                                     <option value="Chauffeurs">Chauffeurs</option>
                                     <option value="Security">Security</option>
@@ -820,6 +821,7 @@
                             <label class="form-label">Category</label>
                             <select id="staffCategory" class="form-select">
                                 <option value="Waiters">Waiters</option>
+                                <option value="Ushers">Ushers</option>
                                 <option value="Protocol">Protocol</option>
                                 <option value="Chauffeurs">Chauffeurs</option>
                                 <option value="Security">Security</option>
@@ -1006,7 +1008,7 @@
                     document.getElementById('staffName').value = member.name;
 
                     // Check if category is standard
-                    const standardCategories = ['Waiters', 'Protocol', 'Chauffeurs', 'Security', 'Setup', 'Coordination', 'Director', 'IT Head'];
+                    const standardCategories = ['Waiters', 'Ushers', 'Protocol', 'Chauffeurs', 'Security', 'Setup', 'Coordination', 'Director', 'IT Head'];
                     if (standardCategories.includes(member.category)) {
                         document.getElementById('staffCategory').value = member.category;
                         document.getElementById('customRoleGroup').style.display = 'none';
