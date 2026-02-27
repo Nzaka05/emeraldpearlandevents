@@ -935,8 +935,10 @@ router.post('/change-password', verifyAdminJWT, async (req, res) => {
 router.get('/gallery', verifyAdminJWT, async (req, res) => {
     try {
         const items = await Gallery.find().sort({ order: 1, uploadedAt: -1 });
+        console.log(`📸 GET /gallery invoked. Found ${items.length} items`);
         res.json({ success: true, gallery: items });
     } catch (error) {
+        console.error('Error fetching gallery:', error);
         res.status(500).json({ success: false, message: 'Error fetching gallery' });
     }
 });
@@ -959,10 +961,11 @@ router.post('/gallery/upload', verifyAdminJWT, async (req, res) => {
             eventType: eventType || null,
             caption: caption || '',
             order: nextOrder,
-            uploadedBy: req.admin._id
+            uploadedBy: req.admin._id || req.admin.adminId
         });
 
         await item.save();
+        console.log(`✅ Gallery image saved: ${item.filename} with ID: ${item._id}`);
 
         res.status(201).json({ success: true, message: 'Image uploaded successfully', item });
     } catch (error) {
