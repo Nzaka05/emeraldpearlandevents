@@ -176,6 +176,22 @@
             gap: 12px;
         }
 
+        .bulk-actions {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 12px 16px;
+            background: rgba(201, 168, 76, 0.05);
+            border: 1px solid rgba(201, 168, 76, 0.2);
+            border-radius: 6px;
+            margin-bottom: 16px;
+            display: none;
+        }
+
+        .bulk-actions.active {
+            display: flex;
+        }
+
         .notification-item {
             background: var(--bg-card);
             border: 1px solid var(--border-color);
@@ -184,8 +200,9 @@
             border-radius: 4px;
             display: flex;
             justify-content: space-between;
-            align-items: center;
+            align-items: flex-start;
             transition: all 0.3s ease;
+            cursor: pointer;
         }
 
         .notification-item:hover {
@@ -195,6 +212,15 @@
         .notification-item.unread {
             background: rgba(201, 168, 76, 0.05);
             border-left-color: var(--accent-gold-hover);
+        }
+
+        .notification-checkbox {
+            margin-right: 16px;
+            margin-top: 4px;
+            cursor: pointer;
+            width: 16px;
+            height: 16px;
+            accent-color: var(--accent-gold);
         }
 
         .notification-content {
@@ -211,9 +237,18 @@
         }
 
         .notification-text {
-            font-size: 13px;
+            font-size: 14px;
+            line-height: 1.5;
             color: var(--text-main);
-            margin-bottom: 4px;
+            margin-bottom: 8px;
+            max-height: 42px;
+            /* ~2 lines */
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+
+        .notification-item.expanded .notification-text {
+            max-height: 500px;
         }
 
         .notification-time {
@@ -283,11 +318,11 @@
                 transform: translateY(-8px);
             }
         }
-    
+
         /* ═══════════════════════════════════════════════════════════
            MOBILE RESPONSIVENESS (Injected via Phase 10 Overhaul)
            ═══════════════════════════════════════════════════════════ */
-        
+
         /* Hamburger Menu Icon (Hidden on Desktop) */
         .mobile-menu-btn {
             display: none;
@@ -300,72 +335,86 @@
         }
 
         @media (max-width: 768px) {
+
             /* Show Hamburger */
             .mobile-menu-btn {
                 display: block;
             }
-            
+
             /* Sidebar becomes a drawer */
             .sidebar {
                 transform: translateX(-100%);
                 transition: transform 0.3s ease-in-out;
                 z-index: 2000;
             }
-            
+
             .sidebar.active {
                 transform: translateX(0);
             }
-            
+
             /* Main content expands to full width */
             .main-content {
                 margin-left: 0;
                 width: 100vw;
             }
-            
+
             /* Topbar adjustments */
             .topbar {
                 padding: 15px 20px;
                 flex-wrap: wrap;
                 gap: 15px;
             }
-            
+
             .page-title {
                 font-size: 22px;
             }
-            
+
             .search-bar {
-                display: none; /* Hide search on extreme mobile to save space */
+                display: none;
+                /* Hide search on extreme mobile to save space */
             }
-            
+
             /* Stats Grid Stacking */
             .stats-grid {
                 grid-template-columns: 1fr;
             }
-            
+
             /* Charts & Tables Stacking */
             .dashboard-grid {
                 grid-template-columns: 1fr;
             }
-            
+
             /* Modals */
             .modal-content {
                 width: 95%;
                 margin: 20px auto;
                 padding: 20px;
             }
-            
+
             /* Form Rows */
-            .form-row, .booking-grid {
+            .form-row,
+            .booking-grid {
                 grid-template-columns: 1fr;
             }
-            
+
             /* Tables */
             .table-container {
                 overflow-x: auto;
             }
+
+            .notification-item {
+                flex-direction: column;
+            }
+
+            .notification-actions {
+                margin-left: 0;
+                margin-top: 12px;
+                width: 100%;
+                justify-content: space-between;
+            }
         }
 
-    
+
         /* ═══════════════════════════════════════════════════════════
            MOBILE QUICK ACTION FAB
            ═══════════════════════════════════════════════════════════ */
@@ -445,7 +494,8 @@
             width: 16px;
         }
 
-        .fab-item:hover, .fab-item:active {
+        .fab-item:hover,
+        .fab-item:active {
             background: rgba(201, 168, 76, 0.1);
         }
 
@@ -454,7 +504,6 @@
                 display: block;
             }
         }
-
     </style>
 
     <!-- DARK MODE LOGIC -->
@@ -476,7 +525,7 @@
             }
         });
 
-        (function() {
+        (function () {
             if (localStorage.getItem('emeraldDarkMode') === 'true') {
                 document.documentElement.classList.add('dark-mode');
             }
@@ -503,13 +552,40 @@
         }
 
         /* Generic Dark Mode Fixes */
-        html.dark-mode .sidebar { background: var(--sidebar-bg); border-right-color: var(--border-color); }
-        html.dark-mode .topbar { background: var(--sidebar-bg); border-bottom-color: var(--border-color); }
-        html.dark-mode .modal-content { background: var(--bg-card); }
-        html.dark-mode input, html.dark-mode select, html.dark-mode textarea { background: var(--sidebar-bg); color: var(--text-main); }
-        html.dark-mode .btn-secondary, html.dark-mode .btn-cancel { color: var(--text-main); }
-        html.dark-mode .nav-item { color: var(--text-main); }
-        html.dark-mode .pagination-btn { background: var(--sidebar-bg); color: var(--text-main); }
+        html.dark-mode .sidebar {
+            background: var(--sidebar-bg);
+            border-right-color: var(--border-color);
+        }
+
+        html.dark-mode .topbar {
+            background: var(--sidebar-bg);
+            border-bottom-color: var(--border-color);
+        }
+
+        html.dark-mode .modal-content {
+            background: var(--bg-card);
+        }
+
+        html.dark-mode input,
+        html.dark-mode select,
+        html.dark-mode textarea {
+            background: var(--sidebar-bg);
+            color: var(--text-main);
+        }
+
+        html.dark-mode .btn-secondary,
+        html.dark-mode .btn-cancel {
+            color: var(--text-main);
+        }
+
+        html.dark-mode .nav-item {
+            color: var(--text-main);
+        }
+
+        html.dark-mode .pagination-btn {
+            background: var(--sidebar-bg);
+            color: var(--text-main);
+        }
     </style>
 
 </head>
@@ -530,12 +606,12 @@
             </a>
         </div>
     </div>
-    
+
     <script>
         function toggleFab() {
             document.getElementById('mobileFab').classList.toggle('active');
         }
-        
+
         // Close FAB if clicking outside
         document.addEventListener('click', (e) => {
             const fab = document.getElementById('mobileFab');
@@ -567,17 +643,29 @@
 
         <div class="main-content">
             <div class="topbar">
+                <button class="mobile-menu-btn" onclick="toggleSidebar()">☰</button>
                 <h1 class="page-title">Notifications</h1>
                 <div style="flex: 1; text-align: right;">
-                    <span style="font-style: italic; color: var(--accent-gold); font-weight: 600;" id="todayDate"></span>
+                    <span style="font-style: italic; color: var(--accent-gold); font-weight: 600;"
+                        id="todayDate"></span>
                 </div>
             </div>
 
             <div class="content">
                 <div class="tabs">
-                    <button class="tab active" onclick="filterNotifications('all')">All Notifications</button>
-                    <button class="tab" onclick="filterNotifications('unread')">Unread</button>
+                    <button class="tab active" onclick="filterNotifications('unread')">Unread</button>
+                    <button class="tab" onclick="filterNotifications('all')">All</button>
                     <button class="tab" onclick="filterNotifications('read')">Read</button>
+                </div>
+
+                <div class="bulk-actions" id="bulkActions">
+                    <input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll(this)"
+                        style="cursor: pointer; width: 16px; height: 16px; accent-color: var(--accent-gold);">
+                    <label for="selectAllCheckbox" style="font-size: 12px; font-weight: 600; cursor: pointer;">Select
+                        All</label>
+                    <div style="flex: 1;"></div>
+                    <button class="action-btn btn-mark" onclick="bulkMarkRead()">Mark Selected as Read</button>
+                    <button class="action-btn btn-delete" onclick="bulkDelete()">Delete Selected</button>
                 </div>
 
                 <div class="notifications-list" id="notificationsList">
@@ -589,8 +677,9 @@
 
     <script>
         let sampleNotifications = [];
-
-        let currentFilter = 'all';
+        let currentFilter = 'unread'; // Default to unread as requested
+        let selectedNotificationIds = new Set();
+        let isLoading = false;
 
         window.addEventListener('load', () => {
             updateDate();
@@ -598,6 +687,8 @@
         });
 
         async function loadNotifications() {
+            if (isLoading) return;
+            isLoading = true;
             try {
                 const response = await fetch('/api/admin/notifications');
                 const result = await response.json();
@@ -614,6 +705,8 @@
                 }
             } catch (error) {
                 console.error('Error loading notifications:', error);
+            } finally {
+                isLoading = false;
             }
         }
 
@@ -633,8 +726,21 @@
             }
 
             const list = document.getElementById('notificationsList');
+            const bulkBar = document.getElementById('bulkActions');
+
+            // Re-evaluate 'Select All' state
+            const selectAllCheck = document.getElementById('selectAllCheckbox');
+            if (selectAllCheck) { // Check if selectAllCheck exists before accessing its properties
+                if (filtered.length > 0 && Array.from(filtered).every(n => selectedNotificationIds.has(n.id))) {
+                    selectAllCheck.checked = true;
+                } else {
+                    selectAllCheck.checked = false;
+                }
+            }
+
 
             if (filtered.length === 0) {
+                bulkBar.classList.remove('active');
                 list.innerHTML = `
                     <div class="empty-state">
                         <div class="empty-state-icon">📭</div>
@@ -644,54 +750,110 @@
                 return;
             }
 
+            bulkBar.classList.add('active');
+
             list.innerHTML = filtered.map(notif => `
-                <div class="notification-item ${notif.isRead ? '' : 'unread'}">
+                <div class="notification-item ${notif.isRead ? '' : 'unread'}" id="notif-${notif.id}" onclick="handleNotificationClick(event, '${notif.id}', ${!notif.isRead})">
+                    <input type="checkbox" class="notification-checkbox" value="${notif.id}" 
+                        ${selectedNotificationIds.has(notif.id) ? 'checked' : ''} 
+                        onclick="event.stopPropagation(); toggleCheckbox('${notif.id}')">
                     <div class="notification-content">
                         <div class="notification-type">${notif.type.replace(/_/g, ' ')}</div>
                         <div class="notification-text">${notif.text}</div>
                         <div class="notification-time">${notif.time}</div>
                     </div>
                     <div class="notification-actions">
-                        <button class="action-btn btn-mark" onclick="toggleRead('${notif.id}')">${notif.isRead ? '✓ Mark Unread' : '○ Mark Read'}</button>
-                        <button class="action-btn btn-delete" onclick="deleteNotification('${notif.id}')">🗑️</button>
+                        <button class="action-btn btn-mark" onclick="event.stopPropagation(); toggleRead('${notif.id}')">${notif.isRead ? 'Mark Unread' : 'Mark Read'}</button>
+                        <button class="action-btn btn-delete" onclick="event.stopPropagation(); deleteNotification('${notif.id}')">🗑️</button>
                     </div>
                 </div>
             `).join('');
         }
 
+        function handleNotificationClick(event, id, isItemUnread) {
+            // Expand item
+            const item = document.getElementById(`notif-${id}`);
+            if (item) {
+                item.classList.toggle('expanded');
+            }
+
+            // If it is unread, automatically mark it as read
+            if (isItemUnread) {
+                toggleRead(id, true);
+            }
+        }
+
+        function toggleCheckbox(id) {
+            if (selectedNotificationIds.has(id)) {
+                selectedNotificationIds.delete(id);
+            } else {
+                selectedNotificationIds.add(id);
+            }
+            renderNotifications();
+        }
+
+        function toggleSelectAll(checkbox) {
+            let filtered = sampleNotifications;
+            if (currentFilter === 'unread') filtered = sampleNotifications.filter(n => !n.isRead);
+            else if (currentFilter === 'read') filtered = sampleNotifications.filter(n => n.isRead);
+
+            if (checkbox.checked) {
+                filtered.forEach(n => selectedNotificationIds.add(n.id));
+            } else {
+                filtered.forEach(n => selectedNotificationIds.delete(n.id));
+            }
+            renderNotifications();
+        }
+
         function filterNotifications(filter) {
             currentFilter = filter;
+            selectedNotificationIds.clear();
             document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
             event.target.classList.add('active');
             renderNotifications();
         }
 
-        async function toggleRead(id) {
+        async function toggleRead(id, forceRead = false) {
             try {
+                const notification = sampleNotifications.find(n => n.id === id);
+                if (forceRead && notification && notification.isRead) return;
+
                 const response = await fetch(`/api/admin/notifications/${id}/read`, { method: 'PATCH' });
                 const result = await response.json();
                 if (result.success) {
-                    loadNotifications();
+                    if (notification) {
+                        notification.isRead = !notification.isRead;
+                    }
+                    renderNotifications();
                 }
             } catch (error) {
                 console.error('Error toggling read status:', error);
             }
         }
 
-        async function deleteNotification(id) {
-            if (confirm('Delete this notification forever?')) {
-                try {
-                    const response = await fetch(`/api/admin/notifications/${id}`, { method: 'DELETE' });
-                    const result = await response.json();
-                    if (result.success) {
-                        loadNotifications();
-                    } else {
-                        alert(result.message || 'Error deleting notification');
-                    }
-                } catch (error) {
-                    console.error('Error deleting notification:', error);
-                }
-            }
+        async function bulkMarkRead() {
+            if (selectedNotificationIds.size === 0) return alert('No notifications selected');
+
+            const promises = Array.from(selectedNotificationIds).map(id =>
+                fetch(`/api/admin/notifications/${id}/read`, { method: 'PATCH' })
+            );
+
+            await Promise.all(promises);
+            selectedNotificationIds.clear();
+            await loadNotifications();
+        }
+
+        async function bulkDelete() {
+            if (selectedNotificationIds.size === 0) return alert('No notifications selected');
+            if (!confirm(`Are you sure you want to delete ${selectedNotificationIds.size} notifications?`)) return;
+
+            const promises = Array.from(selectedNotificationIds).map(id =>
+                fetch(`/api/admin/notifications/${id}`, { method: 'DELETE' })
+            );
+
+            await Promise.all(promises);
+            selectedNotificationIds.clear();
+            await loadNotifications();
         }
 
         function handleLogout() {
