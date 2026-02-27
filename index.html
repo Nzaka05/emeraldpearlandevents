@@ -3743,7 +3743,7 @@
         updateGalleryLightboxArray();
 
         // Fetch dynamic gallery from MongoDB
-        fetch('https://emeraldpearlandevents.onrender.com/api/gallery')
+        fetch('/api/gallery')
             .then(res => res.json())
             .then(data => {
                 if (data.success && data.gallery && data.gallery.length > 0) {

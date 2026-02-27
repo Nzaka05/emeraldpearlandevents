@@ -9,6 +9,7 @@ const bodyParser = require('body-parser');
 const rateLimit = require('express-rate-limit');
 const cors = require('cors');
 const mongoose = require('mongoose');
+const cookieParser = require('cookie-parser');
 require('dotenv').config();
 
 // ── TWILIO CLIENT (optional – only used if credentials are set) ──
@@ -44,6 +45,7 @@ const PORT = process.env.PORT || 3000;
 
 
 // ── MIDDLEWARE ──
+app.use(cookieParser());
 app.use(cors({
     origin: [
         'http://localhost:3000',
@@ -59,10 +61,11 @@ app.use(cors({
         'http://127.0.0.1:3001',
         'http://127.0.0.1:4000',
         'http://127.0.0.1:4200',
-        'http://127.0.0.1:5500',
         'http://127.0.0.1:5501',
         'http://127.0.0.1:8000',
         'http://127.0.0.1:8080',
+        'https://emeraldpearlandevents.netlify.app',
+        'https://emeraldpearlandevents.onrender.com',
         'null' // file:// protocol (opening HTML directly)
     ],
     credentials: true
@@ -91,8 +94,8 @@ app.get('/admin', (req, res) => {
     res.redirect('/admin/login');
 });
 
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json({ limit: '50mb' }));
+app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
 app.use(express.static('public'));
 
 // ── RATE LIMITING (Prevent spam) ──

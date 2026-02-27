@@ -3,6 +3,7 @@ const rateLimit = require('express-rate-limit');
 const Booking = require('../models/Booking');
 const Customer = require('../models/Customer');
 const AdminNotification = require('../models/AdminNotification');
+const Gallery = require('../models/Gallery');
 const { initializeEmailService, sendBusinessBookingNotification, sendClientBookingConfirmation, sendFollowUpEmail } = require('../services/emailService');
 
 // ── INITIALIZE EMAIL TRANSPORTER ──
@@ -98,6 +99,19 @@ const generateWhatsAppMessage = (booking, customer) => {
     const message = `Hi Emerald Pearland Events, I have a booking reference ${booking.bookingReference}. My event is ${booking.eventType} on ${eventDate} at ${booking.location} with ${booking.guests} guests. Ushers required: ${ushersInfo}.`;
     return message;
 };
+
+// ═══════════════════════════════════════════════════════════
+// PUBLIC GALLERY ENDPOINT
+// ═══════════════════════════════════════════════════════════
+router.get('/gallery', async (req, res) => {
+    try {
+        const items = await Gallery.find().sort({ order: 1, uploadedAt: -1 });
+        res.json({ success: true, gallery: items });
+    } catch (error) {
+        console.error('Error fetching public gallery:', error);
+        res.status(500).json({ success: false, message: 'Error fetching gallery' });
+    }
+});
 
 // ═══════════════════════════════════════════════════════════
 // MAIN BOOKING ENDPOINT
