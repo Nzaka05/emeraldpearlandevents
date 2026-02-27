@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gallery - Emerald Admin</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+    <script>
+
+        // Mobile Sidebar Toggle
+        function toggleSidebar() {
+            document.querySelector('.sidebar').classList.toggle('active');
+        }
+
+        // Close sidebar if clicking outside of it on mobile
+        document.addEventListener('click', (e) => {
+            const sidebar = document.querySelector('.sidebar');
+            const hamburger = document.querySelector('.mobile-menu-btn');
+            if (window.innerWidth <= 768 && sidebar && sidebar.classList.contains('active')) {
+                if (!sidebar.contains(e.target) && !hamburger.contains(e.target)) {
+                    sidebar.classList.remove('active');
+                }
+            }
+        });
+(function () { if (localStorage.getItem('emeraldDarkMode') === 'true') document.documentElement.classList.add('dark-mode') })();</script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box
+        }
+
+        :root {
+            --bg-primary: #F7F4EF;
+            --bg-card: #FFFFFF;
+            --text-main: #0D2B1F;
+            --border-color: #E9E5DB;
+            --accent-gold: #C9A84C;
+            --accent-gold-hover: #E9A825;
+            --accent-danger: #B5332A;
+            --sidebar-bg: #FFFFFF
+        }
+
+        html.dark-mode {
+            --bg-primary: #0a1f16;
+            --bg-card: #0d2b1f;
+            --text-main: #F7F4EF;
+            --border-color: #1a3d2e;
+            --sidebar-bg: #091a13
+        }
+
+        html.dark-mode .sidebar,
+        .dark-mode .topbar {
+            background: var(--sidebar-bg);
+            border-color: var(--border-color)
+        }
+
+        html.dark-mode .modal-content,
+        html.dark-mode input,
+        html.dark-mode select,
+        html.dark-mode textarea {
+            background: var(--sidebar-bg);
+            color: var(--text-main)
+        }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-main)
+        }
+
+        .admin-layout {
+            display: flex;
+            min-height: 100vh
+        }
+
+        .sidebar {
+            width: 280px;
+            background: var(--bg-card);
+            border-right: 1px solid var(--accent-gold-hover);
+            padding: 32px 0;
+            position: fixed;
+            left: 0;
+            top: 0;
+            height: 100vh;
+            overflow-y: auto;
+            z-index: 100
+        }
+
+        .sidebar-logo {
+            padding: 0 24px;
+            margin-bottom: 48px;
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            color: var(--accent-gold)
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 24px;
+            margin: 0 12px;
+            border-radius: 6px;
+            color: var(--text-main);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all .3s;
+            cursor: pointer;
+            position: relative
+        }
+
+        .nav-item:hover,
+        .nav-item.active {
+            background: rgba(201, 168, 76, .1)
+        }
+
+        .nav-item.active::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: var(--accent-gold)
+        }
+
+        .sidebar-footer {
+            position: absolute;
+            bottom: 24px;
+            left: 24px;
+            right: 24px
+        }
+
+        .logout-btn {
+            width: 100%;
+            padding: 8px 12px;
+            background: var(--text-main);
+            color: var(--bg-primary);
+            border: none;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer
+        }
+
+        .logout-btn:hover {
+            background: var(--accent-gold);
+            color: var(--text-main)
+        }
+
+        .main-content {
+            flex: 1;
+            margin-left: 280px;
+            display: flex;
+            flex-direction: column
+        }
+
+        .topbar {
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border-color);
+            padding: 16px 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 50
+        }
+
+        .page-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 28px;
+            font-weight: 600
+        }
+
+        .content {
+            flex: 1;
+            padding: 32px;
+            overflow-y: auto
+        }
+
+        .header-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px
+        }
+
+        .btn-primary {
+            padding: 10px 20px;
+            background: var(--text-main);
+            color: var(--bg-primary);
+            border: none;
+            border-radius: 4px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all .3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px
+        }
+
+        .btn-primary:hover {
+            background: var(--accent-gold);
+            color: var(--text-main)
+        }
+
+        .btn-secondary {
+            padding: 10px 20px;
+            background: transparent;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all .3s;
+            color: var(--text-main)
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--accent-gold);
+            color: var(--accent-gold)
+        }
+
+        .upload-zone {
+            border: 2px dashed var(--accent-gold);
+            border-radius: 8px;
+            padding: 40px;
+            text-align: center;
+            background: rgba(201, 168, 76, .05);
+            transition: all .3s;
+            cursor: pointer;
+            margin-bottom: 32px
+        }
+
+        .upload-zone:hover,
+        .upload-zone.dragover {
+            background: rgba(201, 168, 76, .12);
+            border-color: var(--accent-gold-hover)
+        }
+
+        .upload-icon {
+            font-size: 48px;
+            margin-bottom: 16px
+        }
+
+        #fileInput {
+            display: none
+        }
+
+        .gallery-stats {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 24px
+        }
+
+        .stat-chip {
+            padding: 6px 14px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-main)
+        }
+
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 16px
+        }
+
+        .gallery-item {
+            position: relative;
+            overflow: hidden;
+            border-radius: 8px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            transition: all .3s
+        }
+
+        .gallery-item:hover {
+            box-shadow: 0 8px 24px rgba(13, 43, 31, .15);
+            transform: translateY(-4px)
+        }
+
+        .gallery-item:hover .gallery-overlay {
+            opacity: 1
+        }
+
+        .gallery-img {
+            width: 100%;
+            height: 160px;
+            object-fit: cover;
+            display: block
+        }
+
+        .gallery-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(13, 43, 31, .7);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            opacity: 0;
+            transition: all .3s
+        }
+
+        .gallery-overlay button {
+            padding: 6px 14px;
+            border: none;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            width: 80%
+        }
+
+        .btn-view {
+            background: var(--accent-gold);
+            color: #0D2B1F
+        }
+
+        .btn-delete-img {
+            background: var(--accent-danger);
+            color: #fff
+        }
+
+        .gallery-meta {
+            padding: 10px 12px;
+            font-size: 12px
+        }
+
+        .gallery-caption {
+            font-weight: 600;
+            color: var(--text-main);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis
+        }
+
+        .gallery-tag {
+            display: inline-block;
+            background: rgba(201, 168, 76, .15);
+            color: var(--accent-gold);
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 10px;
+            font-weight: 700;
+            margin-top: 4px
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 80px 20px;
+            color: #999
+        }
+
+        .empty-state .empty-icon {
+            font-size: 64px;
+            margin-bottom: 16px
+        }
+
+        .upload-progress {
+            display: none;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 16px
+        }
+
+        .progress-bar {
+            height: 4px;
+            background: #eee;
+            border-radius: 2px;
+            overflow: hidden;
+            margin-top: 8px
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--accent-gold);
+            width: 0%;
+            transition: width .3s
+        }
+
+        /* Lightbox */
+        .lightbox {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, .9);
+            z-index: 200;
+            align-items: center;
+            justify-content: center
+        }
+
+        .lightbox.show {
+            display: flex
+        }
+
+        .lightbox-img {
+            max-width: 90vw;
+            max-height: 90vh;
+            object-fit: contain;
+            border-radius: 4px
+        }
+
+        .lightbox-close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: var(--accent-gold);
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            font-size: 20px;
+            cursor: pointer;
+            font-weight: 700;
+            color: #0D2B1F
+        }
+
+        /* Filter bar */
+        .filter-bar {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 24px;
+            flex-wrap: wrap
+        }
+
+        .filter-btn {
+            padding: 6px 14px;
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            background: transparent;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-main);
+            transition: all .2s
+        }
+
+        .filter-btn.active,
+        .filter-btn:hover {
+            background: var(--accent-gold);
+            color: #0D2B1F;
+            border-color: var(--accent-gold)
+        }
+    
+        /* ═══════════════════════════════════════════════════════════
+           MOBILE RESPONSIVENESS (Injected via Phase 10 Overhaul)
+           ═══════════════════════════════════════════════════════════ */
+        
+        /* Hamburger Menu Icon (Hidden on Desktop) */
+        .mobile-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: var(--text-main);
+            cursor: pointer;
+            margin-right: 15px;
+        }
+
+        @media (max-width: 768px) {
+            /* Show Hamburger */
+            .mobile-menu-btn {
+                display: block;
+            }
+            
+            /* Sidebar becomes a drawer */
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s ease-in-out;
+                z-index: 2000;
+            }
+            
+            .sidebar.active {
+                transform: translateX(0);
+            }
+            
+            /* Main content expands to full width */
+            .main-content {
+                margin-left: 0;
+                width: 100vw;
+            }
+            
+            /* Topbar adjustments */
+            .topbar {
+                padding: 15px 20px;
+                flex-wrap: wrap;
+                gap: 15px;
+            }
+            
+            .page-title {
+                font-size: 22px;
+            }
+            
+            .search-bar {
+                display: none; /* Hide search on extreme mobile to save space */
+            }
+            
+            /* Stats Grid Stacking */
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            /* Charts & Tables Stacking */
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            /* Modals */
+            .modal-content {
+                width: 95%;
+                margin: 20px auto;
+                padding: 20px;
+            }
+            
+            /* Form Rows */
+            .form-row, .booking-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            /* Tables */
+            .table-container {
+                overflow-x: auto;
+            }
+        }
+
+    
+        /* ═══════════════════════════════════════════════════════════
+           MOBILE QUICK ACTION FAB
+           ═══════════════════════════════════════════════════════════ */
+        .mobile-fab-container {
+            display: none;
+            position: fixed;
+            bottom: 25px;
+            right: 25px;
+            z-index: 999;
+        }
+
+        .mobile-fab-btn {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: var(--accent);
+            color: var(--primary);
+            border: none;
+            box-shadow: 0 4px 15px rgba(201, 168, 76, 0.4);
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: transform 0.3s ease, background 0.3s ease;
+        }
+
+        .mobile-fab-btn:active {
+            transform: scale(0.92);
+        }
+
+        .mobile-fab-menu {
+            position: absolute;
+            bottom: 70px;
+            right: 0;
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            padding: 10px 0;
+            min-width: 180px;
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(20px);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid rgba(201, 168, 76, 0.2);
+        }
+
+        .mobile-fab-container.active .mobile-fab-menu {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translateY(0);
+        }
+
+        .mobile-fab-container.active .mobile-fab-btn {
+            transform: rotate(45deg);
+        }
+
+        .fab-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 20px;
+            color: var(--text-dark);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: background 0.2s;
+            cursor: pointer;
+            border: none;
+            width: 100%;
+            background: transparent;
+            text-align: left;
+        }
+
+        .fab-item i {
+            margin-right: 12px;
+            color: var(--accent);
+            width: 16px;
+        }
+
+        .fab-item:hover, .fab-item:active {
+            background: rgba(201, 168, 76, 0.1);
+        }
+
+        @media (max-width: 768px) {
+            .mobile-fab-container {
+                display: block;
+            }
+        }
+
+    </style>
+</head>
+
+<body>
+
+    <!-- Mobile Quick Action FAB -->
+    <div class="mobile-fab-container" id="mobileFab">
+        <button class="mobile-fab-btn" onclick="toggleFab()">
+            <i class="fas fa-plus"></i>
+        </button>
+        <div class="mobile-fab-menu">
+            <a href="/admin/bookings" class="fab-item">
+                <i class="fas fa-calendar-plus"></i> New Booking
+            </a>
+            <a href="/admin/clients" class="fab-item">
+                <i class="fas fa-user-plus"></i> New Client
+            </a>
+        </div>
+    </div>
+    
+    <script>
+        function toggleFab() {
+            document.getElementById('mobileFab').classList.toggle('active');
+        }
+        
+        // Close FAB if clicking outside
+        document.addEventListener('click', (e) => {
+            const fab = document.getElementById('mobileFab');
+            if (fab && fab.classList.contains('active') && !fab.contains(e.target)) {
+                fab.classList.remove('active');
+            }
+        });
+    </script>
+
+    <div class="admin-layout">
+        <aside class="sidebar">
+            <div class="sidebar-logo">EMERALD</div>
+            <nav>
+                <a href="/admin/dashboard" class="nav-item">Dashboard</a>
+                <a href="/admin/bookings" class="nav-item">Bookings</a>
+                <a href="/admin/clients" class="nav-item">Clients</a>
+                <a href="/admin/calendar" class="nav-item">Calendar</a>
+                <a href="/admin/analytics" class="nav-item">Analytics</a>
+                <a href="/admin/notifications" class="nav-item">Notifications</a>
+                <a href="/admin/gallery" class="nav-item active">Gallery</a>
+                <a href="/admin/testimonials" class="nav-item">Testimonials</a>
+                <a href="/admin/staff" class="nav-item">Staff</a>
+                <a href="/admin/settings" class="nav-item">Settings</a>
+            </nav>
+            <div class="sidebar-footer">
+                <button class="logout-btn" onclick="handleLogout()">Logout</button>
+            </div>
+        </aside>
+
+        <div class="main-content">
+            <div class="topbar">
+                <h1 class="page-title">Gallery</h1>
+                <div style="display:flex;gap:12px;align-items:center">
+                    <span style="font-style:italic;color:var(--accent-gold);font-weight:600" id="todayDate"></span>
+                    <button class="btn-primary" onclick="document.getElementById('fileInput').click()">📸 Upload
+                        Images</button>
+                </div>
+            </div>
+
+            <div class="content">
+                <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()">
+                    <div class="upload-icon">⬆️</div>
+                    <div style="font-size:14px;font-weight:600">Drop images here or click to upload</div>
+                    <div style="font-size:12px;color:#999;margin-top:8px">PNG, JPG, GIF, WebP up to 10MB — instantly
+                        visible to clients</div>
+                </div>
+                <input type="file" id="fileInput" multiple accept="image/*">
+
+                <div class="upload-progress" id="uploadProgress">
+                    <div style="font-size:13px;font-weight:600" id="uploadProgressText">Uploading...</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                </div>
+
+                <div class="header-controls">
+                    <div class="gallery-stats">
+                        <span class="stat-chip" id="totalCount">0 images</span>
+                    </div>
+                </div>
+
+                <div class="filter-bar">
+                    <button class="filter-btn active" onclick="filterGallery('')" id="filter-all">All</button>
+                    <button class="filter-btn" onclick="filterGallery('Wedding')" id="filter-Wedding">Weddings</button>
+                    <button class="filter-btn" onclick="filterGallery('Birthday Party')"
+                        id="filter-Birthday Party">Birthdays</button>
+                    <button class="filter-btn" onclick="filterGallery('Corporate Event')"
+                        id="filter-Corporate Event">Corporate</button>
+                    <button class="filter-btn" onclick="filterGallery('Traditional Ceremony')"
+                        id="filter-Traditional Ceremony">Traditional</button>
+                    <button class="filter-btn" onclick="filterGallery('Private Celebration')"
+                        id="filter-Private Celebration">Celebrations</button>
+                </div>
+
+                <div class="gallery-grid" id="galleryGrid">
+                    <div class="empty-state" style="grid-column:1/-1">
+                        <div class="empty-icon">🖼️</div>
+                        <p>Loading gallery...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="lightbox" id="lightbox">
+        <img class="lightbox-img" id="lightboxImg" alt="">
+        <button class="lightbox-close" onclick="closeLightbox()">✕</button>
+    </div>
+
+    <script>
+        let allGallery = [];
+        let currentFilter = '';
+
+        window.addEventListener('load', () => {
+            document.getElementById('todayDate').textContent = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+            loadGallery();
+        });
+
+        async function loadGallery() {
+            try {
+                const res = await fetch('/api/admin/gallery');
+                const result = await res.json();
+                if (result.success) {
+                    allGallery = result.gallery || [];
+                    renderGallery();
+                }
+            } catch (err) {
+                console.error('Failed to load gallery:', err);
+            }
+        }
+
+        function filterGallery(type) {
+            currentFilter = type;
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            const btn = document.getElementById(`filter-${type || 'all'}`);
+            if (btn) btn.classList.add('active');
+            renderGallery();
+        }
+
+        function renderGallery() {
+            const grid = document.getElementById('galleryGrid');
+            const items = currentFilter ? allGallery.filter(i => i.eventType === currentFilter) : allGallery;
+
+            document.getElementById('totalCount').textContent = `${allGallery.length} image${allGallery.length !== 1 ? 's' : ''}`;
+
+            if (!items.length) {
+                grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">🖼️</div><p>No images yet. Upload your first photo above!</p></div>`;
+                return;
+            }
+
+            grid.innerHTML = items.map(item => `
+            <div class="gallery-item" id="img-${item._id}">
+                <img class="gallery-img" src="${item.url}" alt="${item.caption || item.filename}" loading="lazy">
+                <div class="gallery-overlay">
+                    <button class="btn-view" onclick="openLightbox('${item.url}')">👁 Preview</button>
+                    <button class="btn-delete-img" onclick="deleteImage('${item._id}')">🗑 Delete</button>
+                </div>
+                <div class="gallery-meta">
+                    <div class="gallery-caption">${item.caption || item.filename}</div>
+                    ${item.eventType ? `<span class="gallery-tag">${item.eventType}</span>` : ''}
+                </div>
+            </div>
+        `).join('');
+        }
+
+        // Upload via FileReader → base64 → POST to API
+        document.getElementById('fileInput').addEventListener('change', async (e) => {
+            const files = Array.from(e.target.files);
+            if (!files.length) return;
+
+            const progress = document.getElementById('uploadProgress');
+            const fill = document.getElementById('progressFill');
+            const text = document.getElementById('uploadProgressText');
+            progress.style.display = 'block';
+
+            let uploaded = 0;
+            for (const file of files) {
+                text.textContent = `Uploading ${file.name}... (${uploaded + 1}/${files.length})`;
+                fill.style.width = `${Math.round((uploaded / files.length) * 100)}%`;
+
+                try {
+                    const base64 = await fileToBase64(file);
+                    const res = await fetch('/api/admin/gallery/upload', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            filename: file.name,
+                            url: base64,
+                            caption: file.name.replace(/\.[^.]+$/, '').replace(/_/g, ' ')
+                        })
+                    });
+                    const result = await res.json();
+                    if (result.success) {
+                        allGallery.unshift(result.item);
+                        uploaded++;
+                    } else {
+                        console.error('Upload failed:', result.message);
+                    }
+                } catch (err) {
+                    console.error('Error uploading:', err);
+                }
+            }
+
+            fill.style.width = '100%';
+            text.textContent = `✅ ${uploaded} image(s) uploaded successfully!`;
+            setTimeout(() => { progress.style.display = 'none'; }, 3000);
+            renderGallery();
+            e.target.value = '';
+        });
+
+        function fileToBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = e => resolve(e.target.result);
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
+
+        async function deleteImage(id) {
+            if (!confirm('Delete this image? It will also be removed from the client gallery.')) return;
+            try {
+                const res = await fetch(`/api/admin/gallery/${id}`, { method: 'DELETE' });
+                const result = await res.json();
+                if (result.success) {
+                    allGallery = allGallery.filter(i => i._id !== id);
+                    renderGallery();
+                } else {
+                    alert('Failed to delete: ' + result.message);
+                }
+            } catch (err) {
+                alert('Error deleting image.');
+            }
+        }
+
+        // Drag and drop
+        const uploadZone = document.getElementById('uploadZone');
+        uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('dragover'); });
+        uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('dragover'));
+        uploadZone.addEventListener('drop', e => {
+            e.preventDefault();
+            uploadZone.classList.remove('dragover');
+            const dt = new DataTransfer();
+            Array.from(e.dataTransfer.files).forEach(f => dt.items.add(f));
+            document.getElementById('fileInput').files = dt.files;
+            document.getElementById('fileInput').dispatchEvent(new Event('change'));
+        });
+
+        function openLightbox(src) {
+            document.getElementById('lightboxImg').src = src;
+            document.getElementById('lightbox').classList.add('show');
+        }
+        function closeLightbox() {
+            document.getElementById('lightbox').classList.remove('show');
+        }
+        document.getElementById('lightbox').addEventListener('click', e => {
+            if (e.target.id === 'lightbox') closeLightbox();
+        });
+
+        function handleLogout() {
+            fetch('/api/admin/logout', { method: 'POST' })
+                .then(() => window.location.href = '/admin/login')
+                .catch(err => console.error(err));
+        }
+    </script>
+</body>
+
+</html>

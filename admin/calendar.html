@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calendar - Emerald Admin</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-main);
+        }
+
+        .admin-layout {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 280px;
+            background: var(--bg-card);
+            border-right: 1px solid var(--accent-gold-hover);
+            padding: 32px 0;
+            position: fixed;
+            left: 0;
+            top: 0;
+            height: 100vh;
+            overflow-y: auto;
+            z-index: 100;
+        }
+
+        .sidebar-logo {
+            padding: 0 24px;
+            margin-bottom: 48px;
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-main);
+            letter-spacing: 2px;
+            animation: floatIdle 6s ease-in-out infinite;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 24px;
+            margin: 0 12px;
+            border-radius: 6px;
+            color: var(--text-main);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .nav-item:hover, .nav-item.active {
+            background-color: rgba(201, 168, 76, 0.1);
+        }
+
+        .nav-item.active::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: var(--accent-gold);
+        }
+
+        .sidebar-footer {
+            position: absolute;
+            bottom: 24px;
+            left: 24px;
+            right: 24px;
+        }
+
+        .logout-btn {
+            width: 100%;
+            padding: 8px 12px;
+            background: var(--text-main);
+            color: var(--bg-primary);
+            border: none;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 16px;
+        }
+
+        .logout-btn:hover {
+            background: var(--accent-gold);
+            color: var(--text-main);
+        }
+
+        .main-content {
+            flex: 1;
+            margin-left: 280px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .topbar {
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border-color);
+            padding: 16px 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+
+        .page-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 28px;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .content {
+            flex: 1;
+            padding: 32px;
+            overflow-y: auto;
+        }
+
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .month-nav {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .nav-btn {
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-card);
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .nav-btn:hover {
+            border-color: var(--accent-gold);
+            background: rgba(201, 168, 76, 0.05);
+        }
+
+        .current-month {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 18px;
+            font-weight: 600;
+            min-width: 150px;
+            text-align: center;
+        }
+
+        .calendar-grid {
+            background: var(--bg-card);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+        }
+
+        .weekdays {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            background: var(--bg-primary);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .weekday {
+            padding: 12px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #666;
+        }
+
+        .days {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 0;
+        }
+
+        .day {
+            aspect-ratio: 1/1.2;
+            padding: 12px 8px;
+            border-right: 1px solid var(--border-color);
+            border-bottom: 1px solid var(--border-color);
+            background: var(--bg-card);
+            font-size: 13px;
+            color: var(--text-main);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .day:hover {
+            background: rgba(201, 168, 76, 0.05);
+        }
+
+        .day.other-month {
+            color: #CCC;
+            background: #FAFAF8;
+        }
+
+        .day.today {
+            background: rgba(201, 168, 76, 0.1);
+        }
+
+        .day.today::before {
+            content: '';
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            width: 6px;
+            height: 6px;
+            background: var(--accent-gold);
+            border-radius: 50%;
+        }
+
+        .day-events {
+            font-size: 9px;
+            margin-top: 8px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .event-item {
+            background: var(--text-main);
+            color: var(--bg-primary);
+            padding: 2px 4px;
+            border-radius: 2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-weight: 600;
+        }
+
+        .event-item.wedding { background: #2D6A4F; }
+        .event-item.corporate { background: var(--accent-gold); color: var(--text-main); }
+        .event-item.birthday { background: var(--accent-gold-hover); color: var(--text-main); }
+        .event-item.engagement { background: var(--accent-danger); }
+
+        .legend {
+            display: flex;
+            gap: 16px;
+            margin-top: 24px;
+            padding: 16px;
+            background: var(--bg-card);
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+        }
+
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 3px;
+        }
+
+        @keyframes floatIdle {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+    
+        /* ═══════════════════════════════════════════════════════════
+           MOBILE RESPONSIVENESS (Injected via Phase 10 Overhaul)
+           ═══════════════════════════════════════════════════════════ */
+        
+        /* Hamburger Menu Icon (Hidden on Desktop) */
+        .mobile-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: var(--text-main);
+            cursor: pointer;
+            margin-right: 15px;
+        }
+
+        @media (max-width: 768px) {
+            /* Show Hamburger */
+            .mobile-menu-btn {
+                display: block;
+            }
+            
+            /* Sidebar becomes a drawer */
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s ease-in-out;
+                z-index: 2000;
+            }
+            
+            .sidebar.active {
+                transform: translateX(0);
+            }
+            
+            /* Main content expands to full width */
+            .main-content {
+                margin-left: 0;
+                width: 100vw;
+            }
+            
+            /* Topbar adjustments */
+            .topbar {
+                padding: 15px 20px;
+                flex-wrap: wrap;
+                gap: 15px;
+            }
+            
+            .page-title {
+                font-size: 22px;
+            }
+            
+            .search-bar {
+                display: none; /* Hide search on extreme mobile to save space */
+            }
+            
+            /* Stats Grid Stacking */
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            /* Charts & Tables Stacking */
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            /* Modals */
+            .modal-content {
+                width: 95%;
+                margin: 20px auto;
+                padding: 20px;
+            }
+            
+            /* Form Rows */
+            .form-row, .booking-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            /* Tables */
+            .table-container {
+                overflow-x: auto;
+            }
+        }
+
+    
+        /* ═══════════════════════════════════════════════════════════
+           MOBILE QUICK ACTION FAB
+           ═══════════════════════════════════════════════════════════ */
+        .mobile-fab-container {
+            display: none;
+            position: fixed;
+            bottom: 25px;
+            right: 25px;
+            z-index: 999;
+        }
+
+        .mobile-fab-btn {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: var(--accent);
+            color: var(--primary);
+            border: none;
+            box-shadow: 0 4px 15px rgba(201, 168, 76, 0.4);
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: transform 0.3s ease, background 0.3s ease;
+        }
+
+        .mobile-fab-btn:active {
+            transform: scale(0.92);
+        }
+
+        .mobile-fab-menu {
+            position: absolute;
+            bottom: 70px;
+            right: 0;
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            padding: 10px 0;
+            min-width: 180px;
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(20px);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid rgba(201, 168, 76, 0.2);
+        }
+
+        .mobile-fab-container.active .mobile-fab-menu {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translateY(0);
+        }
+
+        .mobile-fab-container.active .mobile-fab-btn {
+            transform: rotate(45deg);
+        }
+
+        .fab-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 20px;
+            color: var(--text-dark);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: background 0.2s;
+            cursor: pointer;
+            border: none;
+            width: 100%;
+            background: transparent;
+            text-align: left;
+        }
+
+        .fab-item i {
+            margin-right: 12px;
+            color: var(--accent);
+            width: 16px;
+        }
+
+        .fab-item:hover, .fab-item:active {
+            background: rgba(201, 168, 76, 0.1);
+        }
+
+        @media (max-width: 768px) {
+            .mobile-fab-container {
+                display: block;
+            }
+        }
+
+    </style>
+
+    <!-- DARK MODE LOGIC -->
+    <script>
+
+        // Mobile Sidebar Toggle
+        function toggleSidebar() {
+            document.querySelector('.sidebar').classList.toggle('active');
+        }
+
+        // Close sidebar if clicking outside of it on mobile
+        document.addEventListener('click', (e) => {
+            const sidebar = document.querySelector('.sidebar');
+            const hamburger = document.querySelector('.mobile-menu-btn');
+            if (window.innerWidth <= 768 && sidebar && sidebar.classList.contains('active')) {
+                if (!sidebar.contains(e.target) && !hamburger.contains(e.target)) {
+                    sidebar.classList.remove('active');
+                }
+            }
+        });
+
+        (function() {
+            if (localStorage.getItem('emeraldDarkMode') === 'true') {
+                document.documentElement.classList.add('dark-mode');
+            }
+        })();
+    </script>
+    <style>
+        :root {
+            --bg-primary: #F7F4EF;
+            --bg-card: #FFFFFF;
+            --text-main: #0D2B1F;
+            --border-color: #E9E5DB;
+            --accent-gold: #C9A84C;
+            --accent-gold-hover: #E9A825;
+            --accent-danger: #B5332A;
+            --sidebar-bg: #FFFFFF;
+        }
+
+        html.dark-mode {
+            --bg-primary: #0a1f16;
+            --bg-card: #0d2b1f;
+            --text-main: #F7F4EF;
+            --border-color: #1a3d2e;
+            --sidebar-bg: #091a13;
+        }
+
+        /* Generic Dark Mode Fixes */
+        html.dark-mode .sidebar { background: var(--sidebar-bg); border-right-color: var(--border-color); }
+        html.dark-mode .topbar { background: var(--sidebar-bg); border-bottom-color: var(--border-color); }
+        html.dark-mode .modal-content { background: var(--bg-card); }
+        html.dark-mode input, html.dark-mode select, html.dark-mode textarea { background: var(--sidebar-bg); color: var(--text-main); }
+        html.dark-mode .btn-secondary, html.dark-mode .btn-cancel { color: var(--text-main); }
+        html.dark-mode .nav-item { color: var(--text-main); }
+        html.dark-mode .pagination-btn { background: var(--sidebar-bg); color: var(--text-main); }
+    </style>
+
+</head>
+<body>
+
+    <!-- Mobile Quick Action FAB -->
+    <div class="mobile-fab-container" id="mobileFab">
+        <button class="mobile-fab-btn" onclick="toggleFab()">
+            <i class="fas fa-plus"></i>
+        </button>
+        <div class="mobile-fab-menu">
+            <a href="/admin/bookings" class="fab-item">
+                <i class="fas fa-calendar-plus"></i> New Booking
+            </a>
+            <a href="/admin/clients" class="fab-item">
+                <i class="fas fa-user-plus"></i> New Client
+            </a>
+        </div>
+    </div>
+    
+    <script>
+        function toggleFab() {
+            document.getElementById('mobileFab').classList.toggle('active');
+        }
+        
+        // Close FAB if clicking outside
+        document.addEventListener('click', (e) => {
+            const fab = document.getElementById('mobileFab');
+            if (fab && fab.classList.contains('active') && !fab.contains(e.target)) {
+                fab.classList.remove('active');
+            }
+        });
+    </script>
+
+    <div class="admin-layout">
+        <aside class="sidebar">
+            <div class="sidebar-logo">EMERALD</div>
+            <nav>
+                <a href="/admin/dashboard" class="nav-item">Dashboard</a>
+                <a href="/admin/bookings" class="nav-item">Bookings</a>
+                <a href="/admin/clients" class="nav-item">Clients</a>
+                <a href="/admin/calendar" class="nav-item active">Calendar</a>
+                <a href="/admin/analytics" class="nav-item">Analytics</a>
+                <a href="/admin/notifications" class="nav-item">Notifications</a>
+                <a href="/admin/gallery" class="nav-item">Gallery</a>
+                <a href="/admin/testimonials" class="nav-item">Testimonials</a>
+                <a href="/admin/staff" class="nav-item">Staff</a>
+                <a href="/admin/settings" class="nav-item">Settings</a>
+            </nav>
+            <div class="sidebar-footer">
+                <button class="logout-btn" onclick="handleLogout()">Logout</button>
+            </div>
+        </aside>
+
+        <div class="main-content">
+            <div class="topbar">
+                <h1 class="page-title">Calendar</h1>
+            </div>
+
+            <div class="content">
+                <div class="calendar-header">
+                    <div class="month-nav">
+                        <button class="nav-btn" onclick="previousMonth()">← Previous</button>
+                        <div class="current-month" id="currentMonth"></div>
+                        <button class="nav-btn" onclick="nextMonth()">Next →</button>
+                    </div>
+                    <button class="nav-btn" onclick="goToToday()">Today</button>
+                </div>
+
+                <div class="calendar-grid">
+                    <div class="weekdays">
+                        <div class="weekday">Sun</div>
+                        <div class="weekday">Mon</div>
+                        <div class="weekday">Tue</div>
+                        <div class="weekday">Wed</div>
+                        <div class="weekday">Thu</div>
+                        <div class="weekday">Fri</div>
+                        <div class="weekday">Sat</div>
+                    </div>
+                    <div class="days" id="calendarDays"></div>
+                </div>
+
+                <div class="legend">
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #2D6A4F;"></div>
+                        <span>Wedding</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: var(--accent-gold);"></div>
+                        <span>Corporate</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: var(--accent-gold-hover);"></div>
+                        <span>Birthday</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: var(--accent-danger);"></div>
+                        <span>Engagement</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentDate = new Date();
+
+        const sampleEvents = [
+            { date: 'Feb 14, 2026', type: 'wedding', title: 'Wedding Venue Visit' },
+            { date: 'Feb 20, 2026', type: 'corporate', title: 'Corporate Gala' },
+            { date: 'Feb 25, 2026', type: 'birthday', title: 'Birthday Party' },
+            { date: 'Feb 28, 2026', type: 'engagement', title: 'Engagement Celebration' },
+        ];
+
+        window.addEventListener('load', renderCalendar);
+
+        function renderCalendar() {
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+            
+            document.getElementById('currentMonth').textContent = 
+                currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const daysInPrevMonth = new Date(year, month, 0).getDate();
+
+            const daysContainer = document.getElementById('calendarDays');
+            daysContainer.innerHTML = '';
+
+            // Previous month days
+            for (let i = firstDay - 1; i >= 0; i--) {
+                const day = daysInPrevMonth - i;
+                const dayEl = createDayElement(day, true, null);
+                daysContainer.appendChild(dayEl);
+            }
+
+            // Current month days
+            const today = new Date();
+            for (let i = 1; i <= daysInMonth; i++) {
+                const dateStr = `${new Date(year, month, i).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
+                const isToday = today.getFullYear() === year && today.getMonth() === month && today.getDate() === i;
+                const events = sampleEvents.filter(e => e.date === dateStr);
+                const dayEl = createDayElement(i, false, events, isToday);
+                daysContainer.appendChild(dayEl);
+            }
+
+            // Next month days
+            const totalCells = daysContainer.children.length;
+            for (let i = 1; i <= 42 - totalCells; i++) {
+                const dayEl = createDayElement(i, true, null);
+                daysContainer.appendChild(dayEl);
+            }
+        }
+
+        function createDayElement(day, isOtherMonth, events, isToday) {
+            const el = document.createElement('div');
+            el.className = 'day' + (isOtherMonth ? ' other-month' : '') + (isToday ? ' today' : '');
+            
+            const dayNum = document.createElement('div');
+            dayNum.style.fontSize = '12px';
+            dayNum.style.fontWeight = 'bold';
+            dayNum.textContent = day;
+            el.appendChild(dayNum);
+
+            if (events && events.length > 0) {
+                const eventsDiv = document.createElement('div');
+                eventsDiv.className = 'day-events';
+                events.slice(0, 2).forEach(event => {
+                    const eventEl = document.createElement('div');
+                    eventEl.className = `event-item ${event.type}`;
+                    eventEl.textContent = event.title.substring(0, 10);
+                    eventEl.title = event.title;
+                    eventsDiv.appendChild(eventEl);
+                });
+                el.appendChild(eventsDiv);
+            }
+
+            el.style.cursor = 'pointer';
+            el.addEventListener('click', () => {
+                alert(`Details for day ${day}${events && events.length > 0 ? '\n' + events.map(e => e.title).join('\n') : ''}`);
+            });
+
+            return el;
+        }
+
+        function previousMonth() {
+            currentDate.setMonth(currentDate.getMonth() - 1);
+            renderCalendar();
+        }
+
+        function nextMonth() {
+            currentDate.setMonth(currentDate.getMonth() + 1);
+            renderCalendar();
+        }
+
+        function goToToday() {
+            currentDate = new Date();
+            renderCalendar();
+        }
+
+        function handleLogout() {
+            fetch('/api/admin/logout', { method: 'POST' })
+                .then(() => window.location.href = '/admin/login')
+                .catch(error => console.error('Logout error:', error));
+        }
+    </script>
+</body>
+</html>

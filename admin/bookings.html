@@ -1,0 +1,1897 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bookings - Emerald Admin</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-main);
+        }
+
+        .admin-layout {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* SIDEBAR */
+        .sidebar {
+            width: 280px;
+            background: var(--bg-card);
+            border-right: 1px solid var(--accent-gold-hover);
+            padding: 32px 0;
+            position: fixed;
+            left: 0;
+            top: 0;
+            height: 100vh;
+            overflow-y: auto;
+            z-index: 100;
+        }
+
+        .sidebar-logo {
+            padding: 0 24px;
+            margin-bottom: 48px;
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-main);
+            letter-spacing: 2px;
+            animation: floatIdle 6s ease-in-out infinite;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 24px;
+            margin: 0 12px;
+            border-radius: 6px;
+            color: var(--text-main);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+            position: relative;
+            cursor: pointer;
+        }
+
+        .nav-item:hover,
+        .nav-item.active {
+            background-color: rgba(201, 168, 76, 0.1);
+        }
+
+        .nav-item.active::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: var(--accent-gold);
+            border-radius: 0 3px 3px 0;
+        }
+
+        .nav-badge {
+            margin-left: auto;
+            background: var(--accent-danger);
+            color: var(--bg-primary);
+            border-radius: 12px;
+            padding: 2px 8px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .sidebar-footer {
+            position: absolute;
+            bottom: 24px;
+            left: 24px;
+            right: 24px;
+            padding-top: 24px;
+            border-top: 1px solid var(--accent-gold-hover);
+        }
+
+        .admin-profile {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .admin-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent-gold), var(--accent-gold-hover));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--bg-card);
+            font-weight: 700;
+            font-size: 16px;
+        }
+
+        .admin-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .admin-name {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-main);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .logout-btn {
+            width: 100%;
+            padding: 8px 12px;
+            background: var(--text-main);
+            color: var(--bg-primary);
+            border: none;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+        }
+
+        .logout-btn:hover {
+            background: var(--accent-gold);
+            color: var(--text-main);
+        }
+
+        /* MAIN CONTENT */
+        .main-content {
+            flex: 1;
+            margin-left: 280px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* TOPBAR */
+        .topbar {
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border-color);
+            padding: 16px 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+
+        .topbar-left {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+        }
+
+        .page-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 28px;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .breadcrumb {
+            font-size: 12px;
+            color: #999;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .topbar-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .search-bar {
+            width: 200px;
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 13px;
+            transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+        }
+
+        .search-bar:focus {
+            outline: none;
+            width: 280px;
+            border-color: var(--accent-gold);
+            box-shadow: 0 0 0 2px rgba(201, 168, 76, 0.1);
+        }
+
+        .today-date {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 14px;
+            font-style: italic;
+            color: var(--accent-gold);
+            font-weight: 600;
+        }
+
+        .notification-bell {
+            position: relative;
+            cursor: pointer;
+            font-size: 18px;
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: -6px;
+            right: -8px;
+            background: var(--accent-danger);
+            color: var(--bg-card);
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: 700;
+        }
+
+        /* CONTENT AREA */
+        .content {
+            flex: 1;
+            padding: 32px;
+            overflow-y: auto;
+        }
+
+        /* FILTERS & ACTIONS */
+        .controls-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 32px;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .filters {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .filter-select,
+        .filter-input {
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 13px;
+            font-family: 'DM Sans', sans-serif;
+            transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+        }
+
+        .filter-select:focus,
+        .filter-input:focus {
+            outline: none;
+            border-color: var(--accent-gold);
+            box-shadow: 0 0 0 2px rgba(201, 168, 76, 0.1);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn-primary {
+            padding: 10px 20px;
+            background: var(--text-main);
+            color: var(--bg-primary);
+            border: none;
+            border-radius: 4px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary:hover {
+            background: var(--accent-gold);
+            color: var(--text-main);
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            padding: 10px 16px;
+            background: transparent;
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--accent-gold);
+            background: rgba(201, 168, 76, 0.05);
+        }
+
+        /* TABLE SECTION */
+        .table-container {
+            background: var(--bg-card);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+        }
+
+        .table-header {
+            display: grid;
+            grid-template-columns: 120px 180px 140px 120px 100px 100px 60px;
+            gap: 16px;
+            padding: 16px 24px;
+            background: var(--bg-primary);
+            border-bottom: 1px solid var(--border-color);
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #666;
+        }
+
+        .table-rows {
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .table-row {
+            display: grid;
+            grid-template-columns: 120px 180px 140px 120px 100px 100px 60px;
+            gap: 16px;
+            padding: 16px 24px;
+            border-bottom: 1px solid var(--border-color);
+            align-items: center;
+            transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+            cursor: pointer;
+        }
+
+        .table-row:hover {
+            background: rgba(201, 168, 76, 0.05);
+        }
+
+        .booking-id {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--accent-gold);
+        }
+
+        .client-name {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-main);
+        }
+
+        .event-type {
+            font-size: 12px;
+            color: #666;
+            text-transform: capitalize;
+        }
+
+        .event-date {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: capitalize;
+        }
+
+        .status-new {
+            background: rgba(41, 106, 79, 0.1);
+            color: #2D6A4F;
+        }
+
+        .status-contacted {
+            background: rgba(233, 168, 37, 0.1);
+            color: var(--accent-gold-hover);
+        }
+
+        .status-confirmed {
+            background: rgba(45, 106, 79, 0.1);
+            color: #2D6A4F;
+        }
+
+        .status-completed {
+            background: rgba(45, 106, 79, 0.1);
+            color: #2D6A4F;
+        }
+
+        .status-cancelled {
+            background: rgba(181, 51, 42, 0.1);
+            color: var(--accent-danger);
+        }
+
+        .paid-badge {
+            font-size: 11px;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 4px;
+            text-transform: capitalize;
+        }
+
+        .paid-yes {
+            background: rgba(45, 106, 79, 0.1);
+            color: #2D6A4F;
+        }
+
+        .paid-no {
+            background: rgba(233, 168, 37, 0.1);
+            color: var(--accent-gold-hover);
+        }
+
+        .row-actions {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+        }
+
+        .action-btn {
+            width: 28px;
+            height: 28px;
+            border: none;
+            border-radius: 4px;
+            background: var(--text-main);
+            color: var(--bg-primary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+        }
+
+        .action-btn:hover {
+            background: var(--accent-gold);
+            color: var(--text-main);
+            transform: translateY(-2px);
+        }
+
+        /* MODAL */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(13, 43, 31, 0.5);
+            z-index: 200;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--bg-card);
+            border-radius: 8px;
+            width: 90%;
+            max-width: 700px;
+            max-height: 85vh;
+            overflow-y: auto;
+            animation: slideInUp 0.4s cubic-bezier(0.4, 0.0, 0.2, 1);
+        }
+
+        .modal-header {
+            padding: 24px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--text-main);
+            letter-spacing: 1px;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #999;
+            transition: color 0.3s ease;
+        }
+
+        .modal-close:hover {
+            color: var(--text-main);
+        }
+
+        .modal-body {
+            padding: 24px;
+        }
+
+        .detail-section {
+            margin-bottom: 24px;
+        }
+
+        .detail-label {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #999;
+            margin-bottom: 8px;
+        }
+
+        .detail-value {
+            font-size: 14px;
+            color: var(--text-main);
+            font-weight: 500;
+        }
+
+        .detail-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-label {
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #666;
+            margin-bottom: 6px;
+            display: block;
+        }
+
+        .form-input,
+        .form-select,
+        .form-textarea {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 13px;
+            font-family: 'DM Sans', sans-serif;
+            transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+        }
+
+        .form-textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .form-input:focus,
+        .form-select:focus,
+        .form-textarea:focus {
+            outline: none;
+            border-color: var(--accent-gold);
+            box-shadow: 0 0 0 2px rgba(201, 168, 76, 0.1);
+        }
+
+        .notes-section {
+            background: var(--bg-primary);
+            border-radius: 6px;
+            padding: 16px;
+            margin-top: 24px;
+        }
+
+        .notes-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .notes-title {
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #666;
+        }
+
+        .note-item {
+            background: var(--bg-card);
+            padding: 12px;
+            border-radius: 4px;
+            margin-bottom: 8px;
+            border-left: 3px solid var(--accent-gold);
+        }
+
+        .note-text {
+            font-size: 12px;
+            color: var(--text-main);
+            margin-bottom: 4px;
+        }
+
+        .note-meta {
+            font-size: 10px;
+            color: #999;
+        }
+
+        .add-note-form {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .add-note-form input {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        .add-note-form button {
+            padding: 8px 16px;
+            background: var(--accent-gold);
+            color: var(--text-main);
+            border: none;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .add-note-form button:hover {
+            background: var(--accent-gold-hover);
+            transform: translateY(-2px);
+        }
+
+        .modal-footer {
+            padding: 24px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+
+        .btn-cancel {
+            padding: 10px 20px;
+            background: transparent;
+            color: #666;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-cancel:hover {
+            border-color: var(--accent-gold);
+            color: var(--text-main);
+        }
+
+        .btn-save {
+            padding: 10px 20px;
+            background: var(--accent-gold);
+            color: var(--text-main);
+            border: none;
+            border-radius: 4px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-save:hover {
+            background: var(--accent-gold-hover);
+            transform: translateY(-2px);
+        }
+
+        /* PAGINATION */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 24px;
+            align-items: center;
+        }
+
+        .pagination-btn {
+            width: 32px;
+            height: 32px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-card);
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .pagination-btn:hover,
+        .pagination-btn.active {
+            background: var(--text-main);
+            color: var(--bg-primary);
+            border-color: var(--text-main);
+        }
+
+        /* ANIMATIONS */
+        @keyframes floatIdle {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-8px);
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 1024px) {
+            .sidebar {
+                width: 260px;
+            }
+
+            .main-content {
+                margin-left: 260px;
+            }
+
+            .table-header,
+            .table-row {
+                grid-template-columns: 100px 150px 120px 100px 80px 80px 50px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: relative;
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+
+            .content {
+                padding: 16px;
+            }
+
+            .topbar {
+                flex-direction: column;
+                gap: 12px;
+            }
+
+            .detail-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* ═══════════════════════════════════════════════════════════
+           MOBILE RESPONSIVENESS (Injected via Phase 10 Overhaul)
+           ═══════════════════════════════════════════════════════════ */
+
+        /* Hamburger Menu Icon (Hidden on Desktop) */
+        .mobile-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: var(--text-main);
+            cursor: pointer;
+            margin-right: 15px;
+        }
+
+        @media (max-width: 768px) {
+
+            /* Show Hamburger */
+            .mobile-menu-btn {
+                display: block;
+            }
+
+            /* Sidebar becomes a drawer */
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s ease-in-out;
+                z-index: 2000;
+            }
+
+            .sidebar.active {
+                transform: translateX(0);
+            }
+
+            /* Main content expands to full width */
+            .main-content {
+                margin-left: 0;
+                width: 100vw;
+            }
+
+            /* Topbar adjustments */
+            .topbar {
+                padding: 15px 20px;
+                flex-wrap: wrap;
+                gap: 15px;
+            }
+
+            .page-title {
+                font-size: 22px;
+            }
+
+            .search-bar {
+                display: none;
+                /* Hide search on extreme mobile to save space */
+            }
+
+            /* Stats Grid Stacking */
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            /* Charts & Tables Stacking */
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+
+            /* Modals */
+            .modal-content {
+                width: 95%;
+                margin: 20px auto;
+                padding: 20px;
+            }
+
+            /* Form Rows */
+            .form-row,
+            .booking-grid {
+                grid-template-columns: 1fr;
+            }
+
+            /* Tables */
+            .table-container {
+                overflow-x: auto;
+            }
+        }
+
+
+        /* ═══════════════════════════════════════════════════════════
+           MOBILE QUICK ACTION FAB
+           ═══════════════════════════════════════════════════════════ */
+        .mobile-fab-container {
+            display: none;
+            position: fixed;
+            bottom: 25px;
+            right: 25px;
+            z-index: 999;
+        }
+
+        .mobile-fab-btn {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: var(--accent);
+            color: var(--primary);
+            border: none;
+            box-shadow: 0 4px 15px rgba(201, 168, 76, 0.4);
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: transform 0.3s ease, background 0.3s ease;
+        }
+
+        .mobile-fab-btn:active {
+            transform: scale(0.92);
+        }
+
+        .mobile-fab-menu {
+            position: absolute;
+            bottom: 70px;
+            right: 0;
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            padding: 10px 0;
+            min-width: 180px;
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(20px);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid rgba(201, 168, 76, 0.2);
+        }
+
+        .mobile-fab-container.active .mobile-fab-menu {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translateY(0);
+        }
+
+        .mobile-fab-container.active .mobile-fab-btn {
+            transform: rotate(45deg);
+        }
+
+        .fab-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 20px;
+            color: var(--text-dark);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: background 0.2s;
+            cursor: pointer;
+            border: none;
+            width: 100%;
+            background: transparent;
+            text-align: left;
+        }
+
+        .fab-item i {
+            margin-right: 12px;
+            color: var(--accent);
+            width: 16px;
+        }
+
+        .fab-item:hover,
+        .fab-item:active {
+            background: rgba(201, 168, 76, 0.1);
+        }
+
+        @media (max-width: 768px) {
+            .mobile-fab-container {
+                display: block;
+            }
+        }
+    </style>
+
+    <!-- DARK MODE LOGIC -->
+    <script>
+
+        // Mobile Sidebar Toggle
+        function toggleSidebar() {
+            document.querySelector('.sidebar').classList.toggle('active');
+        }
+
+        // Close sidebar if clicking outside of it on mobile
+        document.addEventListener('click', (e) => {
+            const sidebar = document.querySelector('.sidebar');
+            const hamburger = document.querySelector('.mobile-menu-btn');
+            if (window.innerWidth <= 768 && sidebar && sidebar.classList.contains('active')) {
+                if (!sidebar.contains(e.target) && !hamburger.contains(e.target)) {
+                    sidebar.classList.remove('active');
+                }
+            }
+        });
+
+        (function () {
+            if (localStorage.getItem('emeraldDarkMode') === 'true') {
+                document.documentElement.classList.add('dark-mode');
+            }
+        })();
+    </script>
+    <style>
+        :root {
+            --bg-primary: #F7F4EF;
+            --bg-card: #FFFFFF;
+            --text-main: #0D2B1F;
+            --border-color: #E9E5DB;
+            --accent-gold: #C9A84C;
+            --accent-gold-hover: #E9A825;
+            --accent-danger: #B5332A;
+            --sidebar-bg: #FFFFFF;
+        }
+
+        html.dark-mode {
+            --bg-primary: #0a1f16;
+            --bg-card: #0d2b1f;
+            --text-main: #F7F4EF;
+            --border-color: #1a3d2e;
+            --sidebar-bg: #091a13;
+        }
+
+        /* Generic Dark Mode Fixes */
+        html.dark-mode .sidebar {
+            background: var(--sidebar-bg);
+            border-right-color: var(--border-color);
+        }
+
+        html.dark-mode .topbar {
+            background: var(--sidebar-bg);
+            border-bottom-color: var(--border-color);
+        }
+
+        html.dark-mode .modal-content {
+            background: var(--bg-card);
+        }
+
+        html.dark-mode input,
+        html.dark-mode select,
+        html.dark-mode textarea {
+            background: var(--sidebar-bg);
+            color: var(--text-main);
+        }
+
+        html.dark-mode .btn-secondary,
+        html.dark-mode .btn-cancel {
+            color: var(--text-main);
+        }
+
+        html.dark-mode .nav-item {
+            color: var(--text-main);
+        }
+
+        html.dark-mode .pagination-btn {
+            background: var(--sidebar-bg);
+            color: var(--text-main);
+        }
+    </style>
+
+</head>
+
+<body>
+
+    <!-- Mobile Quick Action FAB -->
+    <div class="mobile-fab-container" id="mobileFab">
+        <button class="mobile-fab-btn" onclick="toggleFab()">
+            <i class="fas fa-plus"></i>
+        </button>
+        <div class="mobile-fab-menu">
+            <a href="/admin/bookings" class="fab-item">
+                <i class="fas fa-calendar-plus"></i> New Booking
+            </a>
+            <a href="/admin/clients" class="fab-item">
+                <i class="fas fa-user-plus"></i> New Client
+            </a>
+        </div>
+    </div>
+
+    <script>
+        function toggleFab() {
+            document.getElementById('mobileFab').classList.toggle('active');
+        }
+
+        // Close FAB if clicking outside
+        document.addEventListener('click', (e) => {
+            const fab = document.getElementById('mobileFab');
+            if (fab && fab.classList.contains('active') && !fab.contains(e.target)) {
+                fab.classList.remove('active');
+            }
+        });
+    </script>
+
+    <div class="admin-layout">
+        <!-- SIDEBAR -->
+        <aside class="sidebar">
+            <div class="sidebar-logo">EMERALD</div>
+
+            <nav>
+                <a href="/admin/dashboard" class="nav-item">Dashboard</a>
+                <a href="/admin/bookings" class="nav-item active">Bookings <span class="nav-badge"
+                        id="bookingsBadge">0</span></a>
+                <a href="/admin/clients" class="nav-item">Clients</a>
+                <a href="/admin/calendar" class="nav-item">Calendar</a>
+                <a href="/admin/analytics" class="nav-item">Analytics</a>
+                <a href="/admin/notifications" class="nav-item">Notifications</a>
+                <a href="/admin/gallery" class="nav-item">Gallery</a>
+                <a href="/admin/testimonials" class="nav-item">Testimonials</a>
+                <a href="/admin/staff" class="nav-item">Staff</a>
+                <a href="/admin/settings" class="nav-item">Settings</a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="admin-profile">
+                    <div class="admin-avatar" id="adminAvatar">AD</div>
+                    <div class="admin-info">
+                        <div class="admin-name" id="adminName">Admin</div>
+                    </div>
+                </div>
+                <button class="logout-btn" onclick="handleLogout()">Logout</button>
+            </div>
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <div class="main-content">
+            <!-- TOPBAR -->
+            <div class="topbar">
+                <div class="topbar-left">
+                    <!-- Mobile Hamburger Menu -->
+                    <button class="mobile-menu-btn" onclick="toggleSidebar()">
+                        <i class="fas fa-bars"></i>
+                    </button>
+
+                    <h1 class="page-title">Bookings</h1>
+                    <div class="breadcrumb">Dashboard / Bookings</div>
+                </div>
+                <div class="topbar-right">
+                    <input type="text" class="search-bar" id="globalSearch" placeholder="Search bookings...">
+                    <div class="today-date" id="todayDate"></div>
+                    <div class="notification-bell">🔔<span class="notification-badge">3</span></div>
+                </div>
+            </div>
+
+            <!-- CONTENT -->
+            <div class="content">
+                <!-- CONTROLS -->
+                <div class="controls-section">
+                    <div class="filters">
+                        <select class="filter-select" id="statusFilter">
+                            <option value="">All Status</option>
+                            <option value="new">New</option>
+                            <option value="contacted">Contacted</option>
+                            <option value="confirmed">Confirmed</option>
+                            <option value="completed">Completed</option>
+                            <option value="cancelled">Cancelled</option>
+                        </select>
+
+                        <select class="filter-select" id="eventTypeFilter">
+                            <option value="">All Event Types</option>
+                            <option value="wedding">Wedding</option>
+                            <option value="anniversary">Anniversary</option>
+                            <option value="birthday party">Birthday Party</option>
+                            <option value="family & house party">Family & House Party</option>
+                            <option value="traditional ceremony">Traditional Ceremony</option>
+                            <option value="memorial service">Memorial Service</option>
+                            <option value="corporate event">Corporate Event</option>
+                            <option value="brand ambassador event">Brand Ambassador Event</option>
+                            <option value="product launch">Product Launch</option>
+                            <option value="private celebration">Private Celebration</option>
+                            <option value="luxury decor & styling">Luxury Décor & Styling</option>
+                            <option value="other">Other</option>
+                        </select>
+
+                        <select class="filter-select" id="paidFilter">
+                            <option value="">All Payments</option>
+                            <option value="paid">Paid</option>
+                            <option value="pending">Pending</option>
+                        </select>
+                    </div>
+
+                    <div class="action-buttons">
+                        <button class="btn-secondary" onclick="exportBookings()">📥 Export</button>
+                        <button class="btn-primary" onclick="openNewBookingModal()">➕ New Booking</button>
+                    </div>
+                </div>
+
+                <!-- TABLE -->
+                <div class="table-container">
+                    <div class="table-header">
+                        <div>Booking ID</div>
+                        <div>Client Name</div>
+                        <div>Event Type</div>
+                        <div>Event Date</div>
+                        <div>Status</div>
+                        <div>Payment</div>
+                        <div>Actions</div>
+                    </div>
+
+                    <div class="table-rows" id="bookingsTable">
+                        <!-- Populated by JavaScript -->
+                    </div>
+                </div>
+
+                <!-- PAGINATION -->
+                <div class="pagination">
+                    <button class="pagination-btn" onclick="previousPage()">←</button>
+                    <span id="pageInfo">Page 1 of 1</span>
+                    <button class="pagination-btn" onclick="nextPage()">→</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- DETAIL MODAL -->
+    <div class="modal" id="detailModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="modalTitle">Booking Details</h2>
+                <button class="modal-close" onclick="closeModal()">✕</button>
+            </div>
+
+            <div class="modal-body">
+                <!-- CLIENT INFO -->
+                <div class="detail-section">
+                    <div class="detail-label">Client Information</div>
+                    <div class="detail-grid">
+                        <div>
+                            <div class="detail-label">Name</div>
+                            <div class="detail-value" id="detailClientName">-</div>
+                        </div>
+                        <div>
+                            <div class="detail-label">Email</div>
+                            <div class="detail-value" id="detailClientEmail">-</div>
+                        </div>
+                        <div>
+                            <div class="detail-label">Phone</div>
+                            <div class="detail-value" id="detailClientPhone">-</div>
+                        </div>
+                        <div>
+                            <div class="detail-label">Location</div>
+                            <div class="detail-value" id="detailClientLocation">-</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- EVENT INFO -->
+                <div class="detail-section">
+                    <div class="detail-label">Event Information</div>
+                    <div class="detail-grid">
+                        <div>
+                            <div class="detail-label">Event Type</div>
+                            <div class="detail-value" id="detailEventType">-</div>
+                        </div>
+                        <div>
+                            <div class="detail-label">Event Date</div>
+                            <div class="detail-value" id="detailEventDate">-</div>
+                        </div>
+                        <div>
+                            <div class="detail-label">Event Time</div>
+                            <div class="detail-value" id="detailEventTime">-</div>
+                        </div>
+                        <div>
+                            <div class="detail-label">Guest Count</div>
+                            <div class="detail-value" id="detailGuestCount">-</div>
+                        </div>
+                        <div>
+                            <div class="detail-label">Budget Range</div>
+                            <div class="detail-value" id="detailBudgetRange">-</div>
+                        </div>
+                        <div>
+                            <div class="detail-label">Venue</div>
+                            <div class="detail-value" id="detailVenue">-</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- EDITABLE FIELDS -->
+                <div class="detail-section">
+                    <div class="detail-label">Status & Payment</div>
+                    <div class="detail-grid">
+                        <div class="form-group">
+                            <label class="form-label">Status</label>
+                            <select class="form-select" id="statusInput">
+                                <option value="new">New</option>
+                                <option value="contacted">Contacted</option>
+                                <option value="confirmed">Confirmed</option>
+                                <option value="completed">Completed</option>
+                                <option value="cancelled">Cancelled</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Payment Status</label>
+                            <select class="form-select" id="paidInput">
+                                <option value="false">Pending</option>
+                                <option value="true">Paid</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="grid-column: span 2;">
+                            <label class="form-label">Amount Paid (KES)</label>
+                            <input type="number" class="form-input" id="amountPaidInput" placeholder="0">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- NOTES SECTION -->
+                <div class="notes-section">
+                    <div class="notes-header">
+                        <div class="notes-title">Admin Notes</div>
+                    </div>
+                    <div id="notesList"></div>
+                    <div class="add-note-form">
+                        <input type="text" id="newNoteInput" placeholder="Add a note...">
+                        <button onclick="addNote()">Add</button>
+                    </div>
+                </div>
+
+                <!-- STAFF ASSIGNMENT -->
+                <div class="detail-section" id="staffAssignmentSection"
+                    style="margin-top: 24px; border-top: 1px solid var(--border-color); padding-top: 16px;">
+                    <div class="detail-label" style="color: var(--accent-gold); font-size: 16px; margin-bottom: 16px;">
+                        👥 Staff Assignment</div>
+
+                    <div class="detail-grid">
+                        <div class="form-group" style="grid-column: span 2;">
+                            <label class="form-label">Supervisor</label>
+                            <select class="form-select" id="supervisorSelect">
+                                <option value="">Select Supervisor...</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="grid-column: span 2;">
+                            <label class="form-label">Team Members</label>
+                            <select multiple class="form-select" id="teamStaffSelect"
+                                style="height: 100px; padding: 8px;">
+                            </select>
+                            <small style="font-size: 11px; color: #999;">Hold Ctrl (Windows) or Cmd (Mac) to select
+                                multiple.</small>
+                        </div>
+                    </div>
+                    <button onclick="assignStaffToBooking()" class="btn-primary"
+                        style="margin-top: 12px; width: 100%;">Save Staff Assignment</button>
+                    <div id="staffAssignmentStatus"
+                        style="font-size: 13px; font-weight: 600; margin-top: 8px; color: var(--accent-gold); text-align: center;">
+                    </div>
+                </div>
+
+                <!-- POST-EVENT ACTIONS (Feedback & Staff Messaging) -->
+                <div class="detail-section" id="postEventActionsSection"
+                    style="display: none; border: 1px solid var(--accent-gold); padding: 16px; border-radius: 8px; background: rgba(201, 168, 76, 0.05); margin-top: 24px;">
+                    <div class="detail-label"
+                        style="color: var(--accent-gold); font-size: 16px; border-bottom: 1px solid var(--accent-gold-hover); padding-bottom: 8px; margin-bottom: 16px;">
+                        ✨ Post-Event Actions</div>
+
+                    <div style="margin-bottom: 24px;">
+                        <h4 style="font-size: 14px; margin-bottom: 8px; color: var(--text-main);">Client Appreciation &
+                            Feedback</h4>
+                        <p style="font-size: 12px; color: #666; margin-bottom: 12px;">Send a beautifully crafted emails
+                            thanking the client and requesting their feedback on the overall experience.</p>
+                        <button onclick="sendAppreciationEmail()" class="btn-primary"
+                            style="background: var(--accent-gold); color: #fff; width: 100%; border: none; padding: 12px;">💌
+                            Send Appreciation Email to Client</button>
+                    </div>
+
+                    <div style="border-top: 1px solid var(--border-color); padding-top: 16px;">
+                        <h4 style="font-size: 14px; margin-bottom: 8px; color: var(--text-main);">Request Internal Staff
+                            Feedback</h4>
+                        <p style="font-size: 12px; color: #666; margin-bottom: 12px;">Send an email to assigned staff
+                            members to gather their internal feedback on this event/client.</p>
+
+                        <div class="form-group">
+                            <label class="form-label">Select Staff to Message</label>
+                            <select multiple class="form-select" id="feedbackStaffSelect"
+                                style="height: 100px; padding: 8px;">
+                                <!-- Populated dynamically based on assigned staff -->
+                            </select>
+                            <small style="font-size: 11px; color: #999;">Hold Ctrl (Windows) or Cmd (Mac) to select
+                                multiple.</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Message/Question for Staff</label>
+                            <textarea class="form-input" id="feedbackStaffMessage" rows="3"
+                                placeholder="e.g. How was the setup process? Did the client have any complaints on site?"></textarea>
+                        </div>
+
+                        <button onclick="sendStaffFeedbackMessage()" class="btn-secondary"
+                            style="width: 100%; justify-content: center;">📨 Send Message to Selected Staff</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+                <button class="btn-save" onclick="saveBooking()">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- GSAP & SCRIPTS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+    <script>
+        gsap.registerPlugin(ScrollTrigger);
+
+        let currentBooking = null;
+        let currentPage = 1;
+        let bookingsPerPage = 10;
+        let allBookings = [];
+        let filteredBookings = [];
+        let allStaffList = []; // Global store for loaded staff
+
+        // Initialize
+        window.addEventListener('load', () => {
+            updateDate();
+            loadAdminData();
+            loadBookings();
+            loadStaffForFeedback(); // Preload staff for the feedback dropdown
+        });
+
+        async function loadStaffForFeedback() {
+            try {
+                const response = await fetch('/api/admin/staff');
+                const result = await response.json();
+                if (result.success && result.staff) {
+                    allStaffList = result.staff.sort((a, b) => a.name.localeCompare(b.name));
+
+                    const feedbackSelect = document.getElementById('feedbackStaffSelect');
+                    const supervisorSelect = document.getElementById('supervisorSelect');
+                    const teamSelect = document.getElementById('teamStaffSelect');
+
+                    let allOpts = '';
+                    allStaffList.forEach(s => {
+                        allOpts += `<option value="${s._id}">${s.name} (${s.category})</option>`;
+                    });
+
+                    if (feedbackSelect) feedbackSelect.innerHTML = allOpts;
+                    if (teamSelect) teamSelect.innerHTML = allOpts;
+                    if (supervisorSelect) supervisorSelect.innerHTML = '<option value="">Select Supervisor...</option>' + allOpts;
+                }
+            } catch (err) {
+                console.error('Failed to load staff list', err);
+            }
+        }
+
+        function updateDate() {
+            const options = { year: 'numeric', month: 'short', day: 'numeric' };
+            const today = new Date().toLocaleDateString('en-US', options);
+            document.getElementById('todayDate').textContent = today;
+        }
+
+        async function loadAdminData() {
+            try {
+                const response = await fetch('/api/admin/me');
+                const result = await response.json();
+                if (result.success) {
+                    const name = result.admin.name || 'Admin';
+                    const initials = name.split(' ').map(n => n[0]).join('').toUpperCase();
+                    document.getElementById('adminAvatar').textContent = initials;
+                    document.getElementById('adminName').textContent = name;
+                }
+            } catch (error) {
+                console.error('Error loading admin data:', error);
+            }
+        }
+
+        async function loadBookings() {
+            try {
+                const response = await fetch('/api/admin/bookings?limit=100');
+                const result = await response.json();
+                if (result.success) {
+                    allBookings = result.bookings || [];
+                    filteredBookings = [...allBookings];
+                    applyFilters();
+                    renderBookings();
+                }
+            } catch (error) {
+                console.error('Error loading bookings:', error);
+            }
+        }
+
+        function applyFilters() {
+            const status = document.getElementById('statusFilter').value;
+            const eventType = document.getElementById('eventTypeFilter').value;
+            const paymentStatus = document.getElementById('paidFilter').value;
+            const searchTerm = document.getElementById('globalSearch').value.toLowerCase();
+
+            filteredBookings = allBookings.filter(booking => {
+                const clientName = booking.customerId?.name || 'Unknown';
+                const matchStatus = !status || booking.status === status;
+                const matchType = !eventType || booking.eventType === eventType;
+                const matchPayment = !paymentStatus || (paymentStatus === 'paid' ? booking.isPaid : !booking.isPaid);
+                const matchSearch = !searchTerm ||
+                    clientName.toLowerCase().includes(searchTerm) ||
+                    booking._id.includes(searchTerm);
+
+                return matchStatus && matchType && matchPayment && matchSearch;
+            });
+
+            currentPage = 1;
+        }
+
+        function renderBookings() {
+            const start = (currentPage - 1) * bookingsPerPage;
+            const end = start + bookingsPerPage;
+            const pageBookings = filteredBookings.slice(start, end);
+
+            const html = pageBookings.map(booking => {
+                const clientName = booking.customerId?.name || 'Unknown';
+                return `
+                <div class="table-row" onclick="openBookingModal('${booking._id}')">
+                    <div class="booking-id">#${booking._id.slice(-6).toUpperCase()}</div>
+                    <div class="client-name">${clientName}</div>
+                    <div class="event-type">${booking.eventType}</div>
+                    <div class="event-date">${new Date(booking.eventDate).toLocaleDateString()}</div>
+                    <div><span class="status-badge status-${booking.status}">${booking.status}</span></div>
+                    <div><span class="paid-badge ${booking.isPaid ? 'paid-yes' : 'paid-no'}">${booking.isPaid ? 'Paid' : 'Pending'}</span></div>
+                    <div class="row-actions" onclick="event.stopPropagation()">
+                        <button class="action-btn" title="Edit">✏️</button>
+                        <button class="action-btn" title="Delete" onclick="deleteBooking('${booking._id}')">🗑️</button>
+                    </div>
+                </div>
+                `;
+            }).join('');
+
+            document.getElementById('bookingsTable').innerHTML = html;
+            updatePagination();
+        }
+
+        function updatePagination() {
+            const totalPages = Math.ceil(filteredBookings.length / bookingsPerPage);
+            document.getElementById('pageInfo').textContent = `Page ${currentPage} of ${totalPages}`;
+            document.getElementById('bookingsBadge').textContent = filteredBookings.filter(b => b.status === 'new').length;
+        }
+
+        function previousPage() {
+            if (currentPage > 1) {
+                currentPage--;
+                renderBookings();
+            }
+        }
+
+        function nextPage() {
+            const totalPages = Math.ceil(filteredBookings.length / bookingsPerPage);
+            if (currentPage < totalPages) {
+                currentPage++;
+                renderBookings();
+            }
+        }
+
+        async function openBookingModal(bookingId) {
+            try {
+                const response = await fetch(`/api/admin/bookings/${bookingId}`);
+                const result = await response.json();
+                if (result.success) {
+                    currentBooking = result.booking;
+                    populateModal(result.booking);
+                    document.getElementById('detailModal').classList.add('show');
+                }
+            } catch (error) {
+                console.error('Error loading booking:', error);
+            }
+        }
+
+        function populateModal(booking) {
+            const clientName = booking.customerId?.name || 'Unknown';
+            const clientEmail = booking.customerId?.email || 'Unknown';
+            const clientPhone = booking.customerId?.phone || 'Unknown';
+            const clientLocation = booking.location || '-';
+
+            document.getElementById('modalTitle').textContent = `Booking #${booking._id.slice(-6).toUpperCase()}`;
+            document.getElementById('detailClientName').textContent = clientName;
+            document.getElementById('detailClientEmail').textContent = clientEmail;
+            document.getElementById('detailClientPhone').textContent = clientPhone;
+            document.getElementById('detailClientLocation').textContent = clientLocation;
+            document.getElementById('detailEventType').textContent = booking.eventType;
+            document.getElementById('detailEventDate').textContent = new Date(booking.eventDate).toLocaleDateString();
+            document.getElementById('detailEventTime').textContent = booking.eventDuration || '-';
+            document.getElementById('detailGuestCount').textContent = booking.guests || '0';
+            document.getElementById('detailBudgetRange').textContent = booking.budgetRange || '-';
+            document.getElementById('detailVenue').textContent = booking.location || '-';
+
+            document.getElementById('statusInput').value = booking.status;
+            document.getElementById('paidInput').value = booking.isPaid ? 'true' : 'false';
+            document.getElementById('amountPaidInput').value = booking.amountPaid || 0;
+
+            // Set assigned staff and supervisor
+            const supervisorSelect = document.getElementById('supervisorSelect');
+            if (supervisorSelect) {
+                supervisorSelect.value = booking.supervisor?._id || booking.supervisor || '';
+            }
+
+            const teamSelect = document.getElementById('teamStaffSelect');
+            if (teamSelect) {
+                Array.from(teamSelect.options).forEach(opt => {
+                    const assignedList = booking.assignedStaff || [];
+                    const isAssigned = assignedList.find(s => (s._id || s) === opt.value);
+                    opt.selected = !!isAssigned;
+                });
+            }
+
+            // Load notes
+            const notesList = document.getElementById('notesList');
+            if (notesList) {
+                notesList.innerHTML = (booking.adminNotes || []).map(note => `
+                    <div class="note-item">
+                        <div class="note-text">${note.note || note.text || ''}</div>
+                        <div class="note-meta">Added on ${new Date(note.addedAt || Date.now()).toLocaleDateString()}</div>
+                    </div>
+                `).join('');
+            }
+
+            // Post Event Actions Display logic — only show when status is 'completed'
+            const postEventSection = document.getElementById('postEventActionsSection');
+            if (postEventSection) {
+                if (booking.status === 'completed') {
+                    postEventSection.style.display = 'block';
+                    // Reset staff feedback form
+                    const msgField = document.getElementById('feedbackStaffMessage');
+                    if (msgField) msgField.value = '';
+                    const select = document.getElementById('feedbackStaffSelect');
+                    if (select) Array.from(select.options).forEach(opt => opt.selected = false);
+                } else {
+                    postEventSection.style.display = 'none';
+                }
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('detailModal').classList.remove('show');
+            currentBooking = null;
+        }
+
+        async function saveBooking() {
+            if (!currentBooking) return;
+
+            const statusData = {
+                status: document.getElementById('statusInput').value
+            };
+            const paymentData = {
+                isPaid: document.getElementById('paidInput').value === 'true',
+                amountPaid: parseFloat(document.getElementById('amountPaidInput').value || 0)
+            };
+
+            try {
+                // Update status
+                const res1 = await fetch(`/api/admin/bookings/${currentBooking._id}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(statusData)
+                });
+
+                // Update payment via separate endpoint to trigger notifications
+                const res2 = await fetch(`/api/admin/bookings/${currentBooking._id}/pay`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(paymentData)
+                });
+
+                const result1 = await res1.json();
+                const result2 = await res2.json();
+
+                if (result1.success && result2.success) {
+                    if (paymentData.isPaid) {
+                        const paidFilter = document.getElementById('paidFilter');
+                        if (paidFilter) paidFilter.value = 'paid';
+                    }
+
+                    closeModal();
+                    loadBookings();
+                    alert('Booking updated successfully');
+                }
+            } catch (error) {
+                console.error('Error saving booking:', error);
+            }
+        }
+
+        async function assignStaffToBooking() {
+            if (!currentBooking) return;
+
+            const btn = event.target;
+            const originalText = btn.innerHTML;
+            btn.innerHTML = 'Assigning...';
+            btn.disabled = true;
+
+            const supervisorId = document.getElementById('supervisorSelect').value;
+            const teamIds = Array.from(document.getElementById('teamStaffSelect').selectedOptions).map(opt => opt.value);
+
+            try {
+                const response = await fetch(`/api/admin/bookings/${currentBooking._id}/assign-staff`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        supervisor: supervisorId ? supervisorId : null,
+                        assignedStaff: teamIds
+                    })
+                });
+                const result = await response.json();
+                if (result.success) {
+                    const status = document.getElementById('staffAssignmentStatus');
+                    status.textContent = '✓ Staff assigned successfully.';
+                    setTimeout(() => status.textContent = '', 4000);
+                    // Update our local booking object
+                    currentBooking.supervisor = supervisorId || null;
+                    currentBooking.assignedStaff = teamIds;
+                } else {
+                    alert('Error: ' + result.message);
+                }
+            } catch (error) {
+                console.error('Error assigning staff', error);
+                alert('Could not assign staff at this time.');
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        function addNote() {
+            const noteText = document.getElementById('newNoteInput').value.trim();
+            if (!noteText) return;
+
+            // Add note to current booking and save
+            if (currentBooking) {
+                currentBooking.adminNotes = currentBooking.adminNotes || [];
+                currentBooking.adminNotes.push({
+                    text: noteText,
+                    addedBy: 'Admin',
+                    addedAt: new Date()
+                });
+
+                populateModal(currentBooking);
+                document.getElementById('newNoteInput').value = '';
+
+                // Save with PATCH
+                const updatedData = {
+                    adminNotes: currentBooking.adminNotes
+                };
+
+                fetch(`/api/admin/bookings/${currentBooking._id}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(updatedData)
+                }).catch(error => console.error('Error adding note:', error));
+            }
+        }
+
+        async function deleteBooking(bookingId) {
+            if (!confirm('Are you sure you want to delete this booking?')) return;
+
+            try {
+                const response = await fetch(`/api/admin/bookings/${bookingId}`, {
+                    method: 'DELETE'
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    loadBookings();
+                    alert('Booking deleted successfully');
+                }
+            } catch (error) {
+                console.error('Error deleting booking:', error);
+            }
+        }
+
+        // Post Event Feedback Calls
+        async function sendAppreciationEmail() {
+            if (!currentBooking) return;
+            const clientName = currentBooking.customerId?.name || 'Client';
+            if (!confirm(`Are you sure you want to send the appreciation email to ${clientName}?`)) return;
+
+            try {
+                const response = await fetch(`/api/admin/bookings/${currentBooking._id}/send-appreciation`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                const result = await response.json();
+
+                if (result.success) {
+                    alert('Appreciation email sent successfully!');
+                    openBookingModal(currentBooking._id); // reload modal data to see new note
+                } else {
+                    alert('Failed to send email: ' + result.message);
+                }
+            } catch (err) {
+                console.error('Error sending appreciation email', err);
+                alert('An error occurred while sending the email.');
+            }
+        }
+
+        async function sendStaffFeedbackMessage() {
+            if (!currentBooking) return;
+
+            const staffSelect = document.getElementById('feedbackStaffSelect');
+            const messageStr = document.getElementById('feedbackStaffMessage').value.trim();
+
+            const selectedStaffIds = Array.from(staffSelect.selectedOptions).map(opt => opt.value);
+
+            if (selectedStaffIds.length === 0) {
+                alert('Please select at least one staff member to message.');
+                return;
+            }
+            if (!messageStr) {
+                alert('Please enter a feedback message/question for the staff.');
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/admin/bookings/${currentBooking._id}/message-staff`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        staffIds: selectedStaffIds,
+                        customMessage: messageStr
+                    })
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    alert(result.message);
+                    openBookingModal(currentBooking._id); // reload modal data to see new note
+                } else {
+                    alert('Error: ' + result.message);
+                }
+            } catch (err) {
+                console.error('Error sending staff feedback email', err);
+                alert('An error occurred while communicating with the server.');
+            }
+        }
+
+        function openNewBookingModal() {
+            // redirect to public booking page so admin can fill request on behalf of client
+            window.location.href = '/booking.html';
+        }
+
+        function exportBookings() {
+            // CSV export
+            const csv = [
+                ['ID', 'Client', 'Event Type', 'Event Date', 'Status', 'Payment'].join(','),
+                ...filteredBookings.map(b => [
+                    `#${b._id.slice(-6)}`,
+                    b.customerName,
+                    b.eventType,
+                    new Date(b.eventDate).toLocaleDateString(),
+                    b.status,
+                    b.isPaid ? 'Paid' : 'Pending'
+                ].join(','))
+            ].join('\n');
+
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `bookings_${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+        }
+
+        function handleLogout() {
+            fetch('/api/admin/logout', { method: 'POST' })
+                .then(() => window.location.href = '/admin/login')
+                .catch(error => console.error('Logout error:', error));
+        }
+
+        // Filter event listeners
+        document.getElementById('statusFilter').addEventListener('change', () => { applyFilters(); renderBookings(); });
+        document.getElementById('eventTypeFilter').addEventListener('change', () => { applyFilters(); renderBookings(); });
+
+        // if ?new=1 in query string, send user to booking form automatically
+        if (new URLSearchParams(window.location.search).get('new') === '1') {
+            openNewBookingModal();
+        }
+        document.getElementById('paidFilter').addEventListener('change', () => { applyFilters(); renderBookings(); });
+        document.getElementById('globalSearch').addEventListener('input', () => { applyFilters(); renderBookings(); });
+
+        // Close modal on outside click
+        document.getElementById('detailModal').addEventListener('click', (e) => {
+            if (e.target.id === 'detailModal') closeModal();
+        });
+    </script>
+</body>
+
+</html>

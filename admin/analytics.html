@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analytics - Emerald Admin</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-main);
+        }
+
+        .admin-layout {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 280px;
+            background: var(--bg-card);
+            border-right: 1px solid var(--accent-gold-hover);
+            padding: 32px 0;
+            position: fixed;
+            left: 0;
+            top: 0;
+            height: 100vh;
+            overflow-y: auto;
+            z-index: 100;
+        }
+
+        .sidebar-logo {
+            padding: 0 24px;
+            margin-bottom: 48px;
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-main);
+            letter-spacing: 2px;
+            animation: floatIdle 6s ease-in-out infinite;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 24px;
+            margin: 0 12px;
+            border-radius: 6px;
+            color: var(--text-main);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .nav-item:hover, .nav-item.active {
+            background-color: rgba(201, 168, 76, 0.1);
+        }
+
+        .nav-item.active::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: var(--accent-gold);
+            border-radius: 0 3px 3px 0;
+        }
+
+        .sidebar-footer {
+            position: absolute;
+            bottom: 24px;
+            left: 24px;
+            right: 24px;
+        }
+
+        .admin-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent-gold), var(--accent-gold-hover));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--bg-card);
+            font-weight: 700;
+        }
+
+        .logout-btn {
+            width: 100%;
+            padding: 8px 12px;
+            background: var(--text-main);
+            color: var(--bg-primary);
+            border: none;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .logout-btn:hover {
+            background: var(--accent-gold);
+            color: var(--text-main);
+        }
+
+        .main-content {
+            flex: 1;
+            margin-left: 280px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .topbar {
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border-color);
+            padding: 16px 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+
+        .page-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 28px;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .breadcrumb {
+            font-size: 12px;
+            color: #999;
+        }
+
+        .today-date {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 14px;
+            font-style: italic;
+            color: var(--accent-gold);
+            font-weight: 600;
+        }
+
+        .content {
+            flex: 1;
+            padding: 32px;
+            overflow-y: auto;
+        }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+
+        .chart-card {
+            background: var(--bg-card);
+            border-radius: 8px;
+            padding: 24px;
+            border: 1px solid var(--border-color);
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        .chart-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: var(--text-main);
+            letter-spacing: 0.5px;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+        }
+
+        .full-width {
+            grid-column: 1 / -1;
+        }
+
+        @keyframes floatIdle {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 1024px) {
+            .charts-grid { grid-template-columns: 1fr; }
+            .sidebar { width: 260px; }
+            .main-content { margin-left: 260px; }
+        }
+
+        @media (max-width: 768px) {
+            .sidebar { position: relative; width: 100%; }
+            .main-content { margin-left: 0; }
+            .content { padding: 16px; }
+        }
+    
+        /* ═══════════════════════════════════════════════════════════
+           MOBILE RESPONSIVENESS (Injected via Phase 10 Overhaul)
+           ═══════════════════════════════════════════════════════════ */
+        
+        /* Hamburger Menu Icon (Hidden on Desktop) */
+        .mobile-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: var(--text-main);
+            cursor: pointer;
+            margin-right: 15px;
+        }
+
+        @media (max-width: 768px) {
+            /* Show Hamburger */
+            .mobile-menu-btn {
+                display: block;
+            }
+            
+            /* Sidebar becomes a drawer */
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s ease-in-out;
+                z-index: 2000;
+            }
+            
+            .sidebar.active {
+                transform: translateX(0);
+            }
+            
+            /* Main content expands to full width */
+            .main-content {
+                margin-left: 0;
+                width: 100vw;
+            }
+            
+            /* Topbar adjustments */
+            .topbar {
+                padding: 15px 20px;
+                flex-wrap: wrap;
+                gap: 15px;
+            }
+            
+            .page-title {
+                font-size: 22px;
+            }
+            
+            .search-bar {
+                display: none; /* Hide search on extreme mobile to save space */
+            }
+            
+            /* Stats Grid Stacking */
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            /* Charts & Tables Stacking */
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            /* Modals */
+            .modal-content {
+                width: 95%;
+                margin: 20px auto;
+                padding: 20px;
+            }
+            
+            /* Form Rows */
+            .form-row, .booking-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            /* Tables */
+            .table-container {
+                overflow-x: auto;
+            }
+        }
+
+    
+        /* ═══════════════════════════════════════════════════════════
+           MOBILE QUICK ACTION FAB
+           ═══════════════════════════════════════════════════════════ */
+        .mobile-fab-container {
+            display: none;
+            position: fixed;
+            bottom: 25px;
+            right: 25px;
+            z-index: 999;
+        }
+
+        .mobile-fab-btn {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: var(--accent);
+            color: var(--primary);
+            border: none;
+            box-shadow: 0 4px 15px rgba(201, 168, 76, 0.4);
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: transform 0.3s ease, background 0.3s ease;
+        }
+
+        .mobile-fab-btn:active {
+            transform: scale(0.92);
+        }
+
+        .mobile-fab-menu {
+            position: absolute;
+            bottom: 70px;
+            right: 0;
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            padding: 10px 0;
+            min-width: 180px;
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(20px);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid rgba(201, 168, 76, 0.2);
+        }
+
+        .mobile-fab-container.active .mobile-fab-menu {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translateY(0);
+        }
+
+        .mobile-fab-container.active .mobile-fab-btn {
+            transform: rotate(45deg);
+        }
+
+        .fab-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 20px;
+            color: var(--text-dark);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: background 0.2s;
+            cursor: pointer;
+            border: none;
+            width: 100%;
+            background: transparent;
+            text-align: left;
+        }
+
+        .fab-item i {
+            margin-right: 12px;
+            color: var(--accent);
+            width: 16px;
+        }
+
+        .fab-item:hover, .fab-item:active {
+            background: rgba(201, 168, 76, 0.1);
+        }
+
+        @media (max-width: 768px) {
+            .mobile-fab-container {
+                display: block;
+            }
+        }
+
+    </style>
+
+    <!-- DARK MODE LOGIC -->
+    <script>
+
+        // Mobile Sidebar Toggle
+        function toggleSidebar() {
+            document.querySelector('.sidebar').classList.toggle('active');
+        }
+
+        // Close sidebar if clicking outside of it on mobile
+        document.addEventListener('click', (e) => {
+            const sidebar = document.querySelector('.sidebar');
+            const hamburger = document.querySelector('.mobile-menu-btn');
+            if (window.innerWidth <= 768 && sidebar && sidebar.classList.contains('active')) {
+                if (!sidebar.contains(e.target) && !hamburger.contains(e.target)) {
+                    sidebar.classList.remove('active');
+                }
+            }
+        });
+
+        (function() {
+            if (localStorage.getItem('emeraldDarkMode') === 'true') {
+                document.documentElement.classList.add('dark-mode');
+            }
+        })();
+    </script>
+    <style>
+        :root {
+            --bg-primary: #F7F4EF;
+            --bg-card: #FFFFFF;
+            --text-main: #0D2B1F;
+            --border-color: #E9E5DB;
+            --accent-gold: #C9A84C;
+            --accent-gold-hover: #E9A825;
+            --accent-danger: #B5332A;
+            --sidebar-bg: #FFFFFF;
+        }
+
+        html.dark-mode {
+            --bg-primary: #0a1f16;
+            --bg-card: #0d2b1f;
+            --text-main: #F7F4EF;
+            --border-color: #1a3d2e;
+            --sidebar-bg: #091a13;
+        }
+
+        /* Generic Dark Mode Fixes */
+        html.dark-mode .sidebar { background: var(--sidebar-bg); border-right-color: var(--border-color); }
+        html.dark-mode .topbar { background: var(--sidebar-bg); border-bottom-color: var(--border-color); }
+        html.dark-mode .modal-content { background: var(--bg-card); }
+        html.dark-mode input, html.dark-mode select, html.dark-mode textarea { background: var(--sidebar-bg); color: var(--text-main); }
+        html.dark-mode .btn-secondary, html.dark-mode .btn-cancel { color: var(--text-main); }
+        html.dark-mode .nav-item { color: var(--text-main); }
+        html.dark-mode .pagination-btn { background: var(--sidebar-bg); color: var(--text-main); }
+    </style>
+
+</head>
+<body>
+
+    <!-- Mobile Quick Action FAB -->
+    <div class="mobile-fab-container" id="mobileFab">
+        <button class="mobile-fab-btn" onclick="toggleFab()">
+            <i class="fas fa-plus"></i>
+        </button>
+        <div class="mobile-fab-menu">
+            <a href="/admin/bookings" class="fab-item">
+                <i class="fas fa-calendar-plus"></i> New Booking
+            </a>
+            <a href="/admin/clients" class="fab-item">
+                <i class="fas fa-user-plus"></i> New Client
+            </a>
+        </div>
+    </div>
+    
+    <script>
+        function toggleFab() {
+            document.getElementById('mobileFab').classList.toggle('active');
+        }
+        
+        // Close FAB if clicking outside
+        document.addEventListener('click', (e) => {
+            const fab = document.getElementById('mobileFab');
+            if (fab && fab.classList.contains('active') && !fab.contains(e.target)) {
+                fab.classList.remove('active');
+            }
+        });
+    </script>
+
+    <div class="admin-layout">
+        <aside class="sidebar">
+            <div class="sidebar-logo">EMERALD</div>
+            <nav>
+                <a href="/admin/dashboard" class="nav-item">Dashboard</a>
+                <a href="/admin/bookings" class="nav-item">Bookings</a>
+                <a href="/admin/clients" class="nav-item">Clients</a>
+                <a href="/admin/calendar" class="nav-item">Calendar</a>
+                <a href="/admin/analytics" class="nav-item active">Analytics</a>
+                <a href="/admin/notifications" class="nav-item">Notifications</a>
+                <a href="/admin/gallery" class="nav-item">Gallery</a>
+                <a href="/admin/testimonials" class="nav-item">Testimonials</a>
+                <a href="/admin/staff" class="nav-item">Staff</a>
+                <a href="/admin/settings" class="nav-item">Settings</a>
+            </nav>
+            <div class="sidebar-footer">
+                <button class="logout-btn" onclick="handleLogout()">Logout</button>
+            </div>
+        </aside>
+
+        <div class="main-content">
+            <div class="topbar">
+                <div>
+                    <h1 class="page-title">Analytics</h1>
+                    <div class="breadcrumb">Dashboard / Analytics</div>
+                </div>
+                <div class="today-date" id="todayDate"></div>
+            </div>
+
+            <div class="content">
+                <div class="charts-grid">
+                    <!-- Monthly Bookings Line Chart -->
+                    <div class="chart-card">
+                        <div class="chart-title">📈 Monthly Bookings Trend</div>
+                        <div class="chart-container">
+                            <canvas id="lineChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Revenue by Event Type -->
+                    <div class="chart-card">
+                        <div class="chart-title">💰 Revenue by Event Type</div>
+                        <div class="chart-container">
+                            <canvas id="doughnutChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Event Type Distribution -->
+                    <div class="chart-card">
+                        <div class="chart-title">🎪 Event Type Distribution</div>
+                        <div class="chart-container">
+                            <canvas id="barChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Booking Status Funnel -->
+                    <div class="chart-card">
+                        <div class="chart-title">🔄 Booking Status Funnel</div>
+                        <div class="chart-container">
+                            <canvas id="radarChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Full Width Charts -->
+                    <div class="chart-card full-width">
+                        <div class="chart-title">📊 Annual Revenue Comparison</div>
+                        <div class="chart-container" style="height: 250px;">
+                            <canvas id="areaChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="chart-card full-width">
+                        <div class="chart-title">🎯 Conversion Funnel</div>
+                        <div class="chart-container" style="height: 250px;">
+                            <canvas id="horizontalBarChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script>
+        const chartColors = {
+            primary: 'var(--text-main)',
+            accent: 'var(--accent-gold)',
+            success: '#2D6A4F',
+            warning: 'var(--accent-gold-hover)',
+            danger: 'var(--accent-danger)',
+            bg: 'var(--bg-primary)'
+        };
+
+        // Set chart defaults
+        Chart.defaults.font.family = "'DM Sans', sans-serif";
+        Chart.defaults.color = '#999';
+
+        // Line Chart - Monthly Bookings
+        const lineCtx = document.getElementById('lineChart').getContext('2d');
+        new Chart(lineCtx, {
+            type: 'line',
+            data: {
+                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+                datasets: [{
+                    label: 'Bookings',
+                    data: [12, 19, 15, 22, 28, 35, 32, 40, 38, 45, 42, 50],
+                    borderColor: chartColors.accent,
+                    backgroundColor: 'rgba(201, 168, 76, 0.05)',
+                    tension: 0.4,
+                    fill: true,
+                    pointBackgroundColor: chartColors.accent,
+                    pointBorderWidth: 0,
+                    pointRadius: 4,
+                    pointHoverRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true, ticks: { color: '#999' } },
+                    x: { ticks: { color: '#999' } }
+                }
+            }
+        });
+
+        // Doughnut Chart - Revenue by Event Type
+        const dougnutCtx = document.getElementById('doughnutChart').getContext('2d');
+        new Chart(dougnutCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Wedding', 'Corporate', 'Birthday', 'Engagement', 'Other'],
+                datasets: [{
+                    data: [35, 25, 20, 12, 8],
+                    backgroundColor: [
+                        chartColors.accent,
+                        chartColors.primary,
+                        chartColors.success,
+                        chartColors.warning,
+                        '#D4A574'
+                    ],
+                    borderColor: 'var(--bg-card)',
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { padding: 16, color: '#666' }
+                    }
+                }
+            }
+        });
+
+        // Bar Chart - Event Type Distribution
+        const barCtx = document.getElementById('barChart').getContext('2d');
+        new Chart(barCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Wedding', 'Corporate', 'Birthday', 'Engagement', 'Other'],
+                datasets: [{
+                    label: 'Count',
+                    data: [45, 32, 28, 18, 12],
+                    backgroundColor: chartColors.accent,
+                    borderRadius: 4,
+                    borderSkipped: false
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true, ticks: { color: '#999' } },
+                    x: { ticks: { color: '#999' } }
+                }
+            }
+        });
+
+        // Radar Chart - Booking Status
+        const radarCtx = document.getElementById('radarChart').getContext('2d');
+        new Chart(radarCtx, {
+            type: 'radar',
+            data: {
+                labels: ['New', 'Contacted', 'Confirmed', 'Completed', 'Cancelled'],
+                datasets: [{
+                    label: 'Bookings by Status',
+                    data: [12, 19, 30, 35, 8],
+                    borderColor: chartColors.accent,
+                    backgroundColor: 'rgba(201, 168, 76, 0.1)',
+                    pointBackgroundColor: chartColors.accent,
+                    pointBorderColor: 'var(--bg-card)',
+                    pointBorderWidth: 2,
+                    pointRadius: 4,
+                    pointHoverRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    r: {
+                        ticks: { color: '#999' },
+                        grid: { color: 'var(--border-color)' }
+                    }
+                }
+            }
+        });
+
+        // Area Chart - Annual Revenue
+        const areaCtx = document.getElementById('areaChart').getContext('2d');
+        new Chart(areaCtx, {
+            type: 'line',
+            data: {
+                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+                datasets: [
+                    {
+                        label: '2024 Revenue',
+                        data: [15000, 18000, 21000, 24000, 28000, 32000, 30000, 35000, 33000, 38000, 40000, 45000],
+                        borderColor: chartColors.accent,
+                        backgroundColor: 'rgba(201, 168, 76, 0.1)',
+                        tension: 0.4,
+                        fill: true,
+                        pointRadius: 0
+                    },
+                    {
+                        label: '2025 Revenue',
+                        data: [18000, 22000, 25000, 28000, 32000, 36000, 34000, 39000, 37000, 42000, 44000, 50000],
+                        borderColor: chartColors.primary,
+                        backgroundColor: 'rgba(13, 43, 31, 0.1)',
+                        tension: 0.4,
+                        fill: true,
+                        pointRadius: 0
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top',
+                        labels: { color: '#666', padding: 16 }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: { color: '#999', callback: v => `KES ${(v/1000).toFixed(0)}k` }
+                    },
+                    x: { ticks: { color: '#999' } }
+                }
+            }
+        });
+
+        // Horizontal Bar Chart - Conversion Funnel
+        const horizontalCtx = document.getElementById('horizontalBarChart').getContext('2d');
+        new Chart(horizontalCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Inquiries', 'Quotes Sent', 'Follow-ups', 'Confirmed', 'Completed'],
+                datasets: [{
+                    label: 'Count',
+                    data: [120, 95, 78, 55, 50],
+                    backgroundColor: [
+                        'var(--accent-gold-hover)',
+                        '#D4A574',
+                        'var(--accent-gold)',
+                        '#2D6A4F',
+                        'var(--text-main)'
+                    ],
+                    borderRadius: 4,
+                    borderSkipped: false
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { beginAtZero: true, ticks: { color: '#999' } },
+                    y: { ticks: { color: '#999' } }
+                }
+            }
+        });
+
+        function updateDate() {
+            const options = { year: 'numeric', month: 'short', day: 'numeric' };
+            const today = new Date().toLocaleDateString('en-US', options);
+            document.getElementById('todayDate').textContent = today;
+        }
+
+        function handleLogout() {
+            fetch('/api/admin/logout', { method: 'POST' })
+                .then(() => window.location.href = '/admin/login')
+                .catch(error => console.error('Logout error:', error));
+        }
+
+        window.addEventListener('load', updateDate);
+    </script>
+</body>
+</html>

@@ -2,6 +2,7 @@ const express = require('express');
 const rateLimit = require('express-rate-limit');
 const Booking = require('../models/Booking');
 const Customer = require('../models/Customer');
+const AdminNotification = require('../models/AdminNotification');
 const { initializeEmailService, sendBusinessBookingNotification, sendClientBookingConfirmation, sendFollowUpEmail } = require('../services/emailService');
 
 // ── INITIALIZE EMAIL TRANSPORTER ──
@@ -183,6 +184,19 @@ router.post('/book-event', bookingLimiter, async (req, res) => {
         });
 
         await booking.save();
+
+        // ───────────────────────────────────────────────────────────
+        // STEP 3.5: CREATE ADMIN NOTIFICATION
+        // ───────────────────────────────────────────────────────────
+        const notificationMessage = `New booking request from ${data.fullName} for a ${data.eventType}.`;
+        const notification = new AdminNotification({
+            type: 'new_booking',
+            message: notificationMessage,
+            bookingRef: booking._id,
+            icon: 'book',
+            action: `/admin/bookings`
+        });
+        await notification.save();
 
         // ───────────────────────────────────────────────────────────
         // STEP 4: SEND EMAILS

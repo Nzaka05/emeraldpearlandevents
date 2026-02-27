@@ -1,4 +1,35 @@
 node_modules
 .env
 .env.local
+
+# Logs
 *.log
+server.log
+
+# IDEs and Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS Data
+.DS_Store
+Thumbs.db
+
+# Large media files (serve via CDN/cloud storage)
+services.mp4
+
+# Dev/helper/injection scripts (not needed in production)
+inject_fab.js
+inject_mobile_css.js
+inject_mobile_js.js
+replace_colors.js
+set_feed.js
+
+# Test and seed scripts
+test-email.js
+test-revenue-logic.js
+seed-admin.js
+
+# Antigravity/AI resolved artifacts
+*.resolved

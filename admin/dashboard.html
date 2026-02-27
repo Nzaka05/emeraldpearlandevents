@@ -1,0 +1,1370 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Emerald Pearland Events</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600;700&family=DM+Sans:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: var(--text-main);
+            --secondary: #2d8a5e;
+            --accent: var(--accent-gold);
+            --surface: var(--bg-primary);
+            --card-bg: var(--bg-card);
+            --text-dark: #1a1a1a;
+            --text-light: #6b6b6b;
+            --success: #2d6a4f;
+            --warning: var(--accent-gold-hover);
+            --danger: var(--accent-danger);
+        }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--surface);
+            color: var(--text-dark);
+            overflow-x: hidden;
+        }
+
+        /* SIDEBAR */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 280px;
+            height: 100vh;
+            background: var(--primary);
+            color: var(--surface);
+            padding: 30px 20px;
+            overflow-y: auto;
+            z-index: 1000;
+            box-shadow: 4px 0 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .sidebar-logo {
+            text-align: center;
+            margin-bottom: 40px;
+            animation: floatIdle 6s ease-in-out infinite;
+        }
+
+        .sidebar-logo-img {
+            max-width: 80px;
+            margin: 0 auto 15px;
+            display: block;
+        }
+
+        @keyframes floatIdle {
+
+            0%,
+            100% {
+                transform: translateY(0px);
+            }
+
+            50% {
+                transform: translateY(-8px);
+            }
+        }
+
+        .sidebar-logo-icon {
+            width: 60px;
+            height: 60px;
+            background: var(--accent);
+            border-radius: 50%;
+            margin: 0 auto 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            color: var(--primary);
+            box-shadow: 0 8px 25px rgba(201, 168, 76, 0.3);
+        }
+
+        .sidebar-logo h1 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 20px;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+        }
+
+        .sidebar-logo p {
+            font-size: 11px;
+            opacity: 0.7;
+            margin-top: 5px;
+            letter-spacing: 0.1em;
+        }
+
+        .sidebar-nav {
+            list-style: none;
+            margin-bottom: 40px;
+        }
+
+        .sidebar-nav-item {
+            margin-bottom: 8px;
+        }
+
+        .sidebar-nav-link {
+            display: flex;
+            align-items: center;
+            padding: 12px 14px;
+            color: var(--surface);
+            text-decoration: none;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .sidebar-nav-link::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: var(--accent);
+            transform: scaleY(0);
+            transform-origin: center;
+            transition: transform 0.3s ease;
+        }
+
+        .sidebar-nav-link:hover::before,
+        .sidebar-nav-link.active::before {
+            transform: scaleY(1);
+        }
+
+        .sidebar-nav-link:hover {
+            background: rgba(201, 168, 76, 0.1);
+            color: var(--accent);
+        }
+
+        .sidebar-nav-link.active {
+            background: rgba(201, 168, 76, 0.15);
+            color: var(--accent);
+        }
+
+        .sidebar-nav-icon {
+            width: 20px;
+            margin-right: 12px;
+            text-align: center;
+        }
+
+        .nav-badge {
+            margin-left: auto;
+            background: var(--accent);
+            color: var(--primary);
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        .sidebar-footer {
+            border-top: 1px solid rgba(201, 168, 76, 0.2);
+            padding-top: 20px;
+            margin-top: auto;
+        }
+
+        .admin-profile {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .admin-profile:hover {
+            background: rgba(201, 168, 76, 0.1);
+        }
+
+        .admin-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--accent);
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 16px;
+        }
+
+        .admin-info {
+            flex: 1;
+        }
+
+        .admin-name {
+            font-size: 13px;
+            font-weight: 600;
+            display: block;
+        }
+
+        .admin-role {
+            font-size: 11px;
+            opacity: 0.7;
+        }
+
+        .social-links {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .social-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 700;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            color: white;
+        }
+
+        .social-icon.ig {
+            background: linear-gradient(135deg, #833ab4, #fd1d1d, #fcb045);
+        }
+
+        .social-icon.fb {
+            background: #1877F2;
+        }
+
+        .social-icon:hover {
+            opacity: 0.85;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .logout-btn {
+            background: none;
+            border: none;
+            color: var(--surface);
+            cursor: pointer;
+            font-size: 16px;
+            transition: color 0.3s ease;
+        }
+
+        .logout-btn:hover {
+            color: var(--accent);
+        }
+
+        /* MAIN CONTENT */
+        .main-content {
+            margin-left: 280px;
+            min-height: 100vh;
+            background: var(--surface);
+        }
+
+        /* TOPBAR */
+        .topbar {
+            background: var(--card-bg);
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .topbar-left {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .page-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 28px;
+            font-weight: 300;
+            letter-spacing: 0.05em;
+        }
+
+        .breadcrumb {
+            font-size: 12px;
+            color: var(--text-light);
+            margin-top: 5px;
+        }
+
+        .topbar-right {
+            display: flex;
+            align-items: center;
+            gap: 25px;
+        }
+
+        .search-bar {
+            position: relative;
+        }
+
+        .search-bar input {
+            padding: 10px 14px;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            width: 200px;
+            font-size: 13px;
+            transition: all 0.3s ease;
+        }
+
+        .search-bar input:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(201, 168, 76, 0.1);
+            width: 280px;
+        }
+
+        .today-date {
+            font-family: 'Cormorant Garamond', serif;
+            font-style: italic;
+            color: var(--accent);
+            font-size: 14px;
+        }
+
+        .notification-bell {
+            position: relative;
+            font-size: 20px;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+
+        .notification-bell:hover {
+            color: var(--accent);
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: var(--danger);
+            color: white;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        .admin-menu {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 14px;
+            background: #f9f9f9;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .admin-menu-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--accent);
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+        }
+
+        /* PAGE CONTENT */
+        .page-content {
+            padding: 40px;
+        }
+
+        /* STATS GRID */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 25px;
+            margin-bottom: 45px;
+        }
+
+        .stat-card {
+            background: var(--card-bg);
+            padding: 28px;
+            border-radius: 8px;
+            border: 1px solid #e8e8e8;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+            transition: all 0.4s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--accent);
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform 0.4s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+        }
+
+        .stat-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .stat-icon {
+            font-size: 24px;
+            color: var(--accent);
+            margin-bottom: 12px;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--text-light);
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .stat-value {
+            font-size: 36px;
+            font-family: 'Cormorant Garamond', serif;
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 8px;
+        }
+
+        .stat-change {
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .stat-change.positive {
+            color: var(--success);
+        }
+
+        .stat-change.negative {
+            color: var(--danger);
+        }
+
+        /* SECTION */
+        .section {
+            margin-bottom: 50px;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            position: relative;
+            padding-bottom: 15px;
+        }
+
+        .section-header::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            height: 2px;
+            width: 0;
+            background: var(--accent);
+            animation: drawLine 0.6s ease-out forwards;
+        }
+
+        @keyframes drawLine {
+            to {
+                width: 50px;
+            }
+        }
+
+        .section-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 24px;
+            font-weight: 400;
+            letter-spacing: 0.05em;
+        }
+
+        .section-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn {
+            padding: 10px 18px;
+            border: none;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: var(--surface);
+        }
+
+        .btn-primary:hover {
+            background: var(--secondary);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(13, 43, 31, 0.2);
+        }
+
+        .btn-accent {
+            background: var(--accent);
+            color: var(--primary);
+        }
+
+        .btn-accent:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(201, 168, 76, 0.2);
+        }
+
+        .social-quick-link {
+            display: inline-block;
+            padding: 6px 14px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: 0.3s;
+        }
+
+        .social-quick-link.ig {
+            background: linear-gradient(135deg, #833ab4, #fd1d1d, #fcb045);
+            color: white;
+            margin-left: 8px;
+        }
+
+        .social-quick-link.fb {
+            background: #1877F2;
+            color: white;
+            margin-left: 8px;
+        }
+
+        .social-quick-link:hover {
+            opacity: 0.85;
+            transform: translateY(-1px);
+        }
+
+        /* LOADING SKELETON */
+        .skeleton {
+            background: linear-gradient(90deg, #e8e8e8 25%, #f0f0f0 50%, #e8e8e8 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+        }
+
+        @keyframes shimmer {
+            0% {
+                background-position: 200% 0;
+            }
+
+            100% {
+                background-position: -200% 0;
+            }
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 1200px) {
+            .sidebar {
+                width: 260px;
+            }
+
+            .main-content {
+                margin-left: 260px;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+            }
+
+            .sidebar.open {
+                transform: translateX(0);
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+
+            .topbar {
+                padding: 15px 20px;
+            }
+
+            .page-content {
+                padding: 20px;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* ═══════════════════════════════════════════════════════════
+           MOBILE RESPONSIVENESS (Injected via Phase 10 Overhaul)
+           ═══════════════════════════════════════════════════════════ */
+
+        /* Hamburger Menu Icon (Hidden on Desktop) */
+        .mobile-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: var(--text-main);
+            cursor: pointer;
+            margin-right: 15px;
+        }
+
+        @media (max-width: 768px) {
+
+            /* Show Hamburger */
+            .mobile-menu-btn {
+                display: block;
+            }
+
+            /* Sidebar becomes a drawer */
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s ease-in-out;
+                z-index: 2000;
+            }
+
+            .sidebar.active {
+                transform: translateX(0);
+            }
+
+            /* Main content expands to full width */
+            .main-content {
+                margin-left: 0;
+                width: 100vw;
+            }
+
+            /* Topbar adjustments */
+            .topbar {
+                padding: 15px 20px;
+                flex-wrap: wrap;
+                gap: 15px;
+            }
+
+            .page-title {
+                font-size: 22px;
+            }
+
+            .search-bar {
+                display: none;
+                /* Hide search on extreme mobile to save space */
+            }
+
+            /* Stats Grid Stacking */
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            /* Charts & Tables Stacking */
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+
+            /* Modals */
+            .modal-content {
+                width: 95%;
+                margin: 20px auto;
+                padding: 20px;
+            }
+
+            /* Form Rows */
+            .form-row,
+            .booking-grid {
+                grid-template-columns: 1fr;
+            }
+
+            /* Tables */
+            .table-container {
+                overflow-x: auto;
+            }
+        }
+
+
+        /* ═══════════════════════════════════════════════════════════
+           MOBILE QUICK ACTION FAB
+           ═══════════════════════════════════════════════════════════ */
+        .mobile-fab-container {
+            display: none;
+            position: fixed;
+            bottom: 25px;
+            right: 25px;
+            z-index: 999;
+        }
+
+        .mobile-fab-btn {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: var(--accent);
+            color: var(--primary);
+            border: none;
+            box-shadow: 0 4px 15px rgba(201, 168, 76, 0.4);
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: transform 0.3s ease, background 0.3s ease;
+        }
+
+        .mobile-fab-btn:active {
+            transform: scale(0.92);
+        }
+
+        .mobile-fab-menu {
+            position: absolute;
+            bottom: 70px;
+            right: 0;
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            padding: 10px 0;
+            min-width: 180px;
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(20px);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid rgba(201, 168, 76, 0.2);
+        }
+
+        .mobile-fab-container.active .mobile-fab-menu {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translateY(0);
+        }
+
+        .mobile-fab-container.active .mobile-fab-btn {
+            transform: rotate(45deg);
+        }
+
+        .fab-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 20px;
+            color: var(--text-dark);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: background 0.2s;
+            cursor: pointer;
+            border: none;
+            width: 100%;
+            background: transparent;
+            text-align: left;
+        }
+
+        .fab-item i {
+            margin-right: 12px;
+            color: var(--accent);
+            width: 16px;
+        }
+
+        .fab-item:hover,
+        .fab-item:active {
+            background: rgba(201, 168, 76, 0.1);
+        }
+
+        @media (max-width: 768px) {
+            .mobile-fab-container {
+                display: block;
+            }
+        }
+    </style>
+
+    <!-- DARK MODE LOGIC -->
+    <script>
+
+        // Mobile Sidebar Toggle
+        function toggleSidebar() {
+            document.querySelector('.sidebar').classList.toggle('active');
+        }
+
+        // Close sidebar if clicking outside of it on mobile
+        document.addEventListener('click', (e) => {
+            const sidebar = document.querySelector('.sidebar');
+            const hamburger = document.querySelector('.mobile-menu-btn');
+            if (window.innerWidth <= 768 && sidebar && sidebar.classList.contains('active')) {
+                if (!sidebar.contains(e.target) && !hamburger.contains(e.target)) {
+                    sidebar.classList.remove('active');
+                }
+            }
+        });
+
+        (function () {
+            if (localStorage.getItem('emeraldDarkMode') === 'true') {
+                document.documentElement.classList.add('dark-mode');
+            }
+        })();
+    </script>
+    <style>
+        :root {
+            --bg-primary: #F7F4EF;
+            --bg-card: #FFFFFF;
+            --text-main: #0D2B1F;
+            --border-color: #E9E5DB;
+            --accent-gold: #C9A84C;
+            --accent-gold-hover: #E9A825;
+            --accent-danger: #B5332A;
+            --sidebar-bg: #FFFFFF;
+        }
+
+        html.dark-mode {
+            --bg-primary: #0a1f16;
+            --bg-card: #0d2b1f;
+            --text-main: #F7F4EF;
+            --border-color: #1a3d2e;
+            --sidebar-bg: #091a13;
+        }
+
+        /* Generic Dark Mode Fixes */
+        html.dark-mode .sidebar {
+            background: var(--sidebar-bg);
+            border-right-color: var(--border-color);
+        }
+
+        html.dark-mode .topbar {
+            background: var(--sidebar-bg);
+            border-bottom-color: var(--border-color);
+        }
+
+        html.dark-mode .modal-content {
+            background: var(--bg-card);
+        }
+
+        html.dark-mode input,
+        html.dark-mode select,
+        html.dark-mode textarea {
+            background: var(--sidebar-bg);
+            color: var(--text-main);
+        }
+
+        html.dark-mode .btn-secondary,
+        html.dark-mode .btn-cancel {
+            color: var(--text-main);
+        }
+
+        html.dark-mode .nav-item {
+            color: var(--text-main);
+        }
+
+        html.dark-mode .pagination-btn {
+            background: var(--sidebar-bg);
+            color: var(--text-main);
+        }
+    </style>
+
+</head>
+
+<body>
+
+    <!-- Mobile Quick Action FAB -->
+    <div class="mobile-fab-container" id="mobileFab">
+        <button class="mobile-fab-btn" onclick="toggleFab()">
+            <i class="fas fa-plus"></i>
+        </button>
+        <div class="mobile-fab-menu">
+            <a href="/admin/bookings" class="fab-item">
+                <i class="fas fa-calendar-plus"></i> New Booking
+            </a>
+            <a href="/admin/clients" class="fab-item">
+                <i class="fas fa-user-plus"></i> New Client
+            </a>
+        </div>
+    </div>
+
+    <script>
+        function toggleFab() {
+            document.getElementById('mobileFab').classList.toggle('active');
+        }
+
+        // Close FAB if clicking outside
+        document.addEventListener('click', (e) => {
+            const fab = document.getElementById('mobileFab');
+            if (fab && fab.classList.contains('active') && !fab.contains(e.target)) {
+                fab.classList.remove('active');
+            }
+        });
+    </script>
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+        <div class="sidebar-logo">
+            <img src="../images/logo%202.png" alt="Emerald Logo" class="sidebar-logo-img" />
+            <!-- fallback icon if image fails -->
+            <div class="sidebar-logo-icon" style="display:none;">✨</div>
+            <h1>ADMIN PORTAL</h1>
+            <p>Emerald Pearland</p>
+        </div>
+
+        <nav class="sidebar-nav">
+            <li class="sidebar-nav-item">
+                <a href="/admin/dashboard" class="sidebar-nav-link active">
+                    <span class="sidebar-nav-icon"><i class="fas fa-home"></i></span>
+                    <span>Dashboard</span>
+                </a>
+            </li>
+            <li class="sidebar-nav-item">
+                <a href="/admin/bookings" class="sidebar-nav-link">
+                    <span class="sidebar-nav-icon"><i class="fas fa-calendar"></i></span>
+                    <span>Bookings</span>
+                    <span class="nav-badge">12</span>
+                </a>
+            </li>
+            <li class="sidebar-nav-item">
+                <a href="/admin/clients" class="sidebar-nav-link">
+                    <span class="sidebar-nav-icon"><i class="fas fa-users"></i></span>
+                    <span>Clients</span>
+                </a>
+            </li>
+            <li class="sidebar-nav-item">
+                <a href="/admin/calendar" class="sidebar-nav-link">
+                    <span class="sidebar-nav-icon"><i class="fas fa-calendar-alt"></i></span>
+                    <span>Calendar</span>
+                </a>
+            </li>
+            <li class="sidebar-nav-item">
+                <a href="/admin/analytics" class="sidebar-nav-link">
+                    <span class="sidebar-nav-icon"><i class="fas fa-chart-bar"></i></span>
+                    <span>Analytics</span>
+                </a>
+            </li>
+            <li class="sidebar-nav-item">
+                <a href="/admin/notifications" class="sidebar-nav-link">
+                    <span class="sidebar-nav-icon"><i class="fas fa-bell"></i></span>
+                    <span>Notifications</span>
+                </a>
+            </li>
+            <li class="sidebar-nav-item">
+                <a href="/admin/gallery" class="sidebar-nav-link">
+                    <span class="sidebar-nav-icon"><i class="fas fa-image"></i></span>
+                    <span>Gallery</span>
+                </a>
+            </li>
+            <li class="sidebar-nav-item">
+                <a href="/admin/testimonials" class="sidebar-nav-link">
+                    <span class="sidebar-nav-icon"><i class="fas fa-star"></i></span>
+                    <span>Testimonials</span>
+                </a>
+            </li>
+            <li class="sidebar-nav-item">
+                <a href="/admin/staff" class="sidebar-nav-link">
+                    <span class="sidebar-nav-icon"><i class="fas fa-user-tie"></i></span>
+                    <span>Staff</span>
+                </a>
+            </li>
+            <li class="sidebar-nav-item">
+                <a href="/admin/settings" class="sidebar-nav-link">
+                    <span class="sidebar-nav-icon"><i class="fas fa-cog"></i></span>
+                    <span>Settings</span>
+                </a>
+            </li>
+        </nav>
+
+        <div class="sidebar-footer">
+            <div class="admin-profile">
+                <div class="admin-avatar" id="adminAvatar">A</div>
+                <div class="admin-info">
+                    <span class="admin-name" id="adminName">Admin</span>
+                    <span class="admin-role">Super Admin</span>
+                </div>
+                <button class="logout-btn" onclick="handleLogout()">
+                    <i class="fas fa-sign-out-alt"></i>
+                </button>
+            </div>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+        <!-- TOPBAR -->
+        <div class="topbar">
+            <div class="topbar-left">
+                <!-- Mobile Hamburger Menu -->
+                <button class="mobile-menu-btn" onclick="toggleSidebar()">
+                    <i class="fas fa-bars"></i>
+                </button>
+
+                <div>
+                    <div class="page-title">Dashboard</div>
+                    <div class="breadcrumb">Home / Overview</div>
+                </div>
+            </div>
+
+            <div class="topbar-right">
+                <div class="search-bar">
+                    <input type="text" placeholder="Search bookings...">
+                </div>
+
+                <div class="today-date" id="todayDate"></div>
+
+                <div class="notification-bell">
+                    <i class="fas fa-bell"></i>
+                    <div class="notification-badge">3</div>
+                </div>
+
+                <div class="admin-menu">
+                    <div class="admin-menu-avatar" id="topbarAvatar">A</div>
+                    <div style="flex-direction: column; display: flex; font-size: 13px;">
+                        <span style="font-weight: 600;" id="topbarName">Admin</span>
+                        <span style="color: var(--text-light); font-size: 11px;">Super Admin</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PAGE CONTENT -->
+        <div class="page-content">
+            <!-- STATS GRID -->
+            <div class="stats-grid" id="statsGrid">
+                <a href="/admin/bookings" class="stat-card">
+                    <div class="stat-icon"><i class="fas fa-book"></i></div>
+                    <div class="stat-label">Total Bookings</div>
+                    <div class="stat-value" id="totalBookingsVal">0</div>
+                    <div class="stat-change positive">
+                        <i class="fas fa-arrow-up"></i> Overview
+                    </div>
+                </a>
+
+                <a href="/admin/bookings" class="stat-card">
+                    <div class="stat-icon"><i class="fas fa-money-bill-wave"></i></div>
+                    <div class="stat-label">Revenue (KES)</div>
+                    <div class="stat-value" id="revenueCount">0</div>
+                    <div class="stat-change positive">
+                        <i class="fas fa-check-circle"></i> Paid & Confirmed
+                    </div>
+                </a>
+
+                <!-- NEW: Projected Revenue -->
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="fas fa-chart-line" style="color: var(--secondary);"></i></div>
+                    <div class="stat-label">Projected Revenue</div>
+                    <div class="stat-value" id="projectedRevenueCount" style="color: var(--secondary);">0</div>
+                    <div class="stat-change" style="color: var(--text-light);">
+                        <i class="fas fa-calculator"></i> From unpaid bookings
+                    </div>
+                </div>
+
+                <a href="/admin/bookings?status=pending" class="stat-card">
+                    <div class="stat-icon"><i class="fas fa-exclamation-circle" style="color: var(--danger);"></i></div>
+                    <div class="stat-label">Pending Confirmations</div>
+                    <div class="stat-value" id="pendingCount">0</div>
+                    <div class="stat-change negative">
+                        <i class="fas fa-clock"></i> Awaiting Action
+                    </div>
+                </a>
+
+                <a href="/admin/calendar" class="stat-card">
+                    <div class="stat-icon"><i class="fas fa-calendar-check"></i></div>
+                    <div class="stat-label">Upcoming Events</div>
+                    <div class="stat-value" id="upcomingCount">0</div>
+                    <div class="stat-change positive">
+                        <i class="fas fa-calendar-day"></i> Scheduled
+                    </div>
+                </a>
+            </div>
+
+            <!-- QUICK ACTIONS -->
+            <div class="section">
+                <div class="section-header">
+                    <h2 class="section-title">Quick Actions</h2>
+                </div>
+                <div style="display: flex; gap: 15px;">
+                    <a href="/admin/bookings?new=1" class="btn btn-primary"><i class="fas fa-plus"></i> New Booking</a>
+                    <a href="/admin/bookings" class="btn btn-accent"><i class="fas fa-download"></i> Export Report</a>
+                    <a href="/admin/calendar" class="btn btn-primary"><i class="fas fa-calendar"></i> View Calendar</a>
+                    <a href="/admin/clients" class="btn btn-primary"><i class="fas fa-user-plus"></i> Add Client</a>
+                </div>
+            </div>
+
+            <!-- PLACEHOLDER FOR CHARTS -->
+            <div class="section">
+                <div class="section-header">
+                    <h2 class="section-title">Bookings Trend</h2>
+                </div>
+                <div
+                    style="background: var(--card-bg); padding: 30px; border-radius: 8px; height: 350px; position: relative;">
+                    <canvas id="revenueChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Social Feed Widget -->
+            <div class="section">
+                <div class="section-header">
+                    <div class="section-title">📸 Social Feed</div>
+                    <div class="section-actions">
+                        <a id="igLink" href="#" target="_blank" class="social-quick-link ig">
+                            Instagram ↗
+                        </a>
+                        <a id="fbLink" href="#" target="_blank" class="social-quick-link fb">
+                            Facebook ↗
+                        </a>
+                    </div>
+                </div>
+                <div id="socialFeedContainer">
+                    <!-- Behold embed renders here if feed ID is configured -->
+                    <!-- Falls back to a "not configured" state if no feed ID -->
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- SCRIPTS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+    <script>
+        gsap.registerPlugin(ScrollTrigger);
+
+        // Update date
+        function updateDate() {
+            const options = { weekday: 'short', month: 'short', day: 'numeric' };
+            const today = new Date().toLocaleDateString('en-US', options);
+            document.getElementById('todayDate').textContent = today;
+        }
+
+        // Load admin data
+        async function loadAdminData() {
+            try {
+                const response = await fetch('/api/admin/me');
+                const result = await response.json();
+
+                if (result.success && result.admin) {
+                    const admin = result.admin;
+                    const initials = admin.name.split(' ').map(n => n[0]).join('').toUpperCase();
+
+                    document.getElementById('adminAvatar').textContent = initials;
+                    document.getElementById('topbarAvatar').textContent = initials;
+                    document.getElementById('adminName').textContent = admin.name;
+                    document.getElementById('topbarName').textContent = admin.name;
+                }
+            } catch (error) {
+                console.error('Error loading admin data:', error);
+            }
+        }
+
+        // Load stats
+        async function loadStats() {
+            try {
+                const response = await fetch('/api/admin/analytics/overview');
+                const result = await response.json();
+
+                if (result.success && result.stats) {
+                    const stats = result.stats;
+
+                    // Animate numbers by specific ID to avoid layout order issues
+                    const elTotalBookings = document.getElementById('totalBookingsVal');
+                    const elRevenue = document.getElementById('revenueCount');
+                    const elProjected = document.getElementById('projectedRevenueCount');
+                    const elPending = document.getElementById('pendingCount');
+                    const elUpcoming = document.getElementById('upcomingCount');
+
+                    if (elTotalBookings) animateCounter(elTotalBookings, stats.totalBookingsThisMonth || 0);
+                    if (elRevenue) animateCounter(elRevenue, Math.floor(stats.revenue || 0));
+                    // Check if projectedRevenue exists yet from backend, default to 0
+                    if (elProjected) animateCounter(elProjected, Math.floor(stats.projectedRevenue || 0));
+                    if (elPending) animateCounter(elPending, stats.pendingConfirmations || 0);
+                    if (elUpcoming) animateCounter(elUpcoming, stats.upcomingEventsThisWeek || 0);
+
+                    // Initialize Chart
+                    if (stats.chartData) {
+                        initChart(stats.chartData.labels, stats.chartData.revenue);
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading stats:', error);
+            }
+        }
+
+        // Initialize Chart.js
+        function initChart(labels, data) {
+            const ctx = document.getElementById('revenueChart');
+            if (!ctx) return;
+
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Revenue (KES)',
+                        data: data,
+                        borderColor: 'var(--accent-gold)',
+                        backgroundColor: 'rgba(201, 168, 76, 0.1)',
+                        borderWidth: 2,
+                        tension: 0.4,
+                        fill: true,
+                        pointBackgroundColor: 'var(--text-main)',
+                        pointBorderColor: 'var(--accent-gold)',
+                        pointBorderWidth: 2,
+                        pointRadius: 4,
+                        pointHoverRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'var(--text-main)',
+                            titleFont: { family: 'DM Sans', size: 13 },
+                            bodyFont: { family: 'DM Sans', size: 14, weight: 'bold' },
+                            padding: 12,
+                            displayColors: false,
+                            callbacks: {
+                                label: function (context) {
+                                    return 'KES ' + context.parsed.y.toLocaleString();
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: 'rgba(0, 0, 0, 0.05)', drawBorder: false },
+                            ticks: {
+                                font: { family: 'DM Sans', size: 11 },
+                                callback: function (value) {
+                                    if (value >= 1000000) return (value / 1000000).toFixed(1) + 'M';
+                                    if (value >= 1000) return (value / 1000).toFixed(1) + 'k';
+                                    return value;
+                                }
+                            }
+                        },
+                        x: {
+                            grid: { display: false, drawBorder: false },
+                            ticks: { font: { family: 'DM Sans', size: 11 } }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Counter animation
+        function animateCounter(element, target) {
+            gsap.to(element, {
+                textContent: target,
+                duration: 1.5,
+                snap: { textContent: 1 },
+                ease: 'power2.out'
+            });
+        }
+
+        // Logout handler
+        function handleLogout() {
+            fetch('/api/admin/logout', { method: 'POST' })
+                .then(() => window.location.href = '/admin/login')
+                .catch(err => console.error('Logout error:', err));
+        }
+
+        // Animations on scroll
+        gsap.utils.toArray('.stat-card').forEach((card, index) => {
+            gsap.from(card, {
+                scrollTrigger: {
+                    trigger: card,
+                    start: 'top 80%',
+                    toggleActions: 'play none none none'
+                },
+                opacity: 0,
+                y: 40,
+                duration: 0.6,
+                delay: index * 0.1
+            });
+        });
+
+        async function loadSocialConfig() {
+            try {
+                const res = await fetch('/api/admin/settings', { credentials: 'include' });
+                const data = await res.json();
+                if (!data.success) return;
+
+                const s = data.settings;
+
+                // Set quick-link URLs
+                if (s.instagramUrl) document.getElementById('igLink').href = s.instagramUrl;
+                if (s.facebookUrl) document.getElementById('fbLink').href = s.facebookUrl;
+
+                // Inject Behold embed if feed ID is configured
+                const container = document.getElementById('socialFeedContainer');
+                if (s.beholdfeedId && s.beholdfeedId.trim()) {
+                    container.innerHTML = `
+                        <div data-behold-id="${s.beholdfeedId}"></div>
+                        <script>
+                            (function() {
+                                const d=document, script=d.createElement("script");
+                                script.type="module";
+                                script.src="https://w.behold.so/widget.js";
+                                d.head.append(script);
+                            })();
+                        <\/sc`+ `ript>
+                    `;
+                } else {
+                    container.innerHTML = `
+                        <div style="padding:32px;text-align:center;color:#999;
+                            background:#fff;border-radius:8px;border:1px dashed #E9E5DB;">
+                            <div style="font-size:32px;margin-bottom:12px;">📸</div>
+                            <div style="font-weight:600;color:#0D2B1F;margin-bottom:8px;">
+                                Instagram feed not connected
+                            </div>
+                            <div style="font-size:13px;">
+                                Go to <a href="/admin/settings" 
+                                style="color:#C9A84C;font-weight:600;">Settings → Social Media
+                                </a> and paste your Behold feed ID to display your latest posts here.
+                            </div>
+                        </div>
+                    `;
+                }
+            } catch (e) {
+                console.error('Failed to load social config:', e);
+            }
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            updateDate();
+            loadAdminData();
+            loadStats();
+            loadSocialConfig();
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,1129 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Staff - Emerald Admin</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-main);
+        }
+
+        .admin-layout {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 280px;
+            background: var(--bg-card);
+            border-right: 1px solid var(--accent-gold-hover);
+            padding: 32px 0;
+            position: fixed;
+            left: 0;
+            top: 0;
+            height: 100vh;
+            overflow-y: auto;
+            z-index: 100;
+        }
+
+        .sidebar-logo {
+            padding: 0 24px;
+            margin-bottom: 48px;
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-main);
+            letter-spacing: 2px;
+            animation: floatIdle 6s ease-in-out infinite;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 24px;
+            margin: 0 12px;
+            border-radius: 6px;
+            color: var(--text-main);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .nav-item:hover,
+        .nav-item.active {
+            background-color: rgba(201, 168, 76, 0.1);
+        }
+
+        .nav-item.active::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: var(--accent-gold);
+        }
+
+        .sidebar-footer {
+            position: absolute;
+            bottom: 24px;
+            left: 24px;
+            right: 24px;
+        }
+
+        .logout-btn {
+            width: 100%;
+            padding: 8px 12px;
+            background: var(--text-main);
+            color: var(--bg-primary);
+            border: none;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 16px;
+        }
+
+        .logout-btn:hover {
+            background: var(--accent-gold);
+            color: var(--text-main);
+        }
+
+        .main-content {
+            flex: 1;
+            margin-left: 280px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .topbar {
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border-color);
+            padding: 16px 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+
+        .page-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 28px;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .content {
+            flex: 1;
+            padding: 32px;
+            overflow-y: auto;
+        }
+
+        .header-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .filter-group {
+            display: flex;
+            gap: 12px;
+        }
+
+        .filter-select {
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 13px;
+            background: var(--bg-card);
+        }
+
+        .btn-primary {
+            padding: 10px 20px;
+            background: var(--text-main);
+            color: var(--bg-primary);
+            border: none;
+            border-radius: 4px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            background: var(--accent-gold);
+            color: var(--text-main);
+        }
+
+        .staff-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 16px;
+        }
+
+        .staff-card {
+            background: var(--bg-card);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .staff-card:hover {
+            box-shadow: 0 8px 24px rgba(13, 43, 31, 0.1);
+            transform: translateY(-4px);
+        }
+
+        .staff-header {
+            background: linear-gradient(135deg, var(--text-main), #1a3d2e);
+            color: var(--bg-primary);
+            padding: 16px;
+            text-align: center;
+        }
+
+        .staff-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: var(--accent-gold);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-main);
+            font-weight: 700;
+            font-size: 20px;
+            margin: 0 auto 12px;
+        }
+
+        .staff-name {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .staff-role {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .staff-body {
+            padding: 16px;
+        }
+
+        .staff-info {
+            font-size: 11px;
+            margin-bottom: 8px;
+            line-height: 1.6;
+        }
+
+        .staff-label {
+            color: var(--accent-gold);
+            font-weight: 600;
+        }
+
+        .staff-value {
+            color: var(--text-main);
+        }
+
+        .availability-toggle {
+            width: 100%;
+            padding: 8px;
+            margin: 8px 0;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            background: var(--bg-primary);
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .availability-toggle.available {
+            background: rgba(45, 106, 79, 0.1);
+            border-color: #2D6A4F;
+            color: #2D6A4F;
+        }
+
+        .availability-toggle.unavailable {
+            background: rgba(181, 51, 42, 0.1);
+            border-color: var(--accent-danger);
+            color: var(--accent-danger);
+        }
+
+        .staff-actions {
+            display: flex;
+            gap: 8px;
+            padding-top: 8px;
+            border-top: 1px solid var(--border-color);
+            margin-top: 8px;
+        }
+
+        .action-btn {
+            flex: 1;
+            padding: 6px;
+            border: none;
+            border-radius: 4px;
+            background: var(--text-main);
+            color: var(--bg-primary);
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .action-btn:hover {
+            background: var(--accent-gold);
+            color: var(--text-main);
+        }
+
+        @keyframes floatIdle {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-8px);
+            }
+        }
+
+        /* MODAL STYLES */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(13, 43, 31, 0.5);
+            z-index: 200;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--bg-card);
+            border-radius: 8px;
+            width: 90%;
+            max-width: 500px;
+            animation: slideInUp 0.4s cubic-bezier(0.4, 0.0, 0.2, 1);
+        }
+
+        .modal-header {
+            padding: 24px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .modal-body {
+            padding: 24px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #666;
+            text-transform: uppercase;
+        }
+
+        .form-input,
+        .form-select,
+        .form-textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 14px;
+        }
+
+        .form-textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .modal-footer {
+            padding: 16px 24px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+
+        .btn-cancel {
+            padding: 10px 20px;
+            background: transparent;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ═══════════════════════════════════════════════════════════
+           MOBILE RESPONSIVENESS (Injected via Phase 10 Overhaul)
+           ═══════════════════════════════════════════════════════════ */
+
+        /* Hamburger Menu Icon (Hidden on Desktop) */
+        .mobile-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: var(--text-main);
+            cursor: pointer;
+            margin-right: 15px;
+        }
+
+        @media (max-width: 768px) {
+
+            /* Show Hamburger */
+            .mobile-menu-btn {
+                display: block;
+            }
+
+            /* Sidebar becomes a drawer */
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s ease-in-out;
+                z-index: 2000;
+            }
+
+            .sidebar.active {
+                transform: translateX(0);
+            }
+
+            /* Main content expands to full width */
+            .main-content {
+                margin-left: 0;
+                width: 100vw;
+            }
+
+            /* Topbar adjustments */
+            .topbar {
+                padding: 15px 20px;
+                flex-wrap: wrap;
+                gap: 15px;
+            }
+
+            .page-title {
+                font-size: 22px;
+            }
+
+            .search-bar {
+                display: none;
+                /* Hide search on extreme mobile to save space */
+            }
+
+            /* Stats Grid Stacking */
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            /* Charts & Tables Stacking */
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+
+            /* Modals */
+            .modal-content {
+                width: 95%;
+                margin: 20px auto;
+                padding: 20px;
+            }
+
+            /* Form Rows */
+            .form-row,
+            .booking-grid {
+                grid-template-columns: 1fr;
+            }
+
+            /* Tables */
+            .table-container {
+                overflow-x: auto;
+            }
+        }
+
+
+        /* ═══════════════════════════════════════════════════════════
+           MOBILE QUICK ACTION FAB
+           ═══════════════════════════════════════════════════════════ */
+        .mobile-fab-container {
+            display: none;
+            position: fixed;
+            bottom: 25px;
+            right: 25px;
+            z-index: 999;
+        }
+
+        .mobile-fab-btn {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: var(--accent);
+            color: var(--primary);
+            border: none;
+            box-shadow: 0 4px 15px rgba(201, 168, 76, 0.4);
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: transform 0.3s ease, background 0.3s ease;
+        }
+
+        .mobile-fab-btn:active {
+            transform: scale(0.92);
+        }
+
+        .mobile-fab-menu {
+            position: absolute;
+            bottom: 70px;
+            right: 0;
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            padding: 10px 0;
+            min-width: 180px;
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(20px);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid rgba(201, 168, 76, 0.2);
+        }
+
+        .mobile-fab-container.active .mobile-fab-menu {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translateY(0);
+        }
+
+        .mobile-fab-container.active .mobile-fab-btn {
+            transform: rotate(45deg);
+        }
+
+        .fab-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 20px;
+            color: var(--text-dark);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: background 0.2s;
+            cursor: pointer;
+            border: none;
+            width: 100%;
+            background: transparent;
+            text-align: left;
+        }
+
+        .fab-item i {
+            margin-right: 12px;
+            color: var(--accent);
+            width: 16px;
+        }
+
+        .fab-item:hover,
+        .fab-item:active {
+            background: rgba(201, 168, 76, 0.1);
+        }
+
+        @media (max-width: 768px) {
+            .mobile-fab-container {
+                display: block;
+            }
+        }
+    </style>
+
+    <!-- DARK MODE LOGIC -->
+    <script>
+
+        // Mobile Sidebar Toggle
+        function toggleSidebar() {
+            document.querySelector('.sidebar').classList.toggle('active');
+        }
+
+        // Close sidebar if clicking outside of it on mobile
+        document.addEventListener('click', (e) => {
+            const sidebar = document.querySelector('.sidebar');
+            const hamburger = document.querySelector('.mobile-menu-btn');
+            if (window.innerWidth <= 768 && sidebar && sidebar.classList.contains('active')) {
+                if (!sidebar.contains(e.target) && !hamburger.contains(e.target)) {
+                    sidebar.classList.remove('active');
+                }
+            }
+        });
+
+        (function () {
+            if (localStorage.getItem('emeraldDarkMode') === 'true') {
+                document.documentElement.classList.add('dark-mode');
+            }
+        })();
+    </script>
+    <style>
+        :root {
+            --bg-primary: #F7F4EF;
+            --bg-card: #FFFFFF;
+            --text-main: #0D2B1F;
+            --border-color: #E9E5DB;
+            --accent-gold: #C9A84C;
+            --accent-gold-hover: #E9A825;
+            --accent-danger: #B5332A;
+            --sidebar-bg: #FFFFFF;
+        }
+
+        html.dark-mode {
+            --bg-primary: #0a1f16;
+            --bg-card: #0d2b1f;
+            --text-main: #F7F4EF;
+            --border-color: #1a3d2e;
+            --sidebar-bg: #091a13;
+        }
+
+        /* Generic Dark Mode Fixes */
+        html.dark-mode .sidebar {
+            background: var(--sidebar-bg);
+            border-right-color: var(--border-color);
+        }
+
+        html.dark-mode .topbar {
+            background: var(--sidebar-bg);
+            border-bottom-color: var(--border-color);
+        }
+
+        html.dark-mode .modal-content {
+            background: var(--bg-card);
+        }
+
+        html.dark-mode input,
+        html.dark-mode select,
+        html.dark-mode textarea {
+            background: var(--sidebar-bg);
+            color: var(--text-main);
+        }
+
+        html.dark-mode .btn-secondary,
+        html.dark-mode .btn-cancel {
+            color: var(--text-main);
+        }
+
+        html.dark-mode .nav-item {
+            color: var(--text-main);
+        }
+
+        html.dark-mode .pagination-btn {
+            background: var(--sidebar-bg);
+            color: var(--text-main);
+        }
+    </style>
+
+</head>
+
+<body>
+
+    <!-- Mobile Quick Action FAB -->
+    <div class="mobile-fab-container" id="mobileFab">
+        <button class="mobile-fab-btn" onclick="toggleFab()">
+            <i class="fas fa-plus"></i>
+        </button>
+        <div class="mobile-fab-menu">
+            <a href="/admin/bookings" class="fab-item">
+                <i class="fas fa-calendar-plus"></i> New Booking
+            </a>
+            <a href="/admin/clients" class="fab-item">
+                <i class="fas fa-user-plus"></i> New Client
+            </a>
+        </div>
+    </div>
+
+    <script>
+        function toggleFab() {
+            document.getElementById('mobileFab').classList.toggle('active');
+        }
+
+        // Close FAB if clicking outside
+        document.addEventListener('click', (e) => {
+            const fab = document.getElementById('mobileFab');
+            if (fab && fab.classList.contains('active') && !fab.contains(e.target)) {
+                fab.classList.remove('active');
+            }
+        });
+    </script>
+
+    <div class="admin-layout">
+        <aside class="sidebar">
+            <div class="sidebar-logo">EMERALD</div>
+            <nav>
+                <a href="/admin/dashboard" class="nav-item">Dashboard</a>
+                <a href="/admin/bookings" class="nav-item">Bookings</a>
+                <a href="/admin/clients" class="nav-item">Clients</a>
+                <a href="/admin/calendar" class="nav-item">Calendar</a>
+                <a href="/admin/analytics" class="nav-item">Analytics</a>
+                <a href="/admin/notifications" class="nav-item">Notifications</a>
+                <a href="/admin/gallery" class="nav-item">Gallery</a>
+                <a href="/admin/testimonials" class="nav-item">Testimonials</a>
+                <a href="/admin/staff" class="nav-item active">Staff</a>
+                <a href="/admin/settings" class="nav-item">Settings</a>
+            </nav>
+            <div class="sidebar-footer">
+                <button class="logout-btn" onclick="handleLogout()">Logout</button>
+            </div>
+        </aside>
+
+        <div class="main-content">
+            <div class="topbar">
+                <h1 class="page-title">Staff</h1>
+                <div style="flex: 1; text-align: right;">
+                    <span style="font-style: italic; color: var(--accent-gold); font-weight: 600;"
+                        id="todayDate"></span>
+                </div>
+            </div>
+
+
+            <div class="admin-layout">
+                <aside class="sidebar">
+                    <div class="sidebar-logo">EMERALD</div>
+                    <nav>
+                        <a href="/admin/dashboard" class="nav-item">Dashboard</a>
+                        <a href="/admin/bookings" class="nav-item">Bookings</a>
+                        <a href="/admin/clients" class="nav-item">Clients</a>
+                        <a href="/admin/calendar" class="nav-item">Calendar</a>
+                        <a href="/admin/analytics" class="nav-item">Analytics</a>
+                        <a href="/admin/notifications" class="nav-item">Notifications</a>
+                        <a href="/admin/gallery" class="nav-item">Gallery</a>
+                        <a href="/admin/testimonials" class="nav-item">Testimonials</a>
+                        <a href="/admin/staff" class="nav-item active">Staff</a>
+                        <a href="/admin/settings" class="nav-item">Settings</a>
+                    </nav>
+                    <div class="sidebar-footer">
+                        <button class="logout-btn" onclick="handleLogout()">Logout</button>
+                    </div>
+                </aside>
+
+                <div class="main-content">
+                    <div class="topbar">
+                        <h1 class="page-title">Staff</h1>
+                        <div style="flex: 1; text-align: right;">
+                            <span style="font-style: italic; color: var(--accent-gold); font-weight: 600;"
+                                id="todayDate"></span>
+                        </div>
+                    </div>
+
+                    <div class="content">
+                        <div class="header-controls">
+                            <div class="filter-group">
+                                <select class="filter-select" id="categoryFilter" onchange="filterStaff()">
+                                    <option value="">All Categories</option>
+                                    <option value="Waiters">Waiters</option>
+                                    <option value="Protocol">Protocol</option>
+                                    <option value="Chauffeurs">Chauffeurs</option>
+                                    <option value="Security">Security</option>
+                                    <option value="Setup">Setup</option>
+                                    <option value="Coordination">Coordination</option>
+                                    <option value="Director">Director</option>
+                                    <option value="IT Head">IT Head</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                                <select class="filter-select" id="availabilityFilter" onchange="filterStaff()">
+                                    <option value="">All Availability</option>
+                                    <option value="available">Available</option>
+                                    <option value="unavailable">Unavailable</option>
+                                </select>
+                            </div>
+                            <button class="btn-primary" onclick="addStaff()">➕ Add Staff Member</button>
+                        </div>
+
+                        <div class="staff-grid" id="staffGrid">
+                            <!-- Populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ADD STAFF MODAL -->
+            <div class="modal" id="staffModal">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2 class="modal-title">Add Staff Member</h2>
+                        <button class="action-btn" style="width: auto; background: none; color: #999; font-size: 20px;"
+                            onclick="closeModal()">✕</button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label class="form-label">Full Name</label>
+                            <input type="text" id="staffName" class="form-input" placeholder="e.g. Jane Doe">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Category</label>
+                            <select id="staffCategory" class="form-select">
+                                <option value="Waiters">Waiters</option>
+                                <option value="Protocol">Protocol</option>
+                                <option value="Chauffeurs">Chauffeurs</option>
+                                <option value="Security">Security</option>
+                                <option value="Setup">Setup</option>
+                                <option value="Coordination">Coordination</option>
+                                <option value="Director">Director</option>
+                                <option value="IT Head">IT Head</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        <div class="form-group" id="customRoleGroup" style="display: none;">
+                            <label class="form-label">Specify Role</label>
+                            <input type="text" id="staffCustomRole" class="form-input"
+                                placeholder="e.g. Lead Technician">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Profile Photo (Optional)</label>
+                            <input type="file" id="staffPhoto" class="form-input" accept="image/*">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Email</label>
+                            <input type="email" id="staffEmail" class="form-input" placeholder="jane@example.com">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Phone</label>
+                            <input type="text" id="staffPhone" class="form-input" placeholder="+254...">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">WhatsApp Number</label>
+                            <input type="text" id="staffWhatsapp" class="form-input" placeholder="+254... (Optional)">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Bio / Notes</label>
+                            <textarea id="staffBio" class="form-textarea" placeholder="Optional details..."></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+                        <button class="btn-primary" onclick="saveStaff()">Save Staff</button>
+                    </div>
+                </div>
+            </div>
+
+            <script>
+                let staffData = [];
+
+                window.addEventListener('load', () => {
+                    updateDate();
+                    loadAdminData();
+                    loadStaff();
+                });
+
+                async function loadAdminData() {
+                    try {
+                        const response = await fetch('/api/admin/me');
+                        const result = await response.json();
+                        if (result.success && result.admin) {
+                            const initials = result.admin.name.split(' ').map(n => n[0]).join('').toUpperCase();
+                            // update profile pic or name here if needed
+                        }
+                    } catch (error) {
+                        console.error('Error:', error);
+                    }
+                }
+
+                async function loadStaff() {
+                    try {
+                        const response = await fetch('/api/admin/staff');
+                        const result = await response.json();
+                        if (result.success) {
+                            staffData = result.staff.map(s => ({
+                                id: s._id,
+                                name: s.name,
+                                category: s.category,
+                                phone: s.phone || '-',
+                                whatsapp: s.whatsapp || null,
+                                email: s.email || '-',
+                                hourlyRate: s.hourlyRate || 0,
+                                available: s.isAvailable,
+                                photo: s.photo || null,
+                                notes: s.notes || ''
+                            }));
+                            renderStaff(staffData);
+                        }
+                    } catch (error) {
+                        console.error('Error loading staff:', error);
+                    }
+                }
+
+                function updateDate() {
+                    const options = { year: 'numeric', month: 'short', day: 'numeric' };
+                    const today = new Date().toLocaleDateString('en-US', options);
+                    document.getElementById('todayDate').textContent = today;
+                }
+
+                function renderStaff(staff) {
+                    const grid = document.getElementById('staffGrid');
+                    grid.innerHTML = staff.map(member => {
+                        const initials = member.name.split(' ').map(n => n[0]).join('');
+                        const avatarContent = member.photo
+                            ? `<img src="${member.photo}" alt="${member.name}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">`
+                            : initials;
+
+                        return `
+                    <div class="staff-card">
+                        <div class="staff-header">
+                            <div class="staff-avatar">${avatarContent}</div>
+                            <div class="staff-name">${member.name}</div>
+                            <div class="staff-role">${member.category}</div>
+                        </div>
+                        <div class="staff-body">
+                            <div class="staff-info">
+                                <span class="staff-label">Email:</span><br>
+                                <span class="staff-value">${member.email}</span>
+                            </div>
+                            <div class="staff-info">
+                                <span class="staff-label">Phone:</span><br>
+                                <span class="staff-value">${member.phone}</span>
+                            </div>
+                            ${member.whatsapp ? `
+                            <div class="staff-info" style="margin-top:4px;">
+                                <span class="staff-label">WhatsApp:</span><br>
+                                <a href="https://wa.me/${member.whatsapp.replace(/\D/g, '')}" target="_blank" style="color:#25D366;font-size:12px;text-decoration:none;font-weight:600;">
+                                    💬 Message on WhatsApp
+                                </a>
+                            </div>` : ''}
+                            <div class="staff-info" style="margin-top:8px;">
+                                <span class="staff-label">Hourly Rate:</span><br>
+                                <span class="staff-value">${member.hourlyRate}</span>
+                            </div>
+                            <button class="availability-toggle ${member.available ? 'available' : 'unavailable'}" 
+                                    onclick="toggleAvailability(${member.id})">
+                                ${member.available ? '✓ Available' : '✗ Unavailable'}
+                            </button>
+                                <button class="action-btn" onclick="deleteStaff('${member.id}')" style="background: var(--accent-danger); margin-top: 8px;">Delete Access</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                    }).join('');
+                }
+
+                function filterStaff() {
+                    const category = document.getElementById('categoryFilter').value;
+                    const availability = document.getElementById('availabilityFilter').value;
+
+                    const filtered = staffData.filter(staff => {
+                        const catMatch = !category || staff.category === category;
+                        const availMatch = !availability || (availability === 'available' ? staff.available : !staff.available);
+                        return catMatch && availMatch;
+                    });
+
+                    renderStaff(filtered);
+                }
+
+                function toggleAvailability(id) {
+                    alert('Status toggling requires backend implementation in staff model, skipping for now.');
+                }
+
+                function addStaff() {
+                    document.getElementById('staffName').value = '';
+                    document.getElementById('staffCategory').value = 'Waiters';
+                    document.getElementById('staffCustomRole').value = '';
+                    document.getElementById('customRoleGroup').style.display = 'none';
+                    document.getElementById('staffEmail').value = '';
+                    document.getElementById('staffPhone').value = '';
+                    document.getElementById('staffWhatsapp').value = '';
+                    document.getElementById('staffBio').value = '';
+                    document.getElementById('staffPhoto').value = '';
+                    document.getElementById('staffModal').dataset.editId = '';
+                    document.querySelector('#staffModal .modal-title').textContent = 'Add Staff Member';
+                    document.getElementById('staffModal').classList.add('show');
+                }
+
+                // Handle category change to show/hide custom role
+                document.getElementById('staffCategory').addEventListener('change', function () {
+                    document.getElementById('customRoleGroup').style.display = this.value === 'Other' ? 'block' : 'none';
+                });
+
+                function editStaff(id) {
+                    const member = staffData.find(s => s.id === id);
+                    if (!member) return;
+
+                    document.getElementById('staffName').value = member.name;
+
+                    // Check if category is standard
+                    const standardCategories = ['Waiters', 'Protocol', 'Chauffeurs', 'Security', 'Setup', 'Coordination', 'Director', 'IT Head'];
+                    if (standardCategories.includes(member.category)) {
+                        document.getElementById('staffCategory').value = member.category;
+                        document.getElementById('customRoleGroup').style.display = 'none';
+                    } else {
+                        document.getElementById('staffCategory').value = 'Other';
+                        document.getElementById('staffCustomRole').value = member.category;
+                        document.getElementById('customRoleGroup').style.display = 'block';
+                    }
+
+                    document.getElementById('staffEmail').value = member.email !== '-' ? member.email : '';
+                    document.getElementById('staffPhone').value = member.phone !== '-' ? member.phone : '';
+                    document.getElementById('staffWhatsapp').value = member.whatsapp || '';
+                    document.getElementById('staffBio').value = member.notes || '';
+                    document.getElementById('staffPhoto').value = ''; // Don't preload file path
+
+                    document.getElementById('staffModal').dataset.editId = member.id;
+                    document.querySelector('#staffModal .modal-title').textContent = 'Edit Staff Member';
+                    document.getElementById('staffModal').classList.add('show');
+                }
+
+                async function deleteStaff(id) {
+                    if (confirm('Delete this staff member permanently?')) {
+                        try {
+                            const response = await fetch(`/api/admin/staff/${id}`, { method: 'DELETE' });
+                            const result = await response.json();
+                            if (result.success) {
+                                loadStaff();
+                            } else {
+                                alert(result.message || 'Failed to delete staff');
+                            }
+                        } catch (error) {
+                            console.error('Error deleting staff:', error);
+                        }
+                    }
+                }
+
+                function closeModal() {
+                    document.getElementById('staffModal').classList.remove('show');
+                }
+
+                // Convert file to Base64
+                function convertToBase64(file) {
+                    return new Promise((resolve, reject) => {
+                        const fileReader = new FileReader();
+                        fileReader.readAsDataURL(file);
+                        fileReader.onload = () => {
+                            resolve(fileReader.result);
+                        };
+                        fileReader.onerror = (error) => {
+                            reject(error);
+                        };
+                    });
+                }
+
+                async function saveStaff() {
+                    const categorySelect = document.getElementById('staffCategory').value;
+                    const category = categorySelect === 'Other'
+                        ? document.getElementById('staffCustomRole').value.trim()
+                        : categorySelect;
+
+                    const fileInput = document.getElementById('staffPhoto');
+                    let photoBase64 = null;
+                    if (fileInput.files.length > 0) {
+                        try {
+                            photoBase64 = await convertToBase64(fileInput.files[0]);
+                        } catch (e) {
+                            return alert('Failed to process image file.');
+                        }
+                    }
+
+                    const data = {
+                        name: document.getElementById('staffName').value.trim(),
+                        category: category,
+                        email: document.getElementById('staffEmail').value.trim(),
+                        phone: document.getElementById('staffPhone').value.trim(),
+                        whatsapp: document.getElementById('staffWhatsapp').value.trim(),
+                        bio: document.getElementById('staffBio').value.trim(),
+                    };
+
+                    if (photoBase64) {
+                        data.photo = photoBase64;
+                    }
+
+                    if (!data.name || !data.phone || !data.category) {
+                        return alert('Name, phone number, and defining a category sequence are required.');
+                    }
+
+                    const editId = document.getElementById('staffModal').dataset.editId;
+                    const url = editId ? `/api/admin/staff/${editId}` : '/api/admin/staff';
+                    const method = editId ? 'PATCH' : 'POST';
+
+                    try {
+                        const response = await fetch(url, {
+                            method: method,
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(data)
+                        });
+                        const result = await response.json();
+
+                        if (result.success) {
+                            closeModal();
+                            loadStaff();
+                        } else {
+                            alert(result.message || 'Error saving staff');
+                        }
+                    } catch (err) {
+                        console.error('Error:', err);
+                        alert('Server error saving staff.');
+                    }
+                }
+
+                function handleLogout() {
+                    fetch('/api/admin/logout', { method: 'POST' })
+                        .then(() => window.location.href = '/admin/login')
+                        .catch(error => console.error('Logout error:', error));
+                }
+            </script>
+</body>
+
+</html>

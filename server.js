@@ -31,6 +31,9 @@ const Analytics = require('./server/models/Analytics');
 // ── BOOKING ROUTER ──
 const bookingRoutes = require('./server/routes/bookingRoutes');
 
+// ── ADMIN ROUTER ──
+const adminRoutes = require('./server/routes/adminRoutes');
+
 mongoose.connect(process.env.MONGODB_URI)
     .then(() => console.log('✅ MongoDB connected'))
     .catch(err => console.error('❌ MongoDB connection error:', err.message));
@@ -64,6 +67,30 @@ app.use(cors({
     ],
     credentials: true
 }));
+
+// serve admin static UI files so they load from the same origin as the API
+const path = require('path');
+// allow requests like /admin/bookings to resolve to bookings.html
+app.use('/admin', express.static(path.join(__dirname, 'admin'), {
+    extensions: ['html'],
+    index: false
+}));
+
+// fallback for any other /admin/* path that doesn't match a file
+app.get('/admin/*', (req, res) => {
+    const page = req.path.replace('/admin/', '');
+    // prevent directory traversal
+    if (page.includes('..')) return res.status(400).send('Bad request');
+    res.sendFile(path.join(__dirname, 'admin', page + '.html'), err => {
+        if (err) res.status(404).send('Admin page not found');
+    });
+});
+
+// redirect bare /admin to login
+app.get('/admin', (req, res) => {
+    res.redirect('/admin/login');
+});
+
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static('public'));
@@ -499,6 +526,9 @@ app.get('/api/health', (req, res) => {
 
 // ── BOOKING ROUTES (handles /api/book-event, saves to MongoDB) ──
 app.use('/api', bookingRoutes);
+
+// ── ADMIN ROUTES (handles /api/admin/login, /api/admin/change-password, etc) ──
+app.use('/api/admin', adminRoutes);
 
 // ── ANALYTICS TRACKING ENDPOINT ──
 app.post('/api/analytics/event', async (req, res) => {

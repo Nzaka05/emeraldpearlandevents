@@ -62,6 +62,38 @@ const BookingSchema = new mongoose.Schema({
         type: String,
         default: ''
     },
+    adminNotes: [{
+        note: String,
+        addedBy: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Admin'
+        },
+        addedAt: {
+            type: Date,
+            default: Date.now
+        }
+    }],
+    assignedStaff: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Staff'
+    }],
+    supervisor: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Staff',
+        default: null
+    },
+    staffNotified48hr: {
+        type: Boolean,
+        default: false
+    },
+    isPaid: {
+        type: Boolean,
+        default: false
+    },
+    amountPaid: {
+        type: Number,
+        default: 0
+    },
     status: {
         type: String,
         enum: ['new', 'contacted', 'confirmed', 'completed', 'cancelled'],

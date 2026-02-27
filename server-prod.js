@@ -3,11 +3,17 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const helmet = require('helmet');
+const compression = require('compression');
+const mongoSanitize = require('express-mongo-sanitize');
+const morgan = require('morgan');
 const bodyParser = require('body-parser');
 const rateLimit = require('express-rate-limit');
+const cookieParser = require('cookie-parser');
 
 // Import routes and services
 const bookingRoutes = require('./server/routes/bookingRoutes');
+const adminRoutes = require('./server/routes/adminRoutes');
+const { verifyAdminPage } = require('./server/middleware/adminAuth');
 const { initializeEmailService } = require('./server/services/emailService');
 const { initializeCronJobs, stopCronJobs } = require('./server/services/cronService');
 const Analytics = require('./server/models/Analytics');
@@ -24,8 +30,32 @@ const NODE_ENV = process.env.NODE_ENV || 'development';
 // MIDDLEWARE - SECURITY & PARSING
 // ═══════════════════════════════════════════════════════════
 
+// Production HTTP Request Logging
+if (NODE_ENV !== 'test') {
+    app.use(morgan('combined'));
+}
+
+// Data Compression (Gzip/Brotli)
+app.use(compression());
+
+// Prevent NoSQL Injection
+app.use(mongoSanitize());
+
 // Helmet for security headers
-app.use(helmet());
+app.use(helmet({
+    contentSecurityPolicy: {
+        directives: {
+            defaultSrc: ["'self'"],
+            scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "cdnjs.cloudflare.com"],
+            scriptSrcAttr: ["'unsafe-inline'"],
+            styleSrc: ["'self'", "'unsafe-inline'", "fonts.googleapis.com", "cdnjs.cloudflare.com"],
+            fontSrc: ["'self'", "fonts.gstatic.com", "cdnjs.cloudflare.com"],
+            imgSrc: ["'self'", "data:", "blob:"],
+            mediaSrc: ["'self'", "blob:"],
+            connectSrc: ["'self'"]
+        }
+    }
+}));
 
 // CORS configuration
 app.use(cors({
@@ -48,6 +78,7 @@ app.use(cors({
         'http://127.0.0.1:8000',
         'http://127.0.0.1:8080',
         'https://emeraldpearlandevents.netlify.app', // ✅ Netlify production
+        'https://emeraldpearlandevents.onrender.com', // ✅ Render production
         'null' // file:// protocol (opening HTML directly)
     ],
     methods: ['GET', 'POST', 'PATCH', 'DELETE'],
@@ -57,6 +88,9 @@ app.use(cors({
 // Body parser
 app.use(bodyParser.json({ limit: '10mb' }));
 app.use(bodyParser.urlencoded({ limit: '10mb', extended: true }));
+
+// Cookie parser
+app.use(cookieParser());
 
 // General rate limiting
 const limiter = rateLimit({
@@ -93,9 +127,104 @@ const connectDatabase = async () => {
 };
 
 // ═══════════════════════════════════════════════════════════
-// HEALTH CHECK ENDPOINT
+// SERVE STATIC FILES & ADMIN PAGES
 // ═══════════════════════════════════════════════════════════
 
+// Static file caching options
+const staticOptions = {
+    maxAge: '1d', // Cache for 1 day
+    etag: true
+};
+
+// Public files
+app.use(express.static('public', staticOptions));
+app.use('/images', express.static('images', staticOptions));
+
+// Root redirect for admin
+app.get('/admin', (req, res) => {
+    res.redirect('/admin/login');
+});
+
+// Admin pages (must be served after routes to avoid conflicts)
+// Admin login
+app.get('/admin/login', (req, res) => {
+    res.sendFile(__dirname + '/admin/login.html');
+});
+
+// Admin dashboard (protected)
+app.get('/admin/dashboard', verifyAdminPage, (req, res) => {
+    res.sendFile(__dirname + '/admin/dashboard.html');
+});
+
+// Admin bookings page
+app.get('/admin/bookings', verifyAdminPage, (req, res) => {
+    res.sendFile(__dirname + '/admin/bookings.html');
+});
+
+// Admin clients page
+app.get('/admin/clients', verifyAdminPage, (req, res) => {
+    res.sendFile(__dirname + '/admin/clients.html');
+});
+
+// Admin calendar page
+app.get('/admin/calendar', verifyAdminPage, (req, res) => {
+    res.sendFile(__dirname + '/admin/calendar.html');
+});
+
+// Admin analytics page
+app.get('/admin/analytics', verifyAdminPage, (req, res) => {
+    res.sendFile(__dirname + '/admin/analytics.html');
+});
+
+// Admin notifications page
+app.get('/admin/notifications', verifyAdminPage, (req, res) => {
+    res.sendFile(__dirname + '/admin/notifications.html');
+});
+
+// Admin gallery page
+app.get('/admin/gallery', verifyAdminPage, (req, res) => {
+    res.sendFile(__dirname + '/admin/gallery.html');
+});
+
+// Admin testimonials page
+app.get('/admin/testimonials', verifyAdminPage, (req, res) => {
+    res.sendFile(__dirname + '/admin/testimonials.html');
+});
+
+// Admin staff page
+app.get('/admin/staff', verifyAdminPage, (req, res) => {
+    res.sendFile(__dirname + '/admin/staff.html');
+});
+
+// Admin settings page
+app.get('/admin/settings', verifyAdminPage, (req, res) => {
+    res.sendFile(__dirname + '/admin/settings.html');
+});
+
+// Error pages
+app.get('/admin/404', (req, res) => {
+    res.sendFile(__dirname + '/admin/404.html');
+});
+
+app.get('/admin/500', (req, res) => {
+    res.sendFile(__dirname + '/admin/500.html');
+});
+
+app.get('/admin/403', (req, res) => {
+    res.sendFile(__dirname + '/admin/403.html');
+});
+
+// ═══════════════════════════════════════════════════════════
+// API ROUTES
+// ═══════════════════════════════════════════════════════════
+
+// Main booking API
+app.use('/api', bookingRoutes);
+
+// Admin API (protected by JWT middleware)
+app.use('/api/admin', adminRoutes);
+
+// Health check
 app.get('/api/health', (req, res) => {
     const mongooseState = mongoose.connection.readyState;
     const isConnected = mongooseState === 1;
@@ -110,11 +239,16 @@ app.get('/api/health', (req, res) => {
     });
 });
 
-// ═══════════════════════════════════════════════════════════
-// ROUTES
-// ═══════════════════════════════════════════════════════════
-
-app.use('/api', bookingRoutes);
+// Public gallery endpoint (no auth required — client page reads this)
+app.get('/api/gallery', async (req, res) => {
+    try {
+        const Gallery = require('./server/models/Gallery');
+        const items = await Gallery.find().sort({ order: 1, uploadedAt: -1 });
+        res.json({ success: true, gallery: items });
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'Error fetching gallery' });
+    }
+});
 
 // ═══════════════════════════════════════════════════════════
 // ANALYTICS TRACKING ENDPOINT
@@ -159,28 +293,57 @@ app.post('/api/analytics/event', async (req, res) => {
 });
 
 // ═══════════════════════════════════════════════════════════
+// API RATE LIMITING (STRICT)
+// ═══════════════════════════════════════════════════════════
+
+// Stricter limit for authentication/admin routes to prevent brute force
+const authLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 20, // Limit each IP to 20 auth requests per window
+    message: { success: false, message: 'Too many authentication attempts, please try again after 15 minutes' }
+});
+
+app.use('/api/admin/login', authLimiter);
+app.use('/api/admin/forgot-password', authLimiter);
+
+// ═══════════════════════════════════════════════════════════
 // 404 HANDLER
 // ═══════════════════════════════════════════════════════════
 
 app.use((req, res) => {
-    res.status(404).json({
-        success: false,
-        message: 'Endpoint not found',
-        path: req.path
-    });
+    // If it's an API route that wasn't found, return JSON
+    if (req.path.startsWith('/api/')) {
+        return res.status(404).json({
+            success: false,
+            message: 'API Endpoint not found',
+            path: req.path
+        });
+    }
+    // Otherwise serve the 404 HTML page for admin routes
+    if (req.path.startsWith('/admin/')) {
+        return res.status(404).sendFile(__dirname + '/admin/404.html');
+    }
+    // Very fallback
+    res.status(404).send('Page not found');
 });
 
 // ═══════════════════════════════════════════════════════════
-// ERROR HANDLING MIDDLEWARE
+// GLOBAL ERROR HANDLING MIDDLEWARE
 // ═══════════════════════════════════════════════════════════
 
 app.use((error, req, res, next) => {
-    console.error('[ERROR]', error);
+    console.error('[SERVER ERROR]', error);
 
-    res.status(error.status || 500).json({
+    const statusCode = error.status || 500;
+
+    // Do not leak stack traces in production
+    const isProd = NODE_ENV === 'production';
+    const message = isProd && statusCode === 500 ? 'Internal Server Error' : error.message;
+
+    res.status(statusCode).json({
         success: false,
-        message: error.message || 'Server error',
-        ...(NODE_ENV === 'development' && { error: error.stack })
+        message: message || 'Server error',
+        ...(!isProd && { stack: error.stack })
     });
 });
 

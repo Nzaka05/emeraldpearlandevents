@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clients - Emerald Admin</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-main);
+        }
+
+        .admin-layout {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 280px;
+            background: var(--bg-card);
+            border-right: 1px solid var(--accent-gold-hover);
+            padding: 32px 0;
+            position: fixed;
+            left: 0;
+            top: 0;
+            height: 100vh;
+            overflow-y: auto;
+            z-index: 100;
+        }
+
+        .sidebar-logo {
+            padding: 0 24px;
+            margin-bottom: 48px;
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-main);
+            letter-spacing: 2px;
+            animation: floatIdle 6s ease-in-out infinite;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 24px;
+            margin: 0 12px;
+            border-radius: 6px;
+            color: var(--text-main);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .nav-item:hover, .nav-item.active {
+            background-color: rgba(201, 168, 76, 0.1);
+        }
+
+        .nav-item.active::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: var(--accent-gold);
+        }
+
+        .sidebar-footer {
+            position: absolute;
+            bottom: 24px;
+            left: 24px;
+            right: 24px;
+        }
+
+        .logout-btn {
+            width: 100%;
+            padding: 8px 12px;
+            background: var(--text-main);
+            color: var(--bg-primary);
+            border: none;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 16px;
+        }
+
+        .logout-btn:hover {
+            background: var(--accent-gold);
+            color: var(--text-main);
+        }
+
+        .main-content {
+            flex: 1;
+            margin-left: 280px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .topbar {
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border-color);
+            padding: 16px 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+
+        .page-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 28px;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .content {
+            flex: 1;
+            padding: 32px;
+            overflow-y: auto;
+        }
+
+        .header-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 32px;
+        }
+
+        .search-bar {
+            padding: 10px 16px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            width: 300px;
+            font-size: 13px;
+        }
+
+        .search-bar:focus {
+            outline: none;
+            border-color: var(--accent-gold);
+            box-shadow: 0 0 0 2px rgba(201, 168, 76, 0.1);
+        }
+
+        .btn-primary {
+            padding: 10px 20px;
+            background: var(--text-main);
+            color: var(--bg-primary);
+            border: none;
+            border-radius: 4px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            background: var(--accent-gold);
+            color: var(--text-main);
+        }
+
+        .clients-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 24px;
+        }
+
+        .flip-card {
+            background-color: transparent;
+            width: 100%;
+            height: 320px;
+            perspective: 1000px;
+            cursor: pointer;
+        }
+
+        .flip-card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            text-align: center;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+        }
+
+        .flip-card.flipped .flip-card-inner {
+            transform: rotateY(180deg);
+        }
+
+        .flip-card-front, .flip-card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 24px;
+        }
+
+        .flip-card-front {
+            background: linear-gradient(135deg, var(--bg-card) 0%, var(--bg-primary) 100%);
+        }
+
+        .flip-card-back {
+            background: linear-gradient(135deg, var(--text-main) 0%, #1a3d2e 100%);
+            color: var(--bg-primary);
+            transform: rotateY(180deg);
+        }
+
+        .client-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent-gold), var(--accent-gold-hover));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--bg-card);
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            box-shadow: 0 4px 12px rgba(201, 168, 76, 0.2);
+        }
+
+        .client-name {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--text-main);
+        }
+
+        .client-event-type {
+            font-size: 12px;
+            color: var(--accent-gold);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 600;
+        }
+
+        .client-email {
+            font-size: 12px;
+            color: #999;
+            margin-top: 12px;
+            word-break: break-all;
+        }
+
+        .client-phone {
+            font-size: 12px;
+            color: #999;
+            margin-top: 8px;
+        }
+
+        .client-info-row {
+            font-size: 11px;
+            color: var(--accent-gold-hover);
+            margin-top: 6px;
+        }
+
+        .flip-card-back .info-item {
+            text-align: left;
+            width: 100%;
+            font-size: 11px;
+            margin-top: 8px;
+            line-height: 1.6;
+        }
+
+        .info-label {
+            color: var(--accent-gold);
+            font-weight: 600;
+        }
+
+        @keyframes floatIdle {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+
+        @media (max-width: 768px) {
+            .sidebar { position: relative; width: 100%; }
+            .main-content { margin-left: 0; }
+            .clients-grid { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
+        }
+    
+        /* ═══════════════════════════════════════════════════════════
+           MOBILE RESPONSIVENESS (Injected via Phase 10 Overhaul)
+           ═══════════════════════════════════════════════════════════ */
+        
+        /* Hamburger Menu Icon (Hidden on Desktop) */
+        .mobile-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: var(--text-main);
+            cursor: pointer;
+            margin-right: 15px;
+        }
+
+        @media (max-width: 768px) {
+            /* Show Hamburger */
+            .mobile-menu-btn {
+                display: block;
+            }
+            
+            /* Sidebar becomes a drawer */
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s ease-in-out;
+                z-index: 2000;
+            }
+            
+            .sidebar.active {
+                transform: translateX(0);
+            }
+            
+            /* Main content expands to full width */
+            .main-content {
+                margin-left: 0;
+                width: 100vw;
+            }
+            
+            /* Topbar adjustments */
+            .topbar {
+                padding: 15px 20px;
+                flex-wrap: wrap;
+                gap: 15px;
+            }
+            
+            .page-title {
+                font-size: 22px;
+            }
+            
+            .search-bar {
+                display: none; /* Hide search on extreme mobile to save space */
+            }
+            
+            /* Stats Grid Stacking */
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            /* Charts & Tables Stacking */
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            /* Modals */
+            .modal-content {
+                width: 95%;
+                margin: 20px auto;
+                padding: 20px;
+            }
+            
+            /* Form Rows */
+            .form-row, .booking-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            /* Tables */
+            .table-container {
+                overflow-x: auto;
+            }
+        }
+
+    
+        /* ═══════════════════════════════════════════════════════════
+           MOBILE QUICK ACTION FAB
+           ═══════════════════════════════════════════════════════════ */
+        .mobile-fab-container {
+            display: none;
+            position: fixed;
+            bottom: 25px;
+            right: 25px;
+            z-index: 999;
+        }
+
+        .mobile-fab-btn {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: var(--accent);
+            color: var(--primary);
+            border: none;
+            box-shadow: 0 4px 15px rgba(201, 168, 76, 0.4);
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: transform 0.3s ease, background 0.3s ease;
+        }
+
+        .mobile-fab-btn:active {
+            transform: scale(0.92);
+        }
+
+        .mobile-fab-menu {
+            position: absolute;
+            bottom: 70px;
+            right: 0;
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            padding: 10px 0;
+            min-width: 180px;
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(20px);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid rgba(201, 168, 76, 0.2);
+        }
+
+        .mobile-fab-container.active .mobile-fab-menu {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translateY(0);
+        }
+
+        .mobile-fab-container.active .mobile-fab-btn {
+            transform: rotate(45deg);
+        }
+
+        .fab-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 20px;
+            color: var(--text-dark);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: background 0.2s;
+            cursor: pointer;
+            border: none;
+            width: 100%;
+            background: transparent;
+            text-align: left;
+        }
+
+        .fab-item i {
+            margin-right: 12px;
+            color: var(--accent);
+            width: 16px;
+        }
+
+        .fab-item:hover, .fab-item:active {
+            background: rgba(201, 168, 76, 0.1);
+        }
+
+        @media (max-width: 768px) {
+            .mobile-fab-container {
+                display: block;
+            }
+        }
+
+    </style>
+
+    <!-- DARK MODE LOGIC -->
+    <script>
+
+        // Mobile Sidebar Toggle
+        function toggleSidebar() {
+            document.querySelector('.sidebar').classList.toggle('active');
+        }
+
+        // Close sidebar if clicking outside of it on mobile
+        document.addEventListener('click', (e) => {
+            const sidebar = document.querySelector('.sidebar');
+            const hamburger = document.querySelector('.mobile-menu-btn');
+            if (window.innerWidth <= 768 && sidebar && sidebar.classList.contains('active')) {
+                if (!sidebar.contains(e.target) && !hamburger.contains(e.target)) {
+                    sidebar.classList.remove('active');
+                }
+            }
+        });
+
+        (function() {
+            if (localStorage.getItem('emeraldDarkMode') === 'true') {
+                document.documentElement.classList.add('dark-mode');
+            }
+        })();
+    </script>
+    <style>
+        :root {
+            --bg-primary: #F7F4EF;
+            --bg-card: #FFFFFF;
+            --text-main: #0D2B1F;
+            --border-color: #E9E5DB;
+            --accent-gold: #C9A84C;
+            --accent-gold-hover: #E9A825;
+            --accent-danger: #B5332A;
+            --sidebar-bg: #FFFFFF;
+        }
+
+        html.dark-mode {
+            --bg-primary: #0a1f16;
+            --bg-card: #0d2b1f;
+            --text-main: #F7F4EF;
+            --border-color: #1a3d2e;
+            --sidebar-bg: #091a13;
+        }
+
+        /* Generic Dark Mode Fixes */
+        html.dark-mode .sidebar { background: var(--sidebar-bg); border-right-color: var(--border-color); }
+        html.dark-mode .topbar { background: var(--sidebar-bg); border-bottom-color: var(--border-color); }
+        html.dark-mode .modal-content { background: var(--bg-card); }
+        html.dark-mode input, html.dark-mode select, html.dark-mode textarea { background: var(--sidebar-bg); color: var(--text-main); }
+        html.dark-mode .btn-secondary, html.dark-mode .btn-cancel { color: var(--text-main); }
+        html.dark-mode .nav-item { color: var(--text-main); }
+        html.dark-mode .pagination-btn { background: var(--sidebar-bg); color: var(--text-main); }
+    </style>
+
+</head>
+<body>
+
+    <!-- Mobile Quick Action FAB -->
+    <div class="mobile-fab-container" id="mobileFab">
+        <button class="mobile-fab-btn" onclick="toggleFab()">
+            <i class="fas fa-plus"></i>
+        </button>
+        <div class="mobile-fab-menu">
+            <a href="/admin/bookings" class="fab-item">
+                <i class="fas fa-calendar-plus"></i> New Booking
+            </a>
+            <a href="/admin/clients" class="fab-item">
+                <i class="fas fa-user-plus"></i> New Client
+            </a>
+        </div>
+    </div>
+    
+    <script>
+        function toggleFab() {
+            document.getElementById('mobileFab').classList.toggle('active');
+        }
+        
+        // Close FAB if clicking outside
+        document.addEventListener('click', (e) => {
+            const fab = document.getElementById('mobileFab');
+            if (fab && fab.classList.contains('active') && !fab.contains(e.target)) {
+                fab.classList.remove('active');
+            }
+        });
+    </script>
+
+    <div class="admin-layout">
+        <aside class="sidebar">
+            <div class="sidebar-logo">EMERALD</div>
+            <nav>
+                <a href="/admin/dashboard" class="nav-item">Dashboard</a>
+                <a href="/admin/bookings" class="nav-item">Bookings</a>
+                <a href="/admin/clients" class="nav-item active">Clients</a>
+                <a href="/admin/calendar" class="nav-item">Calendar</a>
+                <a href="/admin/analytics" class="nav-item">Analytics</a>
+                <a href="/admin/notifications" class="nav-item">Notifications</a>
+                <a href="/admin/gallery" class="nav-item">Gallery</a>
+                <a href="/admin/testimonials" class="nav-item">Testimonials</a>
+                <a href="/admin/staff" class="nav-item">Staff</a>
+                <a href="/admin/settings" class="nav-item">Settings</a>
+            </nav>
+            <div class="sidebar-footer">
+                <button class="logout-btn" onclick="handleLogout()">Logout</button>
+            </div>
+        </aside>
+
+        <div class="main-content">
+            <div class="topbar">
+                <h1 class="page-title">Clients</h1>
+                <div style="flex: 1; text-align: right;">
+                    <span style="font-style: italic; color: var(--accent-gold); font-weight: 600;" id="todayDate"></span>
+                </div>
+            </div>
+
+            <div class="content">
+                <div class="header-controls">
+                    <input type="text" class="search-bar" id="searchInput" placeholder="Search clients...">
+                    <button class="btn-primary" onclick="openNewClientModal()">➕ New Client</button>
+                </div>
+
+                <div class="clients-grid" id="clientsGrid">
+                    <!-- Populated by JavaScript -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script>
+        let allClients = [];
+
+        window.addEventListener('load', () => {
+            updateDate();
+            loadClients();
+        });
+
+        function updateDate() {
+            const options = { year: 'numeric', month: 'short', day: 'numeric' };
+            const today = new Date().toLocaleDateString('en-US', options);
+            document.getElementById('todayDate').textContent = today;
+        }
+
+        async function loadClients() {
+            try {
+                const response = await fetch('/api/admin/bookings?limit=100');
+                const result = await response.json();
+                if (result.success) {
+                    // Extract unique clients from bookings
+                    const clientMap = new Map();
+                    result.bookings.forEach(booking => {
+                        if (!clientMap.has(booking.customerEmail)) {
+                            clientMap.set(booking.customerEmail, {
+                                name: booking.customerName,
+                                email: booking.customerEmail,
+                                phone: booking.customerPhone,
+                                eventType: booking.eventType,
+                                location: booking.customerLocation,
+                                totalBookings: 1
+                            });
+                        } else {
+                            const client = clientMap.get(booking.customerEmail);
+                            client.totalBookings++;
+                        }
+                    });
+                    
+                    allClients = Array.from(clientMap.values());
+                    renderClients(allClients);
+                }
+            } catch (error) {
+                console.error('Error loading clients:', error);
+            }
+        }
+
+        function renderClients(clients) {
+            const grid = document.getElementById('clientsGrid');
+            grid.innerHTML = clients.map((client, index) => {
+                const initials = client.name.split(' ').map(n => n[0]).join('').toUpperCase();
+                return `
+                    <div class="flip-card" onclick="this.classList.toggle('flipped')">
+                        <div class="flip-card-inner">
+                            <div class="flip-card-front">
+                                <div class="client-avatar">${initials}</div>
+                                <div class="client-name">${client.name}</div>
+                                <div class="client-event-type">${client.eventType}</div>
+                                <div class="client-email">${client.email}</div>
+                                <div class="client-phone">${client.phone}</div>
+                                <div class="client-info-row">📚 ${client.totalBookings} booking${client.totalBookings > 1 ? 's' : ''}</div>
+                            </div>
+                            <div class="flip-card-back">
+                                <div style="width: 100%;">
+                                    <div style="font-family: 'Cormorant Garamond', serif; font-size: 16px; font-weight: 600; margin-bottom: 12px;">Client Details</div>
+                                    <div class="info-item"><span class="info-label">Location:</span><br>${client.location || 'Not specified'}</div>
+                                    <div class="info-item"><span class="info-label">Total Bookings:</span><br>${client.totalBookings}</div>
+                                    <div class="info-item"><span class="info-label">Primary Event:</span><br>${client.eventType}</div>
+                                    <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid rgba(201, 168, 76, 0.3);">
+                                        <button onclick="editClient('${client.email}')" style="background: var(--accent-gold); color: var(--text-main); border: none; padding: 6px 12px; border-radius: 4px; font-size: 11px; font-weight: 600; cursor: pointer; width: 100%; margin-bottom: 8px;">Edit</button>
+                                        <button onclick="deleteClient('${client.email}')" style="background: var(--accent-danger); color: var(--bg-primary); border: none; padding: 6px 12px; border-radius: 4px; font-size: 11px; font-weight: 600; cursor: pointer; width: 100%;">Delete</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+            const term = e.target.value.toLowerCase();
+            const filtered = allClients.filter(client => 
+                client.name.toLowerCase().includes(term) ||
+                client.email.toLowerCase().includes(term)
+            );
+            renderClients(filtered);
+        });
+
+        function openNewClientModal() {
+            alert('New Client form - to be implemented');
+        }
+
+        function editClient(email) {
+            alert(`Edit client: ${email}`);
+        }
+
+        function deleteClient(email) {
+            if (confirm(`Delete client ${email}?`)) {
+                allClients = allClients.filter(c => c.email !== email);
+                renderClients(allClients);
+            }
+        }
+
+        function handleLogout() {
+            fetch('/api/admin/logout', { method: 'POST' })
+                .then(() => window.location.href = '/admin/login')
+                .catch(error => console.error('Logout error:', error));
+        }
+    </script>
+</body>
+</html>

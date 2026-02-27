@@ -3522,101 +3522,9 @@
             <div class="gallery-intro-line"></div>
         </div>
 
-        <!-- ROW 1 — Large feature left + stacked right -->
-        <div class="gallery-row-feature">
-            <div class="ci" data-ci>
-                <img src="images/gallery/WhatsApp Image 2025-10-01 at 00.29.40.jpeg" alt="Event" loading="lazy">
-                <div class="ci-overlay">
-                    <span class="ci-label">Signature Event</span>
-                    <span class="ci-count">01</span>
-                </div>
-            </div>
-            <div class="gallery-row-feature-stack">
-                <div class="ci" data-ci>
-                    <img src="images/gallery/WhatsApp Image 2025-10-01 at 00.29.42 (1).jpeg" alt="Event" loading="lazy">
-                    <div class="ci-overlay">
-                        <span class="ci-label">Luxury Detail</span>
-                        <span class="ci-count">02</span>
-                    </div>
-                </div>
-                <div class="ci" data-ci>
-                    <img src="images/gallery/WhatsApp Image 2025-10-01 at 00.29.42.jpeg" alt="Event" loading="lazy">
-                    <div class="ci-overlay">
-                        <span class="ci-label">Ambiance</span>
-                        <span class="ci-count">03</span>
-                    </div>
-                </div>
-            </div>
-        </div>
+        <!-- Dynamic Gallery Container -->
+        <div id="dynamic-gallery-container"></div>
 
-        <!-- ROW 2 — Horizontal film strip -->
-        <div class="gallery-strip">
-            <div class="ci" data-ci>
-                <img src="images/gallery/WhatsApp Image 2025-10-01 at 00.29.43.jpeg" alt="Event" loading="lazy">
-                <div class="ci-overlay"><span class="ci-label">Décor</span></div>
-            </div>
-            <div class="ci" data-ci>
-                <img src="images/gallery/WhatsApp Image 2025-10-01 at 00.30.39.jpeg" alt="Event" loading="lazy">
-                <div class="ci-overlay"><span class="ci-label">Celebration</span></div>
-            </div>
-            <div class="ci" data-ci>
-                <img src="images/gallery/WhatsApp Image 2025-10-01 at 00.30.40 (1).jpeg" alt="Event" loading="lazy">
-                <div class="ci-overlay"><span class="ci-label">Moments</span></div>
-            </div>
-            <div class="ci" data-ci>
-                <img src="images/gallery/WhatsApp Image 2025-10-01 at 00.30.40.jpeg" alt="Event" loading="lazy">
-                <div class="ci-overlay"><span class="ci-label">Styling</span></div>
-            </div>
-            <div class="ci" data-ci>
-                <img src="images/gallery/WhatsApp Image 2025-10-01 at 00.30.41.jpeg" alt="Event" loading="lazy">
-                <div class="ci-overlay"><span class="ci-label">Light &amp; Space</span></div>
-            </div>
-        </div>
-
-        <!-- QUOTE INTERLUDE -->
-        <div class="gallery-quote" data-ci-quote>
-            <p>"Every frame tells a story — every event, a legacy."</p>
-            <cite>Emerald Pearland Events</cite>
-        </div>
-
-        <!-- ROW 3 — Asymmetric mosaic -->
-        <div class="gallery-mosaic">
-            <div class="ci" data-ci>
-                <img src="images/gallery/WhatsApp Image 2025-10-01 at 00.30.42.jpeg" alt="Event" loading="lazy">
-                <div class="ci-overlay">
-                    <span class="ci-label">Elegance</span>
-                    <span class="ci-count">07</span>
-                </div>
-            </div>
-            <div class="ci" data-ci>
-                <img src="images/gallery/WhatsApp Image 2025-10-01 at 00.30.43.jpeg" alt="Event" loading="lazy">
-                <div class="ci-overlay">
-                    <span class="ci-label">Featured Work</span>
-                    <span class="ci-count">08</span>
-                </div>
-            </div>
-            <div class="ci" data-ci>
-                <img src="images/gallery/WhatsApp Image 2025-10-01 at 00.30.44.jpeg" alt="Event" loading="lazy">
-                <div class="ci-overlay">
-                    <span class="ci-label">Florals</span>
-                    <span class="ci-count">09</span>
-                </div>
-            </div>
-            <div class="ci" data-ci>
-                <img src="images/gallery/WhatsApp Image 2025-10-01 at 00.30.45.jpeg" alt="Event" loading="lazy">
-                <div class="ci-overlay">
-                    <span class="ci-label">Reception</span>
-                    <span class="ci-count">10</span>
-                </div>
-            </div>
-            <div class="ci" data-ci>
-                <img src="images/gallery/WhatsApp Image 2025-10-01 at 00.30.46.jpeg" alt="Event" loading="lazy">
-                <div class="ci-overlay">
-                    <span class="ci-label">Atmosphere</span>
-                    <span class="ci-count">11</span>
-                </div>
-            </div>
-        </div>
 
     </section>
 
@@ -3813,19 +3721,131 @@
         const slideCounter = document.querySelector('.gallery-slide-counter');
 
         // Collect all gallery images
-        const galleryImages = [];
-        allGalleryCells.forEach(cell => {
-            const img = cell.querySelector('img');
-            const overlay = cell.querySelector('.ci-overlay');
-            if (img) {
-                galleryImages.push({
-                    src: img.src,
-                    alt: img.alt,
-                    label: overlay?.querySelector('.ci-label')?.textContent || 'Gallery',
-                    count: overlay?.querySelector('.ci-count')?.textContent || ''
-                });
-            }
-        });
+        let galleryImages = [];
+
+        function updateGalleryLightboxArray() {
+            galleryImages = [];
+            document.querySelectorAll('[data-ci]').forEach(cell => {
+                const img = cell.querySelector('img');
+                const overlay = cell.querySelector('.ci-overlay');
+                if (img) {
+                    galleryImages.push({
+                        src: img.src,
+                        alt: img.alt,
+                        label: overlay?.querySelector('.ci-label')?.textContent || 'Gallery',
+                        count: overlay?.querySelector('.ci-count')?.textContent || ''
+                    });
+                }
+            });
+        }
+
+        // Initial build
+        updateGalleryLightboxArray();
+
+        // Fetch dynamic gallery from MongoDB
+        fetch('/api/gallery')
+            .then(res => res.json())
+            .then(data => {
+                if (data.success && data.gallery && data.gallery.length > 0) {
+                    const container = document.getElementById('dynamic-gallery-container');
+                    let html = '';
+                    let items = data.gallery;
+                    let currentIndex = 0;
+
+                    function createCell(item, defaultLabel, count) {
+                        return `
+                            <div class="ci" data-ci>
+                                <img src="${item.url}" alt="${item.caption || item.filename || 'Emerald Pearland Event'}" loading="lazy">
+                                <div class="ci-overlay">
+                                    <span class="ci-label">${item.eventType || defaultLabel}</span>
+                                    <span class="ci-count">${count}</span>
+                                </div>
+                            </div>
+                        `;
+                    }
+
+                    while (currentIndex < items.length) {
+                        let remaining = items.length - currentIndex;
+
+                        // Try to build Row 1 (Feature - needs 3)
+                        if (remaining >= 3 && (currentIndex % 13 === 0)) {
+                            html += '<div class="gallery-row-feature">';
+                            html += createCell(items[currentIndex], 'Signature Event', '0' + (currentIndex + 1));
+                            html += '<div class="gallery-row-feature-stack">';
+                            html += createCell(items[currentIndex + 1], 'Luxury Detail', '0' + (currentIndex + 2));
+                            html += createCell(items[currentIndex + 2], 'Ambiance', '0' + (currentIndex + 3));
+                            html += '</div></div>';
+                            currentIndex += 3;
+                        }
+                        // Try to build Row 2 (Strip - up to 5)
+                        else if (remaining >= 1 && (currentIndex % 13 === 3 || remaining < 5 || currentIndex % 13 >= 8)) {
+                            let stripCount = Math.min(5, remaining);
+                            html += '<div class="gallery-strip">';
+                            for (let i = 0; i < stripCount; i++) {
+                                html += createCell(items[currentIndex], 'Gallery', '0' + (currentIndex + 1));
+                                currentIndex++;
+                            }
+                            html += '</div>';
+                        }
+                        // Try to build Row 3 (Mosaic - needs 5)
+                        else if (remaining >= 5 && (currentIndex % 13 === 8)) {
+                            html += '<div class="gallery-mosaic">';
+                            for (let i = 0; i < 5; i++) {
+                                html += createCell(items[currentIndex], 'Elegance', '0' + (currentIndex + 1));
+                                currentIndex++;
+                            }
+                            html += '</div>';
+                        }
+                        else {
+                            // Fallback
+                            let stripCount = Math.min(5, remaining);
+                            html += '<div class="gallery-strip">';
+                            for (let i = 0; i < stripCount; i++) {
+                                html += createCell(items[currentIndex], 'Gallery', '0' + (currentIndex + 1));
+                                currentIndex++;
+                            }
+                            html += '</div>';
+                        }
+                    }
+
+                    html += `
+                        <div class="gallery-quote" data-ci-quote>
+                            <p>"Every frame tells a story — every event, a legacy."</p>
+                            <cite>Emerald Pearland Events</cite>
+                        </div>
+                    `;
+
+                    container.innerHTML = html;
+
+                    // Rebuild array with the new dynamically fetched images
+                    updateGalleryLightboxArray();
+
+                    // Re-bind click events for newly created cells
+                    const newCells = document.querySelectorAll('[data-ci]');
+                    newCells.forEach((cell, index) => {
+                        cell.addEventListener('click', () => openLightbox(index));
+                    });
+
+                    // Trigger GSAP animations for new cells
+                    if (typeof gsap !== 'undefined' && typeof ScrollTrigger !== 'undefined') {
+                        newCells.forEach((cell, i) => {
+                            gsap.from(cell, {
+                                scrollTrigger: {
+                                    trigger: cell,
+                                    start: 'top 88%',
+                                    toggleActions: 'play none none none'
+                                },
+                                opacity: 0,
+                                clipPath: 'inset(100% 0 0 0)',
+                                duration: 1.1,
+                                delay: (i % 4) * 0.08,
+                                ease: 'power3.out'
+                            });
+                        });
+                    }
+                }
+            })
+            .catch(err => console.error('Gallery fetch error:', err));
 
         function openLightbox(index) {
             galleryIndex = index;
