@@ -1,10 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Calendar - Emerald Admin</title>
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -62,7 +65,8 @@
             cursor: pointer;
         }
 
-        .nav-item:hover, .nav-item.active {
+        .nav-item:hover,
+        .nav-item.active {
             background-color: rgba(201, 168, 76, 0.1);
         }
 
@@ -258,10 +262,23 @@
             font-weight: 600;
         }
 
-        .event-item.wedding { background: #2D6A4F; }
-        .event-item.corporate { background: var(--accent-gold); color: var(--text-main); }
-        .event-item.birthday { background: var(--accent-gold-hover); color: var(--text-main); }
-        .event-item.engagement { background: var(--accent-danger); }
+        .event-item.wedding {
+            background: #2D6A4F;
+        }
+
+        .event-item.corporate {
+            background: var(--accent-gold);
+            color: var(--text-main);
+        }
+
+        .event-item.birthday {
+            background: var(--accent-gold-hover);
+            color: var(--text-main);
+        }
+
+        .event-item.engagement {
+            background: var(--accent-danger);
+        }
 
         .legend {
             display: flex;
@@ -287,14 +304,21 @@
         }
 
         @keyframes floatIdle {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-8px); }
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-8px);
+            }
         }
-    
+
         /* ═══════════════════════════════════════════════════════════
            MOBILE RESPONSIVENESS (Injected via Phase 10 Overhaul)
            ═══════════════════════════════════════════════════════════ */
-        
+
         /* Hamburger Menu Icon (Hidden on Desktop) */
         .mobile-menu-btn {
             display: none;
@@ -307,72 +331,75 @@
         }
 
         @media (max-width: 768px) {
+
             /* Show Hamburger */
             .mobile-menu-btn {
                 display: block;
             }
-            
+
             /* Sidebar becomes a drawer */
             .sidebar {
                 transform: translateX(-100%);
                 transition: transform 0.3s ease-in-out;
                 z-index: 2000;
             }
-            
+
             .sidebar.active {
                 transform: translateX(0);
             }
-            
+
             /* Main content expands to full width */
             .main-content {
                 margin-left: 0;
                 width: 100vw;
             }
-            
+
             /* Topbar adjustments */
             .topbar {
                 padding: 15px 20px;
                 flex-wrap: wrap;
                 gap: 15px;
             }
-            
+
             .page-title {
                 font-size: 22px;
             }
-            
+
             .search-bar {
-                display: none; /* Hide search on extreme mobile to save space */
+                display: none;
+                /* Hide search on extreme mobile to save space */
             }
-            
+
             /* Stats Grid Stacking */
             .stats-grid {
                 grid-template-columns: 1fr;
             }
-            
+
             /* Charts & Tables Stacking */
             .dashboard-grid {
                 grid-template-columns: 1fr;
             }
-            
+
             /* Modals */
             .modal-content {
                 width: 95%;
                 margin: 20px auto;
                 padding: 20px;
             }
-            
+
             /* Form Rows */
-            .form-row, .booking-grid {
+            .form-row,
+            .booking-grid {
                 grid-template-columns: 1fr;
             }
-            
+
             /* Tables */
             .table-container {
                 overflow-x: auto;
             }
         }
 
-    
+
         /* ═══════════════════════════════════════════════════════════
            MOBILE QUICK ACTION FAB
            ═══════════════════════════════════════════════════════════ */
@@ -452,7 +479,8 @@
             width: 16px;
         }
 
-        .fab-item:hover, .fab-item:active {
+        .fab-item:hover,
+        .fab-item:active {
             background: rgba(201, 168, 76, 0.1);
         }
 
@@ -461,7 +489,6 @@
                 display: block;
             }
         }
-
     </style>
 
     <!-- DARK MODE LOGIC -->
@@ -483,7 +510,7 @@
             }
         });
 
-        (function() {
+        (function () {
             if (localStorage.getItem('emeraldDarkMode') === 'true') {
                 document.documentElement.classList.add('dark-mode');
             }
@@ -510,16 +537,44 @@
         }
 
         /* Generic Dark Mode Fixes */
-        html.dark-mode .sidebar { background: var(--sidebar-bg); border-right-color: var(--border-color); }
-        html.dark-mode .topbar { background: var(--sidebar-bg); border-bottom-color: var(--border-color); }
-        html.dark-mode .modal-content { background: var(--bg-card); }
-        html.dark-mode input, html.dark-mode select, html.dark-mode textarea { background: var(--sidebar-bg); color: var(--text-main); }
-        html.dark-mode .btn-secondary, html.dark-mode .btn-cancel { color: var(--text-main); }
-        html.dark-mode .nav-item { color: var(--text-main); }
-        html.dark-mode .pagination-btn { background: var(--sidebar-bg); color: var(--text-main); }
+        html.dark-mode .sidebar {
+            background: var(--sidebar-bg);
+            border-right-color: var(--border-color);
+        }
+
+        html.dark-mode .topbar {
+            background: var(--sidebar-bg);
+            border-bottom-color: var(--border-color);
+        }
+
+        html.dark-mode .modal-content {
+            background: var(--bg-card);
+        }
+
+        html.dark-mode input,
+        html.dark-mode select,
+        html.dark-mode textarea {
+            background: var(--sidebar-bg);
+            color: var(--text-main);
+        }
+
+        html.dark-mode .btn-secondary,
+        html.dark-mode .btn-cancel {
+            color: var(--text-main);
+        }
+
+        html.dark-mode .nav-item {
+            color: var(--text-main);
+        }
+
+        html.dark-mode .pagination-btn {
+            background: var(--sidebar-bg);
+            color: var(--text-main);
+        }
     </style>
 
 </head>
+
 <body>
 
     <!-- Mobile Quick Action FAB -->
@@ -536,12 +591,12 @@
             </a>
         </div>
     </div>
-    
+
     <script>
         function toggleFab() {
             document.getElementById('mobileFab').classList.toggle('active');
         }
-        
+
         // Close FAB if clicking outside
         document.addEventListener('click', (e) => {
             const fab = document.getElementById('mobileFab');
@@ -609,10 +664,6 @@
                         <span>Corporate</span>
                     </div>
                     <div class="legend-item">
-                        <div class="legend-color" style="background: var(--accent-gold-hover);"></div>
-                        <span>Birthday</span>
-                    </div>
-                    <div class="legend-item">
                         <div class="legend-color" style="background: var(--accent-danger);"></div>
                         <span>Engagement</span>
                     </div>
@@ -623,21 +674,44 @@
 
     <script>
         let currentDate = new Date();
+        let sampleEvents = [];
 
-        const sampleEvents = [
-            { date: 'Feb 14, 2026', type: 'wedding', title: 'Wedding Venue Visit' },
-            { date: 'Feb 20, 2026', type: 'corporate', title: 'Corporate Gala' },
-            { date: 'Feb 25, 2026', type: 'birthday', title: 'Birthday Party' },
-            { date: 'Feb 28, 2026', type: 'engagement', title: 'Engagement Celebration' },
-        ];
+        window.addEventListener('load', async () => {
+            await fetchBookings();
+            renderCalendar();
+        });
 
-        window.addEventListener('load', renderCalendar);
+        async function fetchBookings() {
+            try {
+                const response = await fetch('/api/admin/bookings?limit=1000');
+                const result = await response.json();
+
+                if (result.success && result.bookings) {
+                    sampleEvents = result.bookings.map(booking => {
+                        let typeClass = 'corporate';
+                        const typeLower = (booking.eventType || '').toLowerCase();
+                        if (typeLower.includes('wedding') || typeLower.includes('anniversary')) typeClass = 'wedding';
+                        else if (typeLower.includes('birthday')) typeClass = 'birthday';
+                        else if (typeLower.includes('engagement') || typeLower.includes('traditional')) typeClass = 'engagement';
+
+                        return {
+                            date: new Date(booking.eventDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+                            type: typeClass,
+                            title: `${booking.eventType} - ${booking.customerId?.name || 'Client'}`,
+                            original: booking
+                        };
+                    });
+                }
+            } catch (error) {
+                console.error('Failed to load bookings:', error);
+            }
+        }
 
         function renderCalendar() {
             const year = currentDate.getFullYear();
             const month = currentDate.getMonth();
-            
-            document.getElementById('currentMonth').textContent = 
+
+            document.getElementById('currentMonth').textContent =
                 currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 
             const firstDay = new Date(year, month, 1).getDay();
@@ -647,35 +721,33 @@
             const daysContainer = document.getElementById('calendarDays');
             daysContainer.innerHTML = '';
 
-            // Previous month days
             for (let i = firstDay - 1; i >= 0; i--) {
                 const day = daysInPrevMonth - i;
-                const dayEl = createDayElement(day, true, null);
-                daysContainer.appendChild(dayEl);
+                const dateStr = new Date(year, month - 1, day).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                const events = sampleEvents.filter(e => e.date === dateStr);
+                daysContainer.appendChild(createDayElement(day, true, events, false));
             }
 
-            // Current month days
             const today = new Date();
             for (let i = 1; i <= daysInMonth; i++) {
-                const dateStr = `${new Date(year, month, i).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
+                const dateStr = new Date(year, month, i).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
                 const isToday = today.getFullYear() === year && today.getMonth() === month && today.getDate() === i;
                 const events = sampleEvents.filter(e => e.date === dateStr);
-                const dayEl = createDayElement(i, false, events, isToday);
-                daysContainer.appendChild(dayEl);
+                daysContainer.appendChild(createDayElement(i, false, events, isToday));
             }
 
-            // Next month days
             const totalCells = daysContainer.children.length;
             for (let i = 1; i <= 42 - totalCells; i++) {
-                const dayEl = createDayElement(i, true, null);
-                daysContainer.appendChild(dayEl);
+                const dateStr = new Date(year, month + 1, i).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                const events = sampleEvents.filter(e => e.date === dateStr);
+                daysContainer.appendChild(createDayElement(i, true, events, false));
             }
         }
 
         function createDayElement(day, isOtherMonth, events, isToday) {
             const el = document.createElement('div');
             el.className = 'day' + (isOtherMonth ? ' other-month' : '') + (isToday ? ' today' : '');
-            
+
             const dayNum = document.createElement('div');
             dayNum.style.fontSize = '12px';
             dayNum.style.fontWeight = 'bold';
@@ -685,19 +757,29 @@
             if (events && events.length > 0) {
                 const eventsDiv = document.createElement('div');
                 eventsDiv.className = 'day-events';
-                events.slice(0, 2).forEach(event => {
+                events.slice(0, 3).forEach(event => {
                     const eventEl = document.createElement('div');
                     eventEl.className = `event-item ${event.type}`;
-                    eventEl.textContent = event.title.substring(0, 10);
+                    eventEl.textContent = event.title.substring(0, 15) + '...';
                     eventEl.title = event.title;
                     eventsDiv.appendChild(eventEl);
                 });
+                if (events.length > 3) {
+                    const more = document.createElement('div');
+                    more.style.fontSize = '9px';
+                    more.style.color = '#666';
+                    more.textContent = `+${events.length - 3} more`;
+                    eventsDiv.appendChild(more);
+                }
                 el.appendChild(eventsDiv);
             }
 
             el.style.cursor = 'pointer';
             el.addEventListener('click', () => {
-                alert(`Details for day ${day}${events && events.length > 0 ? '\n' + events.map(e => e.title).join('\n') : ''}`);
+                if (events && events.length > 0) {
+                    const details = events.map(e => `• ${e.title} (${e.original.status})`).join('\n');
+                    alert(`Events for ${events[0].date}:\n\n${details}`);
+                }
             });
 
             return el;
@@ -725,4 +807,5 @@
         }
     </script>
 </body>
+
 </html>
