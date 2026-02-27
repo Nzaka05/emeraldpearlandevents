@@ -992,6 +992,100 @@
                 display: block;
             }
         }
+
+        /* ═══════════════════════════════════════════════════════════
+           BULK ACTION TOOLBAR
+           ═══════════════════════════════════════════════════════════ */
+        .bulk-toolbar {
+            display: none;
+            align-items: center;
+            gap: 12px;
+            background: var(--bg-card);
+            border: 1px solid var(--accent-gold);
+            border-radius: 8px;
+            padding: 12px 20px;
+            margin-bottom: 16px;
+            animation: slideInUp 0.3s ease-out;
+            box-shadow: 0 4px 16px rgba(201, 168, 76, 0.12);
+        }
+
+        .bulk-toolbar.visible {
+            display: flex;
+        }
+
+        .bulk-count {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--accent-gold);
+            margin-right: auto;
+        }
+
+        .btn-bulk-paid {
+            padding: 8px 16px;
+            background: rgba(45, 106, 79, 0.1);
+            color: #2D6A4F;
+            border: 1px solid #2D6A4F;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            letter-spacing: 0.3px;
+        }
+
+        .btn-bulk-paid:hover {
+            background: #2D6A4F;
+            color: #fff;
+            transform: translateY(-1px);
+        }
+
+        .btn-bulk-delete {
+            padding: 8px 16px;
+            background: rgba(181, 51, 42, 0.1);
+            color: var(--accent-danger);
+            border: 1px solid var(--accent-danger);
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            letter-spacing: 0.3px;
+        }
+
+        .btn-bulk-delete:hover {
+            background: var(--accent-danger);
+            color: #fff;
+            transform: translateY(-1px);
+        }
+
+        .btn-bulk-clear {
+            padding: 8px 12px;
+            background: transparent;
+            color: #999;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.25s ease;
+        }
+
+        .btn-bulk-clear:hover {
+            color: var(--text-main);
+            border-color: var(--text-main);
+        }
+
+        /* Row checkbox */
+        .row-checkbox {
+            width: 16px;
+            height: 16px;
+            accent-color: var(--accent-gold);
+            cursor: pointer;
+        }
+
+        .table-header,
+        .table-row {
+            grid-template-columns: 36px 120px 170px 130px 110px 96px 96px 60px !important;
+        }
     </style>
 
     <!-- DARK MODE LOGIC -->
@@ -1202,9 +1296,19 @@
                     </div>
                 </div>
 
+                <!-- BULK ACTION TOOLBAR -->
+                <div class="bulk-toolbar" id="bulkToolbar">
+                    <span class="bulk-count" id="bulkCount">0 selected</span>
+                    <button class="btn-bulk-paid" onclick="bulkMarkPaid()">✅ Mark as Paid</button>
+                    <button class="btn-bulk-delete" onclick="bulkDelete()">🗑️ Delete Selected</button>
+                    <button class="btn-bulk-clear" onclick="clearSelection()">✕ Clear</button>
+                </div>
+
                 <!-- TABLE -->
                 <div class="table-container">
                     <div class="table-header">
+                        <div><input type="checkbox" class="row-checkbox" id="selectAllChk"
+                                onchange="toggleSelectAll(this)" title="Select all"></div>
                         <div>Booking ID</div>
                         <div>Client Name</div>
                         <div>Event Type</div>
@@ -1516,6 +1620,9 @@
             currentPage = 1;
         }
 
+        // ── Bulk Selection State ──
+        let selectedIds = new Set();
+
         function renderBookings() {
             const start = (currentPage - 1) * bookingsPerPage;
             const end = start + bookingsPerPage;
@@ -1523,8 +1630,14 @@
 
             const html = pageBookings.map(booking => {
                 const clientName = booking.customerId?.name || 'Unknown';
+                const isChecked = selectedIds.has(booking._id) ? 'checked' : '';
                 return `
-                <div class="table-row" onclick="openBookingModal('${booking._id}')">
+                <div class="table-row" onclick="openBookingModal('${booking._id}')" data-id="${booking._id}">
+                    <div onclick="event.stopPropagation()">
+                        <input type="checkbox" class="row-checkbox" data-id="${booking._id}"
+                            ${isChecked}
+                            onchange="toggleRowSelect(this, '${booking._id}')">
+                    </div>
                     <div class="booking-id">#${booking._id.slice(-6).toUpperCase()}</div>
                     <div class="client-name">${clientName}</div>
                     <div class="event-type">${booking.eventType}</div>
@@ -1532,7 +1645,7 @@
                     <div><span class="status-badge status-${booking.status}">${booking.status}</span></div>
                     <div><span class="paid-badge ${booking.isPaid ? 'paid-yes' : 'paid-no'}">${booking.isPaid ? 'Paid' : 'Pending'}</span></div>
                     <div class="row-actions" onclick="event.stopPropagation()">
-                        <button class="action-btn" title="Edit">✏️</button>
+                        <button class="action-btn" title="Edit" onclick="openBookingModal('${booking._id}')">✏️</button>
                         <button class="action-btn" title="Delete" onclick="deleteBooking('${booking._id}')">🗑️</button>
                     </div>
                 </div>
@@ -1541,6 +1654,93 @@
 
             document.getElementById('bookingsTable').innerHTML = html;
             updatePagination();
+            updateBulkBar();
+        }
+
+        function toggleRowSelect(checkbox, id) {
+            if (checkbox.checked) {
+                selectedIds.add(id);
+            } else {
+                selectedIds.delete(id);
+            }
+            updateBulkBar();
+            // Update select-all state
+            const allOnPage = Array.from(document.querySelectorAll('.row-checkbox[data-id]'));
+            const allChecked = allOnPage.length > 0 && allOnPage.every(c => c.checked);
+            const selectAll = document.getElementById('selectAllChk');
+            if (selectAll) selectAll.checked = allChecked;
+        }
+
+        function toggleSelectAll(masterChk) {
+            const checkboxes = document.querySelectorAll('.row-checkbox[data-id]');
+            checkboxes.forEach(chk => {
+                chk.checked = masterChk.checked;
+                const id = chk.dataset.id;
+                if (masterChk.checked) selectedIds.add(id);
+                else selectedIds.delete(id);
+            });
+            updateBulkBar();
+        }
+
+        function clearSelection() {
+            selectedIds.clear();
+            document.querySelectorAll('.row-checkbox').forEach(c => c.checked = false);
+            updateBulkBar();
+        }
+
+        function updateBulkBar() {
+            const toolbar = document.getElementById('bulkToolbar');
+            const countEl = document.getElementById('bulkCount');
+            if (selectedIds.size > 0) {
+                toolbar.classList.add('visible');
+                countEl.textContent = `${selectedIds.size} booking${selectedIds.size > 1 ? 's' : ''} selected`;
+            } else {
+                toolbar.classList.remove('visible');
+            }
+        }
+
+        async function bulkMarkPaid() {
+            if (selectedIds.size === 0) return;
+            const ids = Array.from(selectedIds);
+            const confirmMsg = `Mark ${ids.length} booking${ids.length > 1 ? 's' : ''} as Paid?`;
+            if (!confirm(confirmMsg)) return;
+
+            let successCount = 0;
+            for (const id of ids) {
+                try {
+                    const res = await fetch(`/api/admin/bookings/${id}`, {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ isPaid: true })
+                    });
+                    const result = await res.json();
+                    if (result.success) successCount++;
+                } catch (e) { console.error('Bulk paid error', e); }
+            }
+
+            alert(`✅ ${successCount} of ${ids.length} bookings marked as Paid.`);
+            clearSelection();
+            await loadBookings();
+        }
+
+        async function bulkDelete() {
+            if (selectedIds.size === 0) return;
+            const ids = Array.from(selectedIds);
+            const confirmMsg = `Permanently delete ${ids.length} booking${ids.length > 1 ? 's' : ''}? This cannot be undone.`;
+            if (!confirm(confirmMsg)) return;
+
+            let successCount = 0;
+            for (const id of ids) {
+                try {
+                    const res = await fetch(`/api/admin/bookings/${id}`, { method: 'DELETE' });
+                    const result = await res.json();
+                    if (result.success) successCount++;
+                } catch (e) { console.error('Bulk delete error', e); }
+            }
+
+            alert(`🗑️ ${successCount} of ${ids.length} bookings deleted.`);
+            clearSelection();
+            await loadBookings();
         }
 
         function updatePagination() {
