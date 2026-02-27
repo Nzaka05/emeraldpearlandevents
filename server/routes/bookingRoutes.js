@@ -5,6 +5,7 @@ const Customer = require('../models/Customer');
 const AdminNotification = require('../models/AdminNotification');
 const Gallery = require('../models/Gallery');
 const { initializeEmailService, sendBusinessBookingNotification, sendClientBookingConfirmation, sendFollowUpEmail } = require('../services/emailService');
+const { sendPushNotificationToAdmins } = require('../services/notificationService');
 
 // ── INITIALIZE EMAIL TRANSPORTER ──
 initializeEmailService();
@@ -211,6 +212,14 @@ router.post('/book-event', bookingLimiter, async (req, res) => {
             action: `/admin/bookings`
         });
         await notification.save();
+
+        // Send Push Notification immediately to any subscribed admin devices
+        sendPushNotificationToAdmins({
+            title: 'New Booking Received!',
+            body: notificationMessage,
+            icon: '/images/logo 2.png',
+            url: `/admin/bookings?highlight=${booking._id}`
+        });
 
         // ───────────────────────────────────────────────────────────
         // STEP 4: SEND EMAILS

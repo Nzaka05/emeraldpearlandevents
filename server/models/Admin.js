@@ -41,13 +41,17 @@ const AdminSchema = new mongoose.Schema({
     updatedAt: {
         type: Date,
         default: Date.now
+    },
+    pushSubscriptions: {
+        type: Array,
+        default: []
     }
 });
 
 // Hash password before saving
-AdminSchema.pre('save', async function(next) {
+AdminSchema.pre('save', async function (next) {
     if (!this.isModified('passwordHash')) return next();
-    
+
     try {
         const salt = await bcrypt.genSalt(10);
         this.passwordHash = await bcrypt.hash(this.passwordHash, salt);
@@ -58,7 +62,7 @@ AdminSchema.pre('save', async function(next) {
 });
 
 // Compare password method
-AdminSchema.methods.comparePassword = async function(plainPassword) {
+AdminSchema.methods.comparePassword = async function (plainPassword) {
     return await bcrypt.compare(plainPassword, this.passwordHash);
 };
 

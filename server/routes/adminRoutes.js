@@ -15,6 +15,47 @@ const { verifyAdminJWT, generateAdminToken } = require('../middleware/adminAuth'
 // AUTH ROUTES
 // ═══════════════════════════════════════════════════════════
 
+// ═══════════════════════════════════════════════════════════
+// PUSH NOTIFICATION ROUTES
+// ═══════════════════════════════════════════════════════════
+
+// GET /api/admin/vapid-public-key
+router.get('/vapid-public-key', verifyAdminJWT, (req, res) => {
+    res.json({
+        success: true,
+        publicKey: process.env.VAPID_PUBLIC_KEY
+    });
+});
+
+// POST /api/admin/push-subscribe
+router.post('/push-subscribe', verifyAdminJWT, async (req, res) => {
+    try {
+        const { subscription } = req.body;
+        if (!subscription) {
+            return res.status(400).json({ success: false, message: 'Missing subscription object' });
+        }
+
+        const admin = await Admin.findById(req.admin.adminId);
+        if (!admin) return res.status(404).json({ success: false, message: 'Admin not found' });
+
+        // Check if the exact subscription endpoint already exists
+        const exists = admin.pushSubscriptions.some(sub => sub.endpoint === subscription.endpoint);
+
+        if (!exists) {
+            admin.pushSubscriptions.push(subscription);
+            await admin.save();
+            console.log(`✅ Push subscription added for admin ${admin.email}`);
+        } else {
+            console.log(`ℹ️ Push subscription already exists for admin ${admin.email}`);
+        }
+
+        res.json({ success: true, message: 'Subscription saved successfully' });
+    } catch (error) {
+        console.error('❌ Error saving push subscription:', error);
+        res.status(500).json({ success: false, message: 'Server error saving subscription' });
+    }
+});
+
 // POST /api/admin/login
 router.post('/login', async (req, res) => {
     try {
