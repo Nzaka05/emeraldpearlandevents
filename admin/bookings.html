@@ -371,6 +371,34 @@
             background: rgba(201, 168, 76, 0.05);
         }
 
+        @keyframes highlightGlow {
+            0% {
+                background: transparent;
+                box-shadow: none;
+            }
+
+            20% {
+                background: rgba(201, 168, 76, 0.3);
+                box-shadow: 0 0 15px rgba(201, 168, 76, 0.5);
+                border-color: var(--accent-gold);
+            }
+
+            80% {
+                background: rgba(201, 168, 76, 0.15);
+                box-shadow: 0 0 10px rgba(201, 168, 76, 0.3);
+                border-color: var(--accent-gold);
+            }
+
+            100% {
+                background: transparent;
+                box-shadow: none;
+            }
+        }
+
+        .table-row.highlight-glow {
+            animation: highlightGlow 3s ease-in-out forwards;
+        }
+
         .booking-id {
             font-family: 'Cormorant Garamond', serif;
             font-size: 13px;
@@ -1592,7 +1620,34 @@
                     allBookings = result.bookings || [];
                     filteredBookings = [...allBookings];
                     applyFilters();
+
+                    // Highlight logic
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const highlightId = urlParams.get('highlight');
+
+                    if (highlightId) {
+                        const index = filteredBookings.findIndex(b => b._id === highlightId);
+                        if (index !== -1) {
+                            currentPage = Math.floor(index / bookingsPerPage) + 1;
+                        }
+                    }
+
                     renderBookings();
+
+                    if (highlightId) {
+                        setTimeout(() => {
+                            const row = document.querySelector(`.table-row[data-id="${highlightId}"]`);
+                            if (row) {
+                                row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                row.classList.add('highlight-glow');
+                                setTimeout(() => row.classList.remove('highlight-glow'), 3500);
+
+                                // Clean up the URL so it doesn't re-highlight on refresh
+                                const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+                                window.history.replaceState({ path: newUrl }, '', newUrl);
+                            }
+                        }, 200);
+                    }
                 }
             } catch (error) {
                 console.error('Error loading bookings:', error);

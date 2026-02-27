@@ -251,6 +251,28 @@
             max-height: 500px;
         }
 
+        .view-booking-link {
+            display: inline-block;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--accent-gold);
+            text-decoration: none;
+            margin-bottom: 8px;
+            opacity: 0;
+            max-height: 0;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .view-booking-link:hover {
+            text-decoration: underline;
+        }
+
+        .notification-item.expanded .view-booking-link {
+            opacity: 1;
+            max-height: 30px;
+        }
+
         .notification-time {
             font-size: 11px;
             color: #999;
@@ -699,7 +721,8 @@
                         text: n.message,
                         time: new Date(n.createdAt).toLocaleString(),
                         isRead: n.isRead,
-                        icon: n.icon
+                        icon: n.icon,
+                        bookingId: n.bookingRef ? n.bookingRef._id : null
                     }));
                     renderNotifications();
                 }
@@ -760,6 +783,7 @@
                     <div class="notification-content">
                         <div class="notification-type">${notif.type.replace(/_/g, ' ')}</div>
                         <div class="notification-text">${notif.text}</div>
+                        ${notif.bookingId ? `<a href="/admin/bookings?highlight=${notif.bookingId}" class="view-booking-link" onclick="event.stopPropagation()">View Booking →</a>` : ''}
                         <div class="notification-time">${notif.time}</div>
                     </div>
                     <div class="notification-actions">

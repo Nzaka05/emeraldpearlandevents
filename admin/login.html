@@ -28,6 +28,32 @@
         .login-container {
             display: flex;
             height: 100vh;
+            position: relative;
+        }
+
+        .mobile-bg-video {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: 0;
+        }
+
+        .login-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(247, 244, 239, 0.85);
+            /* Light mode overlay */
+            z-index: 1;
+            display: none;
+            pointer-events: none;
         }
 
         /* LEFT SIDE - VIDEO BACKGROUND */
@@ -393,8 +419,19 @@
                 display: none;
             }
 
+            .mobile-bg-video {
+                display: block;
+            }
+
+            .login-container::before {
+                display: block;
+            }
+
             .login-right {
                 flex: 1;
+                background: transparent;
+                position: relative;
+                z-index: 2;
             }
         }
 
@@ -562,11 +599,21 @@
             background: var(--sidebar-bg);
             color: var(--text-main);
         }
+
+        html.dark-mode .login-container::before {
+            background: rgba(10, 31, 22, 0.90);
+            /* Dark mode overlay */
+        }
     </style>
 </head>
 
 <body>
     <div class="login-container">
+        <!-- MOBILE BACKGROUND VIDEO -->
+        <video autoplay muted loop playsinline class="mobile-bg-video">
+            <source src="/images/logo.mp4" type="video/mp4">
+        </video>
+
         <!-- LEFT SIDE -->
         <div class="login-left">
             <video autoplay muted loop playsinline>
