@@ -1,12 +1,17 @@
 const webpush = require('web-push');
 const Admin = require('../models/Admin');
+require('dotenv').config();
 
-// Set VAPID details
-webpush.setVapidDetails(
-    'mailto:emeraldpearlandevents@gmail.com', // MUST be a mailto or URL
-    process.env.VAPID_PUBLIC_KEY,
-    process.env.VAPID_PRIVATE_KEY
-);
+// Set VAPID details gracefully so the server doesn't crash if env vars are not set
+if (process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
+    webpush.setVapidDetails(
+        'mailto:emeraldpearlandevents@gmail.com',
+        process.env.VAPID_PUBLIC_KEY,
+        process.env.VAPID_PRIVATE_KEY
+    );
+} else {
+    console.warn('⚠️ Web Push VAPID keys are missing! Push notifications will be disabled.');
+}
 
 async function sendPushNotificationToAdmins(payload) {
     if (!process.env.VAPID_PUBLIC_KEY || !process.env.VAPID_PRIVATE_KEY) {
