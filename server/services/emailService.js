@@ -2,7 +2,7 @@
 // EMAIL SERVICE — BREVO SDK (Official @getbrevo/brevo)
 // ═══════════════════════════════════════════════════════════
 
-const Brevo = require('@getbrevo/brevo');
+const Brevo = require('sib-api-v3-sdk');
 
 let apiInstance = null;
 
