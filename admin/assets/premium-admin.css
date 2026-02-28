@@ -10,24 +10,24 @@
     --emerald-dark: #0A1C14;
     --emerald-base: #102A1F;
     --emerald-light: #1A4030;
-    
+
     /* True Gold Palette */
     --gold-dark: #A3822E;
     --gold-base: #C9A84C;
     --gold-light: #E0C77D;
     --gold-gradient: linear-gradient(135deg, #C9A84C 0%, #A3822E 100%);
     --gold-gradient-hover: linear-gradient(135deg, #E0C77D 0%, #C9A84C 100%);
-    
+
     /* Warm Ivory & Surface */
     --ivory-base: #FDFBF7;
     --ivory-dark: #F4F1EA;
     --surface: var(--ivory-base);
     --card-bg: #FFFFFF;
-    
+
     /* Text */
     --text-main: var(--emerald-dark);
     --text-muted: #6B7280;
-    
+
     /* Overrides for existing vars */
     --primary: var(--emerald-dark);
     --secondary: var(--emerald-light);
@@ -40,13 +40,22 @@
    TYPOGRAPHY
    ═══════════════════════════════════════════════════════════ */
 body {
-    font-family: 'Outfit', sans-serif; /* Modern, sleek, legible sans */
+    font-family: 'Outfit', sans-serif;
+    /* Modern, sleek, legible sans */
     background: var(--surface);
     color: var(--text-main);
 }
 
-h1, h2, h3, h4, h5, .page-title, .section-title, .stat-value {
-    font-family: 'Cormorant Garamond', serif; /* Elegant serif for premium feel */
+h1,
+h2,
+h3,
+h4,
+h5,
+.page-title,
+.section-title,
+.stat-value {
+    font-family: 'Cormorant Garamond', serif;
+    /* Elegant serif for premium feel */
 }
 
 .page-title {
@@ -58,10 +67,14 @@ h1, h2, h3, h4, h5, .page-title, .section-title, .stat-value {
 /* ═══════════════════════════════════════════════════════════
    BUTTONS (The "Expensive" Look)
    ═══════════════════════════════════════════════════════════ */
-.btn, button.btn-primary, button.btn-accent, .submit-btn {
+.btn,
+button.btn-primary,
+button.btn-accent,
+.submit-btn {
     padding: 12px 24px;
     border: none;
-    border-radius: 4px; /* Sharper corners look more editorial and premium */
+    border-radius: 4px;
+    /* Sharper corners look more editorial and premium */
     font-size: 13px;
     font-weight: 500;
     font-family: 'Outfit', sans-serif;
@@ -79,14 +92,16 @@ h1, h2, h3, h4, h5, .page-title, .section-title, .stat-value {
 }
 
 /* Primary Button Override (Usually dark green or accent) */
-.btn-primary, .submit-btn {
+.btn-primary,
+.submit-btn {
     background: var(--emerald-base);
     color: var(--gold-base);
     box-shadow: 0 4px 15px rgba(16, 42, 31, 0.15);
     border: 1px solid var(--emerald-light);
 }
 
-.btn-primary:hover, .submit-btn:hover {
+.btn-primary:hover,
+.submit-btn:hover {
     background: var(--emerald-dark);
     color: var(--gold-light);
     transform: translateY(-2px);
@@ -101,13 +116,13 @@ h1, h2, h3, h4, h5, .page-title, .section-title, .stat-value {
     box-shadow: 0 4px 15px rgba(201, 168, 76, 0.25);
     border: 1px solid rgba(255, 255, 255, 0.2);
     /* Subtle inner glow for gold buttons */
-    box-shadow: inset 0 1px 0 rgba(255,255,255,0.4), 0 4px 15px rgba(201, 168, 76, 0.3);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 4px 15px rgba(201, 168, 76, 0.3);
 }
 
 .btn-accent:hover {
     background: var(--gold-gradient-hover);
     transform: translateY(-2px);
-    box-shadow: inset 0 1px 0 rgba(255,255,255,0.5), 0 10px 25px rgba(201, 168, 76, 0.4);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), 0 10px 25px rgba(201, 168, 76, 0.4);
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -116,7 +131,8 @@ h1, h2, h3, h4, h5, .page-title, .section-title, .stat-value {
 .sidebar {
     background: var(--emerald-dark);
     border-right: 1px solid rgba(201, 168, 76, 0.1);
-    box-shadow: 4px 0 24px rgba(10, 28, 20, 0.05); /* Softer, deeper shadow */
+    box-shadow: 4px 0 24px rgba(10, 28, 20, 0.05);
+    /* Softer, deeper shadow */
 }
 
 /* Sidebar Nav Links */
@@ -129,7 +145,8 @@ h1, h2, h3, h4, h5, .page-title, .section-title, .stat-value {
     transition: all 0.3s ease;
 }
 
-.sidebar-nav-link:hover, .sidebar-nav-link.active {
+.sidebar-nav-link:hover,
+.sidebar-nav-link.active {
     background: linear-gradient(90deg, rgba(201, 168, 76, 0.08) 0%, transparent 100%);
     color: var(--gold-light);
 }
@@ -147,15 +164,21 @@ h1, h2, h3, h4, h5, .page-title, .section-title, .stat-value {
 /* ═══════════════════════════════════════════════════════════
    CARDS & CONTAINERS (Glassmorphism & Depth)
    ═══════════════════════════════════════════════════════════ */
-.stat-card, .table-container, .card, .dashboard-card {
+.stat-card,
+.table-container,
+.card,
+.dashboard-card {
     background: var(--card-bg);
-    border-radius: 8px; /* Slightly sharper corners */
-    border: 1px solid rgba(201, 168, 76, 0.15); /* Subtle gold tint in border */
+    border-radius: 8px;
+    /* Slightly sharper corners */
+    border: 1px solid rgba(201, 168, 76, 0.15);
+    /* Subtle gold tint in border */
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
     transition: transform 0.4s ease, box-shadow 0.4s ease;
 }
 
-.stat-card:hover, .card:hover {
+.stat-card:hover,
+.card:hover {
     transform: translateY(-3px);
     box-shadow: 0 12px 30px rgba(10, 28, 20, 0.06);
     border-color: rgba(201, 168, 76, 0.3);
@@ -164,7 +187,8 @@ h1, h2, h3, h4, h5, .page-title, .section-title, .stat-value {
 /* Customizing the stat cards top border to look painted */
 .stat-card::before {
     background: var(--gold-gradient);
-    height: 4px; /* Thicker, more pronounced */
+    height: 4px;
+    /* Thicker, more pronounced */
     border-radius: 8px 8px 0 0;
 }
 
@@ -179,7 +203,8 @@ h1, h2, h3, h4, h5, .page-title, .section-title, .stat-value {
     letter-spacing: 0.1em;
     color: var(--text-muted);
     border-bottom: 2px solid rgba(201, 168, 76, 0.15);
-    background: var(--ivory-dark); /* Subtle offset row color for headers */
+    background: var(--ivory-dark);
+    /* Subtle offset row color for headers */
     padding: 16px;
 }
 
@@ -201,7 +226,10 @@ h1, h2, h3, h4, h5, .page-title, .section-title, .stat-value {
 /* ═══════════════════════════════════════════════════════════
    INPUTS & FORMS
    ═══════════════════════════════════════════════════════════ */
-input, select, textarea, .search-bar input {
+input,
+select,
+textarea,
+.search-bar input {
     border: 1px solid #E5E7EB;
     border-radius: 4px;
     background: var(--card-bg);
@@ -212,7 +240,10 @@ input, select, textarea, .search-bar input {
     transition: all 0.3s ease;
 }
 
-input:focus, select:focus, textarea:focus, .search-bar input:focus {
+input:focus,
+select:focus,
+textarea:focus,
+.search-bar input:focus {
     border-color: var(--gold-base);
     box-shadow: 0 0 0 3px rgba(201, 168, 76, 0.1);
     outline: none;
@@ -223,7 +254,8 @@ input:focus, select:focus, textarea:focus, .search-bar input:focus {
    ═══════════════════════════════════════════════════════════ */
 .status {
     padding: 6px 12px;
-    border-radius: 4px; /* Move away from pill shapes for luxury */
+    border-radius: 4px;
+    /* Move away from pill shapes for luxury */
     font-size: 11px;
     font-weight: 600;
     letter-spacing: 0.08em;
@@ -260,6 +292,152 @@ input:focus, select:focus, textarea:focus, .search-bar input:focus {
     border-radius: 10px;
 }
 
-::-webkit-scrollbar-thumb:hover {
-    background: rgba(201, 168, 76, 0.5);
+/* ═══════════════════════════════════════════════════════════
+   PREMIUM ACTION BUTTONS (Edit / Delete / View / Approve etc.)
+   ═══════════════════════════════════════════════════════════ */
+
+/* Base .action-btn: sleek icon pill used in tables & cards */
+.action-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px 14px;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    font-family: 'Outfit', sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    position: relative;
+    overflow: hidden;
+    white-space: nowrap;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.07);
+}
+
+/* Ripple shimmer on all action buttons */
+.action-btn::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(255, 255, 255, 0);
+    transition: background 0.3s ease;
+}
+
+.action-btn:hover::after {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.action-btn:hover {
+    transform: translateY(-2px);
+}
+
+.action-btn:active {
+    transform: translateY(0) scale(0.97);
+}
+
+/* ── Edit / Default ── */
+.action-btn:not([class*="btn-delete"]):not([class*="btn-approve"]):not([class*="btn-hide"]):not([class*="btn-mark"]) {
+    background: var(--emerald-base);
+    color: var(--gold-base);
+    border-color: rgba(201, 168, 76, 0.2);
+    box-shadow: 0 2px 8px rgba(10, 28, 20, 0.12);
+}
+
+.action-btn:not([class*="btn-delete"]):not([class*="btn-approve"]):not([class*="btn-hide"]):not([class*="btn-mark"]):hover {
+    background: var(--emerald-dark);
+    border-color: rgba(201, 168, 76, 0.4);
+    color: var(--gold-light);
+    box-shadow: 0 6px 18px rgba(10, 28, 20, 0.2);
+}
+
+/* ── Delete ── */
+.action-btn.btn-delete,
+.btn-delete-img {
+    background: rgba(171, 40, 40, 0.07) !important;
+    color: #B5332A !important;
+    border: 1px solid rgba(181, 51, 42, 0.2) !important;
+    font-family: 'Outfit', sans-serif !important;
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.08em !important;
+    text-transform: uppercase !important;
+    padding: 8px 14px !important;
+    border-radius: 4px !important;
+    cursor: pointer !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    transition: all 0.3s ease !important;
+    box-shadow: none !important;
+}
+
+.action-btn.btn-delete:hover,
+.btn-delete-img:hover {
+    background: #B5332A !important;
+    color: #fff !important;
+    border-color: #B5332A !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 16px rgba(181, 51, 42, 0.3) !important;
+}
+
+/* ── Approve / Mark Read ── */
+.action-btn.btn-approve,
+.action-btn.btn-mark {
+    background: rgba(45, 106, 79, 0.08);
+    color: #2D6A4F;
+    border-color: rgba(45, 106, 79, 0.25);
+}
+
+.action-btn.btn-approve:hover,
+.action-btn.btn-mark:hover {
+    background: #2D6A4F;
+    color: #fff;
+    border-color: #2D6A4F;
+    box-shadow: 0 6px 16px rgba(45, 106, 79, 0.25);
+}
+
+/* ── Hide ── */
+.action-btn.btn-hide {
+    background: rgba(201, 168, 76, 0.09);
+    color: var(--gold-dark);
+    border-color: rgba(201, 168, 76, 0.25);
+}
+
+.action-btn.btn-hide:hover {
+    background: var(--gold-gradient);
+    color: #fff;
+    border-color: transparent;
+    box-shadow: 0 6px 16px rgba(201, 168, 76, 0.3);
+}
+
+/* ── Gallery .btn-view (Preview button) ── */
+.btn-view {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    padding: 8px 14px !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    border-radius: 4px !important;
+    font-family: 'Outfit', sans-serif !important;
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.08em !important;
+    text-transform: uppercase !important;
+    cursor: pointer !important;
+    background: rgba(13, 43, 31, 0.75) !important;
+    color: #fff !important;
+    backdrop-filter: blur(6px) !important;
+    transition: all 0.3s ease !important;
+}
+
+.btn-view:hover {
+    background: var(--emerald-base) !important;
+    border-color: var(--gold-base) !important;
+    color: var(--gold-light) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 18px rgba(10, 28, 20, 0.25) !important;
 }
