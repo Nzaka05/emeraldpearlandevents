@@ -5,14 +5,11 @@ window.toggleSidebar = function (e) {
         e.stopPropagation();
     }
 
-    // Fallbacks just in case the DOM is loaded weirdly
     const sidebar = document.querySelector('.sidebar');
     const overlay = document.getElementById('sidebarOverlay');
 
-    if (sidebar) {
-        sidebar.classList.toggle('active');
-        if (overlay) overlay.classList.toggle('active');
-    }
+    if (sidebar) sidebar.classList.toggle('active');
+    if (overlay) overlay.classList.toggle('active');
 };
 
 window.closeSidebar = function () {
@@ -23,46 +20,37 @@ window.closeSidebar = function () {
     if (overlay) overlay.classList.remove('active');
 };
 
-function initMobileSidebar() {
-    const btn = document.getElementById('mobileMenuBtn');
-    const sidebar = document.querySelector('.sidebar');
-    const overlay = document.getElementById('sidebarOverlay');
-
-    // We do NOT add btn.addEventListener('click', window.toggleSidebar) here
-    // because all 14 HTML files already have an inline onclick="window.toggleSidebar(event)".
-    // Having both causes it to toggle twice (open then instantly close).
-
-    if (overlay) {
-        overlay.addEventListener('click', window.closeSidebar);
+// Use event delegation for better reliability across pages
+document.addEventListener('click', (e) => {
+    // Check if we clicked the menu button or its children (icon)
+    const btn = e.target.closest('.mobile-menu-btn');
+    if (btn) {
+        window.toggleSidebar(e);
+        return;
     }
 
-    // Auto close sidebar when clicking outside
-    document.addEventListener('click', (e) => {
-        if (sidebar && sidebar.classList.contains('active')) {
-            // Check if click was outside sidebar and NOT on the menu button
-            if (!sidebar.contains(e.target) && (!btn || !btn.contains(e.target))) {
-                window.closeSidebar();
-            }
+    // Check if we clicked the overlay
+    if (e.target.id === 'sidebarOverlay') {
+        window.closeSidebar();
+        return;
+    }
+
+    // Check if we clicked a nav link (close on mobile)
+    if (e.target.closest('.sidebar-nav-link') || e.target.closest('.nav-item')) {
+        if (window.innerWidth <= 768) {
+            window.closeSidebar();
         }
-    });
+        return;
+    }
 
-    // Close when clicking a nav link
-    const navLinks = document.querySelectorAll('.sidebar-nav-link, .nav-item');
-    navLinks.forEach(link => {
-        link.addEventListener('click', () => {
-            if (window.innerWidth <= 768) {
-                window.closeSidebar();
-            }
-        });
-    });
-}
-
-// Ensure execution whether loaded before or after DOMContentLoaded
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initMobileSidebar);
-} else {
-    initMobileSidebar();
-}
+    // Auto-close if clicked outside an active sidebar
+    const sidebar = document.querySelector('.sidebar');
+    if (sidebar && sidebar.classList.contains('active')) {
+        if (!sidebar.contains(e.target)) {
+            window.closeSidebar();
+        }
+    }
+});
 
 async function loadGlobalAdminAvatar() {
     try {

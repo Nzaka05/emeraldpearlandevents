@@ -813,8 +813,8 @@
 
     <!-- MOBILE & DARK LOGIC -->
     <script>
-        
-        (function() {
+
+        (function () {
             if (localStorage.getItem('emeraldDarkMode') === 'true') {
                 document.documentElement.classList.add('dark-mode');
             }
@@ -1005,10 +1005,11 @@
         <!-- TOPBAR -->
         <div class="topbar" id="adminTopbar">
             <div class="topbar-left">
-    <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Open navigation menu" onclick="window.toggleSidebar(event)">
-        <i class="fas fa-bars"></i>
-    </button>
-    <div>
+                <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Open navigation menu"
+                    onclick="window.toggleSidebar(event)">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <div>
                     <div class="page-title">Dashboard</div>
                     <div class="breadcrumb">Home / Overview</div>
                 </div>
@@ -1040,7 +1041,7 @@
         <div class="page-content">
             <!-- STATS GRID -->
             <div class="stats-grid" id="statsGrid">
-                <a href="/admin/bookings" class="stat-card">
+                <a href="/admin/bookings.html" class="stat-card">
                     <div class="stat-icon"><i class="fas fa-book"></i></div>
                     <div class="stat-label">Total Bookings</div>
                     <div class="stat-value" id="totalBookingsVal">0</div>
@@ -1049,7 +1050,7 @@
                     </div>
                 </a>
 
-                <a href="/admin/bookings" class="stat-card">
+                <a href="/admin/bookings.html" class="stat-card">
                     <div class="stat-icon"><i class="fas fa-money-bill-wave"></i></div>
                     <div class="stat-label">Revenue (KES)</div>
                     <div class="stat-value" id="revenueCount">0</div>
@@ -1068,7 +1069,7 @@
                     </div>
                 </div>
 
-                <a href="/admin/bookings?status=pending" class="stat-card">
+                <a href="/admin/bookings.html?status=pending" class="stat-card">
                     <div class="stat-icon"><i class="fas fa-exclamation-circle" style="color: var(--danger);"></i></div>
                     <div class="stat-label">Pending Confirmations</div>
                     <div class="stat-value" id="pendingCount">0</div>
@@ -1093,8 +1094,10 @@
                     <h2 class="section-title">Quick Actions</h2>
                 </div>
                 <div style="display: flex; gap: 15px;">
-                    <a href="/admin/bookings?new=1" class="btn btn-primary"><i class="fas fa-plus"></i> New Booking</a>
-                    <a href="/admin/bookings" class="btn btn-accent"><i class="fas fa-download"></i> Export Report</a>
+                    <a href="/admin/bookings.html?new=1" class="btn btn-primary"><i class="fas fa-plus"></i> New
+                        Booking</a>
+                    <a href="/admin/bookings.html" class="btn btn-accent"><i class="fas fa-download"></i> Export
+                        Report</a>
                     <a href="/admin/calendar" class="btn btn-primary"><i class="fas fa-calendar"></i> View Calendar</a>
                     <a href="/admin/clients" class="btn btn-primary"><i class="fas fa-user-plus"></i> Add Client</a>
                 </div>
@@ -1350,7 +1353,7 @@
         });
     </script>
     <script src="/admin/push-client.js"></script>
-        <script src="/admin/assets/mobile-sidebar.js"></script>
+    <script src="/admin/assets/mobile-sidebar.js"></script>
 </body>
 
 </html>
