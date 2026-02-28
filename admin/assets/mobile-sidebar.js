@@ -1,42 +1,57 @@
 // JS to handle sidebar toggling
+window.toggleSidebar = function (e) {
+    if (e) e.stopPropagation();
+
+    // Fallbacks just in case the DOM is loaded weirdly
+    const sidebar = document.querySelector('.sidebar');
+    const overlay = document.getElementById('sidebarOverlay');
+
+    console.log("Toggle sidebar called!", sidebar);
+
+    if (sidebar) {
+        sidebar.classList.toggle('active');
+        if (overlay) overlay.classList.toggle('active');
+    }
+};
+
+window.closeSidebar = function () {
+    const sidebar = document.querySelector('.sidebar');
+    const overlay = document.getElementById('sidebarOverlay');
+
+    if (sidebar) sidebar.classList.remove('active');
+    if (overlay) overlay.classList.remove('active');
+};
+
 function initMobileSidebar() {
     const btn = document.getElementById('mobileMenuBtn');
     const sidebar = document.querySelector('.sidebar');
     const overlay = document.getElementById('sidebarOverlay');
 
-    if (btn && sidebar) {
-        btn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            sidebar.classList.toggle('active');
-            if (overlay) overlay.classList.toggle('active');
-        });
+    if (btn) {
+        // Also attach traditional listener as backup
+        btn.addEventListener('click', window.toggleSidebar);
     }
 
     if (overlay) {
-        overlay.addEventListener('click', () => {
-            if (sidebar) sidebar.classList.remove('active');
-            overlay.classList.remove('active');
-        });
+        overlay.addEventListener('click', window.closeSidebar);
     }
 
-    // Auto close sidebar when clicking outside (fallback if no overlay)
+    // Auto close sidebar when clicking outside
     document.addEventListener('click', (e) => {
         if (sidebar && sidebar.classList.contains('active')) {
             // Check if click was outside sidebar and NOT on the menu button
             if (!sidebar.contains(e.target) && (!btn || !btn.contains(e.target))) {
-                sidebar.classList.remove('active');
-                if (overlay) overlay.classList.remove('active');
+                window.closeSidebar();
             }
         }
     });
 
-    // Close when clicking a nav link (useful for hash links)
+    // Close when clicking a nav link
     const navLinks = document.querySelectorAll('.sidebar-nav-link');
     navLinks.forEach(link => {
         link.addEventListener('click', () => {
-            if (window.innerWidth <= 768 && sidebar) {
-                sidebar.classList.remove('active');
-                if (overlay) overlay.classList.remove('active');
+            if (window.innerWidth <= 768) {
+                window.closeSidebar();
             }
         });
     });
