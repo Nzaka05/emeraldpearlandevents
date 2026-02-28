@@ -167,6 +167,10 @@ app.get('/admin/dashboard', verifyAdminPage, (req, res) => {
 });
 
 // Admin bookings page
+app.get('/admin/bookings/new', verifyAdminPage, (req, res) => {
+    res.sendFile(__dirname + '/admin/new-booking.html');
+});
+
 app.get('/admin/bookings', verifyAdminPage, (req, res) => {
     res.sendFile(__dirname + '/admin/bookings.html');
 });

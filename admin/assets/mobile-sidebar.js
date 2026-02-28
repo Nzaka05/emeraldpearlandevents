@@ -1,89 +1,36 @@
-// JS to handle sidebar toggling
+(function () {
+    function initSidebar() {
+        const sidebar = document.querySelector('.sidebar') || document.getElementById('sidebar');
+        const overlay = document.querySelector('.sidebar-overlay') || document.getElementById('sidebar-overlay') || document.getElementById('sidebarOverlay');
+        const toggleBtn = document.querySelector('.menu-toggle') || document.getElementById('menu-toggle') || document.querySelector('.mobile-menu-btn');
 
-// Reset all sidebar state on page load as requested to prevent bug 2
-document.addEventListener('DOMContentLoaded', () => {
-    const sidebar = document.querySelector('.sidebar');
-    const overlay = document.getElementById('sidebarOverlay');
+        if (!sidebar) return;
 
-    if (sidebar) sidebar.classList.remove('open', 'active', 'show');
-    if (overlay) {
-        overlay.style.display = 'none';
-        overlay.classList.remove('active', 'show');
-    }
-    document.body.classList.remove('sidebar-open', 'menu-open', 'overlay-active');
-});
+        // Reset state on every page load
+        sidebar.classList.remove('open', 'active');
+        document.body.classList.remove('sidebar-open');
+        if (overlay) { overlay.style.display = 'none'; overlay.classList.remove('active'); }
 
-window.toggleSidebar = function (e) {
-    if (e) {
-        e.preventDefault();
-        e.stopPropagation();
-    }
-
-    const sidebar = document.querySelector('.sidebar');
-    const overlay = document.getElementById('sidebarOverlay');
-
-    if (sidebar) {
-        sidebar.classList.toggle('active');
-        const isActive = sidebar.classList.contains('active');
-
-        if (overlay) {
-            if (isActive) {
-                overlay.style.display = 'block';
-                overlay.classList.add('active');
-                document.body.classList.add('sidebar-open');
-            } else {
-                overlay.style.display = 'none';
-                overlay.classList.remove('active', 'show');
-                document.body.classList.remove('sidebar-open', 'menu-open', 'overlay-active');
-            }
+        function openSidebar() {
+            sidebar.classList.add('open');
+            document.body.classList.add('sidebar-open');
+            if (overlay) { overlay.style.display = 'block'; setTimeout(() => overlay.classList.add('active'), 10); }
         }
-    }
-};
 
-window.closeSidebar = function () {
-    const sidebar = document.querySelector('.sidebar');
-    const overlay = document.getElementById('sidebarOverlay');
-
-    if (sidebar) sidebar.classList.remove('open', 'active', 'show');
-    if (overlay) {
-        overlay.style.display = 'none';
-        overlay.classList.remove('active', 'show');
-    }
-    document.body.classList.remove('sidebar-open', 'menu-open', 'overlay-active');
-};
-
-// Use event delegation for better reliability across pages
-document.addEventListener('click', (e) => {
-    // Check if we clicked the menu button or its children (icon)
-    const btn = e.target.closest('.mobile-menu-btn');
-    if (btn) {
-        window.toggleSidebar(e);
-        return;
-    }
-
-    // Check if we clicked the overlay
-    if (e.target.id === 'sidebarOverlay') {
-        window.closeSidebar();
-        return;
-    }
-
-    // Check if we clicked a nav link (close on mobile)
-    if (e.target.closest('.sidebar-nav-link') || e.target.closest('.nav-item')) {
-        if (window.innerWidth <= 768) {
-            window.closeSidebar();
+        function closeSidebar() {
+            sidebar.classList.remove('open');
+            document.body.classList.remove('sidebar-open');
+            if (overlay) { overlay.classList.remove('active'); setTimeout(() => overlay.style.display = 'none', 300); }
         }
-        return;
+
+        if (toggleBtn) toggleBtn.addEventListener('click', e => { e.stopPropagation(); sidebar.classList.contains('open') ? closeSidebar() : openSidebar(); });
+        if (overlay) overlay.addEventListener('click', closeSidebar);
+        sidebar.querySelectorAll('a').forEach(link => link.addEventListener('click', closeSidebar));
+        document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSidebar(); });
     }
 
-    // Auto-close if clicked outside an active sidebar
-    const sidebar = document.querySelector('.sidebar');
-    if (sidebar && sidebar.classList.contains('active')) {
-        const btnNode = document.querySelector('.mobile-menu-btn');
-        if (!sidebar.contains(e.target) && (!btnNode || !btnNode.contains(e.target))) {
-            window.closeSidebar();
-        }
-    }
-});
+    document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', initSidebar) : initSidebar();
+})();
 
 async function loadGlobalAdminAvatar() {
     try {

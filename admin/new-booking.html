@@ -1,0 +1,647 @@
+
+    <!-- CINEMATIC BACKGROUND -->
+    <div class="cinematic-bg">
+        <div class="light-beam beam-1"></div>
+        <div class="light-beam beam-2"></div>
+        <div class="light-beam beam-3"></div>
+        <!-- Particles -->
+        <div class="particle" style="top: 20%; left: 30%;"></div>
+        <div class="particle" style="top: 60%; left: 70%; animation-delay: 2s;"></div>
+        <div class="particle" style="top: 80%; left: 20%; animation-delay: 5s;"></div>
+        <div class="particle" style="top: 30%; left: 80%; animation-delay: 7s;"></div>
+    </div>
+    
+    <section class="booking-section" id="booking">
+            <div class="booking-container">
+                <div class="booking-card">
+                    <div class="form-header">
+                        <h2>Your Event Details</h2>
+                        <p>Tell us about your vision – we'll handle the magic</p>
+                    </div>
+
+                    <form id="bookingForm">
+                        <!-- Client Details -->
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="fullName">Full Name *</label>
+                                <input type="text" id="fullName" name="fullName" placeholder="Your name" required>
+                                <div class="error-message" id="error-fullName"></div>
+                            </div>
+                            <div class="form-group">
+                                <label for="phone">Phone Number *</label>
+                                <input type="tel" id="phone" name="phone" placeholder="+254 722 446 937" required>
+                                <div class="error-message" id="error-phone"></div>
+                            </div>
+                        </div>
+
+                        <div class="form-row full">
+                            <div class="form-group">
+                                <label for="email">Email Address *</label>
+                                <input type="email" id="email" name="email" placeholder="your@email.com" required>
+                                <div class="error-message" id="error-email"></div>
+                            </div>
+                        </div>
+
+                        <!-- Event Details -->
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="eventType">Event Type *</label>
+                                <select id="eventType" name="eventType" required>
+                                    <option value="">Select event type...</option>
+                                    <option value="Wedding">Wedding</option>
+                                    <option value="Anniversary">Anniversary</option>
+                                    <option value="Birthday Party">Birthday Party</option>
+                                    <option value="Family & House Party">Family & House Party</option>
+                                    <option value="Traditional Ceremony">Traditional Ceremony</option>
+                                    <option value="Memorial Service">Memorial Service</option>
+                                    <option value="Corporate Event">Corporate Event</option>
+                                    <option value="Brand Ambassador Event">Brand Ambassador Event</option>
+                                    <option value="Product Launch">Product Launch</option>
+                                    <option value="Private Celebration">Private Celebration</option>
+                                    <option value="Luxury Decor & Styling">Luxury Décor & Styling</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                                <div class="error-message" id="error-eventType"></div>
+                            </div>
+                            <div class="form-group">
+                                <label for="eventDate">Event Date *</label>
+                                <input type="date" id="eventDate" name="eventDate" required>
+                                <div class="error-message" id="error-eventDate"></div>
+                            </div>
+
+                        </div>
+
+                        <!-- Other Event Type Description -->
+                        <div class="form-row full" id="otherEventDescriptionGroup"
+                            style="display: none; max-height: 0; overflow: hidden; transition: max-height 0.4s ease;">
+                            <div class="form-group">
+                                <label for="otherEventDescription">Please describe your event type *</label>
+                                <input type="text" id="otherEventDescription" name="otherEventDescription"
+                                    placeholder="Describe your unique event..." required>
+                                <div class="error-message" id="error-otherEventDescription"></div>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="durationUnit">Event Duration Unit *</label>
+                                <select id="durationUnit" name="durationUnit" required>
+                                    <option value="">Select duration unit...</option>
+                                    <option value="hours">Hours</option>
+                                    <option value="days">Days</option>
+                                    <option value="weeks">Weeks</option>
+                                </select>
+                                <div class="error-message" id="error-durationUnit"></div>
+                            </div>
+                            <div class="form-group">
+                                <label for="durationValue">Duration *</label>
+                                <select id="durationValue" name="durationValue" style="display: none;">
+                                    <option value="">Select value...</option>
+                                </select>
+                                <!-- Premium hours picker (shown when Hours unit is selected) -->
+                                <div class="hours-selector-wrap" id="hoursPickerWrap">
+                                    <select id="durationHours" name="durationHours">
+                                        <option value="">— Select hours —</option>
+                                        <option value="1Hours">1 Hour</option>
+                                        <option value="2Hours">2 Hours</option>
+                                        <option value="3Hours">3 Hours</option>
+                                        <option value="4Hours">4 Hours</option>
+                                        <option value="5Hours">5 Hours</option>
+                                        <option value="6Hours">6 Hours</option>
+                                        <option value="7Hours">7 Hours</option>
+                                        <option value="8Hours">8 Hours</option>
+                                        <option value="9Hours">9 Hours</option>
+                                        <option value="10Hours">10 Hours</option>
+                                        <option value="11Hours">11 Hours</option>
+                                        <option value="12Hours">12 Hours</option>
+                                        <option value="13Hours">13 Hours</option>
+                                        <option value="14Hours">14 Hours</option>
+                                        <option value="15Hours">15 Hours</option>
+                                        <option value="16Hours">16 Hours</option>
+                                        <option value="17Hours">17 Hours</option>
+                                        <option value="18Hours">18 Hours</option>
+                                        <option value="19Hours">19 Hours</option>
+                                        <option value="20Hours">20 Hours</option>
+                                        <option value="21Hours">21 Hours</option>
+                                        <option value="22Hours">22 Hours</option>
+                                        <option value="23Hours">23 Hours</option>
+                                        <option value="24Hours">24 Hours</option>
+                                    </select>
+                                    <span class="hours-badge">hrs</span>
+                                </div>
+                                <div class="error-message" id="error-durationValue"></div>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="guestCount">Number of Guests *</label>
+                                <input type="number" id="guestCount" name="guestCount" placeholder="50" min="1"
+                                    required>
+                                <div class="error-message" id="error-guestCount"></div>
+                            </div>
+                        </div>
+
+                        <!-- Ushers Question -->
+                        <div class="form-row full">
+                            <div class="form-group">
+                                <label>Will you need ushers? *</label>
+                                <div style="display: flex; gap: 1.5rem; margin-top: 0.5rem;">
+                                    <label
+                                        style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: 0.9rem; font-weight: 300; text-transform: none; letter-spacing: 0;">
+                                        <input type="radio" name="needUshers" id="ushersYes" value="Yes"
+                                            style="width: auto; accent-color: var(--emerald-glow);">
+                                        Yes
+                                    </label>
+                                    <label
+                                        style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: 0.9rem; font-weight: 300; text-transform: none; letter-spacing: 0;">
+                                        <input type="radio" name="needUshers" id="ushersNo" value="No"
+                                            style="width: auto; accent-color: var(--emerald-glow);">
+                                        No
+                                    </label>
+                                </div>
+                                <div class="error-message" id="error-needUshers"></div>
+                            </div>
+                        </div>
+
+                        <!-- Number of Ushers (shown only if Yes) -->
+                        <div class="form-row full" id="usherCountGroup"
+                            style="display: none; max-height: 0; overflow: hidden; transition: max-height 0.4s ease, opacity 0.4s ease; opacity: 0;">
+                            <div class="form-group">
+                                <label for="usherCount">How many ushers will you need? *</label>
+                                <input type="number" id="usherCount" name="usherCount" placeholder="e.g. 4" min="1"
+                                    max="50">
+                                <div class="error-message" id="error-usherCount"></div>
+                            </div>
+                        </div>
+
+                        <!-- Estimated Investment Selector -->
+                        <div class="form-row full">
+                            <div class="form-group">
+                                <label for="budgetRange" class="investment-label">
+                                    Estimated Investment *
+                                    <span class="investment-helper">We tailor staffing and service levels to match your
+                                        investment.</span>
+                                </label>
+                                <div class="budget-selector-container">
+                                    <div class="budget-options">
+                                        <input type="radio" id="budget-under50" name="budgetRange"
+                                            value="Under KES 50,000" class="budget-radio">
+                                        <label for="budget-under50" class="budget-option">Under KES 50,000</label>
+
+                                        <input type="radio" id="budget-50-100" name="budgetRange"
+                                            value="KES 50,000 – 100,000" class="budget-radio">
+                                        <label for="budget-50-100" class="budget-option">KES 50,000 – 100,000</label>
+
+                                        <input type="radio" id="budget-100-250" name="budgetRange"
+                                            value="KES 100,000 – 250,000" class="budget-radio">
+                                        <label for="budget-100-250" class="budget-option">KES 100,000 – 250,000</label>
+
+                                        <input type="radio" id="budget-250-500" name="budgetRange"
+                                            value="KES 250,000 – 500,000" class="budget-radio">
+                                        <label for="budget-250-500" class="budget-option">KES 250,000 – 500,000</label>
+
+                                        <input type="radio" id="budget-500plus" name="budgetRange" value="KES 500,000+"
+                                            class="budget-radio">
+                                        <label for="budget-500plus" class="budget-option">KES 500,000+</label>
+
+                                        <input type="radio" id="budget-notsure" name="budgetRange" value="Not Sure Yet"
+                                            class="budget-radio">
+                                        <label for="budget-notsure" class="budget-option">Not Sure Yet</label>
+                                    </div>
+                                </div>
+                                <div class="error-message" id="error-budgetRange"></div>
+                            </div>
+                        </div>
+
+                        <div class="form-row full">
+                            <div class="form-group">
+                                <label for="location">Event Location *</label>
+                                <input type="text" id="location" name="location" placeholder="Nairobi, Kenya" required>
+                                <div class="error-message" id="error-location"></div>
+                            </div>
+                        </div>
+
+                        <div class="form-row full">
+                            <div class="form-group">
+                                <label for="specialRequests">Special Requests & Notes</label>
+                                <textarea id="specialRequests" name="specialRequests"
+                                    placeholder="Tell us about any special requirements, preferences, or additional notes..."></textarea>
+                                <div class="error-message" id="error-specialRequests"></div>
+                            </div>
+                        </div>
+
+                        <!-- Buttons -->
+                        <div class="button-container">
+                            <button type="submit" id="submitBtn">
+                                <span id="btnText">Book Your Event</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </section>
+</main>
+
+    <!-- SCRIPTS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+    <script>
+        gsap.registerPlugin(ScrollTrigger);
+
+        // Update date
+        function updateDate() {
+            const options = { weekday: 'short', month: 'short', day: 'numeric' };
+            const today = new Date().toLocaleDateString('en-US', options);
+            document.getElementById('todayDate').textContent = today;
+        }
+
+        // Load admin data
+        async function loadAdminData() {
+            try {
+                const response = await fetch('/api/admin/me');
+                const result = await response.json();
+
+                if (result.success && result.admin) {
+                    const admin = result.admin;
+                    const initials = admin.name.split(' ').map(n => n[0]).join('').toUpperCase();
+
+                    document.getElementById('adminAvatar').textContent = initials;
+                    document.getElementById('topbarAvatar').textContent = initials;
+                    document.getElementById('adminName').textContent = admin.name;
+                    document.getElementById('topbarName').textContent = admin.name;
+                }
+            } catch (error) {
+                console.error('Error loading admin data:', error);
+            }
+        }
+
+        // Load stats
+        async function loadStats() {
+            try {
+                const response = await fetch('/api/admin/analytics/overview');
+                const result = await response.json();
+
+                if (result.success && result.stats) {
+                    const stats = result.stats;
+
+                    // Animate numbers by specific ID to avoid layout order issues
+                    const elTotalBookings = document.getElementById('totalBookingsVal');
+                    const elRevenue = document.getElementById('revenueCount');
+                    const elProjected = document.getElementById('projectedRevenueCount');
+                    const elPending = document.getElementById('pendingCount');
+                    const elUpcoming = document.getElementById('upcomingCount');
+
+                    if (elTotalBookings) animateCounter(elTotalBookings, stats.totalBookingsThisMonth || 0);
+                    if (elRevenue) animateCounter(elRevenue, Math.floor(stats.revenue || 0));
+                    // Check if projectedRevenue exists yet from backend, default to 0
+                    if (elProjected) animateCounter(elProjected, Math.floor(stats.projectedRevenue || 0));
+                    if (elPending) animateCounter(elPending, stats.pendingConfirmations || 0);
+                    if (elUpcoming) animateCounter(elUpcoming, stats.upcomingEventsThisWeek || 0);
+
+                    // Initialize Chart
+                    if (stats.chartData) {
+                        initChart(stats.chartData.labels, stats.chartData.revenue);
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading stats:', error);
+            }
+        }
+
+        // Initialize Chart.js
+        function initChart(labels, data) {
+            const ctx = document.getElementById('revenueChart');
+            if (!ctx) return;
+
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Revenue (KES)',
+                        data: data,
+                        borderColor: 'var(--accent-gold)',
+                        backgroundColor: 'rgba(201, 168, 76, 0.1)',
+                        borderWidth: 2,
+                        tension: 0.4,
+                        fill: true,
+                        pointBackgroundColor: 'var(--text-main)',
+                        pointBorderColor: 'var(--accent-gold)',
+                        pointBorderWidth: 2,
+                        pointRadius: 4,
+                        pointHoverRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'var(--text-main)',
+                            titleFont: { family: 'DM Sans', size: 13 },
+                            bodyFont: { family: 'DM Sans', size: 14, weight: 'bold' },
+                            padding: 12,
+                            displayColors: false,
+                            callbacks: {
+                                label: function (context) {
+                                    return 'KES ' + context.parsed.y.toLocaleString();
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: 'rgba(0, 0, 0, 0.05)', drawBorder: false },
+                            ticks: {
+                                font: { family: 'DM Sans', size: 11 },
+                                callback: function (value) {
+                                    if (value >= 1000000) return (value / 1000000).toFixed(1) + 'M';
+                                    if (value >= 1000) return (value / 1000).toFixed(1) + 'k';
+                                    return value;
+                                }
+                            }
+                        },
+                        x: {
+                            grid: { display: false, drawBorder: false },
+                            ticks: { font: { family: 'DM Sans', size: 11 } }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Counter animation
+        function animateCounter(element, target) {
+            gsap.to(element, {
+                textContent: target,
+                duration: 1.5,
+                snap: { textContent: 1 },
+                ease: 'power2.out'
+            });
+        }
+
+        // Logout handler
+        function handleLogout() {
+            fetch('/api/admin/logout', { method: 'POST' })
+                .then(() => window.location.href = '/admin/login')
+                .catch(err => console.error('Logout error:', err));
+        }
+
+        // Animations on scroll
+        gsap.utils.toArray('.stat-card').forEach((card, index) => {
+            gsap.from(card, {
+                scrollTrigger: {
+                    trigger: card,
+                    start: 'top 80%',
+                    toggleActions: 'play none none none'
+                },
+                opacity: 0,
+                y: 40,
+                duration: 0.6,
+                delay: index * 0.1
+            });
+        });
+
+        async function loadSocialConfig() {
+            try {
+                const res = await fetch('/api/admin/settings', { credentials: 'include' });
+                const data = await res.json();
+                if (!data.success) return;
+
+                const s = data.settings;
+
+                // Set quick-link URLs
+                if (s.instagramUrl) document.getElementById('igLink').href = s.instagramUrl;
+                if (s.facebookUrl) document.getElementById('fbLink').href = s.facebookUrl;
+
+                // Inject Behold embed if feed ID is configured
+                const container = document.getElementById('socialFeedContainer');
+                if (s.beholdfeedId && s.beholdfeedId.trim()) {
+                    container.innerHTML = `
+                        <div data-behold-id="${s.beholdfeedId}"></div>
+                        <script>
+                            (function() {
+                                const d=document, script=d.createElement("script");
+                                script.type="module";
+                                script.src="https://w.behold.so/widget.js";
+                                d.head.append(script);
+                            })();
+                        <\/sc`+ `ript>
+                    `;
+                } else {
+                    container.innerHTML = `
+                        <div style="padding:32px;text-align:center;color:#999;
+                            background:#fff;border-radius:8px;border:1px dashed #E9E5DB;">
+                            <div style="font-size:32px;margin-bottom:12px;">📸</div>
+                            <div style="font-weight:600;color:#0D2B1F;margin-bottom:8px;">
+                                Instagram feed not connected
+                            </div>
+                            <div style="font-size:13px;">
+                                Go to <a href="/admin/settings" 
+                                style="color:#C9A84C;font-weight:600;">Settings → Social Media
+                                </a> and paste your Behold feed ID to display your latest posts here.
+                            </div>
+                        </div>
+                    `;
+                }
+            } catch (e) {
+                console.error('Failed to load social config:', e);
+            }
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            updateDate();
+            loadAdminData();
+            loadStats();
+            loadSocialConfig();
+        });
+    </script>
+    <script src="/admin/push-client.js"></script>
+    <script src="/admin/assets/mobile-sidebar.js"></script>
+
+<script>
+    // Include toast library if not present
+</script>
+<script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+
+<script>
+    // Cancel button logic
+    document.addEventListener('DOMContentLoaded', () => {
+        // Find button container and add cancel
+        const btnContainer = document.querySelector('.button-container');
+        if (btnContainer) {
+            const cancelBtn = document.createElement('button');
+            cancelBtn.type = 'button';
+            cancelBtn.className = 'btn-cancel';
+            cancelBtn.style.cssText = 'background: transparent; border: 2px solid #ff6b6b; color: #ff6b6b; margin-right: 15px;';
+            cancelBtn.textContent = 'Cancel';
+            cancelBtn.onclick = function() {
+                if(confirm('Are you sure you want to discard this booking?')) {
+                    window.location.href = '/admin/bookings';
+                }
+            };
+            btnContainer.insertBefore(cancelBtn, btnContainer.firstChild);
+        }
+    });
+
+    // Handle form submit
+    const form = document.getElementById('bookingForm');
+    const submitBtn = document.getElementById('submitBtn');
+    const btnText = document.getElementById('btnText');
+
+    if (form) {
+        // Similar setup to original
+        const eventTypeSelect = document.getElementById('eventType');
+        const otherEventDescriptionGroup = document.getElementById('otherEventDescriptionGroup');
+        const otherEventDescription = document.getElementById('otherEventDescription');
+
+        if (eventTypeSelect) {
+            eventTypeSelect.addEventListener('change', function () {
+                if (this.value === 'Other') {
+                    otherEventDescriptionGroup.style.display = 'block';
+                    otherEventDescriptionGroup.style.maxHeight = '100px';
+                    otherEventDescription.required = true;
+                } else {
+                    otherEventDescriptionGroup.style.display = 'none';
+                    otherEventDescriptionGroup.style.maxHeight = '0';
+                    otherEventDescription.required = false;
+                    otherEventDescription.value = '';
+                }
+            });
+        }
+
+        const needUshersRadios = document.querySelectorAll('input[name="needUshers"]');
+        const usherCountGroup = document.getElementById('usherCountGroup');
+        const usherCountInput = document.getElementById('usherCount');
+
+        needUshersRadios.forEach(radio => {
+            radio.addEventListener('change', function () {
+                if (this.value === 'Yes') {
+                    usherCountGroup.style.display = 'block';
+                    setTimeout(() => {
+                        usherCountGroup.style.maxHeight = '100px';
+                        usherCountGroup.style.opacity = '1';
+                    }, 10);
+                    usherCountInput.required = true;
+                } else {
+                    usherCountGroup.style.maxHeight = '0';
+                    usherCountGroup.style.opacity = '0';
+                    setTimeout(() => {
+                        usherCountGroup.style.display = 'none';
+                    }, 400);
+                    usherCountInput.required = false;
+                    usherCountInput.value = '';
+                }
+            });
+        });
+
+        const durationUnitSelect = document.getElementById('durationUnit');
+        const durationValueSelect = document.getElementById('durationValue');
+        const hoursPickerWrap = document.getElementById('hoursPickerWrap');
+
+        if (durationUnitSelect) {
+            durationUnitSelect.addEventListener('change', function () {
+                const unit = this.value;
+                durationValueSelect.innerHTML = '<option value="">Select value...</option>';
+                
+                if (unit === 'hours') {
+                    durationValueSelect.style.display = 'none';
+                    hoursPickerWrap.style.display = 'flex';
+                    document.getElementById('durationHours').required = true;
+                    durationValueSelect.required = false;
+                } else {
+                    hoursPickerWrap.style.display = 'none';
+                    durationValueSelect.style.display = 'block';
+                    document.getElementById('durationHours').required = false;
+                    document.getElementById('durationHours').value = '';
+                    durationValueSelect.required = true;
+
+                    let max = unit === 'days' ? 14 : 4;
+                    for (let i = 1; i <= max; i++) {
+                        const option = document.createElement('option');
+                        option.value = i + " " + (i === 1 ? unit.slice(0, -1) : unit);
+                        option.textContent = i + " " + (i === 1 ? unit.slice(0, -1) : unit);
+                        durationValueSelect.appendChild(option);
+                    }
+                }
+            });
+        }
+
+        form.addEventListener('submit', async function (e) {
+            e.preventDefault();
+            
+            // Prevent double submission
+            if (submitBtn.disabled) return;
+            
+            submitBtn.disabled = true;
+            btnText.innerHTML = '<div class="spinner"></div> Booking...';
+
+            try {
+                const formData = new FormData(form);
+                const data = Object.fromEntries(formData.entries());
+
+                const durationUnit = data.durationUnit;
+                let finalDuration = '';
+
+                if (durationUnit === 'hours') {
+                    finalDuration = data.durationHours;
+                } else {
+                    finalDuration = data.durationValue;
+                }
+
+                data.duration = finalDuration;
+                if (data.eventType === 'Other') {
+                    data.eventType = "Other: " + data.otherEventDescription;
+                }
+
+                if (data.needUshers === 'Yes') {
+                    data.usherDetails = data.usherCount + " ushers requested";
+                }
+
+                const response = await fetch('/api/book-event', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    Toastify({
+                        text: "Booking created successfully!",
+                        duration: 3000,
+                        gravity: "top",
+                        position: "right",
+                        style: { background: "#2d8a5e" }
+                    }).showToast();
+                    
+                    setTimeout(() => {
+                        window.location.href = '/admin/bookings';
+                    }, 1500);
+                } else {
+                    throw new Error(result.message || 'Validation failed');
+                }
+            } catch (err) {
+                console.error(err);
+                Toastify({
+                    text: err.message || "Something went wrong",
+                    duration: 3000,
+                    gravity: "top",
+                    position: "right",
+                    style: { background: "#ff6b6b" }
+                }).showToast();
+                submitBtn.disabled = false;
+                btnText.textContent = 'Book Your Event';
+            }
+        });
+    }
+</script>
+
+</body>
+
+</html>

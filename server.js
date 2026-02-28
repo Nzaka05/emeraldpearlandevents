@@ -79,6 +79,10 @@ app.use('/admin', express.static(path.join(__dirname, 'admin'), {
     index: false
 }));
 
+app.get('/admin/bookings/new', (req, res) => {
+    res.sendFile(path.join(__dirname, 'admin', 'new-booking.html'));
+});
+
 // fallback for any other /admin/* path that doesn't match a file
 app.get('/admin/*', (req, res) => {
     // Completely ignore query parameters (like ?new=1) for route matching
