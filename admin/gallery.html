@@ -9,8 +9,8 @@
         href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap"
         rel="stylesheet">
     <script>
-        
-        (function() {
+
+        (function () {
             if (localStorage.getItem('emeraldDarkMode') === 'true') {
                 document.documentElement.classList.add('dark-mode');
             }
@@ -899,7 +899,7 @@
 
     <div class="admin-layout">
         <div id="sidebarOverlay"></div>
-    <aside class="sidebar">
+        <aside class="sidebar">
             <div class="sidebar-logo">EMERALD</div>
             <nav>
                 <a href="/admin/dashboard" class="nav-item">Dashboard</a>
@@ -920,10 +920,11 @@
 
         <div class="main-content">
             <div class="topbar" id="adminTopbar">
-    <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Open navigation menu" onclick="window.toggleSidebar(event)">
-        <i class="fas fa-bars"></i>
-    </button>
-    <h1 class="page-title">Gallery</h1>
+                <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Open navigation menu"
+                    onclick="window.toggleSidebar(event)">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <h1 class="page-title">Gallery</h1>
                 <div style="display:flex;gap:12px;align-items:center">
                     <span style="font-style:italic;color:var(--accent-gold);font-weight:600" id="todayDate"></span>
                     <button class="btn-primary" onclick="document.getElementById('fileInput').click()">📸 Upload
@@ -955,15 +956,25 @@
 
                 <div class="filter-bar">
                     <button class="filter-btn active" onclick="filterGallery('')" id="filter-all">All</button>
-                    <button class="filter-btn" onclick="filterGallery('Wedding')" id="filter-Wedding">Weddings</button>
-                    <button class="filter-btn" onclick="filterGallery('Birthday Party')"
+                    <button class="filter-btn" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)"
+                        ondrop="handleDrop(event, 'Wedding')" onclick="filterGallery('Wedding')"
+                        id="filter-Wedding">Weddings</button>
+                    <button class="filter-btn" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)"
+                        ondrop="handleDrop(event, 'Birthday Party')" onclick="filterGallery('Birthday Party')"
                         id="filter-Birthday Party">Birthdays</button>
-                    <button class="filter-btn" onclick="filterGallery('Corporate Event')"
+                    <button class="filter-btn" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)"
+                        ondrop="handleDrop(event, 'Corporate Event')" onclick="filterGallery('Corporate Event')"
                         id="filter-Corporate Event">Corporate</button>
-                    <button class="filter-btn" onclick="filterGallery('Traditional Ceremony')"
+                    <button class="filter-btn" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)"
+                        ondrop="handleDrop(event, 'Traditional Ceremony')"
+                        onclick="filterGallery('Traditional Ceremony')"
                         id="filter-Traditional Ceremony">Traditional</button>
-                    <button class="filter-btn" onclick="filterGallery('Private Celebration')"
+                    <button class="filter-btn" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)"
+                        ondrop="handleDrop(event, 'Private Celebration')" onclick="filterGallery('Private Celebration')"
                         id="filter-Private Celebration">Celebrations</button>
+                    <button class="filter-btn" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)"
+                        ondrop="handleDrop(event, 'Other')" onclick="filterGallery('Other')"
+                        id="filter-Other">Other</button>
                 </div>
 
                 <div class="gallery-grid" id="galleryGrid">
@@ -1006,7 +1017,9 @@
         function filterGallery(type) {
             currentFilter = type;
             document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-            const btn = document.getElementById(`filter-${type || 'all'}`);
+            // Escaping spaces for IDs
+            const safeId = `filter-${type || 'all'}`.replace(/ /g, '\\ ');
+            const btn = document.querySelector('#' + safeId);
             if (btn) btn.classList.add('active');
             renderGallery();
         }
@@ -1023,7 +1036,7 @@
             }
 
             grid.innerHTML = items.map(item => `
-            <div class="gallery-item" id="img-${item._id}">
+            <div class="gallery-item" id="img-${item._id}" draggable="true" ondragstart="handleDragStart(event, '${item._id}')">
                 <img class="gallery-img" src="${item.url}" alt="${item.caption || item.filename}" loading="lazy">
                 <div class="gallery-overlay">
                     <button class="btn-view" onclick="openLightbox('${item.url}')">👁 Preview</button>
@@ -1144,18 +1157,20 @@
             }
         }
 
-        // Drag and drop
+        // Drag and drop zone mapping
         const uploadZone = document.getElementById('uploadZone');
-        uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('dragover'); });
-        uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('dragover'));
-        uploadZone.addEventListener('drop', e => {
-            e.preventDefault();
-            uploadZone.classList.remove('dragover');
-            const dt = new DataTransfer();
-            Array.from(e.dataTransfer.files).forEach(f => dt.items.add(f));
-            document.getElementById('fileInput').files = dt.files;
-            document.getElementById('fileInput').dispatchEvent(new Event('change'));
-        });
+        if (uploadZone) {
+            uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('dragover'); });
+            uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('dragover'));
+            uploadZone.addEventListener('drop', e => {
+                e.preventDefault();
+                uploadZone.classList.remove('dragover');
+                const dt = new DataTransfer();
+                Array.from(e.dataTransfer.files).forEach(f => dt.items.add(f));
+                document.getElementById('fileInput').files = dt.files;
+                document.getElementById('fileInput').dispatchEvent(new Event('change'));
+            });
+        }
 
         function openLightbox(src) {
             document.getElementById('lightboxImg').src = src;
@@ -1167,10 +1182,74 @@
         document.getElementById('lightbox').addEventListener('click', e => {
             if (e.target.id === 'lightbox') closeLightbox();
         });
+
         function handleLogout() {
             fetch('/api/admin/logout', { method: 'POST' })
                 .then(() => window.location.href = '/admin/login')
                 .catch(err => console.error(err));
+        }
+
+        // ═══ CATEGORY DRAG & DROP LOGIC ═══
+        function handleDragStart(e, id) {
+            e.dataTransfer.setData('image_id', id);
+            e.target.style.opacity = '0.5';
+        }
+
+        document.addEventListener('dragend', (e) => {
+            if (e.target.classList && e.target.classList.contains('gallery-item')) {
+                e.target.style.opacity = '1';
+            }
+        });
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.currentTarget.classList.add('drag-hover');
+            e.currentTarget.style.transform = 'scale(1.05)';
+            e.currentTarget.style.boxShadow = '0 0 15px var(--accent-gold)';
+        }
+
+        function handleDragLeave(e) {
+            e.currentTarget.classList.remove('drag-hover');
+            e.currentTarget.style.transform = '';
+            e.currentTarget.style.boxShadow = '';
+        }
+
+        async function handleDrop(e, category) {
+            e.preventDefault();
+            e.currentTarget.classList.remove('drag-hover');
+            e.currentTarget.style.transform = '';
+            e.currentTarget.style.boxShadow = '';
+
+            const imageId = e.dataTransfer.getData('image_id');
+            if (!imageId) return;
+
+            const idx = allGallery.findIndex(i => i._id === imageId);
+            if (idx !== -1) {
+                const oldCategory = allGallery[idx].eventType;
+                if (oldCategory === category) return;
+
+                allGallery[idx].eventType = category;
+
+                const origText = e.currentTarget.textContent;
+                e.currentTarget.textContent = '✅ Moved!';
+                setTimeout(() => e.currentTarget.textContent = origText, 1500);
+
+                if (currentFilter && currentFilter !== category) {
+                    renderGallery();
+                } else if (!currentFilter) {
+                    renderGallery();
+                }
+
+                try {
+                    await fetch(`/api/admin/gallery/${imageId}`, {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ eventType: category })
+                    });
+                } catch (err) {
+                    console.error('Quietly failed to classify dropped image:', err);
+                }
+            }
         }
 
         // ═══ EDIT METADATA MODAL LOGIC ═══
@@ -1213,11 +1292,6 @@
             } catch (e) { alert('Error saving changes.'); }
             finally { btn.textContent = '💾 Save Changes'; btn.disabled = false; }
         }
-
-        document.getElementById('editMetaModal').addEventListener('click', function (e) {
-            if (e.target === this) closeEditModal();
-        });
-
     </script>
 
     <!-- Edit Metadata Modal -->
@@ -1246,11 +1320,10 @@
                     style="width:100%;padding:12px 14px;border:1px solid #e0e0e0;border-radius:6px;font-size:14px;font-family:'Outfit',sans-serif;outline:none;background:#fff;cursor:pointer;">
                     <option value="">— Select Category —</option>
                     <option value="Wedding">💍 Wedding</option>
-                    <option value="Birthday">🎂 Birthday</option>
-                    <option value="Corporate">🏢 Corporate</option>
-                    <option value="Traditional">🌿 Traditional Ceremony</option>
-                    <option value="Social">🎉 Social Event</option>
-                    <option value="Entertainment">🎵 Entertainment</option>
+                    <option value="Birthday Party">🎂 Birthday</option>
+                    <option value="Corporate Event">🏢 Corporate</option>
+                    <option value="Traditional Ceremony">🌿 Traditional Ceremony</option>
+                    <option value="Private Celebration">🎉 Private Celebration</option>
                     <option value="Other">📸 Other</option>
                 </select>
             </div>
@@ -1264,8 +1337,6 @@
         </div>
     </div>
     <script>
-        // Show edit modal as flex
-        document.getElementById('editMetaModal').style.display = 'none';
         document.getElementById('editMetaModal').addEventListener('click', function (e) {
             if (e.target === this) closeEditModal();
         });
@@ -1281,7 +1352,23 @@
         };
     </script>
 
-        <script src="/admin/assets/mobile-sidebar.js"></script>
+    <script src="/admin/assets/mobile-sidebar.js"></script>
+
+    <!-- Mobile Drag and Drop Polyfill -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/mobile-drag-drop@2.3.0-rc.2/default.css">
+    <script src="https://cdn.jsdelivr.net/npm/mobile-drag-drop@2.3.0-rc.2/index.min.js"></script>
+    <script>
+        // Enable touch drag and drop polyfill with 300ms delay
+        MobileDragDrop.polyfill({
+            holdToDrag: 300,
+            dragImageCenterOnTouch: true
+        });
+
+        // Prevent scroll on touchmove during drag
+        window.addEventListener('touchmove', function (e) {
+            if (e.cancelable && e.defaultPrevented) { e.preventDefault(); }
+        }, { passive: false });
+    </script>
 </body>
 
 </html>

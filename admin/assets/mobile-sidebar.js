@@ -1,12 +1,13 @@
 // JS to handle sidebar toggling
 window.toggleSidebar = function (e) {
-    if (e) e.stopPropagation();
+    if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
 
     // Fallbacks just in case the DOM is loaded weirdly
     const sidebar = document.querySelector('.sidebar');
     const overlay = document.getElementById('sidebarOverlay');
-
-    console.log("Toggle sidebar called!", sidebar);
 
     if (sidebar) {
         sidebar.classList.toggle('active');
@@ -27,10 +28,9 @@ function initMobileSidebar() {
     const sidebar = document.querySelector('.sidebar');
     const overlay = document.getElementById('sidebarOverlay');
 
-    if (btn) {
-        // Also attach traditional listener as backup
-        btn.addEventListener('click', window.toggleSidebar);
-    }
+    // We do NOT add btn.addEventListener('click', window.toggleSidebar) here
+    // because all 14 HTML files already have an inline onclick="window.toggleSidebar(event)".
+    // Having both causes it to toggle twice (open then instantly close).
 
     if (overlay) {
         overlay.addEventListener('click', window.closeSidebar);
@@ -47,7 +47,7 @@ function initMobileSidebar() {
     });
 
     // Close when clicking a nav link
-    const navLinks = document.querySelectorAll('.sidebar-nav-link');
+    const navLinks = document.querySelectorAll('.sidebar-nav-link, .nav-item');
     navLinks.forEach(link => {
         link.addEventListener('click', () => {
             if (window.innerWidth <= 768) {
@@ -63,3 +63,40 @@ if (document.readyState === 'loading') {
 } else {
     initMobileSidebar();
 }
+
+async function loadGlobalAdminAvatar() {
+    try {
+        const response = await fetch('/api/admin/settings');
+        const result = await response.json();
+        if (result.success && result.settings && result.settings.profileImage) {
+            const sidebarLogo = document.querySelector('.sidebar-logo');
+            if (sidebarLogo && !document.querySelector('.sidebar-profile')) {
+                const profileDiv = document.createElement('div');
+                profileDiv.className = 'sidebar-profile';
+                profileDiv.style.textAlign = 'center';
+                profileDiv.style.marginBottom = '32px';
+
+                const img = document.createElement('img');
+                img.src = result.settings.profileImage;
+                img.style.width = '70px';
+                img.style.height = '70px';
+                img.style.borderRadius = '50%';
+                img.style.objectFit = 'cover';
+                img.style.border = '2px solid var(--accent-gold)';
+                img.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
+                img.style.transition = 'transform 0.3s ease';
+                img.onmouseover = () => img.style.transform = 'scale(1.05)';
+                img.onmouseout = () => img.style.transform = 'scale(1)';
+
+                profileDiv.appendChild(img);
+                sidebarLogo.parentNode.insertBefore(profileDiv, sidebarLogo.nextSibling);
+            }
+        }
+    } catch (err) {
+        console.error('Failed to load global admin avatar:', err);
+    }
+}
+
+// Load avatar globally
+loadGlobalAdminAvatar();
+// End of file

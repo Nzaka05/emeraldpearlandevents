@@ -769,7 +769,7 @@ router.get('/settings', verifyAdminJWT, async (req, res) => {
 // PATCH /api/admin/settings
 router.patch('/settings', verifyAdminJWT, async (req, res) => {
     try {
-        const { businessName, businessPhone, businessEmail, businessAddress, notifyOnNewBooking, notifyOnWhatsApp, darkMode, instagramHandle, instagramUrl, facebookUrl, beholdfeedId } = req.body;
+        const { businessName, businessPhone, businessEmail, businessAddress, notifyOnNewBooking, notifyOnWhatsApp, darkMode, instagramHandle, instagramUrl, facebookUrl, beholdfeedId, profileImage } = req.body;
 
         let settings = await AdminSettings.findOne();
         if (!settings) {
@@ -787,6 +787,7 @@ router.patch('/settings', verifyAdminJWT, async (req, res) => {
         if (instagramUrl !== undefined) settings.instagramUrl = instagramUrl;
         if (facebookUrl !== undefined) settings.facebookUrl = facebookUrl;
         if (beholdfeedId !== undefined) settings.beholdfeedId = beholdfeedId;
+        if (profileImage !== undefined) settings.profileImage = profileImage;
 
         await settings.save();
 
@@ -1102,6 +1103,52 @@ router.patch('/bookings/:id/pay', verifyAdminJWT, async (req, res) => {
     } catch (error) {
         console.error('Error updating payment:', error);
         res.status(500).json({ success: false, message: 'Error updating payment: ' + error.message });
+    }
+});
+
+// ═══════════════════════════════════════════════════════════
+// CUSTOMER CRM
+// ═══════════════════════════════════════════════════════════
+
+// GET /api/admin/customers
+router.get('/customers', verifyAdminJWT, async (req, res) => {
+    try {
+        const customers = await Customer.find().sort({ createdAt: -1 });
+        res.json({ success: true, customers });
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'Error fetching customers' });
+    }
+});
+
+// POST /api/admin/customers
+router.post('/customers', verifyAdminJWT, async (req, res) => {
+    try {
+        const { name, email, phone, location, tags, notes } = req.body;
+        const newCustomer = new Customer({
+            name,
+            email,
+            phone,
+            location,
+            tags: tags || ['new'],
+            notes: notes || '',
+        });
+        await newCustomer.save();
+        res.json({ success: true, customer: newCustomer });
+    } catch (error) {
+        if (error.code === 11000) {
+            return res.status(400).json({ success: false, message: 'Email or phone already exists' });
+        }
+        res.status(500).json({ success: false, message: 'Error creating customer: ' + error.message });
+    }
+});
+
+// DELETE /api/admin/customers/:id
+router.delete('/customers/:id', verifyAdminJWT, async (req, res) => {
+    try {
+        await Customer.findByIdAndDelete(req.params.id);
+        res.json({ success: true, message: 'Customer deleted' });
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'Error deleting customer' });
     }
 });
 

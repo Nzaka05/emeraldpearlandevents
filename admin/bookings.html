@@ -1118,8 +1118,8 @@
 
     <!-- MOBILE & DARK LOGIC -->
     <script>
-        
-        (function() {
+
+        (function () {
             if (localStorage.getItem('emeraldDarkMode') === 'true') {
                 document.documentElement.classList.add('dark-mode');
             }
@@ -1219,7 +1219,7 @@
     <div class="admin-layout">
         <!-- SIDEBAR -->
         <div id="sidebarOverlay"></div>
-    <aside class="sidebar">
+        <aside class="sidebar">
             <div class="sidebar-logo">EMERALD</div>
 
             <nav>
@@ -1252,10 +1252,11 @@
             <!-- TOPBAR -->
             <div class="topbar" id="adminTopbar">
                 <div class="topbar-left">
-    <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Open navigation menu" onclick="window.toggleSidebar(event)">
-        <i class="fas fa-bars"></i>
-    </button>
-    <h1 class="page-title">Bookings</h1>
+                    <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Open navigation menu"
+                        onclick="window.toggleSidebar(event)">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h1 class="page-title">Bookings</h1>
                     <div class="breadcrumb">Dashboard / Bookings</div>
                 </div>
                 <div class="topbar-right">
@@ -1964,8 +1965,8 @@
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        supervisor: supervisorId ? supervisorId : null,
-                        assignedStaff: teamIds
+                        supervisorId: supervisorId ? supervisorId : null,
+                        staffIds: teamIds
                     })
                 });
                 const result = await response.json();
@@ -2150,7 +2151,7 @@
         });
     </script>
     <script src="/admin/push-client.js"></script>
-        <script src="/admin/assets/mobile-sidebar.js"></script>
+    <script src="/admin/assets/mobile-sidebar.js"></script>
 </body>
 
 </html>

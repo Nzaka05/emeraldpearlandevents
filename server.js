@@ -94,6 +94,11 @@ app.get('/admin', (req, res) => {
     res.redirect('/admin/login');
 });
 
+// ── PUBLIC HTML ROUTES ──
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
+app.get('/index.html', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
+app.get('/booking.html', (req, res) => res.sendFile(path.join(__dirname, 'booking.html')));
+
 app.use(bodyParser.json({ limit: '50mb' }));
 app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
 app.use(express.static('public'));

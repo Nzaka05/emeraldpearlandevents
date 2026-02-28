@@ -1,10 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Clients - Emerald Admin</title>
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -62,7 +65,8 @@
             cursor: pointer;
         }
 
-        .nav-item:hover, .nav-item.active {
+        .nav-item:hover,
+        .nav-item.active {
             background-color: rgba(201, 168, 76, 0.1);
         }
 
@@ -197,7 +201,8 @@
             transform: rotateY(180deg);
         }
 
-        .flip-card-front, .flip-card-back {
+        .flip-card-front,
+        .flip-card-back {
             position: absolute;
             width: 100%;
             height: 100%;
@@ -285,20 +290,36 @@
         }
 
         @keyframes floatIdle {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-8px); }
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-8px);
+            }
         }
 
         @media (max-width: 768px) {
-            .sidebar { position: relative; width: 100%; }
-            .main-content { margin-left: 0; }
-            .clients-grid { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
+            .sidebar {
+                position: relative;
+                width: 100%;
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+
+            .clients-grid {
+                grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            }
         }
-    
+
         /* ═══════════════════════════════════════════════════════════
            MOBILE RESPONSIVENESS (Injected via Phase 10 Overhaul)
            ═══════════════════════════════════════════════════════════ */
-        
+
         /* Hamburger Menu Icon (Hidden on Desktop) */
         .mobile-menu-btn {
             display: none;
@@ -311,72 +332,75 @@
         }
 
         @media (max-width: 768px) {
+
             /* Show Hamburger */
             .mobile-menu-btn {
                 display: block;
             }
-            
+
             /* Sidebar becomes a drawer */
             .sidebar {
                 transform: translateX(-100%);
                 transition: transform 0.3s ease-in-out;
                 z-index: 2000;
             }
-            
+
             .sidebar.active {
                 transform: translateX(0);
             }
-            
+
             /* Main content expands to full width */
             .main-content {
                 margin-left: 0;
                 width: 100vw;
             }
-            
+
             /* Topbar adjustments */
             .topbar {
                 padding: 15px 20px;
                 flex-wrap: wrap;
                 gap: 15px;
             }
-            
+
             .page-title {
                 font-size: 22px;
             }
-            
+
             .search-bar {
-                display: none; /* Hide search on extreme mobile to save space */
+                display: none;
+                /* Hide search on extreme mobile to save space */
             }
-            
+
             /* Stats Grid Stacking */
             .stats-grid {
                 grid-template-columns: 1fr;
             }
-            
+
             /* Charts & Tables Stacking */
             .dashboard-grid {
                 grid-template-columns: 1fr;
             }
-            
+
             /* Modals */
             .modal-content {
                 width: 95%;
                 margin: 20px auto;
                 padding: 20px;
             }
-            
+
             /* Form Rows */
-            .form-row, .booking-grid {
+            .form-row,
+            .booking-grid {
                 grid-template-columns: 1fr;
             }
-            
+
             /* Tables */
             .table-container {
                 overflow-x: auto;
             }
         }
 
-    
+
         /* ═══════════════════════════════════════════════════════════
            MOBILE QUICK ACTION FAB
            ═══════════════════════════════════════════════════════════ */
@@ -456,7 +480,8 @@
             width: 16px;
         }
 
-        .fab-item:hover, .fab-item:active {
+        .fab-item:hover,
+        .fab-item:active {
             background: rgba(201, 168, 76, 0.1);
         }
 
@@ -465,13 +490,12 @@
                 display: block;
             }
         }
-
     </style>
 
     <!-- MOBILE & DARK LOGIC -->
     <script>
-        
-        (function() {
+
+        (function () {
             if (localStorage.getItem('emeraldDarkMode') === 'true') {
                 document.documentElement.classList.add('dark-mode');
             }
@@ -498,17 +522,45 @@
         }
 
         /* Generic Dark Mode Fixes */
-        html.dark-mode .sidebar { background: var(--sidebar-bg); border-right-color: var(--border-color); }
-        html.dark-mode .topbar { background: var(--sidebar-bg); border-bottom-color: var(--border-color); }
-        html.dark-mode .modal-content { background: var(--bg-card); }
-        html.dark-mode input, html.dark-mode select, html.dark-mode textarea { background: var(--sidebar-bg); color: var(--text-main); }
-        html.dark-mode .btn-secondary, html.dark-mode .btn-cancel { color: var(--text-main); }
-        html.dark-mode .nav-item { color: var(--text-main); }
-        html.dark-mode .pagination-btn { background: var(--sidebar-bg); color: var(--text-main); }
+        html.dark-mode .sidebar {
+            background: var(--sidebar-bg);
+            border-right-color: var(--border-color);
+        }
+
+        html.dark-mode .topbar {
+            background: var(--sidebar-bg);
+            border-bottom-color: var(--border-color);
+        }
+
+        html.dark-mode .modal-content {
+            background: var(--bg-card);
+        }
+
+        html.dark-mode input,
+        html.dark-mode select,
+        html.dark-mode textarea {
+            background: var(--sidebar-bg);
+            color: var(--text-main);
+        }
+
+        html.dark-mode .btn-secondary,
+        html.dark-mode .btn-cancel {
+            color: var(--text-main);
+        }
+
+        html.dark-mode .nav-item {
+            color: var(--text-main);
+        }
+
+        html.dark-mode .pagination-btn {
+            background: var(--sidebar-bg);
+            color: var(--text-main);
+        }
     </style>
 
     <link rel="stylesheet" href="/admin/assets/premium-admin.css">
 </head>
+
 <body>
 
     <!-- Mobile Quick Action FAB -->
@@ -525,12 +577,12 @@
             </a>
         </div>
     </div>
-    
+
     <script>
         function toggleFab() {
             document.getElementById('mobileFab').classList.toggle('active');
         }
-        
+
         // Close FAB if clicking outside
         document.addEventListener('click', (e) => {
             const fab = document.getElementById('mobileFab');
@@ -542,7 +594,7 @@
 
     <div class="admin-layout">
         <div id="sidebarOverlay"></div>
-    <aside class="sidebar">
+        <aside class="sidebar">
             <div class="sidebar-logo">EMERALD</div>
             <nav>
                 <a href="/admin/dashboard" class="nav-item">Dashboard</a>
@@ -563,12 +615,14 @@
 
         <div class="main-content">
             <div class="topbar" id="adminTopbar">
-    <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Open navigation menu" onclick="window.toggleSidebar(event)">
-        <i class="fas fa-bars"></i>
-    </button>
-    <h1 class="page-title">Clients</h1>
+                <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Open navigation menu"
+                    onclick="window.toggleSidebar(event)">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <h1 class="page-title">Clients</h1>
                 <div style="flex: 1; text-align: right;">
-                    <span style="font-style: italic; color: var(--accent-gold); font-weight: 600;" id="todayDate"></span>
+                    <span style="font-style: italic; color: var(--accent-gold); font-weight: 600;"
+                        id="todayDate"></span>
                 </div>
             </div>
 
@@ -577,7 +631,6 @@
                     <input type="text" class="search-bar" id="searchInput" placeholder="Search clients...">
                     <button class="btn-primary" onclick="openNewClientModal()">➕ New Client</button>
                 </div>
-
                 <div class="clients-grid" id="clientsGrid">
                     <!-- Populated by JavaScript -->
                 </div>
@@ -585,7 +638,130 @@
         </div>
     </div>
 
+    <!-- NEW CLIENT MODAL -->
+    <div class="modal" id="clientModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">New Client</h2>
+                <button class="action-btn" style="width: auto; background: none; color: #999; font-size: 20px;"
+                    onclick="closeClientModal()">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Full Name</label>
+                    <input type="text" id="clientName" class="form-input" placeholder="e.g. John Doe">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Email</label>
+                    <input type="email" id="clientEmail" class="form-input" placeholder="john@example.com">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Phone</label>
+                    <input type="text" id="clientPhone" class="form-input" placeholder="+254...">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Location (Optional)</label>
+                    <input type="text" id="clientLocation" class="form-input" placeholder="Nairobi">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Notes (Optional)</label>
+                    <textarea id="clientNotes" class="form-textarea"
+                        placeholder="Internal notes about the client..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-cancel" onclick="closeClientModal()"
+                    style="border: 1px solid var(--border-color); background: transparent; padding: 10px 20px; border-radius: 4px; cursor: pointer; color: var(--text-main);">Cancel</button>
+                <button class="btn-primary" onclick="saveClient()">Save Client</button>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(13, 43, 31, 0.5);
+            z-index: 200;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--bg-card);
+            border-radius: 8px;
+            width: 90%;
+            max-width: 500px;
+        }
+
+        .modal-header {
+            padding: 24px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .modal-body {
+            padding: 24px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #666;
+            text-transform: uppercase;
+        }
+
+        .form-input,
+        .form-textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 14px;
+            background: transparent;
+            color: var(--text-main);
+        }
+
+        .form-textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .modal-footer {
+            padding: 16px 24px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+    </style>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+
     <script>
         let allClients = [];
 
@@ -602,14 +778,40 @@
 
         async function loadClients() {
             try {
-                const response = await fetch('/api/admin/bookings?limit=100');
-                const result = await response.json();
-                if (result.success) {
-                    // Extract unique clients from bookings
-                    const clientMap = new Map();
-                    result.bookings.forEach(booking => {
-                        if (!clientMap.has(booking.customerEmail)) {
-                            clientMap.set(booking.customerEmail, {
+                // Fetch both bookings and standalone CRM customers
+                const [bookingsRes, customersRes] = await Promise.all([
+                    fetch('/api/admin/bookings?limit=100'),
+                    fetch('/api/admin/customers')
+                ]);
+
+                const bookingsData = await bookingsRes.json();
+                const customersData = await customersRes.json();
+
+                const clientMap = new Map();
+
+                // 1. Load standalone customers first
+                if (customersData.success) {
+                    customersData.customers.forEach(cust => {
+                        clientMap.set(cust.email.toLowerCase(), {
+                            isStandalone: true,
+                            id: cust._id,
+                            name: cust.name,
+                            email: cust.email,
+                            phone: cust.phone,
+                            eventType: 'General Client',
+                            location: cust.location || '',
+                            totalBookings: 0
+                        });
+                    });
+                }
+
+                // 2. Merge bookings data (update counts or add missing)
+                if (bookingsData.success) {
+                    bookingsData.bookings.forEach(booking => {
+                        const emailKey = booking.customerEmail.toLowerCase();
+                        if (!clientMap.has(emailKey)) {
+                            clientMap.set(emailKey, {
+                                isStandalone: false,
                                 name: booking.customerName,
                                 email: booking.customerEmail,
                                 phone: booking.customerPhone,
@@ -618,14 +820,18 @@
                                 totalBookings: 1
                             });
                         } else {
-                            const client = clientMap.get(booking.customerEmail);
+                            const client = clientMap.get(emailKey);
                             client.totalBookings++;
+                            // update event type if it's currently general
+                            if (client.eventType === 'General Client') {
+                                client.eventType = booking.eventType;
+                            }
                         }
                     });
-                    
-                    allClients = Array.from(clientMap.values());
-                    renderClients(allClients);
                 }
+
+                allClients = Array.from(clientMap.values());
+                renderClients(allClients);
             } catch (error) {
                 console.error('Error loading clients:', error);
             }
@@ -666,7 +872,7 @@
 
         document.getElementById('searchInput').addEventListener('input', (e) => {
             const term = e.target.value.toLowerCase();
-            const filtered = allClients.filter(client => 
+            const filtered = allClients.filter(client =>
                 client.name.toLowerCase().includes(term) ||
                 client.email.toLowerCase().includes(term)
             );
@@ -674,15 +880,63 @@
         });
 
         function openNewClientModal() {
-            alert('New Client form - to be implemented');
+            document.getElementById('clientName').value = '';
+            document.getElementById('clientEmail').value = '';
+            document.getElementById('clientPhone').value = '';
+            document.getElementById('clientLocation').value = '';
+            document.getElementById('clientNotes').value = '';
+            document.getElementById('clientModal').classList.add('show');
+        }
+
+        function closeClientModal() {
+            document.getElementById('clientModal').classList.remove('show');
+        }
+
+        async function saveClient() {
+            const name = document.getElementById('clientName').value.trim();
+            const email = document.getElementById('clientEmail').value.trim();
+            const phone = document.getElementById('clientPhone').value.trim();
+            const location = document.getElementById('clientLocation').value.trim();
+            const notes = document.getElementById('clientNotes').value.trim();
+
+            if (!name || !email || !phone) {
+                alert('Please fill in name, email, and phone.');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/admin/customers', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, email, phone, location, notes })
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    closeClientModal();
+                    alert('Client added successfully!');
+                    loadClients();
+                } else {
+                    alert('Error creating client: ' + result.message);
+                }
+            } catch (error) {
+                console.error('Save error:', error);
+                alert('Failed to save client.');
+            }
         }
 
         function editClient(email) {
-            alert(`Edit client: ${email}`);
+            alert(`CRM editing coming soon for: \${email}`);
         }
 
-        function deleteClient(email) {
-            if (confirm(`Delete client ${email}?`)) {
+        async function deleteClient(email) {
+            if (confirm(`Delete client \${email}? Note: This only deletes standalone CRM records, not booking emails.`)) {
+                const client = allClients.find(c => c.email === email);
+                if (client && client.isStandalone && client.id) {
+                    try {
+                        await fetch(`/api/admin/customers/\${client.id}`, { method: 'DELETE' });
+                    } catch (e) { console.error('Delete failed:', e); }
+                }
                 allClients = allClients.filter(c => c.email !== email);
                 renderClients(allClients);
             }
@@ -693,7 +947,9 @@
                 .then(() => window.location.href = '/admin/login')
                 .catch(error => console.error('Logout error:', error));
         }
+
     </script>
-        <script src="/admin/assets/mobile-sidebar.js"></script>
+    <script src="/admin/assets/mobile-sidebar.js"></script>
 </body>
+
 </html>
