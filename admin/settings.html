@@ -533,8 +533,8 @@
 
     <!-- MOBILE & DARK LOGIC -->
     <script>
-        
-        (function() {
+
+        (function () {
             if (localStorage.getItem('emeraldDarkMode') === 'true') {
                 document.documentElement.classList.add('dark-mode');
             }
@@ -633,7 +633,7 @@
 
     <div class="admin-layout">
         <div id="sidebarOverlay"></div>
-    <aside class="sidebar">
+        <aside class="sidebar">
             <div class="sidebar-logo">EMERALD</div>
             <nav>
                 <a href="/admin/dashboard" class="nav-item">Dashboard</a>
@@ -654,9 +654,10 @@
 
         <div class="main-content">
             <div class="topbar">
-    <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Open navigation menu" onclick="window.toggleSidebar(event)">
-        <i class="fas fa-bars"></i>
-    </button>
+                <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Open navigation menu"
+                    onclick="window.toggleSidebar(event)">
+                    <i class="fas fa-bars"></i>
+                </button>
                 <h1 class="page-title">Settings</h1>
                 <div style="flex: 1; text-align: right;">
                     <span style="font-style: italic; color: var(--accent-gold); font-weight: 600;"
@@ -797,6 +798,24 @@
                                     <div class="toggle-label">Payment Notifications</div>
                                 </div>
                                 <div class="info-text">Notify when payments are received</div>
+                            </div>
+
+                            <!-- Push Notifications -->
+                            <div class="form-group"
+                                style="margin-top: 24px; border-top: 1px solid var(--border-color); padding-top: 24px;">
+                                <div
+                                    style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+                                    <div>
+                                        <div style="font-weight: 600; color: var(--text-main); margin-bottom: 4px;">
+                                            Browser Push Notifications</div>
+                                        <div class="info-text" style="font-size: 13px;">Receive instant pop-up alerts on
+                                            this device when new bookings arrive, even if the tab is inactive.</div>
+                                    </div>
+                                    <button class="btn-primary" id="btnEnablePush" onclick="setupManualPush()"
+                                        style="padding: 10px 20px; font-size: 14px; display: flex; align-items: center; gap: 8px;">
+                                        <i class="fas fa-bell"></i> Enable on this device
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -1188,7 +1207,8 @@
             }
         }
     </script>
-        <script src="/admin/assets/mobile-sidebar.js"></script>
+    <script src="/admin/assets/mobile-sidebar.js"></script>
+    <script src="/admin/push-client.js"></script>
 </body>
 
 </html>

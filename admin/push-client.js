@@ -105,13 +105,60 @@ if ('serviceWorker' in navigator) {
     });
 }
 
-// Ensure user interaction has happened before calling init
+// Function called by the "Enable Push" button in Settings
+async function setupManualPush() {
+    const btn = document.getElementById('btnEnablePush');
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Setting up...';
+    }
+
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+        alert('Push messaging is not supported by your browser.');
+        if (btn) {
+            btn.innerHTML = '🔔 Enable on this device';
+            btn.disabled = false;
+        }
+        return;
+    }
+
+    try {
+        const permission = await Notification.requestPermission();
+        if (permission === 'granted') {
+            await initPushNotifications();
+            Toastify && Toastify({ text: "Push Notifications Enabled!", duration: 3000, style: { background: "#1a3c2e", color: "#c9a84c" } }).showToast();
+            if (btn) {
+                btn.innerHTML = '✅ Active on this device';
+                btn.classList.replace('btn-primary', 'btn-secondary');
+            }
+        } else {
+            alert('Permission for notifications was denied or dismissed.');
+            if (btn) {
+                btn.innerHTML = '🔔 Enable on this device';
+                btn.disabled = false;
+            }
+        }
+    } catch (e) {
+        console.error(e);
+        alert('Failed to enable push notifications.');
+        if (btn) {
+            btn.innerHTML = '🔔 Enable on this device';
+            btn.disabled = false;
+        }
+    }
+}
+
+// Run passively in background if permission already granted
 document.addEventListener('DOMContentLoaded', () => {
-    // A quick check if permission is already granted so we don't have to wait for click
     if (Notification.permission === 'granted') {
         initPushNotifications();
-    } else {
-        // Many browsers require user gesture to show permission prompt
-        document.body.addEventListener('click', initPushNotifications, { once: true });
+
+        // Update Settings page button if user is there
+        const btn = document.getElementById('btnEnablePush');
+        if (btn) {
+            btn.innerHTML = '✅ Active on this device';
+            btn.disabled = true;
+            btn.classList.replace('btn-primary', 'btn-secondary');
+        }
     }
 });
