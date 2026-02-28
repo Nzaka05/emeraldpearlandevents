@@ -1,5 +1,243 @@
-<!DOCTYPE html>
+const fs = require('fs');
+const path = require('path');
 
+const dashboardPath = path.join(__dirname, 'admin', 'dashboard.html');
+const newBookingPath = path.join(__dirname, 'admin', 'new-booking.html');
+
+let dashHtml = fs.readFileSync(dashboardPath, 'utf8');
+
+// The dashboard has <main class="main-content">
+// Inside it has <div class="header">...</div>
+// After the header, we have <!-- Quick Actions --> etc.
+const mainStart = dashHtml.indexOf('<main class="main-content">');
+const headerEnd = dashHtml.indexOf('</div>', dashHtml.indexOf('</div>', dashHtml.indexOf('</div>', mainStart) + 6) + 6) + 6;
+
+// Some dashboards format the header differently. Let's find exactly where <!-- Quick Actions --> or similar content starts.
+const quickActionsIdx = dashHtml.indexOf('<!-- Quick Actions -->');
+const pageHeaderEnd = quickActionsIdx > -1 ? quickActionsIdx : dashHtml.indexOf('<div class="quick-actions">');
+
+const topPart = dashHtml.substring(0, pageHeaderEnd);
+const bottomPart = dashHtml.substring(dashHtml.indexOf('</main>'));
+
+// Fix missing DOCTYPE if any (dashboard.html should have it but let's ensure)
+let prefix = '';
+if (!topPart.trim().toLowerCase().startsWith('<!doctype')) {
+    prefix = '<!DOCTYPE html>\n';
+}
+
+const customStyles = `
+<style>
+/* Admin New Booking Custom Styles */
+.admin-booking-card {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 30px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    margin-bottom: 20px;
+}
+
+.admin-section-header {
+    color: #c9a84c;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.3rem;
+    border-bottom: 2px solid #c9a84c;
+    padding-bottom: 8px;
+    margin-bottom: 20px;
+    margin-top: 30px;
+}
+.admin-section-header:first-of-type {
+    margin-top: 0;
+}
+
+.admin-form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.admin-form-group {
+    margin-bottom: 0;
+}
+
+.admin-form-group.full-width {
+    grid-column: 1 / -1;
+}
+
+.admin-label {
+    font-weight: 600;
+    color: #1a3c2e;
+    margin-bottom: 6px;
+    display: block;
+    font-size: 13px;
+}
+
+.admin-input, .admin-select, .admin-textarea {
+    width: 100%;
+    padding: 12px 15px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: inherit;
+    outline: none;
+    transition: border 0.2s, box-shadow 0.2s;
+    background: #fff;
+    color: #333;
+}
+
+.admin-textarea {
+    resize: vertical;
+    min-height: 100px;
+}
+
+.admin-input:focus, .admin-select:focus, .admin-textarea:focus {
+    border-color: #c9a84c;
+    box-shadow: 0 0 0 3px rgba(201,168,76,0.15);
+}
+
+.admin-radio-group {
+    display: flex;
+    gap: 20px;
+    margin-top: 8px;
+}
+
+.admin-radio-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    cursor: pointer;
+    font-weight: 500;
+    color: #333;
+}
+
+.admin-radio-label input[type="radio"] {
+    accent-color: #1a3c2e;
+    width: 16px;
+    height: 16px;
+}
+
+/* Button Layout */
+.admin-form-actions {
+    display: flex;
+    gap: 15px;
+    margin-top: 30px;
+    border-top: 1px solid #eee;
+    padding-top: 20px;
+    flex-wrap: wrap;
+}
+
+.admin-btn {
+    padding: 12px 28px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 14px;
+    font-family: inherit;
+    transition: all 0.3s ease;
+    text-align: center;
+    border: none;
+}
+
+.btn-cancel {
+    background: #ffffff;
+    border: 1px solid #2d6a4f;
+    color: #2d6a4f;
+}
+.btn-cancel:hover {
+    background: #f0fdf4;
+}
+
+.btn-draft {
+    background: #ffffff;
+    border: 1px solid #c9a84c;
+    color: #c9a84c;
+}
+.btn-draft:hover {
+    background: #fffdf5;
+}
+
+.btn-submit {
+    background: #1a3c2e;
+    color: #ffffff;
+    border: 1px solid #1a3c2e;
+}
+.btn-submit:hover {
+    border-color: #c9a84c;
+    color: #c9a84c;
+}
+
+.btn-submit:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.page-header {
+    margin-bottom: 25px;
+}
+
+.page-title {
+    color: #1a3c2e;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 2rem;
+    margin-bottom: 5px;
+}
+
+.breadcrumb {
+    color: #6b6b6b;
+    font-size: 13px;
+}
+
+.breadcrumb a {
+    color: #1a3c2e;
+    text-decoration: none;
+}
+
+html.dark-mode .admin-booking-card {
+    background: #0d2b1f;
+    border-color: #1a3d2e;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+}
+html.dark-mode .admin-input, html.dark-mode .admin-select, html.dark-mode .admin-textarea {
+    background: #091a13;
+    border-color: #1a3d2e;
+    color: #f5f0e8;
+}
+html.dark-mode .admin-label { color: #f5f0e8; }
+html.dark-mode .page-title { color: #f5f0e8; }
+html.dark-mode .breadcrumb a { color: #c9a84c; }
+
+/* Mobile Optimizations */
+@media (max-width: 768px) {
+    .admin-form-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+    
+    .admin-input, .admin-select, .admin-textarea, .admin-btn {
+        font-size: 16px; /* Prevent iOS zoom */
+        min-height: 44px; /* Touch target */
+    }
+    
+    .admin-form-group {
+        margin-bottom: 16px;
+    }
+    
+    .admin-booking-card {
+        padding: 20px;
+    }
+    
+    .admin-form-actions {
+        flex-direction: column;
+    }
+    
+    .admin-btn {
+        width: 100%;
+    }
+}
+</style>
+`;
+
+const formHtml = `
             <div class="page-header">
                 <h1 class="page-title">New Booking</h1>
                 <div class="breadcrumb">
@@ -71,9 +309,9 @@
                             <select id="budgetRange" name="budgetRange" class="admin-select" required autocomplete="off">
                                 <option value="">Select range...</option>
                                 <option value="Under KES 50,000">Under KES 50,000</option>
-                                <option value="KES 50,000 – 100,000">KES 50,000 – 100,000</option>
-                                <option value="KES 100,000 – 250,000">KES 100,000 – 250,000</option>
-                                <option value="KES 250,000 – 500,000">KES 250,000 – 500,000</option>
+                                <option value="KES 50,000 \u2013 100,000">KES 50,000 \u2013 100,000</option>
+                                <option value="KES 100,000 \u2013 250,000">KES 100,000 \u2013 250,000</option>
+                                <option value="KES 250,000 \u2013 500,000">KES 250,000 \u2013 500,000</option>
                                 <option value="KES 500,000+">KES 500,000+</option>
                                 <option value="Not Sure Yet">Not Sure Yet</option>
                             </select>
@@ -254,227 +492,17 @@
                     });
                 });
             </script>
-</main>
+`;
 
-    <!-- SCRIPTS -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
-    <script>
-        gsap.registerPlugin(ScrollTrigger);
+// Insert the custom styles into the head
+let finalTopPart = prefix + topPart.replace('</head>', customStyles + '\n</head>');
+// Title change
+finalTopPart = finalTopPart.replace('<title>Admin Dashboard - Emerald Pearland Events</title>', '<title>New Booking - Admin</title>');
 
-        // Update date
-        function updateDate() {
-            const options = { weekday: 'short', month: 'short', day: 'numeric' };
-            const today = new Date().toLocaleDateString('en-US', options);
-            document.getElementById('todayDate').textContent = today;
-        }
+let finalHtml = finalTopPart + formHtml + bottomPart;
 
-        // Load admin data
-        async function loadAdminData() {
-            try {
-                const response = await fetch('/api/admin/me');
-                const result = await response.json();
+// Set body background color as requested specifically for the whole page if dashboard has a different var
+finalHtml = finalHtml.replace('body {', 'body { background-color: #f5f0e8 !important;');
 
-                if (result.success && result.admin) {
-                    const admin = result.admin;
-                    const initials = admin.name.split(' ').map(n => n[0]).join('').toUpperCase();
-
-                    document.getElementById('adminAvatar').textContent = initials;
-                    document.getElementById('topbarAvatar').textContent = initials;
-                    document.getElementById('adminName').textContent = admin.name;
-                    document.getElementById('topbarName').textContent = admin.name;
-                }
-            } catch (error) {
-                console.error('Error loading admin data:', error);
-            }
-        }
-
-        // Load stats
-        async function loadStats() {
-            try {
-                const response = await fetch('/api/admin/analytics/overview');
-                const result = await response.json();
-
-                if (result.success && result.stats) {
-                    const stats = result.stats;
-
-                    // Animate numbers by specific ID to avoid layout order issues
-                    const elTotalBookings = document.getElementById('totalBookingsVal');
-                    const elRevenue = document.getElementById('revenueCount');
-                    const elProjected = document.getElementById('projectedRevenueCount');
-                    const elPending = document.getElementById('pendingCount');
-                    const elUpcoming = document.getElementById('upcomingCount');
-
-                    if (elTotalBookings) animateCounter(elTotalBookings, stats.totalBookingsThisMonth || 0);
-                    if (elRevenue) animateCounter(elRevenue, Math.floor(stats.revenue || 0));
-                    // Check if projectedRevenue exists yet from backend, default to 0
-                    if (elProjected) animateCounter(elProjected, Math.floor(stats.projectedRevenue || 0));
-                    if (elPending) animateCounter(elPending, stats.pendingConfirmations || 0);
-                    if (elUpcoming) animateCounter(elUpcoming, stats.upcomingEventsThisWeek || 0);
-
-                    // Initialize Chart
-                    if (stats.chartData) {
-                        initChart(stats.chartData.labels, stats.chartData.revenue);
-                    }
-                }
-            } catch (error) {
-                console.error('Error loading stats:', error);
-            }
-        }
-
-        // Initialize Chart.js
-        function initChart(labels, data) {
-            const ctx = document.getElementById('revenueChart');
-            if (!ctx) return;
-
-            new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Revenue (KES)',
-                        data: data,
-                        borderColor: 'var(--accent-gold)',
-                        backgroundColor: 'rgba(201, 168, 76, 0.1)',
-                        borderWidth: 2,
-                        tension: 0.4,
-                        fill: true,
-                        pointBackgroundColor: 'var(--text-main)',
-                        pointBorderColor: 'var(--accent-gold)',
-                        pointBorderWidth: 2,
-                        pointRadius: 4,
-                        pointHoverRadius: 6
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                            backgroundColor: 'var(--text-main)',
-                            titleFont: { family: 'DM Sans', size: 13 },
-                            bodyFont: { family: 'DM Sans', size: 14, weight: 'bold' },
-                            padding: 12,
-                            displayColors: false,
-                            callbacks: {
-                                label: function (context) {
-                                    return 'KES ' + context.parsed.y.toLocaleString();
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            grid: { color: 'rgba(0, 0, 0, 0.05)', drawBorder: false },
-                            ticks: {
-                                font: { family: 'DM Sans', size: 11 },
-                                callback: function (value) {
-                                    if (value >= 1000000) return (value / 1000000).toFixed(1) + 'M';
-                                    if (value >= 1000) return (value / 1000).toFixed(1) + 'k';
-                                    return value;
-                                }
-                            }
-                        },
-                        x: {
-                            grid: { display: false, drawBorder: false },
-                            ticks: { font: { family: 'DM Sans', size: 11 } }
-                        }
-                    }
-                }
-            });
-        }
-
-        // Counter animation
-        function animateCounter(element, target) {
-            gsap.to(element, {
-                textContent: target,
-                duration: 1.5,
-                snap: { textContent: 1 },
-                ease: 'power2.out'
-            });
-        }
-
-        // Logout handler
-        function handleLogout() {
-            fetch('/api/admin/logout', { method: 'POST' })
-                .then(() => window.location.href = '/admin/login')
-                .catch(err => console.error('Logout error:', err));
-        }
-
-        // Animations on scroll
-        gsap.utils.toArray('.stat-card').forEach((card, index) => {
-            gsap.from(card, {
-                scrollTrigger: {
-                    trigger: card,
-                    start: 'top 80%',
-                    toggleActions: 'play none none none'
-                },
-                opacity: 0,
-                y: 40,
-                duration: 0.6,
-                delay: index * 0.1
-            });
-        });
-
-        async function loadSocialConfig() {
-            try {
-                const res = await fetch('/api/admin/settings', { credentials: 'include' });
-                const data = await res.json();
-                if (!data.success) return;
-
-                const s = data.settings;
-
-                // Set quick-link URLs
-                if (s.instagramUrl) document.getElementById('igLink').href = s.instagramUrl;
-                if (s.facebookUrl) document.getElementById('fbLink').href = s.facebookUrl;
-
-                // Inject Behold embed if feed ID is configured
-                const container = document.getElementById('socialFeedContainer');
-                if (s.beholdfeedId && s.beholdfeedId.trim()) {
-                    container.innerHTML = `
-                        <div data-behold-id="${s.beholdfeedId}"></div>
-                        <script>
-                            (function() {
-                                const d=document, script=d.createElement("script");
-                                script.type="module";
-                                script.src="https://w.behold.so/widget.js";
-                                d.head.append(script);
-                            })();
-                        <\/sc`+ `ript>
-                    `;
-                } else {
-                    container.innerHTML = `
-                        <div style="padding:32px;text-align:center;color:#999;
-                            background:#fff;border-radius:8px;border:1px dashed #E9E5DB;">
-                            <div style="font-size:32px;margin-bottom:12px;">📸</div>
-                            <div style="font-weight:600;color:#0D2B1F;margin-bottom:8px;">
-                                Instagram feed not connected
-                            </div>
-                            <div style="font-size:13px;">
-                                Go to <a href="/admin/settings" 
-                                style="color:#C9A84C;font-weight:600;">Settings → Social Media
-                                </a> and paste your Behold feed ID to display your latest posts here.
-                            </div>
-                        </div>
-                    `;
-                }
-            } catch (e) {
-                console.error('Failed to load social config:', e);
-            }
-        }
-
-        // Initialize
-        document.addEventListener('DOMContentLoaded', () => {
-            updateDate();
-            loadAdminData();
-            loadStats();
-            loadSocialConfig();
-        });
-    </script>
-    <script src="/admin/push-client.js"></script>
-    <script src="/admin/assets/mobile-sidebar.js"></script>
-</body>
-
-</html>
+fs.writeFileSync(newBookingPath, finalHtml, 'utf8');
+console.log('Created admin/new-booking.html successfully with redesigned UI!');
