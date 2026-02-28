@@ -140,6 +140,11 @@ const staticOptions = {
 app.use(express.static('public', staticOptions));
 app.use('/images', express.static('images', staticOptions));
 
+// Admin static assets (CSS, JS, Service Worker)
+app.use('/admin/assets', express.static(require('path').join(__dirname, 'admin', 'assets'), staticOptions));
+app.get('/admin/push-client.js', (req, res) => res.sendFile(require('path').join(__dirname, 'admin', 'push-client.js')));
+app.get('/admin/sw.js', (req, res) => res.sendFile(require('path').join(__dirname, 'admin', 'sw.js')));
+
 // Root redirect for admin
 app.get('/admin', (req, res) => {
     res.redirect('/admin/login');
