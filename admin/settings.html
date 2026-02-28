@@ -530,26 +530,10 @@
         }
     </style>
 
-    <!-- DARK MODE LOGIC -->
+    <!-- MOBILE & DARK LOGIC -->
     <script>
-
-        // Mobile Sidebar Toggle
-        function toggleSidebar() {
-            document.querySelector('.sidebar').classList.toggle('active');
-        }
-
-        // Close sidebar if clicking outside of it on mobile
-        document.addEventListener('click', (e) => {
-            const sidebar = document.querySelector('.sidebar');
-            const hamburger = document.querySelector('.mobile-menu-btn');
-            if (window.innerWidth <= 768 && sidebar && sidebar.classList.contains('active')) {
-                if (!sidebar.contains(e.target) && !hamburger.contains(e.target)) {
-                    sidebar.classList.remove('active');
-                }
-            }
-        });
-
-        (function () {
+        
+        (function() {
             if (localStorage.getItem('emeraldDarkMode') === 'true') {
                 document.documentElement.classList.add('dark-mode');
             }
@@ -647,7 +631,8 @@
     </script>
 
     <div class="admin-layout">
-        <aside class="sidebar">
+        <div id="sidebarOverlay"></div>
+    <aside class="sidebar">
             <div class="sidebar-logo">EMERALD</div>
             <nav>
                 <a href="/admin/dashboard" class="nav-item">Dashboard</a>
@@ -668,6 +653,9 @@
 
         <div class="main-content">
             <div class="topbar">
+    <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Open navigation menu">
+        <i class="fas fa-bars"></i>
+    </button>
                 <h1 class="page-title">Settings</h1>
                 <div style="flex: 1; text-align: right;">
                     <span style="font-style: italic; color: var(--accent-gold); font-weight: 600;"
@@ -1199,6 +1187,7 @@
             }
         }
     </script>
+        <script src="/admin/assets/mobile-sidebar.js"></script>
 </body>
 
 </html>

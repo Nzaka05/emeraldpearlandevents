@@ -9,23 +9,13 @@
         href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap"
         rel="stylesheet">
     <script>
-
-        // Mobile Sidebar Toggle
-        function toggleSidebar() {
-            document.querySelector('.sidebar').classList.toggle('active');
-        }
-
-        // Close sidebar if clicking outside of it on mobile
-        document.addEventListener('click', (e) => {
-            const sidebar = document.querySelector('.sidebar');
-            const hamburger = document.querySelector('.mobile-menu-btn');
-            if (window.innerWidth <= 768 && sidebar && sidebar.classList.contains('active')) {
-                if (!sidebar.contains(e.target) && !hamburger.contains(e.target)) {
-                    sidebar.classList.remove('active');
-                }
+        
+        (function() {
+            if (localStorage.getItem('emeraldDarkMode') === 'true') {
+                document.documentElement.classList.add('dark-mode');
             }
-        });
-        (function () { if (localStorage.getItem('emeraldDarkMode') === 'true') document.documentElement.classList.add('dark-mode') })();</script>
+        })();
+    </script>
     <style>
         * {
             margin: 0;
@@ -908,7 +898,8 @@
     </script>
 
     <div class="admin-layout">
-        <aside class="sidebar">
+        <div id="sidebarOverlay"></div>
+    <aside class="sidebar">
             <div class="sidebar-logo">EMERALD</div>
             <nav>
                 <a href="/admin/dashboard" class="nav-item">Dashboard</a>
@@ -929,7 +920,10 @@
 
         <div class="main-content">
             <div class="topbar" id="adminTopbar">
-                <h1 class="page-title">Gallery</h1>
+    <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Open navigation menu">
+        <i class="fas fa-bars"></i>
+    </button>
+    <h1 class="page-title">Gallery</h1>
                 <div style="display:flex;gap:12px;align-items:center">
                     <span style="font-style:italic;color:var(--accent-gold);font-weight:600" id="todayDate"></span>
                     <button class="btn-primary" onclick="document.getElementById('fileInput').click()">📸 Upload
@@ -1287,6 +1281,7 @@
         };
     </script>
 
+        <script src="/admin/assets/mobile-sidebar.js"></script>
 </body>
 
 </html>

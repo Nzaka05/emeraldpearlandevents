@@ -811,26 +811,10 @@
         }
     </style>
 
-    <!-- DARK MODE LOGIC -->
+    <!-- MOBILE & DARK LOGIC -->
     <script>
-
-        // Mobile Sidebar Toggle
-        function toggleSidebar() {
-            document.querySelector('.sidebar').classList.toggle('active');
-        }
-
-        // Close sidebar if clicking outside of it on mobile
-        document.addEventListener('click', (e) => {
-            const sidebar = document.querySelector('.sidebar');
-            const hamburger = document.querySelector('.mobile-menu-btn');
-            if (window.innerWidth <= 768 && sidebar && sidebar.classList.contains('active')) {
-                if (!sidebar.contains(e.target) && !hamburger.contains(e.target)) {
-                    sidebar.classList.remove('active');
-                }
-            }
-        });
-
-        (function () {
+        
+        (function() {
             if (localStorage.getItem('emeraldDarkMode') === 'true') {
                 document.documentElement.classList.add('dark-mode');
             }
@@ -928,6 +912,7 @@
     </script>
 
     <!-- SIDEBAR -->
+    <div id="sidebarOverlay"></div>
     <aside class="sidebar">
         <div class="sidebar-logo">
             <img src="../images/logo%202.png" alt="Emerald Logo" class="sidebar-logo-img" />
@@ -1023,12 +1008,7 @@
     <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Open navigation menu">
         <i class="fas fa-bars"></i>
     </button>
-                <!-- Mobile Hamburger Menu -->
-                <button class="mobile-menu-btn" onclick="toggleSidebar()">
-                    <i class="fas fa-bars"></i>
-                </button>
-
-                <div>
+    <div>
                     <div class="page-title">Dashboard</div>
                     <div class="breadcrumb">Home / Overview</div>
                 </div>
@@ -1370,6 +1350,7 @@
         });
     </script>
     <script src="/admin/push-client.js"></script>
+        <script src="/admin/assets/mobile-sidebar.js"></script>
 </body>
 
 </html>
