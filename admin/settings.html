@@ -687,6 +687,30 @@
                                 ✓ Profile updated successfully!
                             </div>
                             <div id="profileErrorMessage" class="error-message"></div>
+
+                            <!-- Profile Image Upload -->
+                            <div class="form-group"
+                                style="display:flex;align-items:center;gap:24px;margin-bottom:24px;">
+                                <div style="position:relative;cursor:pointer;"
+                                    onclick="document.getElementById('profileImageInput').click()">
+                                    <div id="profileImagePreview"
+                                        style="width:90px;height:90px;border-radius:50%;background:linear-gradient(135deg,#0D2B1F,#1A4030);display:flex;align-items:center;justify-content:center;font-size:32px;color:#C9A84C;overflow:hidden;border:2px solid rgba(201,168,76,0.4);box-shadow:0 4px 20px rgba(10,28,20,0.2);transition:all 0.3s ease;">
+                                        <span id="profileImageInitials">EP</span>
+                                    </div>
+                                    <div
+                                        style="position:absolute;bottom:0;right:0;background:#C9A84C;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px solid #fff;font-size:12px;">
+                                        📷</div>
+                                </div>
+                                <div>
+                                    <div style="font-weight:600;font-size:14px;color:var(--text-main);">Profile Photo
+                                    </div>
+                                    <div style="font-size:12px;color:#888;margin-top:4px;">Click avatar to upload.
+                                        JPG/PNG, max 2MB.</div>
+                                    <input type="file" id="profileImageInput" accept="image/*" style="display:none;"
+                                        onchange="handleProfileImageChange(event)">
+                                </div>
+                            </div>
+
                             <div class="form-row">
                                 <div class="form-group">
                                     <label class="form-label">Name</label>
@@ -914,6 +938,29 @@
             }
         });
 
+        let profileImageBase64 = '';
+
+        function handleProfileImageChange(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            if (file.size > 2 * 1024 * 1024) { alert('Image must be under 2MB'); return; }
+            const reader = new FileReader();
+            reader.onload = function (ev) {
+                profileImageBase64 = ev.target.result;
+                setProfileImagePreview(profileImageBase64);
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function setProfileImagePreview(src) {
+            const preview = document.getElementById('profileImagePreview');
+            const initials = document.getElementById('profileImageInitials');
+            if (src && preview) {
+                preview.innerHTML = `<img src="${src}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+                if (initials) initials.style.display = 'none';
+            }
+        }
+
         async function loadAdminProfile() {
             try {
                 const response = await fetch('/api/admin/profile');
@@ -927,6 +974,15 @@
             } catch (error) {
                 console.error('Error loading admin profile:', error);
             }
+            // Load profile image from settings
+            try {
+                const res2 = await fetch('/api/admin/settings');
+                const r2 = await res2.json();
+                if (r2.success && r2.settings && r2.settings.profileImage) {
+                    profileImageBase64 = r2.settings.profileImage;
+                    setProfileImagePreview(profileImageBase64);
+                }
+            } catch (e) { }
         }
 
         async function updateAdminProfile() {
@@ -1028,7 +1084,8 @@
                 beholdfeedId: document.getElementById('beholdfeedId').value,
                 notifyOnNewBooking: document.getElementById('notifyNewBooking').classList.contains('active'),
                 notifyOnWhatsApp: document.getElementById('notifyWhatsApp').classList.contains('active'),
-                darkMode: document.getElementById('darkMode').classList.contains('active')
+                darkMode: document.getElementById('darkMode').classList.contains('active'),
+                profileImage: profileImageBase64 || ''
             };
 
             try {

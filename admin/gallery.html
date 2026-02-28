@@ -928,7 +928,7 @@
         </aside>
 
         <div class="main-content">
-            <div class="topbar">
+            <div class="topbar" id="adminTopbar">
                 <h1 class="page-title">Gallery</h1>
                 <div style="display:flex;gap:12px;align-items:center">
                     <span style="font-style:italic;color:var(--accent-gold);font-weight:600" id="todayDate"></span>
@@ -1033,6 +1033,7 @@
                 <img class="gallery-img" src="${item.url}" alt="${item.caption || item.filename}" loading="lazy">
                 <div class="gallery-overlay">
                     <button class="btn-view" onclick="openLightbox('${item.url}')">👁 Preview</button>
+                    <button class="btn-view" style="background:rgba(201,168,76,0.85);" onclick="openEditModal('${item._id}', this)">✏️ Edit</button>
                     <button class="btn-delete-img" onclick="deleteImage('${item._id}')">🗑 Delete</button>
                 </div>
                 <div class="gallery-meta">
@@ -1172,13 +1173,120 @@
         document.getElementById('lightbox').addEventListener('click', e => {
             if (e.target.id === 'lightbox') closeLightbox();
         });
-
         function handleLogout() {
             fetch('/api/admin/logout', { method: 'POST' })
                 .then(() => window.location.href = '/admin/login')
                 .catch(err => console.error(err));
         }
+
+        // ═══ EDIT METADATA MODAL LOGIC ═══
+        let editingImageId = null;
+
+        function openEditModal(id) {
+            editingImageId = id;
+            const item = allGallery.find(i => i._id === id);
+            if (!item) return;
+            document.getElementById('editCaption').value = item.caption || item.filename || '';
+            document.getElementById('editEventType').value = item.eventType || '';
+            document.getElementById('editMetaModal').style.display = 'flex';
+        }
+
+        function closeEditModal() {
+            document.getElementById('editMetaModal').style.display = 'none';
+            editingImageId = null;
+        }
+
+        async function saveEditedMetadata() {
+            if (!editingImageId) return;
+            const caption = document.getElementById('editCaption').value.trim();
+            const eventType = document.getElementById('editEventType').value;
+            const btn = document.getElementById('saveEditMetaBtn');
+            btn.textContent = '⏳ Saving...';
+            btn.disabled = true;
+            try {
+                const res = await fetch(`/api/admin/gallery/${editingImageId}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ caption, eventType })
+                });
+                const result = await res.json();
+                if (result.success) {
+                    const idx = allGallery.findIndex(i => i._id === editingImageId);
+                    if (idx !== -1) { allGallery[idx].caption = caption; allGallery[idx].eventType = eventType; }
+                    renderGallery();
+                    closeEditModal();
+                } else { alert('Save failed: ' + result.message); }
+            } catch (e) { alert('Error saving changes.'); }
+            finally { btn.textContent = '💾 Save Changes'; btn.disabled = false; }
+        }
+
+        document.getElementById('editMetaModal').addEventListener('click', function (e) {
+            if (e.target === this) closeEditModal();
+        });
+
     </script>
+
+    <!-- Edit Metadata Modal -->
+    <div id="editMetaModal"
+        style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.7);backdrop-filter:blur(6px);align-items:center;justify-content:center;">
+        <div
+            style="background:#fff;border-radius:12px;padding:36px;max-width:460px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.3);position:relative;">
+            <button onclick="closeEditModal()"
+                style="position:absolute;top:16px;right:16px;background:none;border:none;font-size:20px;cursor:pointer;color:#888;">✕</button>
+            <h3
+                style="font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600;color:#0D2B1F;margin-bottom:6px;">
+                Edit Image Details</h3>
+            <p style="font-size:13px;color:#888;margin-bottom:24px;">Update the caption and category for this image.</p>
+            <div style="margin-bottom:16px;">
+                <label
+                    style="display:block;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;color:#555;margin-bottom:6px;">Caption</label>
+                <input type="text" id="editCaption" placeholder="Describe this photo..."
+                    style="width:100%;padding:12px 14px;border:1px solid #e0e0e0;border-radius:6px;font-size:14px;font-family:'Outfit',sans-serif;outline:none;transition:border 0.2s;"
+                    onfocus="this.style.borderColor='#C9A84C'" onblur="this.style.borderColor='#e0e0e0'">
+            </div>
+            <div style="margin-bottom:24px;">
+                <label
+                    style="display:block;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;color:#555;margin-bottom:6px;">Event
+                    Type</label>
+                <select id="editEventType"
+                    style="width:100%;padding:12px 14px;border:1px solid #e0e0e0;border-radius:6px;font-size:14px;font-family:'Outfit',sans-serif;outline:none;background:#fff;cursor:pointer;">
+                    <option value="">— Select Category —</option>
+                    <option value="Wedding">💍 Wedding</option>
+                    <option value="Birthday">🎂 Birthday</option>
+                    <option value="Corporate">🏢 Corporate</option>
+                    <option value="Traditional">🌿 Traditional Ceremony</option>
+                    <option value="Social">🎉 Social Event</option>
+                    <option value="Entertainment">🎵 Entertainment</option>
+                    <option value="Other">📸 Other</option>
+                </select>
+            </div>
+            <div style="display:flex;gap:12px;">
+                <button id="saveEditMetaBtn" onclick="saveEditedMetadata()"
+                    style="flex:1;padding:13px;background:linear-gradient(135deg,#C9A84C,#A3822E);color:#fff;border:none;border-radius:6px;font-size:13px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;transition:all 0.3s;">💾
+                    Save Changes</button>
+                <button onclick="closeEditModal()"
+                    style="padding:13px 20px;background:#f5f5f5;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-weight:500;color:#555;">Cancel</button>
+            </div>
+        </div>
+    </div>
+    <script>
+        // Show edit modal as flex
+        document.getElementById('editMetaModal').style.display = 'none';
+        document.getElementById('editMetaModal').addEventListener('click', function (e) {
+            if (e.target === this) closeEditModal();
+        });
+        const origOpenEditModal = openEditModal;
+        window.openEditModal = function (id, btn) {
+            document.getElementById('editMetaModal').style.display = 'flex';
+            origOpenEditModal(id, btn);
+        };
+        const origCloseEditModal = closeEditModal;
+        window.closeEditModal = function () {
+            document.getElementById('editMetaModal').style.display = 'none';
+            origCloseEditModal();
+        };
+    </script>
+
 </body>
 
 </html>

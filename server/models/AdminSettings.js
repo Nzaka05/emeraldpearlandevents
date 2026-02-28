@@ -45,6 +45,7 @@ const AdminSettingsSchema = new mongoose.Schema({
     instagramUrl: { type: String, default: 'https://www.instagram.com/emeraldpearlandevents' },
     facebookUrl: { type: String, default: 'https://www.facebook.com/Emerald.Pearland.Events' },
     beholdfeedId: { type: String, default: '' },
+    profileImage: { type: String, default: '' },
     updatedAt: {
         type: Date,
         default: Date.now

@@ -718,100 +718,31 @@
         }
 
         /* ROW 1: feature + tall stack */
-        .gallery-row-feature {
-            display: grid;
-            grid-template-columns: 3fr 1.2fr;
-            gap: 6px;
-            padding: 0 6px;
-            height: 540px;
+        /* MASONRY GALLERY (Premium Portfolio Layout) */
+        .gallery-masonry {
+            column-count: 3;
+            column-gap: 15px;
+            padding: 0 15px;
+            width: 100%;
         }
 
-        .gallery-row-feature-stack {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
+        .gallery-masonry .ci {
+            break-inside: avoid;
+            margin-bottom: 15px;
+            display: inline-block;
+            width: 100%;
         }
 
-        /* ROW 2: horizontal film-strip */
-        .gallery-strip {
-            display: flex;
-            gap: 6px;
-            padding: 6px;
-            height: 300px;
-            overflow: hidden;
+        @media (max-width: 992px) {
+            .gallery-masonry {
+                column-count: 2;
+            }
         }
 
-        .gallery-strip .ci {
-            flex: 1;
-        }
-
-        /* QUOTE INTERLUDE */
-        .gallery-quote {
-            text-align: center;
-            padding: 5rem 4rem;
-            position: relative;
-        }
-
-        .gallery-quote::before {
-            content: '\201C';
-            font-family: 'Cormorant Garamond', serif;
-            font-size: 14rem;
-            color: var(--gold);
-            opacity: 0.06;
-            position: absolute;
-            top: -1rem;
-            left: 50%;
-            transform: translateX(-50%);
-            line-height: 1;
-            pointer-events: none;
-        }
-
-        .gallery-quote p {
-            font-family: 'Cormorant Garamond', serif;
-            font-size: clamp(1.4rem, 2.5vw, 2rem);
-            font-style: italic;
-            color: var(--pearl-soft);
-            max-width: 700px;
-            margin: 0 auto;
-            line-height: 1.7;
-            letter-spacing: 0.02em;
-            opacity: 0;
-            transform: translateY(20px);
-            transition: opacity 0.8s ease, transform 0.8s ease;
-        }
-
-        .gallery-quote.in-view p {
-            opacity: 1;
-            transform: translateY(0);
-        }
-
-        .gallery-quote cite {
-            display: block;
-            margin-top: 1.2rem;
-            font-size: 0.75rem;
-            letter-spacing: 0.3em;
-            text-transform: uppercase;
-            color: var(--gold);
-            font-style: normal;
-            opacity: 0;
-            transition: opacity 0.8s ease 0.3s;
-        }
-
-        .gallery-quote.in-view cite {
-            opacity: 1;
-        }
-
-        /* ROW 3: mosaic / asymmetric */
-        .gallery-mosaic {
-            display: grid;
-            grid-template-columns: 1fr 1.6fr 1fr;
-            grid-template-rows: 280px 280px;
-            gap: 6px;
-            padding: 0 6px;
-        }
-
-        .gallery-mosaic .ci:nth-child(2) {
-            grid-row: span 2;
+        @media (max-width: 576px) {
+            .gallery-masonry {
+                column-count: 1;
+            }
         }
 
         /* SHARED cinematic image cell */
@@ -3768,56 +3699,16 @@
 
                     // Render function for a batch of items
                     function renderBatch(itemsBatch) {
-                        let batchHtml = '';
-                        let i = 0;
-                        while (i < itemsBatch.length) {
-                            let remaining = itemsBatch.length - i;
-
-                            // Try to build Row 1 (Feature - needs 3)
-                            if (remaining >= 3 && (i % 13 === 0)) {
-                                batchHtml += '<div class="gallery-row-feature">';
-                                batchHtml += createCell(itemsBatch[i], 'Signature Event', '0' + (currentIndex + i + 1));
-                                batchHtml += '<div class="gallery-row-feature-stack">';
-                                batchHtml += createCell(itemsBatch[i + 1], 'Luxury Detail', '0' + (currentIndex + i + 2));
-                                batchHtml += createCell(itemsBatch[i + 2], 'Ambiance', '0' + (currentIndex + i + 3));
-                                batchHtml += '</div></div>';
-                                i += 3;
-                            }
-                            // Try to build Row 2 (Strip - up to 5)
-                            else if (remaining >= 1 && (i % 13 === 3 || remaining < 5 || i % 13 >= 8)) {
-                                let stripCount = Math.min(5, remaining);
-                                batchHtml += '<div class="gallery-strip">';
-                                for (let j = 0; j < stripCount; j++) {
-                                    batchHtml += createCell(itemsBatch[i], 'Gallery', '0' + (currentIndex + i + 1));
-                                    i++;
-                                }
-                                batchHtml += '</div>';
-                            }
-                            // Try to build Row 3 (Mosaic - needs 5)
-                            else if (remaining >= 5 && (i % 13 === 8)) {
-                                batchHtml += '<div class="gallery-mosaic">';
-                                for (let j = 0; j < 5; j++) {
-                                    batchHtml += createCell(itemsBatch[i], 'Elegance', '0' + (currentIndex + i + 1));
-                                    i++;
-                                }
-                                batchHtml += '</div>';
-                            }
-                            else {
-                                // Fallback
-                                let stripCount = Math.min(5, remaining);
-                                batchHtml += '<div class="gallery-strip">';
-                                for (let j = 0; j < stripCount; j++) {
-                                    batchHtml += createCell(itemsBatch[i], 'Gallery', '0' + (currentIndex + i + 1));
-                                    i++;
-                                }
-                                batchHtml += '</div>';
-                            }
+                        let batchHtml = '<div class="gallery-masonry">';
+                        for (let i = 0; i < itemsBatch.length; i++) {
+                            batchHtml += createCell(itemsBatch[i], 'Gallery', '0' + (currentIndex + i + 1));
                         }
+                        batchHtml += '</div>';
                         return batchHtml;
                     }
 
-                    // Initial Load: up to 15 items
-                    const INITIAL_LOAD = 15;
+                    // Initial Load: exactly 10 items
+                    const INITIAL_LOAD = 10;
                     const initialItems = items.slice(0, INITIAL_LOAD);
                     html += renderBatch(initialItems);
                     currentIndex += initialItems.length;
