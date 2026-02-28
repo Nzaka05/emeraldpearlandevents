@@ -334,6 +334,9 @@
             border-radius: 8px;
             width: 90%;
             max-width: 500px;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
             animation: slideInUp 0.4s cubic-bezier(0.4, 0.0, 0.2, 1);
         }
 
@@ -354,6 +357,7 @@
 
         .modal-body {
             padding: 24px;
+            overflow-y: auto;
         }
 
         .form-group {
@@ -492,7 +496,8 @@
             .modal-content {
                 width: 95%;
                 margin: 20px auto;
-                padding: 20px;
+                max-height: 85vh;
+                padding: 0;
             }
 
             /* Form Rows */
@@ -601,8 +606,8 @@
 
     <!-- MOBILE & DARK LOGIC -->
     <script>
-        
-        (function() {
+
+        (function () {
             if (localStorage.getItem('emeraldDarkMode') === 'true') {
                 document.documentElement.classList.add('dark-mode');
             }
@@ -701,7 +706,7 @@
 
     <div class="admin-layout">
         <div id="sidebarOverlay"></div>
-    <aside class="sidebar">
+        <aside class="sidebar">
             <div class="sidebar-logo">EMERALD</div>
             <nav>
                 <a href="/admin/dashboard" class="nav-item">Dashboard</a>
@@ -722,10 +727,11 @@
 
         <div class="main-content">
             <div class="topbar" id="adminTopbar">
-    <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Open navigation menu" onclick="window.toggleSidebar(event)">
-        <i class="fas fa-bars"></i>
-    </button>
-    <h1 class="page-title">Staff</h1>
+                <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Open navigation menu"
+                    onclick="window.toggleSidebar(event)">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <h1 class="page-title">Staff</h1>
                 <div style="flex: 1; text-align: right;">
                     <span style="font-style: italic; color: var(--accent-gold); font-weight: 600;"
                         id="todayDate"></span>
@@ -1116,7 +1122,7 @@
                         .catch(error => console.error('Logout error:', error));
                 }
             </script>
-        <script src="/admin/assets/mobile-sidebar.js"></script>
+            <script src="/admin/assets/mobile-sidebar.js"></script>
 </body>
 
 </html>
