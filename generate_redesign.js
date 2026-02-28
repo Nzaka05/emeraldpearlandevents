@@ -6,20 +6,13 @@ const newBookingPath = path.join(__dirname, 'admin', 'new-booking.html');
 
 let dashHtml = fs.readFileSync(dashboardPath, 'utf8');
 
-// The dashboard has <main class="main-content">
-// Inside it has <div class="header">...</div>
-// After the header, we have <!-- Quick Actions --> etc.
-const mainStart = dashHtml.indexOf('<main class="main-content">');
-const headerEnd = dashHtml.indexOf('</div>', dashHtml.indexOf('</div>', dashHtml.indexOf('</div>', mainStart) + 6) + 6) + 6;
+const pageContentStart = dashHtml.indexOf('<div class="page-content">');
+const topPartEnd = pageContentStart + '<div class="page-content">'.length;
 
-// Some dashboards format the header differently. Let's find exactly where <!-- Quick Actions --> or similar content starts.
-const quickActionsIdx = dashHtml.indexOf('<!-- Quick Actions -->');
-const pageHeaderEnd = quickActionsIdx > -1 ? quickActionsIdx : dashHtml.indexOf('<div class="quick-actions">');
-
-const topPart = dashHtml.substring(0, pageHeaderEnd);
+const topPart = dashHtml.substring(0, topPartEnd);
 const bottomPart = dashHtml.substring(dashHtml.indexOf('</main>'));
 
-// Fix missing DOCTYPE if any (dashboard.html should have it but let's ensure)
+// Fix missing DOCTYPE
 let prefix = '';
 if (!topPart.trim().toLowerCase().startsWith('<!doctype')) {
     prefix = '<!DOCTYPE html>\n';
