@@ -479,6 +479,10 @@ textarea:focus,
 }
 
 @media (max-width: 768px) {
+    .admin-layout {
+        flex-direction: column !important;
+    }
+
     .mobile-menu-btn {
         display: none !important;
     }
