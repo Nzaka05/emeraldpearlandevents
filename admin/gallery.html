@@ -25,7 +25,7 @@
                 }
             }
         });
-(function () { if (localStorage.getItem('emeraldDarkMode') === 'true') document.documentElement.classList.add('dark-mode') })();</script>
+        (function () { if (localStorage.getItem('emeraldDarkMode') === 'true') document.documentElement.classList.add('dark-mode') })();</script>
     <style>
         * {
             margin: 0;
@@ -260,33 +260,37 @@
         }
 
         .stat-chip {
-            padding: 6px 14px;
-            background: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: 20px;
-            font-size: 12px;
+            padding: 8px 16px;
+            background: var(--bg-primary);
+            border: 1px solid var(--accent-gold);
+            border-radius: 30px;
+            font-size: 13px;
             font-weight: 600;
-            color: var(--text-main)
+            color: var(--text-main);
+            box-shadow: 0 4px 12px rgba(201, 168, 76, 0.1);
         }
 
         .gallery-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 16px
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 24px;
+            padding-top: 10px;
         }
 
         .gallery-item {
             position: relative;
             overflow: hidden;
-            border-radius: 8px;
+            border-radius: 12px;
             background: var(--bg-card);
             border: 1px solid var(--border-color);
-            transition: all .3s
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
         }
 
         .gallery-item:hover {
-            box-shadow: 0 8px 24px rgba(13, 43, 31, .15);
-            transform: translateY(-4px)
+            box-shadow: 0 15px 35px rgba(13, 43, 31, 0.15);
+            transform: translateY(-8px);
+            border-color: var(--accent-gold);
         }
 
         .gallery-item:hover .gallery-overlay {
@@ -455,11 +459,201 @@
             color: #0D2B1F;
             border-color: var(--accent-gold)
         }
-    
+
+        /* ═══════════════════════════════════════════════════════════
+           PRE-UPLOAD EDITOR MODAL
+           ═══════════════════════════════════════════════════════════ */
+        .editor-modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(8px);
+            z-index: 3000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .editor-modal.show {
+            display: flex;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        .editor-content {
+            background: var(--bg-card);
+            border-radius: 12px;
+            width: 100%;
+            max-width: 900px;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .editor-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(201, 168, 76, 0.05);
+        }
+
+        .editor-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .editor-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: var(--text-main);
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+
+        .editor-close:hover {
+            color: var(--accent-danger);
+        }
+
+        .editor-body {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .editor-image-area {
+            flex: 1;
+            background: #111;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            min-height: 400px;
+            border-right: 1px solid var(--border-color);
+        }
+
+        .editor-image-wrap {
+            width: 100%;
+            height: 100%;
+        }
+
+        .editor-image-wrap img {
+            max-width: 100%;
+            max-height: 100%;
+            display: block;
+        }
+
+        .editor-sidebar {
+            width: 320px;
+            padding: 24px;
+            overflow-y: auto;
+            background: var(--bg-card);
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .editor-form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .editor-form-group label {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-main);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .editor-input {
+            padding: 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            background: transparent;
+            color: var(--text-main);
+            font-family: inherit;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .editor-input:focus {
+            outline: none;
+            border-color: var(--accent-gold);
+        }
+
+        .editor-actions {
+            margin-top: auto;
+            display: flex;
+            gap: 12px;
+            flex-direction: column;
+        }
+
+        .cropper-toolbar {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 8px 16px;
+            border-radius: 20px;
+            backdrop-filter: blur(4px);
+        }
+
+        .cropper-btn {
+            background: transparent;
+            border: none;
+            color: white;
+            cursor: pointer;
+            padding: 6px 12px;
+            font-size: 14px;
+            transition: color 0.2s;
+        }
+
+        .cropper-btn:hover {
+            color: var(--accent-gold);
+        }
+
+        @media (max-width: 768px) {
+            .editor-body {
+                flex-direction: column;
+                overflow-y: auto;
+            }
+
+            .editor-sidebar {
+                width: 100%;
+                border-left: none;
+            }
+
+            .editor-image-area {
+                min-height: 300px;
+            }
+        }
+
         /* ═══════════════════════════════════════════════════════════
            MOBILE RESPONSIVENESS (Injected via Phase 10 Overhaul)
            ═══════════════════════════════════════════════════════════ */
-        
+
         /* Hamburger Menu Icon (Hidden on Desktop) */
         .mobile-menu-btn {
             display: none;
@@ -472,72 +666,75 @@
         }
 
         @media (max-width: 768px) {
+
             /* Show Hamburger */
             .mobile-menu-btn {
                 display: block;
             }
-            
+
             /* Sidebar becomes a drawer */
             .sidebar {
                 transform: translateX(-100%);
                 transition: transform 0.3s ease-in-out;
                 z-index: 2000;
             }
-            
+
             .sidebar.active {
                 transform: translateX(0);
             }
-            
+
             /* Main content expands to full width */
             .main-content {
                 margin-left: 0;
                 width: 100vw;
             }
-            
+
             /* Topbar adjustments */
             .topbar {
                 padding: 15px 20px;
                 flex-wrap: wrap;
                 gap: 15px;
             }
-            
+
             .page-title {
                 font-size: 22px;
             }
-            
+
             .search-bar {
-                display: none; /* Hide search on extreme mobile to save space */
+                display: none;
+                /* Hide search on extreme mobile to save space */
             }
-            
+
             /* Stats Grid Stacking */
             .stats-grid {
                 grid-template-columns: 1fr;
             }
-            
+
             /* Charts & Tables Stacking */
             .dashboard-grid {
                 grid-template-columns: 1fr;
             }
-            
+
             /* Modals */
             .modal-content {
                 width: 95%;
                 margin: 20px auto;
                 padding: 20px;
             }
-            
+
             /* Form Rows */
-            .form-row, .booking-grid {
+            .form-row,
+            .booking-grid {
                 grid-template-columns: 1fr;
             }
-            
+
             /* Tables */
             .table-container {
                 overflow-x: auto;
             }
         }
 
-    
+
         /* ═══════════════════════════════════════════════════════════
            MOBILE QUICK ACTION FAB
            ═══════════════════════════════════════════════════════════ */
@@ -617,7 +814,8 @@
             width: 16px;
         }
 
-        .fab-item:hover, .fab-item:active {
+        .fab-item:hover,
+        .fab-item:active {
             background: rgba(201, 168, 76, 0.1);
         }
 
@@ -626,7 +824,6 @@
                 display: block;
             }
         }
-
     </style>
 </head>
 
@@ -646,12 +843,60 @@
             </a>
         </div>
     </div>
-    
+
+    <!-- PRE-UPLOAD EDITOR MODAL -->
+    <div class="editor-modal" id="editorModal">
+        <div class="editor-content">
+            <div class="editor-header">
+                <h2 class="editor-title">Edit Image Details</h2>
+                <button class="editor-close" onclick="closeEditorModal()">✕</button>
+            </div>
+            <div class="editor-body">
+                <div class="editor-image-area">
+                    <div class="editor-image-wrap">
+                        <img id="cropperImage" src="" alt="Image to Edit">
+                    </div>
+                    <div class="cropper-toolbar">
+                        <button class="cropper-btn" onclick="cropper.zoom(0.1)">🔍+</button>
+                        <button class="cropper-btn" onclick="cropper.zoom(-0.1)">🔍-</button>
+                        <button class="cropper-btn" onclick="cropper.rotate(90)">↻</button>
+                        <button class="cropper-btn" onclick="cropper.setAspectRatio(16/9)">16:9</button>
+                        <button class="cropper-btn" onclick="cropper.setAspectRatio(4/3)">4:3</button>
+                        <button class="cropper-btn" onclick="cropper.setAspectRatio(1)">1:1</button>
+                        <button class="cropper-btn" onclick="cropper.setAspectRatio(NaN)">Free</button>
+                    </div>
+                </div>
+                <div class="editor-sidebar">
+                    <div class="editor-form-group">
+                        <label for="editorCaption">Caption</label>
+                        <input type="text" id="editorCaption" class="editor-input" placeholder="e.g. Elegant Setup">
+                    </div>
+                    <div class="editor-form-group">
+                        <label for="editorEventType">Event Type</label>
+                        <select id="editorEventType" class="editor-input" style="padding:12px">
+                            <option value="">-- Select Event Type --</option>
+                            <option value="Wedding">Wedding</option>
+                            <option value="Corporate Event">Corporate Event</option>
+                            <option value="Birthday Party">Birthday Party</option>
+                            <option value="Traditional Ceremony">Traditional Ceremony</option>
+                            <option value="Private Celebration">Private Celebration</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    <div class="editor-actions">
+                        <button class="btn-primary" onclick="saveEditedImage()"
+                            style="justify-content:center; width: 100%;">💾 Save & Upload</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         function toggleFab() {
             document.getElementById('mobileFab').classList.toggle('active');
         }
-        
+
         // Close FAB if clicking outside
         document.addEventListener('click', (e) => {
             const fab = document.getElementById('mobileFab');
@@ -797,50 +1042,86 @@
         `).join('');
         }
 
-        // Upload via FileReader → base64 → POST to API
-        document.getElementById('fileInput').addEventListener('change', async (e) => {
+        // ═══════════════════════════════════════════════════════════
+        // CROPPER & UPLOAD LOGIC
+        // ═══════════════════════════════════════════════════════════
+        let cropper = null;
+        let currentFile = null;
+
+        document.getElementById('fileInput').addEventListener('change', (e) => {
             const files = Array.from(e.target.files);
             if (!files.length) return;
 
-            const progress = document.getElementById('uploadProgress');
-            const fill = document.getElementById('progressFill');
-            const text = document.getElementById('uploadProgressText');
-            progress.style.display = 'block';
+            // Only handle one file at a time for cropping
+            currentFile = files[0];
+            const url = URL.createObjectURL(currentFile);
 
-            let uploaded = 0;
-            for (const file of files) {
-                text.textContent = `Uploading ${file.name}... (${uploaded + 1}/${files.length})`;
-                fill.style.width = `${Math.round((uploaded / files.length) * 100)}%`;
+            // Setup Modal
+            document.getElementById('cropperImage').src = url;
+            document.getElementById('editorCaption').value = currentFile.name.replace(/\.[^.]+$/, '').replace(/_/g, ' ');
+            document.getElementById('editorEventType').value = '';
 
-                try {
-                    const base64 = await fileToBase64(file);
-                    const res = await fetch('/api/admin/gallery/upload', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            filename: file.name,
-                            url: base64,
-                            caption: file.name.replace(/\.[^.]+$/, '').replace(/_/g, ' ')
-                        })
-                    });
-                    const result = await res.json();
-                    if (result.success) {
-                        allGallery.unshift(result.item);
-                        uploaded++;
-                    } else {
-                        console.error('Upload failed:', result.message);
-                    }
-                } catch (err) {
-                    console.error('Error uploading:', err);
-                }
-            }
+            document.getElementById('editorModal').classList.add('show');
 
-            fill.style.width = '100%';
-            text.textContent = `✅ ${uploaded} image(s) uploaded successfully!`;
-            setTimeout(() => { progress.style.display = 'none'; }, 3000);
-            renderGallery();
-            e.target.value = '';
+            if (cropper) cropper.destroy();
+            cropper = new Cropper(document.getElementById('cropperImage'), {
+                viewMode: 2,
+                background: false,
+                autoCropArea: 1,
+                responsive: true
+            });
+
+            e.target.value = ''; // Reset input
         });
+
+        function closeEditorModal() {
+            document.getElementById('editorModal').classList.remove('show');
+            if (cropper) cropper.destroy();
+            cropper = null;
+            currentFile = null;
+        }
+
+        async function saveEditedImage() {
+            if (!cropper) return;
+
+            const btn = document.querySelector('.editor-actions .btn-primary');
+            btn.innerHTML = '⏳ Uploading...';
+            btn.disabled = true;
+
+            const canvas = cropper.getCroppedCanvas({
+                maxWidth: 1920,
+                maxHeight: 1920,
+                fillColor: '#fff'
+            });
+
+            const base64 = canvas.toDataURL('image/jpeg', 0.85);
+            const caption = document.getElementById('editorCaption').value.trim();
+            const eventType = document.getElementById('editorEventType').value;
+            const filename = currentFile ? currentFile.name : `image_${Date.now()}.jpg`;
+
+            try {
+                const res = await fetch('/api/admin/gallery/upload', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ filename, url: base64, caption, eventType })
+                });
+
+                const result = await res.json();
+                if (result.success) {
+                    allGallery.unshift(result.item);
+                    renderGallery();
+                    closeEditorModal();
+                } else {
+                    alert('Upload failed: ' + result.message);
+                }
+            } catch (err) {
+                console.error('Error uploading:', err);
+                alert('Error uploading image.');
+            } finally {
+                btn.innerHTML = '💾 Save & Upload';
+                btn.disabled = false;
+            }
+        }
 
         function fileToBase64(file) {
             return new Promise((resolve, reject) => {

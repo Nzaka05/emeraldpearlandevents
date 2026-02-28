@@ -3748,9 +3748,7 @@
             .then(data => {
                 if (data.success && data.gallery && data.gallery.length > 0) {
                     const container = document.getElementById('dynamic-gallery-container');
-                    let html = '';
                     let items = data.gallery;
-                    let currentIndex = 0;
 
                     function createCell(item, defaultLabel, count) {
                         return `
@@ -3764,50 +3762,67 @@
                         `;
                     }
 
-                    while (currentIndex < items.length) {
-                        let remaining = items.length - currentIndex;
+                    // We separate the logic to handle batches
+                    let html = '';
+                    let currentIndex = 0;
 
-                        // Try to build Row 1 (Feature - needs 3)
-                        if (remaining >= 3 && (currentIndex % 13 === 0)) {
-                            html += '<div class="gallery-row-feature">';
-                            html += createCell(items[currentIndex], 'Signature Event', '0' + (currentIndex + 1));
-                            html += '<div class="gallery-row-feature-stack">';
-                            html += createCell(items[currentIndex + 1], 'Luxury Detail', '0' + (currentIndex + 2));
-                            html += createCell(items[currentIndex + 2], 'Ambiance', '0' + (currentIndex + 3));
-                            html += '</div></div>';
-                            currentIndex += 3;
-                        }
-                        // Try to build Row 2 (Strip - up to 5)
-                        else if (remaining >= 1 && (currentIndex % 13 === 3 || remaining < 5 || currentIndex % 13 >= 8)) {
-                            let stripCount = Math.min(5, remaining);
-                            html += '<div class="gallery-strip">';
-                            for (let i = 0; i < stripCount; i++) {
-                                html += createCell(items[currentIndex], 'Gallery', '0' + (currentIndex + 1));
-                                currentIndex++;
+                    // Render function for a batch of items
+                    function renderBatch(itemsBatch) {
+                        let batchHtml = '';
+                        let i = 0;
+                        while (i < itemsBatch.length) {
+                            let remaining = itemsBatch.length - i;
+
+                            // Try to build Row 1 (Feature - needs 3)
+                            if (remaining >= 3 && (i % 13 === 0)) {
+                                batchHtml += '<div class="gallery-row-feature">';
+                                batchHtml += createCell(itemsBatch[i], 'Signature Event', '0' + (currentIndex + i + 1));
+                                batchHtml += '<div class="gallery-row-feature-stack">';
+                                batchHtml += createCell(itemsBatch[i + 1], 'Luxury Detail', '0' + (currentIndex + i + 2));
+                                batchHtml += createCell(itemsBatch[i + 2], 'Ambiance', '0' + (currentIndex + i + 3));
+                                batchHtml += '</div></div>';
+                                i += 3;
                             }
-                            html += '</div>';
-                        }
-                        // Try to build Row 3 (Mosaic - needs 5)
-                        else if (remaining >= 5 && (currentIndex % 13 === 8)) {
-                            html += '<div class="gallery-mosaic">';
-                            for (let i = 0; i < 5; i++) {
-                                html += createCell(items[currentIndex], 'Elegance', '0' + (currentIndex + 1));
-                                currentIndex++;
+                            // Try to build Row 2 (Strip - up to 5)
+                            else if (remaining >= 1 && (i % 13 === 3 || remaining < 5 || i % 13 >= 8)) {
+                                let stripCount = Math.min(5, remaining);
+                                batchHtml += '<div class="gallery-strip">';
+                                for (let j = 0; j < stripCount; j++) {
+                                    batchHtml += createCell(itemsBatch[i], 'Gallery', '0' + (currentIndex + i + 1));
+                                    i++;
+                                }
+                                batchHtml += '</div>';
                             }
-                            html += '</div>';
-                        }
-                        else {
-                            // Fallback
-                            let stripCount = Math.min(5, remaining);
-                            html += '<div class="gallery-strip">';
-                            for (let i = 0; i < stripCount; i++) {
-                                html += createCell(items[currentIndex], 'Gallery', '0' + (currentIndex + 1));
-                                currentIndex++;
+                            // Try to build Row 3 (Mosaic - needs 5)
+                            else if (remaining >= 5 && (i % 13 === 8)) {
+                                batchHtml += '<div class="gallery-mosaic">';
+                                for (let j = 0; j < 5; j++) {
+                                    batchHtml += createCell(itemsBatch[i], 'Elegance', '0' + (currentIndex + i + 1));
+                                    i++;
+                                }
+                                batchHtml += '</div>';
                             }
-                            html += '</div>';
+                            else {
+                                // Fallback
+                                let stripCount = Math.min(5, remaining);
+                                batchHtml += '<div class="gallery-strip">';
+                                for (let j = 0; j < stripCount; j++) {
+                                    batchHtml += createCell(itemsBatch[i], 'Gallery', '0' + (currentIndex + i + 1));
+                                    i++;
+                                }
+                                batchHtml += '</div>';
+                            }
                         }
+                        return batchHtml;
                     }
 
+                    // Initial Load: up to 15 items
+                    const INITIAL_LOAD = 15;
+                    const initialItems = items.slice(0, INITIAL_LOAD);
+                    html += renderBatch(initialItems);
+                    currentIndex += initialItems.length;
+
+                    // Load quote if we loaded some items
                     html += `
                         <div class="gallery-quote" data-ci-quote>
                             <p>"Every frame tells a story — every event, a legacy."</p>
@@ -3815,32 +3830,64 @@
                         </div>
                     `;
 
+                    // Discover More Button container
+                    if (currentIndex < items.length) {
+                        html += `
+                            <div id="discover-more-container" style="text-align:center; padding: 40px 0;">
+                                <button id="discoverMoreBtn" class="btn-primary" style="padding: 15px 40px; font-size: 16px; border-radius: 30px; border: 1px solid var(--gold); background: transparent; color: var(--gold); cursor: pointer; transition: all 0.4s ease; font-family: 'Cormorant Garamond', serif; letter-spacing: 1px; text-transform: uppercase;">
+                                    Discover More Experiences
+                                </button>
+                            </div>
+                            <div id="expanded-gallery-container" style="display:none; transition: all 0.5s ease-in-out;"></div>
+                        `;
+                    }
+
                     container.innerHTML = html;
 
-                    // Rebuild array with the new dynamically fetched images
-                    updateGalleryLightboxArray();
+                    // Handle Discover More Click
+                    const discoverBtn = document.getElementById('discoverMoreBtn');
+                    if (discoverBtn) {
+                        discoverBtn.addEventListener('click', () => {
+                            const expandedContainer = document.getElementById('expanded-gallery-container');
+                            const remainingItems = items.slice(currentIndex);
 
-                    // Re-bind click events for newly created cells
-                    const newCells = document.querySelectorAll('[data-ci]');
-                    newCells.forEach((cell, index) => {
-                        cell.addEventListener('click', () => openLightbox(index));
-                    });
+                            // Change button state
+                            discoverBtn.innerHTML = '✨ Unveiling Magic...';
+                            discoverBtn.style.opacity = '0.7';
+                            discoverBtn.style.pointerEvents = 'none';
 
-                    // Trigger GSAP animations for new cells
-                    if (typeof gsap !== 'undefined' && typeof ScrollTrigger !== 'undefined') {
-                        newCells.forEach((cell, i) => {
-                            gsap.from(cell, {
-                                scrollTrigger: {
-                                    trigger: cell,
-                                    start: 'top 88%',
-                                    toggleActions: 'play none none none'
-                                },
-                                opacity: 0,
-                                clipPath: 'inset(100% 0 0 0)',
-                                duration: 1.1,
-                                delay: (i % 4) * 0.08,
-                                ease: 'power3.out'
-                            });
+                            setTimeout(() => {
+                                expandedContainer.innerHTML = renderBatch(remainingItems);
+                                expandedContainer.style.display = 'block';
+
+                                // Rebuild lightbox array & re-bind clicks
+                                updateGalleryLightboxArray();
+                                const newCells = expandedContainer.querySelectorAll('[data-ci]');
+                                newCells.forEach((cell, index) => {
+                                    // Adjust index for lightbox by adding currentIndex
+                                    cell.addEventListener('click', () => openLightbox(currentIndex + index));
+                                });
+
+                                // Trigger GSAP animations for new cells
+                                if (typeof gsap !== 'undefined' && typeof ScrollTrigger !== 'undefined') {
+                                    newCells.forEach((cell, i) => {
+                                        gsap.from(cell, {
+                                            opacity: 0,
+                                            y: 50,
+                                            clipPath: 'inset(100% 0 0 0)',
+                                            duration: 1.1,
+                                            delay: (i % 4) * 0.08,
+                                            ease: 'power3.out'
+                                        });
+                                    });
+                                }
+
+                                // Hide the button container entirely
+                                document.getElementById('discover-more-container').style.display = 'none';
+
+                                // Update index
+                                currentIndex += remainingItems.length;
+                            }, 500); // Small delay for premium feel
                         });
                     }
                 }
