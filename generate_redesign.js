@@ -436,7 +436,7 @@ const formHtml = `
                                 phone: data.phone,
                                 eventType: data.eventType === 'Other' ? "Other: " + data.otherEventDescription : data.eventType,
                                 eventDate: data.eventDate,
-                                duration: data.durationValue + " " + data.durationUnit,
+                                eventDuration: data.durationValue + " " + data.durationUnit,
                                 guestCount: data.guestCount,
                                 location: data.location,
                                 budgetRange: data.budgetRange,
