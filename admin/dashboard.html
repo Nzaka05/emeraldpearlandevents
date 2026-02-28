@@ -888,10 +888,10 @@
             <i class="fas fa-plus"></i>
         </button>
         <div class="mobile-fab-menu">
-            <a href="/admin/bookings.html?new=1" class="fab-item">
+            <a href="/admin/bookings?new=1" class="fab-item">
                 <i class="fas fa-calendar-plus"></i> New Booking
             </a>
-            <a href="/admin/clients.html" class="fab-item">
+            <a href="/admin/clients" class="fab-item">
                 <i class="fas fa-user-plus"></i> New Client
             </a>
         </div>
@@ -924,62 +924,62 @@
 
         <nav class="sidebar-nav">
             <li class="sidebar-nav-item">
-                <a href="/admin/dashboard.html" class="sidebar-nav-link active">
+                <a href="/admin/dashboard" class="sidebar-nav-link active">
                     <span class="sidebar-nav-icon"><i class="fas fa-home"></i></span>
                     <span>Dashboard</span>
                 </a>
             </li>
             <li class="sidebar-nav-item">
-                <a href="/admin/bookings.html" class="sidebar-nav-link">
+                <a href="/admin/bookings" class="sidebar-nav-link">
                     <span class="sidebar-nav-icon"><i class="fas fa-calendar"></i></span>
                     <span>Bookings</span>
                     <span class="nav-badge">12</span>
                 </a>
             </li>
             <li class="sidebar-nav-item">
-                <a href="/admin/clients.html" class="sidebar-nav-link">
+                <a href="/admin/clients" class="sidebar-nav-link">
                     <span class="sidebar-nav-icon"><i class="fas fa-users"></i></span>
                     <span>Clients</span>
                 </a>
             </li>
             <li class="sidebar-nav-item">
-                <a href="/admin/calendar.html" class="sidebar-nav-link">
+                <a href="/admin/calendar" class="sidebar-nav-link">
                     <span class="sidebar-nav-icon"><i class="fas fa-calendar-alt"></i></span>
                     <span>Calendar</span>
                 </a>
             </li>
             <li class="sidebar-nav-item">
-                <a href="/admin/analytics.html" class="sidebar-nav-link">
+                <a href="/admin/analytics" class="sidebar-nav-link">
                     <span class="sidebar-nav-icon"><i class="fas fa-chart-bar"></i></span>
                     <span>Analytics</span>
                 </a>
             </li>
             <li class="sidebar-nav-item">
-                <a href="/admin/notifications.html" class="sidebar-nav-link">
+                <a href="/admin/notifications" class="sidebar-nav-link">
                     <span class="sidebar-nav-icon"><i class="fas fa-bell"></i></span>
                     <span>Notifications</span>
                 </a>
             </li>
             <li class="sidebar-nav-item">
-                <a href="/admin/gallery.html" class="sidebar-nav-link">
+                <a href="/admin/gallery" class="sidebar-nav-link">
                     <span class="sidebar-nav-icon"><i class="fas fa-image"></i></span>
                     <span>Gallery</span>
                 </a>
             </li>
             <li class="sidebar-nav-item">
-                <a href="/admin/testimonials.html" class="sidebar-nav-link">
+                <a href="/admin/testimonials" class="sidebar-nav-link">
                     <span class="sidebar-nav-icon"><i class="fas fa-star"></i></span>
                     <span>Testimonials</span>
                 </a>
             </li>
             <li class="sidebar-nav-item">
-                <a href="/admin/staff.html" class="sidebar-nav-link">
+                <a href="/admin/staff" class="sidebar-nav-link">
                     <span class="sidebar-nav-icon"><i class="fas fa-user-tie"></i></span>
                     <span>Staff</span>
                 </a>
             </li>
             <li class="sidebar-nav-item">
-                <a href="/admin/settings.html" class="sidebar-nav-link">
+                <a href="/admin/settings" class="sidebar-nav-link">
                     <span class="sidebar-nav-icon"><i class="fas fa-cog"></i></span>
                     <span>Settings</span>
                 </a>
@@ -1041,7 +1041,7 @@
         <div class="page-content">
             <!-- STATS GRID -->
             <div class="stats-grid" id="statsGrid">
-                <a href="/admin/bookings.html" class="stat-card">
+                <a href="/admin/bookings" class="stat-card">
                     <div class="stat-icon"><i class="fas fa-book"></i></div>
                     <div class="stat-label">Total Bookings</div>
                     <div class="stat-value" id="totalBookingsVal">0</div>
@@ -1050,7 +1050,7 @@
                     </div>
                 </a>
 
-                <a href="/admin/bookings.html" class="stat-card">
+                <a href="/admin/bookings" class="stat-card">
                     <div class="stat-icon"><i class="fas fa-money-bill-wave"></i></div>
                     <div class="stat-label">Revenue (KES)</div>
                     <div class="stat-value" id="revenueCount">0</div>
@@ -1069,7 +1069,7 @@
                     </div>
                 </div>
 
-                <a href="/admin/bookings.html?status=pending" class="stat-card">
+                <a href="/admin/bookings?status=pending" class="stat-card">
                     <div class="stat-icon"><i class="fas fa-exclamation-circle" style="color: var(--danger);"></i></div>
                     <div class="stat-label">Pending Confirmations</div>
                     <div class="stat-value" id="pendingCount">0</div>
@@ -1078,7 +1078,7 @@
                     </div>
                 </a>
 
-                <a href="/admin/calendar.html" class="stat-card">
+                <a href="/admin/calendar" class="stat-card">
                     <div class="stat-icon"><i class="fas fa-calendar-check"></i></div>
                     <div class="stat-label">Upcoming Events</div>
                     <div class="stat-value" id="upcomingCount">0</div>
@@ -1094,12 +1094,12 @@
                     <h2 class="section-title">Quick Actions</h2>
                 </div>
                 <div style="display: flex; gap: 15px;">
-                    <a href="/admin/bookings.html?new=1" class="btn btn-primary"><i class="fas fa-plus"></i> New
+                    <a href="/admin/bookings?new=1" class="btn btn-primary"><i class="fas fa-plus"></i> New
                         Booking</a>
-                    <a href="/admin/bookings.html" class="btn btn-accent"><i class="fas fa-download"></i> Export
+                    <a href="/admin/bookings" class="btn btn-accent"><i class="fas fa-download"></i> Export
                         Report</a>
-                    <a href="/admin/calendar.html" class="btn btn-primary"><i class="fas fa-calendar"></i> View Calendar</a>
-                    <a href="/admin/clients.html" class="btn btn-primary"><i class="fas fa-user-plus"></i> Add Client</a>
+                    <a href="/admin/calendar" class="btn btn-primary"><i class="fas fa-calendar"></i> View Calendar</a>
+                    <a href="/admin/clients" class="btn btn-primary"><i class="fas fa-user-plus"></i> Add Client</a>
                 </div>
             </div>
 
@@ -1332,7 +1332,7 @@
                                 Instagram feed not connected
                             </div>
                             <div style="font-size:13px;">
-                                Go to <a href="/admin/settings.html" 
+                                Go to <a href="/admin/settings" 
                                 style="color:#C9A84C;font-weight:600;">Settings → Social Media
                                 </a> and paste your Behold feed ID to display your latest posts here.
                             </div>

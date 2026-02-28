@@ -478,13 +478,25 @@ textarea:focus,
     opacity: 1;
 }
 
-@media (max-width: 768px) {
-    .admin-layout {
-        flex-direction: column !important;
+/* ─── Desktop: overlay must NEVER appear or block clicks ─── */
+@media (min-width: 769px) {
+    #sidebarOverlay {
+        display: none !important;
+        pointer-events: none !important;
     }
 
+    /* Sidebar on desktop is always visible and above everything */
+    .sidebar {
+        z-index: 1000 !important;
+        transform: translateX(0) !important;
+    }
+}
+
+@media (max-width: 768px) {
     .mobile-menu-btn {
-        display: none !important;
+        display: flex !important;
+        align-items: center;
+        justify-content: center;
     }
 
     .topbar-left {
@@ -492,25 +504,20 @@ textarea:focus,
         align-items: center !important;
     }
 
+    /* On mobile, sidebar must slide in since it's position:fixed in inline styles */
     .sidebar {
-        position: relative !important;
-        width: 100% !important;
-        height: auto !important;
-        transform: none !important;
-        z-index: 100 !important;
-        box-shadow: none !important;
-        border-right: none !important;
-        border-bottom: 1px solid var(--accent-gold);
+        transform: translateX(-100%) !important;
+        transition: transform 0.3s ease !important;
+        z-index: 2000 !important;
     }
 
     .sidebar.active {
-        /* No longer needed */
-        transform: none !important;
+        transform: translateX(0) !important;
     }
 
     .main-content {
         margin-left: 0 !important;
-        width: 100vw !important;
+        width: 100% !important;
     }
 
     .topbar {

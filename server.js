@@ -81,9 +81,13 @@ app.use('/admin', express.static(path.join(__dirname, 'admin'), {
 
 // fallback for any other /admin/* path that doesn't match a file
 app.get('/admin/*', (req, res) => {
-    const page = req.path.replace('/admin/', '');
+    // Completely ignore query parameters (like ?new=1) for route matching
+    const urlWithoutQuery = req.url.split('?')[0];
+    const page = urlWithoutQuery.replace('/admin/', '');
+
     // prevent directory traversal
     if (page.includes('..')) return res.status(400).send('Bad request');
+
     res.sendFile(path.join(__dirname, 'admin', page + '.html'), err => {
         if (err) res.status(404).send('Admin page not found');
     });
