@@ -140,6 +140,11 @@ const staticOptions = {
 app.use(express.static('public', staticOptions));
 app.use('/images', express.static('images', staticOptions));
 
+// Root static files
+app.get('/', (req, res) => res.sendFile(require('path').join(__dirname, 'index.html')));
+app.get('/index.html', (req, res) => res.sendFile(require('path').join(__dirname, 'index.html')));
+app.get('/booking.html', (req, res) => res.sendFile(require('path').join(__dirname, 'booking.html')));
+
 // Admin static assets (CSS, JS, Service Worker)
 app.use('/admin/assets', express.static(require('path').join(__dirname, 'admin', 'assets'), staticOptions));
 app.get('/admin/push-client.js', (req, res) => res.sendFile(require('path').join(__dirname, 'admin', 'push-client.js')));

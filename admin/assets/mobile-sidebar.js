@@ -1,4 +1,18 @@
 // JS to handle sidebar toggling
+
+// Reset all sidebar state on page load as requested to prevent bug 2
+document.addEventListener('DOMContentLoaded', () => {
+    const sidebar = document.querySelector('.sidebar');
+    const overlay = document.getElementById('sidebarOverlay');
+
+    if (sidebar) sidebar.classList.remove('open', 'active', 'show');
+    if (overlay) {
+        overlay.style.display = 'none';
+        overlay.classList.remove('active', 'show');
+    }
+    document.body.classList.remove('sidebar-open', 'menu-open', 'overlay-active');
+});
+
 window.toggleSidebar = function (e) {
     if (e) {
         e.preventDefault();
@@ -8,16 +22,34 @@ window.toggleSidebar = function (e) {
     const sidebar = document.querySelector('.sidebar');
     const overlay = document.getElementById('sidebarOverlay');
 
-    if (sidebar) sidebar.classList.toggle('active');
-    if (overlay) overlay.classList.toggle('active');
+    if (sidebar) {
+        sidebar.classList.toggle('active');
+        const isActive = sidebar.classList.contains('active');
+
+        if (overlay) {
+            if (isActive) {
+                overlay.style.display = 'block';
+                overlay.classList.add('active');
+                document.body.classList.add('sidebar-open');
+            } else {
+                overlay.style.display = 'none';
+                overlay.classList.remove('active', 'show');
+                document.body.classList.remove('sidebar-open', 'menu-open', 'overlay-active');
+            }
+        }
+    }
 };
 
 window.closeSidebar = function () {
     const sidebar = document.querySelector('.sidebar');
     const overlay = document.getElementById('sidebarOverlay');
 
-    if (sidebar) sidebar.classList.remove('active');
-    if (overlay) overlay.classList.remove('active');
+    if (sidebar) sidebar.classList.remove('open', 'active', 'show');
+    if (overlay) {
+        overlay.style.display = 'none';
+        overlay.classList.remove('active', 'show');
+    }
+    document.body.classList.remove('sidebar-open', 'menu-open', 'overlay-active');
 };
 
 // Use event delegation for better reliability across pages
@@ -46,7 +78,8 @@ document.addEventListener('click', (e) => {
     // Auto-close if clicked outside an active sidebar
     const sidebar = document.querySelector('.sidebar');
     if (sidebar && sidebar.classList.contains('active')) {
-        if (!sidebar.contains(e.target)) {
+        const btnNode = document.querySelector('.mobile-menu-btn');
+        if (!sidebar.contains(e.target) && (!btnNode || !btnNode.contains(e.target))) {
             window.closeSidebar();
         }
     }
@@ -87,4 +120,3 @@ async function loadGlobalAdminAvatar() {
 
 // Load avatar globally
 loadGlobalAdminAvatar();
-// End of file
