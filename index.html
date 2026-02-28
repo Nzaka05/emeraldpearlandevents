@@ -3863,9 +3863,10 @@
                                 // Rebuild lightbox array & re-bind clicks
                                 updateGalleryLightboxArray();
                                 const newCells = expandedContainer.querySelectorAll('[data-ci]');
+                                const captureIndexStart = currentIndex;
                                 newCells.forEach((cell, index) => {
-                                    // Adjust index for lightbox by adding currentIndex
-                                    cell.addEventListener('click', () => openLightbox(currentIndex + index));
+                                    // Adjust index for lightbox using the captured static index
+                                    cell.addEventListener('click', () => openLightbox(captureIndexStart + index));
                                 });
 
                                 // Trigger GSAP animations for new cells
