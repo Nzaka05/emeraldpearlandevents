@@ -1,5 +1,5 @@
 // JS to handle sidebar toggling
-document.addEventListener('DOMContentLoaded', () => {
+function initMobileSidebar() {
     const btn = document.getElementById('mobileMenuBtn');
     const sidebar = document.querySelector('.sidebar');
     const overlay = document.getElementById('sidebarOverlay');
@@ -40,4 +40,11 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     });
-});
+}
+
+// Ensure execution whether loaded before or after DOMContentLoaded
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initMobileSidebar);
+} else {
+    initMobileSidebar();
+}
