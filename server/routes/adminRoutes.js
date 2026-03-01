@@ -828,7 +828,7 @@ router.get('/profile', verifyAdminJWT, async (req, res) => {
 // PATCH /api/admin/profile
 router.patch('/profile', verifyAdminJWT, async (req, res) => {
     try {
-        const { name, email } = req.body;
+        const { name, email, avatar } = req.body;
         const admin = await Admin.findById(req.admin.adminId);
 
         if (!admin) {
@@ -837,6 +837,7 @@ router.patch('/profile', verifyAdminJWT, async (req, res) => {
 
         if (name) admin.name = name;
         if (email) admin.email = email.toLowerCase().trim();
+        if (avatar !== undefined) admin.avatar = avatar;
 
         await admin.save();
 

@@ -1152,19 +1152,19 @@
                     document.getElementById('adminName').value = result.profile.name || '';
                     document.getElementById('adminEmail').value = result.profile.email || '';
                     document.getElementById('adminRole').value = result.profile.role || '';
+                    
+                    // Load avatar from admin profile
+                    if (result.profile.avatar) {
+                        profileImageBase64 = result.profile.avatar;
+                        setProfileImagePreview(profileImageBase64);
+                        // Update localStorage cache
+                        localStorage.setItem('adminAvatar', result.profile.avatar);
+                        localStorage.setItem('adminName', result.profile.name || 'Admin');
+                    }
                 }
             } catch (error) {
                 console.error('Error loading admin profile:', error);
             }
-            // Load profile image from settings
-            try {
-                const res2 = await fetch('/api/admin/settings');
-                const r2 = await res2.json();
-                if (r2.success && r2.settings && r2.settings.profileImage) {
-                    profileImageBase64 = r2.settings.profileImage;
-                    setProfileImagePreview(profileImageBase64);
-                }
-            } catch (e) { }
         }
 
         async function updateAdminProfile() {
@@ -1183,16 +1183,20 @@
             }
 
             try {
+                // Update profile with avatar
                 const response = await fetch('/api/admin/profile', {
                     method: 'PATCH',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name, email })
+                    body: JSON.stringify({ name, email, avatar: profileImageBase64 || '' })
                 });
 
                 const data = await response.json();
 
                 if (data.success) {
                     successMsg.style.display = 'block';
+                    // Update localStorage cache
+                    localStorage.setItem('adminAvatar', profileImageBase64 || '');
+                    localStorage.setItem('adminName', name);
                     setTimeout(() => {
                         successMsg.style.display = 'none';
                     }, 5000);
@@ -1383,6 +1387,7 @@
     </script>
         <script src="/admin/push-client.js"></script>
     <script src="/js/mobile-sidebar.js?v=3"></script>
+    <script src="/admin/admin-profile.js"></script>
 </body>
 
 </html>
