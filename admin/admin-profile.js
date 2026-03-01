@@ -2,15 +2,18 @@
 (function() {
     async function loadAdminProfile() {
         try {
-            const res = await fetch('/api/admin/me');
+            const res = await fetch('/api/admin/me', { credentials: 'include' });
             const data = await res.json();
 
             if (!data.success || !data.admin) {
-                console.warn('Could not load admin profile');
+                console.warn('Could not load admin profile:', data.message || 'Unknown error');
+                applyCachedProfile();
                 return;
             }
 
             const admin = data.admin;
+            console.log('[AdminProfile] Loaded admin:', admin.name, 'Avatar:', admin.avatar ? 'Yes' : 'No');
+            
             const initials = (admin.name || 'A').split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
 
             // Update all avatar elements on the page
@@ -23,20 +26,28 @@
 
             avatarSelectors.forEach(selector => {
                 const elements = document.querySelectorAll(selector);
+                console.log(`[AdminProfile] Found ${elements.length} elements for selector: ${selector}`);
+                
                 elements.forEach(el => {
-                    if (admin.avatar) {
+                    if (admin.avatar && admin.avatar.trim() !== '') {
                         // If avatar exists, show image
                         if (el.tagName === 'IMG') {
                             el.src = admin.avatar;
                             el.style.display = 'block';
+                            el.onerror = function() {
+                                console.warn('[AdminProfile] Avatar image failed to load, showing initials');
+                                el.style.display = 'none';
+                                el.parentElement.textContent = initials;
+                            };
                         } else {
                             // Replace div content with image
-                            el.innerHTML = `<img src="${admin.avatar}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" alt="${admin.name}">`;
+                            el.innerHTML = `<img src="${admin.avatar}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" alt="${admin.name}" onerror="this.style.display='none'; this.parentElement.textContent='${initials}';">`;
                             el.style.padding = '0';
                             el.style.background = 'transparent';
                         }
                     } else {
                         // No avatar - show initials
+                        console.log('[AdminProfile] No avatar URL, showing initials:', initials);
                         el.textContent = initials;
                         // Reset styles for initials display
                         if (el.tagName !== 'IMG') {

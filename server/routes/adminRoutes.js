@@ -167,6 +167,45 @@ router.get('/me', verifyAdminJWT, async (req, res) => {
     }
 });
 
+// PATCH /api/admin/me - Update admin profile
+router.patch('/me', verifyAdminJWT, async (req, res) => {
+    try {
+        const { name, avatar } = req.body;
+        const admin = await Admin.findById(req.admin.adminId);
+
+        if (!admin) {
+            return res.status(404).json({
+                success: false,
+                message: 'Admin not found'
+            });
+        }
+
+        if (name) admin.name = name;
+        if (avatar !== undefined) admin.avatar = avatar;
+        admin.updatedAt = Date.now();
+
+        await admin.save();
+
+        res.json({
+            success: true,
+            message: 'Profile updated successfully',
+            admin: {
+                id: admin._id,
+                name: admin.name,
+                email: admin.email,
+                avatar: admin.avatar,
+                role: admin.role
+            }
+        });
+    } catch (error) {
+        console.error('Error updating admin profile:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error updating profile'
+        });
+    }
+});
+
 // ═══════════════════════════════════════════════════════════
 // BOOKINGS ROUTES (PROTECTED)
 // ═══════════════════════════════════════════════════════════

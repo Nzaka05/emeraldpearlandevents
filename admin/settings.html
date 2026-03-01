@@ -1146,21 +1146,21 @@
 
         async function loadAdminProfile() {
             try {
-                const response = await fetch('/api/admin/profile');
+                const response = await fetch('/api/admin/me', { credentials: 'include' });
                 const result = await response.json();
 
-                if (result.success && result.profile) {
-                    document.getElementById('adminName').value = result.profile.name || '';
-                    document.getElementById('adminEmail').value = result.profile.email || '';
-                    document.getElementById('adminRole').value = result.profile.role || '';
+                if (result.success && result.admin) {
+                    document.getElementById('adminName').value = result.admin.name || '';
+                    document.getElementById('adminEmail').value = result.admin.email || '';
+                    document.getElementById('adminRole').value = result.admin.role || '';
                     
                     // Load avatar from admin profile
-                    if (result.profile.avatar) {
-                        profileImageBase64 = result.profile.avatar;
+                    if (result.admin.avatar) {
+                        profileImageBase64 = result.admin.avatar;
                         setProfileImagePreview(profileImageBase64);
                         // Update localStorage cache
-                        localStorage.setItem('adminAvatar', result.profile.avatar);
-                        localStorage.setItem('adminName', result.profile.name || 'Admin');
+                        localStorage.setItem('adminAvatar', result.admin.avatar);
+                        localStorage.setItem('adminName', result.admin.name || 'Admin');
                     }
                 }
             } catch (error) {
@@ -1170,25 +1170,25 @@
 
         async function updateAdminProfile() {
             const name = document.getElementById('adminName').value.trim();
-            const email = document.getElementById('adminEmail').value.trim();
             const successMsg = document.getElementById('profileSuccessMessage');
             const errorMsg = document.getElementById('profileErrorMessage');
 
             successMsg.style.display = 'none';
             errorMsg.style.display = 'none';
 
-            if (!name || !email) {
-                errorMsg.textContent = '❌ Name and Email are required';
+            if (!name) {
+                errorMsg.textContent = '❌ Name is required';
                 errorMsg.style.display = 'block';
                 return;
             }
 
             try {
                 // Update profile with avatar
-                const response = await fetch('/api/admin/profile', {
+                const response = await fetch('/api/admin/me', {
                     method: 'PATCH',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name, email, avatar: profileImageBase64 || '' })
+                    credentials: 'include',
+                    body: JSON.stringify({ name, avatar: profileImageBase64 || '' })
                 });
 
                 const data = await response.json();
