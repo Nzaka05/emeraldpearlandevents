@@ -619,6 +619,8 @@ textarea:focus,
         transform: translateX(-100%) !important;
         transition: transform 0.3s ease !important;
         z-index: 2000 !important;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch !important;
     }
 
     .sidebar.active {
