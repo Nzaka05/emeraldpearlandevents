@@ -1,54 +1,106 @@
 (function () {
-    function initSidebar() {
-        const sidebar = document.querySelector('.sidebar');
-        const overlay = document.getElementById('sidebarOverlay'); // correct ID
-        const toggleBtn = document.getElementById('menu-toggle');
+  function initSidebar() {
+    var sidebar = document.querySelector('.sidebar');
+    var overlay = document.getElementById('sidebarOverlay');
+    var toggleBtn = document.getElementById('menu-toggle');
 
-        if (!sidebar) return;
-
-        // Reset on every page load
-        sidebar.classList.remove('active');
-        document.body.classList.remove('sidebar-open');
-        if (overlay) {
-            overlay.style.display = 'none';
-            overlay.classList.remove('active');
-        }
-
-        function openSidebar() {
-            sidebar.classList.add('active'); // use 'active' not 'open'
-            document.body.classList.add('sidebar-open');
-            if (overlay) {
-                overlay.style.display = 'block';
-                setTimeout(() => overlay.classList.add('active'), 10);
-            }
-        }
-
-        function closeSidebar() {
-            sidebar.classList.remove('active'); // use 'active' not 'open'
-            document.body.classList.remove('sidebar-open');
-            if (overlay) {
-                overlay.classList.remove('active');
-                setTimeout(() => overlay.style.display = 'none', 300);
-            }
-        }
-
-        window.toggleSidebar = function () {
-            sidebar.classList.contains('active') ? closeSidebar() : openSidebar();
-        };
-
-        if (toggleBtn) {
-            toggleBtn.addEventListener('click', function (e) {
-                e.stopPropagation();
-                window.toggleSidebar();
-            });
-        }
-
-        if (overlay) overlay.addEventListener('click', closeSidebar);
-        sidebar.querySelectorAll('a').forEach(link => link.addEventListener('click', closeSidebar));
-        document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSidebar(); });
+    if (!sidebar) {
+      console.warn('[Sidebar] .sidebar element not found');
+      return;
     }
 
-    document.readyState === 'loading'
-        ? document.addEventListener('DOMContentLoaded', initSidebar)
-        : initSidebar();
+    // Inject overlay styles directly — no external CSS dependency
+    if (overlay) {
+      overlay.style.cssText = [
+        'position:fixed',
+        'top:0',
+        'left:0',
+        'width:100vw',
+        'height:100vh',
+        'background:rgba(0,0,0,0.55)',
+        'z-index:1999',
+        'display:none',
+        'opacity:0',
+        'transition:opacity 0.3s ease'
+      ].join(';');
+    }
+
+    // Force clean state on every page load
+    sidebar.classList.remove('active');
+    document.body.style.overflow = '';
+    if (overlay) {
+      overlay.style.display = 'none';
+      overlay.style.opacity = '0';
+    }
+
+    function openSidebar() {
+      sidebar.classList.add('active');
+      document.body.style.overflow = 'hidden';
+      if (overlay) {
+        overlay.style.display = 'block';
+        setTimeout(function () {
+          overlay.style.opacity = '1';
+        }, 10);
+      }
+      console.log('[Sidebar] opened');
+    }
+
+    function closeSidebar() {
+      sidebar.classList.remove('active');
+      document.body.style.overflow = '';
+      if (overlay) {
+        overlay.style.opacity = '0';
+        setTimeout(function () {
+          overlay.style.display = 'none';
+        }, 300);
+      }
+      console.log('[Sidebar] closed');
+    }
+
+    // Expose globally for any inline onclick fallback
+    window.toggleSidebar = function () {
+      if (sidebar.classList.contains('active')) {
+        closeSidebar();
+      } else {
+        openSidebar();
+      }
+    };
+
+    // Attach to toggle button
+    if (toggleBtn) {
+      toggleBtn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        window.toggleSidebar();
+      });
+    } else {
+      console.warn('[Sidebar] #menu-toggle button not found');
+    }
+
+    // Click overlay to close
+    if (overlay) {
+      overlay.addEventListener('click', closeSidebar);
+    }
+
+    // Close when any nav link is tapped
+    var navLinks = sidebar.querySelectorAll('a');
+    navLinks.forEach(function (link) {
+      link.addEventListener('click', closeSidebar);
+    });
+
+    // Escape key closes sidebar
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') closeSidebar();
+    });
+
+    console.log('[Sidebar] initialized successfully');
+    console.log('[Sidebar] sidebar el:', sidebar);
+    console.log('[Sidebar] overlay el:', overlay);
+    console.log('[Sidebar] toggle btn:', toggleBtn);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initSidebar);
+  } else {
+    initSidebar();
+  }
 })();
