@@ -1,47 +1,63 @@
 (function () {
-    let sidebar, overlay;
-
     function initSidebar() {
-        sidebar = document.querySelector('.sidebar') || document.getElementById('sidebar');
-        overlay = document.querySelector('.sidebar-overlay') || document.getElementById('sidebar-overlay') || document.getElementById('sidebarOverlay');
-        const toggleBtn = document.querySelector('.menu-toggle') || document.getElementById('menu-toggle') || document.querySelector('.mobile-menu-btn');
+        const sidebar = document.querySelector('.sidebar') || document.getElementById('sidebar');
+        const overlay = document.querySelector('.sidebar-overlay') || document.getElementById('sidebar-overlay');
+        const toggleBtn = document.getElementById('menu-toggle') || document.querySelector('.menu-toggle');
 
-        if (!sidebar) return;
+        if (!sidebar) {
+            console.warn('Sidebar element not found');
+            return;
+        }
 
-        // Reset state on every page load
+        // Clean reset on every page load
         sidebar.classList.remove('open', 'active');
         document.body.classList.remove('sidebar-open');
-        if (overlay) { overlay.style.display = 'none'; overlay.classList.remove('active'); }
+        if (overlay) {
+            overlay.style.display = 'none';
+            overlay.classList.remove('active');
+        }
 
-        if (toggleBtn) toggleBtn.addEventListener('click', e => { e.stopPropagation(); window.toggleSidebar(e); });
-        if (overlay) overlay.addEventListener('click', closeSidebar);
-        sidebar.querySelectorAll('a').forEach(link => link.addEventListener('click', closeSidebar));
-        document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSidebar(); });
-
-        window.toggleSidebar = function (e) {
-            if (e && typeof e.preventDefault === 'function') {
-                e.preventDefault();
-                e.stopPropagation();
+        function openSidebar() {
+            sidebar.classList.add('open');
+            document.body.classList.add('sidebar-open');
+            if (overlay) {
+                overlay.style.display = 'block';
+                setTimeout(() => overlay.classList.add('active'), 10);
             }
-            if (!sidebar) return;
-            (sidebar.classList.contains('open') || sidebar.classList.contains('active')) ? closeSidebar() : openSidebar();
+        }
+
+        function closeSidebar() {
+            sidebar.classList.remove('open', 'active');
+            document.body.classList.remove('sidebar-open');
+            if (overlay) {
+                overlay.classList.remove('active');
+                setTimeout(() => overlay.style.display = 'none', 300);
+            }
+        }
+
+        // Expose globally so onclick="window.toggleSidebar()" still works
+        window.toggleSidebar = function () {
+            sidebar.classList.contains('open') ? closeSidebar() : openSidebar();
         };
+
+        // Also attach via event listener as backup
+        if (toggleBtn) {
+            toggleBtn.addEventListener('click', function (e) {
+                e.stopPropagation();
+                window.toggleSidebar();
+            });
+        }
+
+        if (overlay) overlay.addEventListener('click', closeSidebar);
+
+        sidebar.querySelectorAll('a').forEach(link => {
+            link.addEventListener('click', closeSidebar);
+        });
+
+        document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSidebar(); });
     }
 
-    function openSidebar() {
-        if (!sidebar) return;
-        sidebar.classList.add('open', 'active'); // 'active' is needed for the premium-admin.css CSS
-        document.body.classList.add('sidebar-open');
-        if (overlay) { overlay.style.display = 'block'; setTimeout(() => overlay.classList.add('active'), 10); }
-    }
-
-    function closeSidebar() {
-        if (!sidebar) return;
-        sidebar.classList.remove('open', 'active');
-        document.body.classList.remove('sidebar-open');
-        if (overlay) { overlay.classList.remove('active'); setTimeout(() => overlay.style.display = 'none', 300); }
-    }
-
+    // Run immediately if DOM ready, otherwise wait
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', initSidebar);
     } else {

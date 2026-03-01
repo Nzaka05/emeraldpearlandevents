@@ -1208,6 +1208,12 @@
             const ctx = document.getElementById('revenueChart');
             if (!ctx) return;
 
+            // Destroy existing chart instance before reuse (prevents canvas-already-in-use error)
+            const existingChart = Chart.getChart('revenueChart');
+            if (existingChart) {
+                existingChart.destroy();
+            }
+
             new Chart(ctx, {
                 type: 'line',
                 data: {
