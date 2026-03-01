@@ -1,7 +1,8 @@
 (function () {
     function initSidebar() {
         const sidebar = document.querySelector('.sidebar') || document.getElementById('sidebar');
-        const overlay = document.querySelector('.sidebar-overlay') || document.getElementById('sidebar-overlay');
+        // CSS uses #sidebarOverlay — find it by ID first, then fallback to class
+        const overlay = document.getElementById('sidebarOverlay') || document.querySelector('.sidebar-overlay') || document.getElementById('sidebar-overlay');
         const toggleBtn = document.querySelector('.menu-toggle') || document.getElementById('menu-toggle');
 
         if (!sidebar) return;
@@ -12,13 +13,14 @@
         if (overlay) { overlay.style.display = 'none'; overlay.classList.remove('active'); }
 
         function openSidebar() {
-            sidebar.classList.add('open');
+            // CSS requires .sidebar.active to slide in (see premium-admin.css line 624)
+            sidebar.classList.add('open', 'active');
             document.body.classList.add('sidebar-open');
             if (overlay) { overlay.style.display = 'block'; setTimeout(() => overlay.classList.add('active'), 10); }
         }
 
         function closeSidebar() {
-            sidebar.classList.remove('open');
+            sidebar.classList.remove('open', 'active');
             document.body.classList.remove('sidebar-open');
             if (overlay) { overlay.classList.remove('active'); setTimeout(() => overlay.style.display = 'none', 300); }
         }
