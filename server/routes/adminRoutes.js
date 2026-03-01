@@ -453,6 +453,9 @@ router.get('/analytics/overview', verifyAdminJWT, async (req, res) => {
         const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
         const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0);
 
+        // All-time total bookings
+        const totalBookings = await Booking.countDocuments({});
+
         // This month bookings
         const thisMonthBookings = await Booking.countDocuments({
             createdAt: { $gte: startOfMonth }
@@ -533,6 +536,7 @@ router.get('/analytics/overview', verifyAdminJWT, async (req, res) => {
         res.json({
             success: true,
             stats: {
+                totalBookings,
                 totalBookingsThisMonth: thisMonthBookings,
                 bookingChangePercent,
                 pendingConfirmations,
