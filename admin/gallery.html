@@ -1035,7 +1035,9 @@
                 return;
             }
 
-            grid.innerHTML = items.map(item => `
+            grid.innerHTML = items.map(item => {
+            if (!item) return '';
+            return `
             <div class="gallery-item" id="img-${item._id}" draggable="true" ondragstart="handleDragStart(event, '${item._id}')">
                 <img class="gallery-img" src="${item.url}" alt="${item.caption || item.filename}" loading="lazy">
                 <div class="gallery-overlay">
@@ -1048,7 +1050,8 @@
                     ${item.eventType ? `<span class="gallery-tag">${item.eventType}</span>` : ''}
                 </div>
             </div>
-        `).join('');
+        `;
+        }).join('');
         }
 
         // ═══════════════════════════════════════════════════════════

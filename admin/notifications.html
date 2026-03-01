@@ -811,9 +811,15 @@
             else if (currentFilter === 'read') filtered = sampleNotifications.filter(n => n.isRead);
 
             if (checkbox.checked) {
-                filtered.forEach(n => selectedNotificationIds.add(n.id));
+                filtered.forEach(n => {
+                    if (!n) return;
+                    selectedNotificationIds.add(n.id);
+                });
             } else {
-                filtered.forEach(n => selectedNotificationIds.delete(n.id));
+                filtered.forEach(n => {
+                    if (!n) return;
+                    selectedNotificationIds.delete(n.id);
+                });
             }
             renderNotifications();
         }

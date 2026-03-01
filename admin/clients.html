@@ -792,7 +792,8 @@
                 // 1. Load standalone customers first
                 if (customersData.success) {
                     customersData.customers.forEach(cust => {
-                        clientMap.set(cust.email.toLowerCase(), {
+                        if (!cust) return;
+                        clientMap.set((cust.email || '').toLowerCase(), {
                             isStandalone: true,
                             id: cust._id,
                             name: cust.name,
@@ -808,7 +809,8 @@
                 // 2. Merge bookings data (update counts or add missing)
                 if (bookingsData.success) {
                     bookingsData.bookings.forEach(booking => {
-                        const emailKey = booking.customerEmail.toLowerCase();
+                        if (!booking) return;
+                        const emailKey = (booking.customerEmail || '').toLowerCase();
                         if (!clientMap.has(emailKey)) {
                             clientMap.set(emailKey, {
                                 isStandalone: false,
@@ -871,10 +873,10 @@
         }
 
         document.getElementById('searchInput').addEventListener('input', (e) => {
-            const term = e.target.value.toLowerCase();
+            const term = (e.target.value || '').toLowerCase();
             const filtered = allClients.filter(client =>
-                client.name.toLowerCase().includes(term) ||
-                client.email.toLowerCase().includes(term)
+                (client.name || '').toLowerCase().includes(term) ||
+                (client.email || '').toLowerCase().includes(term)
             );
             renderClients(filtered);
         });
