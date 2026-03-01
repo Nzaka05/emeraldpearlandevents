@@ -180,6 +180,11 @@ app.get('/admin/clients', verifyAdminPage, (req, res) => {
     res.sendFile(__dirname + '/admin/clients.html');
 });
 
+// Admin edit client page
+app.get('/admin/clients/:id/edit', verifyAdminPage, (req, res) => {
+    res.sendFile(__dirname + '/admin/edit-client.html');
+});
+
 // Admin calendar page
 app.get('/admin/calendar', verifyAdminPage, (req, res) => {
     res.sendFile(__dirname + '/admin/calendar.html');

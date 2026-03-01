@@ -805,7 +805,12 @@
             <div class="content">
                 <div class="header-controls">
                     <input type="text" class="search-bar" id="searchInput" placeholder="Search clients...">
-                    <button class="btn-primary" onclick="openNewClientModal()">➕ New Client</button>
+                    <div style="display: flex; gap: 12px;">
+                        <button id="vipFilterBtn" onclick="toggleVIPFilter()" class="vip-filter-btn">
+                            <i class="fas fa-star"></i> VIP Only
+                        </button>
+                        <button class="btn-primary" onclick="openNewClientModal()">➕ New Client</button>
+                    </div>
                 </div>
                 <div class="clients-grid" id="clientsGrid">
                     <!-- Populated by JavaScript -->
@@ -934,6 +939,52 @@
             justify-content: flex-end;
             gap: 12px;
         }
+
+        /* VIP Badge Styles */
+        .vip-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: linear-gradient(135deg, #c9a84c, #e8c96d);
+            color: #1a3c2e;
+            font-size: 10px;
+            font-weight: 800;
+            padding: 3px 8px;
+            border-radius: 20px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            vertical-align: middle;
+            margin-left: 6px;
+        }
+
+        .vip-filter-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-card);
+            color: var(--text-main);
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .vip-filter-btn.active {
+            background: linear-gradient(135deg, #c9a84c, #e8c96d);
+            color: #1a3c2e;
+            border-color: #c9a84c;
+        }
+
+        .vip-filter-btn:hover {
+            border-color: #c9a84c;
+        }
+
+        .vip-filter-btn.active:hover {
+            box-shadow: 0 4px 12px rgba(201, 168, 76, 0.3);
+        }
     </style>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
@@ -977,7 +1028,9 @@
                             phone: cust.phone,
                             eventType: 'General Client',
                             location: cust.location || '',
-                            totalBookings: 0
+                            totalBookings: 0,
+                            isVIP: cust.isVIP || false,
+                            status: cust.status || 'active'
                         });
                     });
                 }
@@ -1015,16 +1068,21 @@
             }
         }
 
+        let showingVIPOnly = false;
+
         function renderClients(clients) {
             const grid = document.getElementById('clientsGrid');
             grid.innerHTML = clients.map((client, index) => {
                 const initials = (client.name || '?').split(' ').map(n => n[0]).join('').toUpperCase();
+                const vipBadge = client.isVIP 
+                    ? `<span class="vip-badge"><i class="fas fa-star"></i> VIP</span>` 
+                    : '';
                 return `
-                    <div class="flip-card" onclick="this.classList.toggle('flipped')">
+                    <div class="flip-card" data-vip="${client.isVIP || false}" data-client-id="${client.id || ''}" onclick="this.classList.toggle('flipped')">
                         <div class="flip-card-inner">
                             <div class="flip-card-front">
                                 <div class="client-avatar">${initials}</div>
-                                <div class="client-name">${client.name}</div>
+                                <div class="client-name">${client.name}${vipBadge}</div>
                                 <div class="client-event-type">${client.eventType}</div>
                                 <div class="client-email">${client.email}</div>
                                 <div class="client-phone">${client.phone}</div>
@@ -1037,8 +1095,8 @@
                                     <div class="info-item"><span class="info-label">Total Bookings:</span><br>${client.totalBookings}</div>
                                     <div class="info-item"><span class="info-label">Primary Event:</span><br>${client.eventType}</div>
                                     <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid rgba(201, 168, 76, 0.3);">
-                                        <button onclick="editClient('${client.email}')" style="background: var(--accent-gold); color: var(--text-main); border: none; padding: 6px 12px; border-radius: 4px; font-size: 11px; font-weight: 600; cursor: pointer; width: 100%; margin-bottom: 8px;">Edit</button>
-                                        <button onclick="deleteClient('${client.email}')" style="background: var(--accent-danger); color: var(--bg-primary); border: none; padding: 6px 12px; border-radius: 4px; font-size: 11px; font-weight: 600; cursor: pointer; width: 100%;">Delete</button>
+                                        <button onclick="event.stopPropagation(); editClient('${client.id}')" style="background: var(--accent-gold); color: var(--text-main); border: none; padding: 6px 12px; border-radius: 4px; font-size: 11px; font-weight: 600; cursor: pointer; width: 100%; margin-bottom: 8px;">Edit</button>
+                                        <button onclick="event.stopPropagation(); deleteClient('${client.email}')" style="background: var(--accent-danger); color: var(--bg-primary); border: none; padding: 6px 12px; border-radius: 4px; font-size: 11px; font-weight: 600; cursor: pointer; width: 100%;">Delete</button>
                                     </div>
                                 </div>
                             </div>
@@ -1046,6 +1104,20 @@
                     </div>
                 `;
             }).join('');
+        }
+
+        function toggleVIPFilter() {
+            showingVIPOnly = !showingVIPOnly;
+            const btn = document.getElementById('vipFilterBtn');
+            btn.classList.toggle('active', showingVIPOnly);
+            
+            document.querySelectorAll('.flip-card').forEach(card => {
+                if (showingVIPOnly) {
+                    card.style.display = card.dataset.vip === 'true' ? 'block' : 'none';
+                } else {
+                    card.style.display = 'block';
+                }
+            });
         }
 
         document.getElementById('searchInput').addEventListener('input', (e) => {
@@ -1103,8 +1175,12 @@
             }
         }
 
-        function editClient(email) {
-            alert('CRM editing coming soon for: ' + email);
+        function editClient(clientId) {
+            if (!clientId) {
+                alert('Cannot edit: Client ID not found');
+                return;
+            }
+            window.location.href = `/admin/clients/${clientId}/edit`;
         }
 
         async function deleteClient(email) {

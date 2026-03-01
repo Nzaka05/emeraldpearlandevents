@@ -68,6 +68,19 @@ const CustomerSchema = new mongoose.Schema({
         type: Boolean,
         default: true
     },
+    isVIP: {
+        type: Boolean,
+        default: false
+    },
+    status: {
+        type: String,
+        enum: ['active', 'inactive', 'prospect'],
+        default: 'active'
+    },
+    howTheyFoundUs: {
+        type: String,
+        default: ''
+    },
     createdAt: {
         type: Date,
         default: Date.now

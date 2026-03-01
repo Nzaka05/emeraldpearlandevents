@@ -533,6 +533,9 @@ router.get('/analytics/overview', verifyAdminJWT, async (req, res) => {
         ]);
         const projectedRevenue = projectedRevenueAgg.length > 0 ? projectedRevenueAgg[0].total : 0;
 
+        // Count VIP clients
+        const vipCount = await Customer.countDocuments({ isVIP: true });
+
         res.json({
             success: true,
             stats: {
@@ -544,6 +547,7 @@ router.get('/analytics/overview', verifyAdminJWT, async (req, res) => {
                 revenue: revenueThisMonth,
                 revenueChangePercent,
                 projectedRevenue,
+                vipCount,
                 chartData: {
                     labels,
                     revenue: revenueData
@@ -1144,6 +1148,54 @@ router.post('/customers', verifyAdminJWT, async (req, res) => {
             return res.status(400).json({ success: false, message: 'Email or phone already exists' });
         }
         res.status(500).json({ success: false, message: 'Error creating customer: ' + error.message });
+    }
+});
+
+// GET /api/admin/customers/:id - Get single customer
+router.get('/customers/:id', verifyAdminJWT, async (req, res) => {
+    try {
+        const customer = await Customer.findById(req.params.id);
+        if (!customer) {
+            return res.status(404).json({ success: false, message: 'Customer not found' });
+        }
+        res.json({ success: true, customer });
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'Error fetching customer' });
+    }
+});
+
+// PUT /api/admin/customers/:id - Update customer
+router.put('/customers/:id', verifyAdminJWT, async (req, res) => {
+    try {
+        const { name, email, phone, location, notes, isVIP, status, howTheyFoundUs } = req.body;
+        
+        const updateData = {
+            name,
+            email,
+            phone,
+            location,
+            notes,
+            isVIP,
+            status,
+            howTheyFoundUs
+        };
+
+        const customer = await Customer.findByIdAndUpdate(
+            req.params.id,
+            updateData,
+            { new: true, runValidators: true }
+        );
+
+        if (!customer) {
+            return res.status(404).json({ success: false, message: 'Customer not found' });
+        }
+
+        res.json({ success: true, customer });
+    } catch (error) {
+        if (error.code === 11000) {
+            return res.status(400).json({ success: false, message: 'Email or phone already exists' });
+        }
+        res.status(500).json({ success: false, message: 'Error updating customer: ' + error.message });
     }
 });
 
