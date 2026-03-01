@@ -302,20 +302,7 @@
             }
         }
 
-        @media (max-width: 768px) {
-            .sidebar {
-                position: relative;
-                width: 100%;
-            }
 
-            .main-content {
-                margin-left: 0;
-            }
-
-            .clients-grid {
-                grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            }
-        }
 
         /* ═══════════════════════════════════════════════════════════
            MOBILE RESPONSIVENESS (Injected via Phase 10 Overhaul)
@@ -842,7 +829,7 @@
         function renderClients(clients) {
             const grid = document.getElementById('clientsGrid');
             grid.innerHTML = clients.map((client, index) => {
-                const initials = client.name.split(' ').map(n => n[0]).join('').toUpperCase();
+                const initials = (client.name || '?').split(' ').map(n => n[0]).join('').toUpperCase();
                 return `
                     <div class="flip-card" onclick="this.classList.toggle('flipped')">
                         <div class="flip-card-inner">
