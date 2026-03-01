@@ -41,3 +41,4 @@
 
   document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', initSidebar) : initSidebar();
 })();
+// v3
