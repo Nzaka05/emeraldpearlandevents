@@ -174,11 +174,22 @@ router.get('/me', verifyAdminJWT, async (req, res) => {
 // GET /api/admin/bookings
 router.get('/bookings', verifyAdminJWT, async (req, res) => {
     try {
-        const { status, eventType, search, page = 1, limit = 20 } = req.query;
+        const { status, eventType, search, clientEmail, clientPhone, page = 1, limit = 20 } = req.query;
         const query = {};
 
         if (status) query.status = status;
         if (eventType) query.eventType = eventType;
+        
+        // Search by client email
+        if (clientEmail) {
+            query.customerEmail = { $regex: clientEmail, $options: 'i' };
+        }
+        
+        // Search by client phone
+        if (clientPhone) {
+            query.customerPhone = { $regex: clientPhone.replace(/\s|-/g, ''), $options: 'i' };
+        }
+        
         if (search) {
             query.$or = [
                 { 'customerId.name': { $regex: search, $options: 'i' } },
@@ -189,8 +200,7 @@ router.get('/bookings', verifyAdminJWT, async (req, res) => {
 
         const skip = (page - 1) * limit;
         const bookings = await Booking.find(query)
-            .
-            populate('customerId')
+            .populate('customerId')
             .populate('assignedStaff')
             .sort({ createdAt: -1 })
             .skip(skip)

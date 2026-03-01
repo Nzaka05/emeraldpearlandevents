@@ -753,7 +753,7 @@
                 updateVIPButton();
 
                 // Load booking history
-                loadClientBookings(client.email);
+                loadClientBookings(client.email, client.phone);
             } catch (error) {
                 console.error('Error loading client:', error);
                 showToast('Error loading client data', 'error');
@@ -778,22 +778,45 @@
             }
         }
 
-        async function loadClientBookings(email) {
+        async function loadClientBookings(email, phone) {
             try {
-                const res = await fetch(`/api/admin/bookings?limit=100`);
-                const data = await res.json();
-
                 const tbody = document.getElementById('bookingTableBody');
+                let data = { success: false, bookings: [] };
+                
+                // Try to fetch bookings by email query first
+                let res = await fetch(`/api/admin/bookings?clientEmail=${encodeURIComponent(email)}&limit=100`);
+                data = await res.json();
+
+                // If no results by email, try by phone
+                if ((!data.success || !data.bookings || data.bookings.length === 0) && phone) {
+                    res = await fetch(`/api/admin/bookings?clientPhone=${encodeURIComponent(phone)}&limit=100`);
+                    data = await res.json();
+                }
+
+                // If still no results, fetch all and filter manually
+                if ((!data.success || !data.bookings || data.bookings.length === 0)) {
+                    res = await fetch(`/api/admin/bookings?limit=500`);
+                    data = await res.json();
+                }
 
                 if (!data.success || !data.bookings) {
                     tbody.innerHTML = '<tr><td colspan="4" class="no-bookings">Could not load booking history</td></tr>';
                     return;
                 }
 
-                // Filter bookings for this client
-                const clientBookings = data.bookings.filter(b => 
-                    b.customerEmail && b.customerEmail.toLowerCase() === email.toLowerCase()
-                );
+                // Filter bookings for this client by email or phone
+                const emailLower = email.toLowerCase().trim();
+                const phoneClean = phone ? phone.replace(/\s|-/g, '') : '';
+                
+                const clientBookings = data.bookings.filter(b => {
+                    const bookingEmail = (b.customerEmail || '').toLowerCase().trim();
+                    const bookingPhone = (b.customerPhone || '').replace(/\s|-/g, '');
+                    
+                    return bookingEmail === emailLower || 
+                           (phoneClean && bookingPhone === phoneClean) ||
+                           (phoneClean && bookingPhone.includes(phoneClean)) ||
+                           (phoneClean && phoneClean.includes(bookingPhone));
+                });
 
                 if (clientBookings.length === 0) {
                     tbody.innerHTML = '<tr><td colspan="4" class="no-bookings">No bookings found for this client</td></tr>';
