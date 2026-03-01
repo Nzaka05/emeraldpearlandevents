@@ -415,6 +415,7 @@
 
         .booking-table tr:hover {
             background: rgba(201, 168, 76, 0.05);
+            cursor: pointer;
         }
 
         .status-badge {
@@ -450,6 +451,109 @@
             text-align: center;
             padding: 40px;
             color: #888;
+        }
+
+        /* Booking Detail Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background: var(--bg-card);
+            border-radius: 12px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+            transform: scale(0.9);
+            transition: transform 0.3s ease;
+            border: 1px solid var(--border-color);
+        }
+
+        .modal-overlay.active .modal-content {
+            transform: scale(1);
+        }
+
+        .modal-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 20px;
+            color: #888;
+            cursor: pointer;
+            padding: 4px;
+            transition: color 0.3s ease;
+        }
+
+        .modal-close:hover {
+            color: var(--accent-danger);
+        }
+
+        .modal-body {
+            padding: 24px;
+        }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+
+        .detail-label {
+            font-size: 13px;
+            color: #666;
+            font-weight: 500;
+        }
+
+        .detail-value {
+            font-size: 14px;
+            color: var(--text-main);
+            font-weight: 600;
+            text-align: right;
+        }
+
+        .modal-footer {
+            padding: 16px 24px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
         }
 
         /* Toast Notification */
@@ -705,6 +809,25 @@
     <!-- Toast Notification -->
     <div id="toast" class="toast"></div>
 
+    <!-- Booking Detail Modal -->
+    <div id="bookingModal" class="modal-overlay" onclick="closeBookingModal(event)">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h3 class="modal-title">Booking Details</h3>
+                <button class="modal-close" onclick="closeBookingModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body" id="bookingModalBody">
+                <!-- Booking details will be populated here -->
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeBookingModal()">Close</button>
+                <a id="viewBookingBtn" href="#" class="btn btn-primary">View Full Booking</a>
+            </div>
+        </div>
+    </div>
+
     <script>
         // Get client ID from URL
         const clientId = window.location.pathname.split('/')[3];
@@ -826,7 +949,10 @@
                 // Sort by date (newest first)
                 clientBookings.sort((a, b) => new Date(b.eventDate) - new Date(a.eventDate));
 
-                tbody.innerHTML = clientBookings.map(booking => {
+                // Store bookings for modal access
+                window.clientBookingsData = clientBookings;
+
+                tbody.innerHTML = clientBookings.map((booking, index) => {
                     const date = booking.eventDate ? new Date(booking.eventDate).toLocaleDateString('en-US', {
                         year: 'numeric',
                         month: 'short',
@@ -837,7 +963,7 @@
                     const amount = booking.price ? booking.price.toLocaleString() : '0';
 
                     return `
-                        <tr>
+                        <tr onclick="openBookingModal(${index})" title="Click to view details">
                             <td>${date}</td>
                             <td>${booking.eventType || 'N/A'}</td>
                             <td><span class="status-badge ${statusClass}">${booking.status || 'N/A'}</span></td>
@@ -945,6 +1071,100 @@
                 toast.classList.remove('show');
             }, 3000);
         }
+
+        function openBookingModal(index) {
+            const booking = window.clientBookingsData[index];
+            if (!booking) return;
+
+            const modalBody = document.getElementById('bookingModalBody');
+            const viewBtn = document.getElementById('viewBookingBtn');
+
+            const eventDate = booking.eventDate ? new Date(booking.eventDate).toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            }) : 'N/A';
+
+            const createdDate = booking.createdAt ? new Date(booking.createdAt).toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric'
+            }) : 'N/A';
+
+            modalBody.innerHTML = `
+                <div class="detail-row">
+                    <span class="detail-label">Booking ID</span>
+                    <span class="detail-value">#${booking._id ? booking._id.slice(-6).toUpperCase() : 'N/A'}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Event Type</span>
+                    <span class="detail-value">${booking.eventType || 'N/A'}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Event Date</span>
+                    <span class="detail-value">${eventDate}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Status</span>
+                    <span class="detail-value"><span class="status-badge status-${(booking.status || '').toLowerCase()}">${booking.status || 'N/A'}</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Amount</span>
+                    <span class="detail-value">KES ${booking.price ? booking.price.toLocaleString() : '0'}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Client Name</span>
+                    <span class="detail-value">${booking.customerName || 'N/A'}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Email</span>
+                    <span class="detail-value">${booking.customerEmail || 'N/A'}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Phone</span>
+                    <span class="detail-value">${booking.customerPhone || 'N/A'}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Location</span>
+                    <span class="detail-value">${booking.location || 'N/A'}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Guests</span>
+                    <span class="detail-value">${booking.guestCount || 'N/A'}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Duration</span>
+                    <span class="detail-value">${booking.duration || 'N/A'}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Booked On</span>
+                    <span class="detail-value">${createdDate}</span>
+                </div>
+                ${booking.notes ? `
+                <div class="detail-row" style="flex-direction: column; gap: 8px;">
+                    <span class="detail-label">Notes</span>
+                    <span class="detail-value" style="text-align: left; font-weight: 400; line-height: 1.5;">${booking.notes}</span>
+                </div>
+                ` : ''}
+            `;
+
+            // Set the view full booking link
+            viewBtn.href = `/admin/bookings?id=${booking._id}`;
+
+            document.getElementById('bookingModal').classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeBookingModal(event) {
+            if (event && event.target !== event.currentTarget && event.type === 'click') return;
+            document.getElementById('bookingModal').classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        // Close modal on Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeBookingModal();
+        });
     </script>
     <script src="/js/mobile-sidebar.js?v=3"></script>
     <script src="/admin/admin-profile.js"></script>
