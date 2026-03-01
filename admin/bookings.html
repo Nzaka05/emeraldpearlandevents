@@ -30,7 +30,7 @@
         /* SIDEBAR */
         .sidebar {
             width: 280px;
-            background: var(--bg-card);
+            background: var(--primary);
             border-right: 1px solid var(--accent-gold-hover);
             padding: 32px 0;
             position: fixed;
@@ -1160,6 +1160,130 @@
         }
     </style>
 
+    <style>
+        .sidebar-logo {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        .sidebar-logo-img {
+            max-width: 80px;
+            margin: 0 auto 15px;
+            display: block;
+        }
+        .sidebar-logo h1 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 20px;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+        }
+        .sidebar-logo p {
+            font-size: 11px;
+            opacity: 0.7;
+            margin-top: 5px;
+            letter-spacing: 0.1em;
+        }
+        .sidebar-nav {
+            list-style: none;
+            margin-bottom: 40px;
+        }
+        .sidebar-nav-item {
+            margin-bottom: 8px;
+        }
+        .sidebar-nav-link {
+            display: flex;
+            align-items: center;
+            padding: 12px 14px;
+            color: var(--surface);
+            text-decoration: none;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        .sidebar-nav-link::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: var(--accent);
+            transform: scaleY(0);
+            transform-origin: center;
+            transition: transform 0.3s ease;
+        }
+        .sidebar-nav-link:hover::before,
+        .sidebar-nav-link.active::before {
+            transform: scaleY(1);
+        }
+        .sidebar-nav-link:hover {
+            background: rgba(201, 168, 76, 0.1);
+            color: var(--accent);
+        }
+        .sidebar-nav-link.active {
+            background: rgba(201, 168, 76, 0.15);
+            color: var(--accent);
+        }
+        .sidebar-nav-icon {
+            width: 20px;
+            margin-right: 12px;
+            text-align: center;
+        }
+        .nav-badge {
+            margin-left: auto;
+            background: var(--accent);
+            color: var(--primary);
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 700;
+        }
+        .sidebar-footer {
+            border-top: 1px solid rgba(201, 168, 76, 0.2);
+            padding-top: 20px;
+            margin-top: auto;
+        }
+        .admin-profile {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .admin-profile:hover {
+            background: rgba(201, 168, 76, 0.1);
+        }
+        .admin-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--accent);
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 16px;
+        }
+        .admin-info { flex: 1; }
+        .admin-name { font-size: 13px; font-weight: 600; display: block; }
+        .admin-role { font-size: 11px; opacity: 0.7; }
+        .logout-btn {
+            background: none;
+            border: none;
+            color: var(--surface);
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+        .logout-btn:hover { background: rgba(181, 51, 42, 0.2); color: #ff6b6b; }
+    </style>
+
     <link rel="stylesheet" href="/admin/assets/premium-admin.css">
 </head>
 
@@ -1195,35 +1319,89 @@
     </script>
 
     <div class="admin-layout">
-        <!-- SIDEBAR -->
-        <div id="sidebarOverlay" style="display:none;opacity:0;"></div>
+        <div id="sidebarOverlay"></div>
         <aside class="sidebar">
-            <div class="sidebar-logo">EMERALD</div>
-
-            <nav>
-                <a href="/admin/dashboard" class="nav-item">Dashboard</a>
-                <a href="/admin/bookings" class="nav-item active">Bookings <span class="nav-badge"
-                        id="bookingsBadge">0</span></a>
-                <a href="/admin/clients" class="nav-item">Clients</a>
-                <a href="/admin/calendar" class="nav-item">Calendar</a>
-                <a href="/admin/analytics" class="nav-item">Analytics</a>
-                <a href="/admin/notifications" class="nav-item">Notifications</a>
-                <a href="/admin/gallery" class="nav-item">Gallery</a>
-                <a href="/admin/testimonials" class="nav-item">Testimonials</a>
-                <a href="/admin/staff" class="nav-item">Staff</a>
-                <a href="/admin/settings" class="nav-item">Settings</a>
-            </nav>
-
-            <div class="sidebar-footer">
-                <div class="admin-profile">
-                    <div class="admin-avatar" id="adminAvatar">AD</div>
-                    <div class="admin-info">
-                        <div class="admin-name" id="adminName">Admin</div>
-                    </div>
+        <div class="sidebar-logo">
+            <img src="../images/logo%202.png" alt="Emerald Logo" class="sidebar-logo-img" onerror="this.style.display='none'" />
+            <h1>ADMIN PORTAL</h1>
+            <p>Emerald Pearland</p>
+        </div>
+        <nav class="sidebar-nav">
+            <li class="sidebar-nav-item">
+                <a href="/admin/dashboard" class="sidebar-nav-link"><!-- add 'active' on dashboard.html -->
+                    <span class="sidebar-nav-icon"><i class="fas fa-home"></i></span>
+                    <span>Dashboard</span>
+                </a>
+            </li>
+            <li class="sidebar-nav-item">
+                <a href="/admin/bookings" class="sidebar-nav-link active"><!-- add 'active' on bookings.html -->
+                    <span class="sidebar-nav-icon"><i class="fas fa-calendar"></i></span>
+                    <span>Bookings</span>
+                    <span class="nav-badge" id="navBadgeBookings" style="display:none"></span>
+                </a>
+            </li>
+            <li class="sidebar-nav-item">
+                <a href="/admin/clients" class="sidebar-nav-link"><!-- add 'active' on clients.html -->
+                    <span class="sidebar-nav-icon"><i class="fas fa-users"></i></span>
+                    <span>Clients</span>
+                </a>
+            </li>
+            <li class="sidebar-nav-item">
+                <a href="/admin/calendar" class="sidebar-nav-link"><!-- add 'active' on calendar.html -->
+                    <span class="sidebar-nav-icon"><i class="fas fa-calendar-alt"></i></span>
+                    <span>Calendar</span>
+                </a>
+            </li>
+            <li class="sidebar-nav-item">
+                <a href="/admin/analytics" class="sidebar-nav-link"><!-- add 'active' on analytics.html -->
+                    <span class="sidebar-nav-icon"><i class="fas fa-chart-bar"></i></span>
+                    <span>Analytics</span>
+                </a>
+            </li>
+            <li class="sidebar-nav-item">
+                <a href="/admin/notifications" class="sidebar-nav-link"><!-- add 'active' on notifications.html -->
+                    <span class="sidebar-nav-icon"><i class="fas fa-bell"></i></span>
+                    <span>Notifications</span>
+                </a>
+            </li>
+            <li class="sidebar-nav-item">
+                <a href="/admin/gallery" class="sidebar-nav-link"><!-- add 'active' on gallery.html -->
+                    <span class="sidebar-nav-icon"><i class="fas fa-image"></i></span>
+                    <span>Gallery</span>
+                </a>
+            </li>
+            <li class="sidebar-nav-item">
+                <a href="/admin/testimonials" class="sidebar-nav-link"><!-- add 'active' on testimonials.html -->
+                    <span class="sidebar-nav-icon"><i class="fas fa-star"></i></span>
+                    <span>Testimonials</span>
+                </a>
+            </li>
+            <li class="sidebar-nav-item">
+                <a href="/admin/staff" class="sidebar-nav-link"><!-- add 'active' on staff.html -->
+                    <span class="sidebar-nav-icon"><i class="fas fa-user-tie"></i></span>
+                    <span>Staff</span>
+                </a>
+            </li>
+            <li class="sidebar-nav-item">
+                <a href="/admin/settings" class="sidebar-nav-link"><!-- add 'active' on settings.html -->
+                    <span class="sidebar-nav-icon"><i class="fas fa-cog"></i></span>
+                    <span>Settings</span>
+                </a>
+            </li>
+        </nav>
+        <div class="sidebar-footer">
+            <div class="admin-profile">
+                <div class="admin-avatar" id="adminAvatar">AD</div>
+                <div class="admin-info">
+                    <span class="admin-name" id="adminName">Admin</span>
+                    <span class="admin-role">Super Admin</span>
                 </div>
-                <button class="logout-btn" onclick="handleLogout()">Logout</button>
+                <button class="logout-btn" onclick="handleLogout()">
+                    <i class="fas fa-sign-out-alt"></i>
+                </button>
             </div>
-        </aside>
+        </div>
+    </aside>
 
         <!-- MAIN CONTENT -->
         <div class="main-content">
