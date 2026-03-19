@@ -1,4 +1,4 @@
-﻿const mongoose = require('mongoose');
+const mongoose = require('mongoose');
 
 const categoryRateSchema = new mongoose.Schema({
     name: { type: String, required: true },
@@ -20,4 +20,5 @@ const PricingSettingsSchema = new mongoose.Schema({
     updatedBy: { type: String, default: '' }
 }, { timestamps: true });
 
-module.exports = mongoose.model('PricingSettings', PricingSettingsSchema);
+module.exports = mongoose.models.PricingSettings || mongoose.model('PricingSettings', PricingSettingsSchema);
+

@@ -26,4 +26,5 @@ ExpenseReceiptSchema.pre('save', async function() {
     }
 });
 
-module.exports = mongoose.model('ExpenseReceipt', ExpenseReceiptSchema);
+module.exports = mongoose.models.ExpenseReceipt || mongoose.model('ExpenseReceipt', ExpenseReceiptSchema);
+

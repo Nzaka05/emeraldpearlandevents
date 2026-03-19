@@ -15,4 +15,5 @@ BiometricSessionSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 BiometricSessionSchema.index({ admin_id: 1, device_id: 1 });
 
 module.exports = mongoose.models.BiometricSession ||
-    mongoose.model('BiometricSession', BiometricSessionSchema);
+    mongoose.models.BiometricSession || mongoose.model('BiometricSession', BiometricSessionSchema);
+

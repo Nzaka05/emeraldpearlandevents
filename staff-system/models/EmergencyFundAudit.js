@@ -63,4 +63,5 @@ EmergencyFundAuditSchema.index({ event_id: 1, timestamp: -1 });
 EmergencyFundAuditSchema.index({ payout_status: 1 });
 
 module.exports = mongoose.models.EmergencyFundAudit ||
-    mongoose.model('EmergencyFundAudit', EmergencyFundAuditSchema);
+    mongoose.models.EmergencyFundAudit || mongoose.model('EmergencyFundAudit', EmergencyFundAuditSchema);
+

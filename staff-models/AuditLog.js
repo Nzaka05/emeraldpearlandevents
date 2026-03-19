@@ -1,4 +1,4 @@
-﻿const mongoose = require('mongoose');
+const mongoose = require('mongoose');
 
 const auditLogSchema = new mongoose.Schema({
     actionType: { type: String, required: true }, // e.g., 'LOGIN_SUCCESS', 'PASSWORD_RESET', 'ACCOUNT_UPDATED', 'PAYMENT_SENT', 'ACCOUNT_SUSPENDED'
@@ -10,4 +10,5 @@ const auditLogSchema = new mongoose.Schema({
     timestamp: { type: Date, default: Date.now }
 });
 
-module.exports = mongoose.models.AuditLog || mongoose.model('AuditLog', auditLogSchema);
+module.exports = mongoose.models.AuditLog || mongoose.models.AuditLog || mongoose.model('AuditLog', auditLogSchema);
+

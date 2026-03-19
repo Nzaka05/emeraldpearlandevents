@@ -1,4 +1,4 @@
-﻿const mongoose = require('mongoose');
+const mongoose = require('mongoose');
 
 const attendanceSchema = new mongoose.Schema({
     staff_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Staff', required: true },
@@ -16,4 +16,5 @@ const attendanceSchema = new mongoose.Schema({
     status: { type: String, enum: ['On Time', 'Late', 'Absent'], default: 'On Time' }
 });
 
-module.exports = mongoose.models.Attendance || mongoose.model('Attendance', attendanceSchema);
+module.exports = mongoose.models.Attendance || mongoose.models.Attendance || mongoose.model('Attendance', attendanceSchema);
+

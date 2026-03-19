@@ -24,4 +24,5 @@ const eventPlannerSchema = new mongoose.Schema({
 
 eventPlannerSchema.index({ name: 'text', company: 'text', email: 'text' });
 
-module.exports = mongoose.model('EventPlanner', eventPlannerSchema);
+module.exports = mongoose.models.EventPlanner || mongoose.model('EventPlanner', eventPlannerSchema);
+

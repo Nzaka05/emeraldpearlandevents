@@ -24,4 +24,5 @@ const EventLedgerSchema = new mongoose.Schema({
 
 // Legacy pre-save ledgerId generator removed in favor of native schema defaults
 
-module.exports = mongoose.model('EventLedger', EventLedgerSchema);
+module.exports = mongoose.models.EventLedger || mongoose.model('EventLedger', EventLedgerSchema);
+

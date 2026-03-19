@@ -27,4 +27,5 @@ const surveySchema = new mongoose.Schema({
 surveySchema.index({ assignment_id: 1, type: 1 });
 surveySchema.index({ respondent_id: 1, submitted: 1 });
 
-module.exports = mongoose.model('Survey', surveySchema);
+module.exports = mongoose.models.Survey || mongoose.model('Survey', surveySchema);
+

@@ -1,4 +1,4 @@
-﻿const mongoose = require('mongoose');
+const mongoose = require('mongoose');
 
 const eventTeamCommunicationSchema = new mongoose.Schema({
     team_id: { type: mongoose.Schema.Types.ObjectId, ref: 'EventTeam', required: true },
@@ -12,4 +12,5 @@ const eventTeamCommunicationSchema = new mongoose.Schema({
     timestamp: { type: Date, default: Date.now }
 });
 
-module.exports = mongoose.models.EventTeamCommunication || mongoose.model('EventTeamCommunication', eventTeamCommunicationSchema);
+module.exports = mongoose.models.EventTeamCommunication || mongoose.models.EventTeamCommunication || mongoose.model('EventTeamCommunication', eventTeamCommunicationSchema);
+

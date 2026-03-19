@@ -20,4 +20,5 @@ const supervisorRatingProfileSchema = new mongoose.Schema({
     timestamps: true
 });
 
-module.exports = mongoose.model('SupervisorRatingProfile', supervisorRatingProfileSchema);
+module.exports = mongoose.models.SupervisorRatingProfile || mongoose.model('SupervisorRatingProfile', supervisorRatingProfileSchema);
+

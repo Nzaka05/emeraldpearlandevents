@@ -16,4 +16,5 @@ const eventPerformanceBaselineSchema = new mongoose.Schema({
     timestamps: true
 });
 
-module.exports = mongoose.model('EventPerformanceBaseline', eventPerformanceBaselineSchema);
+module.exports = mongoose.models.EventPerformanceBaseline || mongoose.model('EventPerformanceBaseline', eventPerformanceBaselineSchema);
+

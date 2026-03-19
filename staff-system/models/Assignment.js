@@ -65,4 +65,4 @@ assignmentSchema.index({ supervisor_id: 1, payment_status: 1 });
 assignmentSchema.index({ status: 1, date: 1 });
 assignmentSchema.index({ 'staff_payments.staff_id': 1, 'staff_payments.status': 1 }); // Compound for staff payments
 
-module.exports = mongoose.model('Assignment', assignmentSchema);
+module.exports = mongoose.models.Assignment || mongoose.model('Assignment', assignmentSchema);

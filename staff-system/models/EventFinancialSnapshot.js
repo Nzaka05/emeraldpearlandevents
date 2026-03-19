@@ -32,4 +32,5 @@ EventFinancialSnapshotSchema.pre('save', async function() {
     this.profitMargin = this.clientPayment > 0 ? Math.round((this.eventProfit / this.clientPayment) * 100) : 0;
 });
 
-module.exports = mongoose.model('EventFinancialSnapshot', EventFinancialSnapshotSchema);
+module.exports = mongoose.models.EventFinancialSnapshot || mongoose.model('EventFinancialSnapshot', EventFinancialSnapshotSchema);
+

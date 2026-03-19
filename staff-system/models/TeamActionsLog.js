@@ -8,4 +8,5 @@ const teamActionsLogSchema = new mongoose.Schema({
     timestamp: { type: Date, default: Date.now }
 });
 
-module.exports = mongoose.model('TeamActionsLog', teamActionsLogSchema);
+module.exports = mongoose.models.TeamActionsLog || mongoose.model('TeamActionsLog', teamActionsLogSchema);
+

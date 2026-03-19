@@ -11,4 +11,5 @@ const RateLimitEntrySchema = new mongoose.Schema({
 RateLimitEntrySchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 
 module.exports = mongoose.models.RateLimitEntry ||
-    mongoose.model('RateLimitEntry', RateLimitEntrySchema);
+    mongoose.models.RateLimitEntry || mongoose.model('RateLimitEntry', RateLimitEntrySchema);
+

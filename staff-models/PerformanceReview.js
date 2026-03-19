@@ -1,4 +1,4 @@
-﻿const mongoose = require('mongoose');
+const mongoose = require('mongoose');
 
 const performanceReviewSchema = new mongoose.Schema({
     assignment_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Assignment', required: true },
@@ -9,4 +9,5 @@ const performanceReviewSchema = new mongoose.Schema({
     timestamp: { type: Date, default: Date.now }
 });
 
-module.exports = mongoose.models.PerformanceReview || mongoose.model('PerformanceReview', performanceReviewSchema);
+module.exports = mongoose.models.PerformanceReview || mongoose.models.PerformanceReview || mongoose.model('PerformanceReview', performanceReviewSchema);
+

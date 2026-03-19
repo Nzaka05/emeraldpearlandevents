@@ -19,4 +19,5 @@ SupervisorNotificationSchema.index({ event_id: 1, createdAt: -1 });
 SupervisorNotificationSchema.index({ supervisor_id: 1, read: 1 });
 
 module.exports = mongoose.models.SupervisorNotification ||
-    mongoose.model('SupervisorNotification', SupervisorNotificationSchema);
+    mongoose.models.SupervisorNotification || mongoose.model('SupervisorNotification', SupervisorNotificationSchema);
+

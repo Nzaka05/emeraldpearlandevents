@@ -46,4 +46,5 @@ performanceReviewSchema.pre('validate', async function() {
     }
 });
 
-module.exports = mongoose.model('PerformanceReview', performanceReviewSchema);
+module.exports = mongoose.models.PerformanceReview || mongoose.model('PerformanceReview', performanceReviewSchema);
+

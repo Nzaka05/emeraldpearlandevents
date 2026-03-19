@@ -14,4 +14,5 @@ const StaffMissingAlertSchema = new mongoose.Schema({
 StaffMissingAlertSchema.index({ event_id: 1, staff_id: 1, resolved: 1 });
 
 module.exports = mongoose.models.StaffMissingAlert ||
-    mongoose.model('StaffMissingAlert', StaffMissingAlertSchema);
+    mongoose.models.StaffMissingAlert || mongoose.model('StaffMissingAlert', StaffMissingAlertSchema);
+

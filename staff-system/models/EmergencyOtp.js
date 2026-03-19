@@ -17,4 +17,5 @@ EmergencyOtpSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 EmergencyOtpSchema.index({ admin_id: 1, event_id: 1, device_id: 1 });
 
 module.exports = mongoose.models.EmergencyOtp ||
-    mongoose.model('EmergencyOtp', EmergencyOtpSchema);
+    mongoose.models.EmergencyOtp || mongoose.model('EmergencyOtp', EmergencyOtpSchema);
+

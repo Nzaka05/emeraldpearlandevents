@@ -1,4 +1,4 @@
-﻿const mongoose = require('mongoose');
+const mongoose = require('mongoose');
 
 const assignmentSchema = new mongoose.Schema({
     title: { type: String, required: true },
@@ -22,4 +22,5 @@ const assignmentSchema = new mongoose.Schema({
     createdAt: { type: Date, default: Date.now }
 });
 
-module.exports = mongoose.models.Assignment || mongoose.model('Assignment', assignmentSchema);
+module.exports = mongoose.models.Assignment || mongoose.models.Assignment || mongoose.model('Assignment', assignmentSchema);
+

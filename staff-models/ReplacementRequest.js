@@ -1,4 +1,4 @@
-﻿const mongoose = require('mongoose');
+const mongoose = require('mongoose');
 
 const replacementRequestSchema = new mongoose.Schema({
     team_id: { type: mongoose.Schema.Types.ObjectId, ref: 'EventTeam', required: true },
@@ -11,4 +11,5 @@ const replacementRequestSchema = new mongoose.Schema({
     createdAt: { type: Date, default: Date.now }
 });
 
-module.exports = mongoose.models.ReplacementRequest || mongoose.model('ReplacementRequest', replacementRequestSchema);
+module.exports = mongoose.models.ReplacementRequest || mongoose.models.ReplacementRequest || mongoose.model('ReplacementRequest', replacementRequestSchema);
+

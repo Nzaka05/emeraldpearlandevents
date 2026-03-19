@@ -35,4 +35,5 @@ const staffPerformanceProfileSchema = new mongoose.Schema({
     timestamps: true
 });
 
-module.exports = mongoose.model('StaffPerformanceProfile', staffPerformanceProfileSchema);
+module.exports = mongoose.models.StaffPerformanceProfile || mongoose.model('StaffPerformanceProfile', staffPerformanceProfileSchema);
+

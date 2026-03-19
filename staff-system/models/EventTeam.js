@@ -11,4 +11,5 @@ const eventTeamSchema = new mongoose.Schema({
     createdAt: { type: Date, default: Date.now }
 });
 
-module.exports = mongoose.model('EventTeam', eventTeamSchema);
+module.exports = mongoose.models.EventTeam || mongoose.model('EventTeam', eventTeamSchema);
+

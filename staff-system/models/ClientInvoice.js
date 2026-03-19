@@ -50,4 +50,5 @@ ClientInvoiceSchema.pre('save', async function() {
     }
 });
 
-module.exports = mongoose.model('ClientInvoice', ClientInvoiceSchema);
+module.exports = mongoose.models.ClientInvoice || mongoose.model('ClientInvoice', ClientInvoiceSchema);
+

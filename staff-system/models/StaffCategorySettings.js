@@ -20,4 +20,5 @@ const staffCategorySettingsSchema = new mongoose.Schema({
     updatedAt:   { type: Date, default: Date.now }
 });
 
-module.exports = mongoose.model('StaffCategorySettings', staffCategorySettingsSchema);
+module.exports = mongoose.models.StaffCategorySettings || mongoose.model('StaffCategorySettings', staffCategorySettingsSchema);
+

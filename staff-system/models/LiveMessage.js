@@ -23,4 +23,5 @@ const liveMessageSchema = new mongoose.Schema({
 liveMessageSchema.index({ timestamp: -1 });
 liveMessageSchema.index({ is_emergency: 1, emergency_acked: 1 });
 
-module.exports = mongoose.model('LiveMessage', liveMessageSchema);
+module.exports = mongoose.models.LiveMessage || mongoose.model('LiveMessage', liveMessageSchema);
+

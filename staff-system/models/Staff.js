@@ -47,4 +47,5 @@ staffSchema.index({ 'last_location': '2d' });
 staffSchema.index({ role: 1, status: 1 });
 staffSchema.index({ email: 1 });
 
-module.exports = mongoose.model('Staff', staffSchema);
+module.exports = mongoose.models.Staff || mongoose.model('Staff', staffSchema);
+

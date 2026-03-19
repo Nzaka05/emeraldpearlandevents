@@ -32,4 +32,5 @@ StaffPayrollSchema.pre('save', async function() {
     this.totalPay = (this.basePay || 0) + (this.overtimePay || 0) + (this.bonus || 0) - (this.deductions || 0);
 });
 
-module.exports = mongoose.model('StaffPayroll', StaffPayrollSchema);
+module.exports = mongoose.models.StaffPayroll || mongoose.model('StaffPayroll', StaffPayrollSchema);
+

@@ -21,4 +21,5 @@ const EventPredictionSnapshotSchema = new mongoose.Schema({
 EventPredictionSnapshotSchema.index({ assignmentId: 1, generatedAt: -1 });
 
 module.exports = mongoose.models.EventPredictionSnapshot ||
-    mongoose.model('EventPredictionSnapshot', EventPredictionSnapshotSchema);
+    mongoose.models.EventPredictionSnapshot || mongoose.model('EventPredictionSnapshot', EventPredictionSnapshotSchema);
+

@@ -16,4 +16,5 @@ const eventTeamCommunicationSchema = new mongoose.Schema({
     timestamp: { type: Date, default: Date.now }
 });
 
-module.exports = mongoose.model('EventTeamCommunication', eventTeamCommunicationSchema);
+module.exports = mongoose.models.EventTeamCommunication || mongoose.model('EventTeamCommunication', eventTeamCommunicationSchema);
+

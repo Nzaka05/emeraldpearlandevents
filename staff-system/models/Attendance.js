@@ -72,4 +72,5 @@ attendanceSchema.index({ staff_id: 1, date: -1 });
 attendanceSchema.index({ assignment_id: 1 });
 attendanceSchema.index({ 'device_fingerprint.device_id': 1 }); // Fraud detection
 
-module.exports = mongoose.model('Attendance', attendanceSchema);
+module.exports = mongoose.models.Attendance || mongoose.model('Attendance', attendanceSchema);
+
