@@ -1,0 +1,152 @@
+project:
+  name: staff-system
+  description: Port 3001 Staff Operations System - workforce management, attendance, payroll, and event ops
+  language: JavaScript (Node.js)
+  framework: Express.js
+  database: MongoDB (Mongoose ODM)
+  authentication: JWT Bearer tokens (portal_token cookie)
+  port: 3001
+  base_url: http://localhost:3001
+
+tech_stack:
+  - Node.js
+  - Express.js
+  - MongoDB/Mongoose
+  - Socket.IO
+  - JWT (jsonwebtoken)
+  - bcrypt/bcryptjs
+  - EJS templating
+  - Multer (file uploads)
+  - PDFKit (PDF generation)
+  - node-cron (scheduled jobs)
+
+entry_point: server.js
+
+features:
+  - name: Staff Authentication
+    description: JWT-based login/logout with role-based access (Staff, Supervisor, Admin)
+    endpoints:
+      - { method: POST, path: /portal/auth/login, description: Staff login returns JWT, auth_required: false }
+      - { method: POST, path: /portal/auth/logout, description: Invalidate session, auth_required: true }
+      - { method: GET, path: /portal/auth/me, description: Get current authenticated staff profile, auth_required: true }
+
+  - name: Supervisor GPS Clock-In
+    description: Supervisor drops geo anchor for events, staff clock in within GPS radius
+    endpoints:
+      - { method: POST, path: /portal/supervisor/anchor/drop, description: Drop geo anchor for event, auth_required: true }
+      - { method: POST, path: /portal/supervisor/anchor/clear, description: Clear geo anchor, auth_required: true }
+      - { method: GET, path: /portal/supervisor/events/:eventId/team, description: Get staff roster, auth_required: true }
+      - { method: POST, path: /portal/supervisor/clock-in/override, description: Override denied clock-in, auth_required: true }
+      - { method: POST, path: /portal/supervisor/events/:eventId/complete, description: Mark event complete, auth_required: true }
+
+  - name: Staff Clock-In
+    description: Staff GPS-based clock-in/clock-out with selfie verification
+    endpoints:
+      - { method: POST, path: /portal/staff/clock-in, description: Staff clock-in attempt, auth_required: true }
+      - { method: POST, path: /portal/staff/clock-out, description: Staff clock-out, auth_required: true }
+      - { method: GET, path: /portal/staff/attendance/:eventId, description: Get attendance status, auth_required: true }
+
+  - name: Emergency Funds
+    description: Secure emergency fund disbursement with biometric, OTP, and fraud detection
+    endpoints:
+      - { method: POST, path: /portal/admin-staff/auth/biometric-verify, description: Create BiometricSession, auth_required: true }
+      - { method: POST, path: /portal/admin-staff/emergency-funds/request-otp, description: Generate and send OTP, auth_required: true }
+      - { method: POST, path: /portal/admin-staff/emergency-funds/send, description: Send emergency funds, auth_required: true }
+      - { method: POST, path: /portal/admin-staff/emergency-funds/unlock-payout, description: Unlock payout lock, auth_required: true }
+
+  - name: AI Event Prediction
+    description: AI-powered event staffing and cost prediction
+    endpoints:
+      - { method: GET, path: /portal/admin-staff/events/:id/prediction, description: Generate AI prediction, auth_required: true }
+
+  - name: Live Command Center
+    description: Real-time supervisor command center with staff tracking
+    endpoints:
+      - { method: GET, path: /portal/supervisor/command-center/:eventId, description: Command center view, auth_required: true }
+      - { method: GET, path: /portal/supervisor/command-center/:eventId/data, description: Command center JSON data, auth_required: true }
+
+  - name: Performance Reviews
+    description: Staff rating and performance intelligence system
+    endpoints:
+      - { method: GET, path: /portal/supervisor/events/:eventId/reviews/pending, description: Staff pending review list, auth_required: true }
+      - { method: POST, path: /portal/supervisor/events/:eventId/reviews/submit, description: Batch submit reviews, auth_required: true }
+
+  - name: ETR System
+    description: Electronic Tax Receipt generation and delivery
+    endpoints:
+      - { method: GET, path: /portal/admin-staff/etr, description: List all ETRs, auth_required: true }
+      - { method: POST, path: /portal/admin-staff/etr/:eventId/generate, description: Generate ETR, auth_required: true }
+      - { method: POST, path: /portal/admin-staff/etr/:eventId/resend, description: Resend ETR to client, auth_required: true }
+
+  - name: Finance Engine
+    description: Event financials, expense logging, and payroll management
+    endpoints:
+      - { method: GET, path: /portal/admin-staff/events/:id/financials, description: Event financial summary, auth_required: true }
+      - { method: POST, path: /portal/admin-staff/expenses/log, description: Log expense, auth_required: true }
+      - { method: GET, path: /portal/admin-staff/payroll, description: Payroll list, auth_required: true }
+
+  - name: Admin Dashboard
+    description: Staff operations admin dashboard
+    endpoints:
+      - { method: GET, path: /portal/admin-staff/dashboard, description: Admin dashboard, auth_required: true }
+
+  - name: Internal Sync
+    description: Inter-service sync endpoints from port 3000
+    endpoints:
+      - { method: POST, path: /internal/sync-staff, description: Sync staff from main portal, auth_required: false }
+      - { method: POST, path: /internal/sync-booking, description: Sync booking as assignment, auth_required: false }
+      - { method: POST, path: /internal/sync-payment, description: Sync payment amount, auth_required: false }
+      - { method: POST, path: /internal/sync-pricing, description: Sync pricing settings, auth_required: false }
+
+known_limitations: []
+
+models:
+  - Staff
+  - Assignment
+  - Attendance
+  - AuditLog
+  - BiometricSession
+  - ClientInvoice
+  - EmergencyFundAudit
+  - EmergencyOtp
+  - EventLedger
+  - EventTeam
+  - EventPredictionSnapshot
+  - ExpenseReceipt
+  - PerformanceReview
+  - PricingSettings
+  - RateLimitEntry
+  - StaffMissingAlert
+  - StaffPayroll
+  - StaffPerformanceProfile
+  - SupervisorNotification
+  - Survey
+  - Transaction
+
+routes:
+  - routes/auth.js
+  - routes/staff.js
+  - routes/supervisor.js
+  - routes/admin.js
+  - routes/adminDashboardRoutes.js
+  - routes/adminEventsRoutes.js
+  - routes/adminFinanceRoutes.js
+  - routes/adminReportsRoutes.js
+  - routes/adminStaffRoutes.js
+  - routes/commandCenterRoutes.js
+  - routes/performanceRoutes.js
+
+controllers:
+  - controllers/authController.js
+  - controllers/staffController.js
+  - controllers/supervisorController.js
+  - controllers/adminController.js
+  - controllers/adminDashboardController.js
+  - controllers/adminEventsController.js
+  - controllers/adminFinanceController.js
+  - controllers/adminReportsController.js
+  - controllers/adminStaffController.js
+  - controllers/commandCenterController.js
+  - controllers/performanceController.js
+  - controllers/invoiceController.js
+  - controllers/surveyController.js

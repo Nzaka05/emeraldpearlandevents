@@ -1,0 +1,26 @@
+<%/* STAT RING — Circular progress ring with center metric */%>
+<% const _val = locals.value || 0; %>
+<% const _max = locals.max || 100; %>
+<% const _pct = Math.min(100, Math.round((_val / _max) * 100)); %>
+<% const _sz = locals.size || 64; %>
+<% const _r = (_sz / 2) - 5; %>
+<% const _circ = 2 * Math.PI * _r; %>
+<% const _offset = _circ - (_circ * _pct / 100); %>
+<% const _clr = locals.color === 'gold' ? '#f59e0b' : locals.color === 'blue' ? '#3b82f6' : locals.color === 'red' ? '#ef4444' : '#10b981'; %>
+
+<div class="relative inline-flex items-center justify-center">
+  <svg class="progress-ring progress-ring-animated" width="<%= _sz %>" height="<%= _sz %>"
+       style="--ring-circumference: <%= _circ %>; --ring-offset: <%= _offset %>; transform: rotate(-90deg)">
+    <circle cx="<%= _sz/2 %>" cy="<%= _sz/2 %>" r="<%= _r %>" fill="none"
+            stroke="rgba(255,255,255,0.06)" stroke-width="4"/>
+    <circle class="ring-fill" cx="<%= _sz/2 %>" cy="<%= _sz/2 %>" r="<%= _r %>" fill="none"
+            stroke="<%= _clr %>" stroke-width="4" stroke-linecap="round"
+            stroke-dasharray="<%= _circ %>" stroke-dashoffset="<%= _offset %>"/>
+  </svg>
+  <div class="absolute inset-0 flex flex-col items-center justify-center">
+    <span class="text-sm font-bold text-slate-200"><%= _pct %>%</span>
+    <% if (locals.label) { %>
+      <span class="text-[0.55rem] text-slate-500 uppercase tracking-wider"><%= locals.label %></span>
+    <% } %>
+  </div>
+</div>

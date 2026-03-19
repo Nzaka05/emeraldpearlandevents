@@ -1,0 +1,199 @@
+<% currentPage='attendance' ; %>
+
+<!-- ══ Header ══ -->
+<div class="flex items-center justify-between mb-6 animate-fade-up">
+    <div>
+        <h1 class="font-display text-2xl font-extrabold text-tx-1 tracking-tight flex items-center gap-3">
+            <i class="fa-solid fa-fingerprint text-emerald-400"></i>
+            <span class="text-gradient-emerald">Attendance</span>
+        </h1>
+        <p class="text-[0.7rem] text-tx-3 mt-1 uppercase tracking-widest font-mono">Proximity-Verified Clock System</p>
+    </div>
+</div>
+
+<!-- ══ Live Clock Widget ══ -->
+<div class="glass-card mb-5 overflow-hidden animate-fade-up border border-emerald-500/20 relative">
+    <!-- Background pulse glow -->
+    <div class="absolute inset-0 bg-gradient-to-br from-emerald-950/20 via-transparent to-transparent pointer-events-none animate-pulse-slow"></div>
+    
+    <div class="p-5 text-center relative z-10">
+        <div class="font-mono font-black text-4xl sm:text-5xl text-tx-1 tracking-widest tabular-nums drop-shadow-[0_0_20px_rgba(16,185,129,0.3)] mb-1" id="liveClock">--:--:--</div>
+        <div class="text-[0.65rem] text-tx-3 uppercase tracking-widest font-bold mb-5" id="liveDate">—</div>
+
+        <!-- GPS Status Bar -->
+        <div class="flex items-center justify-center gap-2 mb-6 bg-black/30 border border-white/5 rounded-full px-4 py-2 w-max mx-auto">
+            <div class="gps-dot" id="clockGpsDot"></div>
+            <span class="text-[0.7rem] font-mono font-bold text-tx-3" id="clockGpsText">ACQUIRING SIGNAL…</span>
+        </div>
+
+        <!-- Clock In/Out Button -->
+        <% if (!todayRecord) { %>
+            <button class="btn btn-primary bg-gradient-to-r from-emerald-600 to-emerald-400 text-white border-none shadow-glow-emerald text-base font-bold h-14 px-10 rounded-xl hover:scale-105 transition-transform" id="clockInBtn" onclick="clockAction('in')">
+                <i class="fa-solid fa-fingerprint mr-2 text-xl"></i> CLOCK IN
+            </button>
+        <% } else if (!todayRecord.clock_out) { %>
+            <div class="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-3 mb-4 text-center mx-auto max-w-[280px]">
+                <div class="text-[0.65rem] text-emerald-400/70 uppercase tracking-widest font-bold mb-1">Session Active Since</div>
+                <div class="font-mono font-extrabold text-emerald-400 text-xl">
+                    <%= new Date(todayRecord.clock_in).toLocaleTimeString('en-KE',{hour:'2-digit',minute:'2-digit'}) %>
+                </div>
+            </div>
+            <button class="btn btn-primary bg-gradient-to-r from-red-700 to-red-500 text-white border-none shadow-[0_0_20px_rgba(239,68,68,0.3)] text-base font-bold h-14 px-10 rounded-xl hover:scale-105 transition-transform" onclick="clockAction('out')">
+                <i class="fa-solid fa-power-off mr-2 text-xl opacity-80"></i> TERMINATE SESSION
+            </button>
+        <% } else { %>
+            <div class="flex flex-col items-center gap-2">
+                <div class="w-14 h-14 bg-emerald-500/10 rounded-full flex items-center justify-center border border-emerald-500/30 shadow-glow-emerald mb-2">
+                    <i class="fa-solid fa-circle-check text-emerald-400 text-2xl"></i>
+                </div>
+                <div class="font-bold text-tx-1 font-display">Session Complete</div>
+                <div class="text-sm text-tx-3 font-mono">
+                    <%= new Date(todayRecord.clock_in).toLocaleTimeString('en-KE',{hour:'2-digit',minute:'2-digit'}) %> → 
+                    <%= new Date(todayRecord.clock_out).toLocaleTimeString('en-KE',{hour:'2-digit',minute:'2-digit'}) %>
+                    <span class="text-emerald-400 font-bold ml-1">(<%= todayRecord.total_hours ? todayRecord.total_hours.toFixed(1)+'h' : '—' %>)</span>
+                </div>
+            </div>
+        <% } %>
+    </div>
+</div>
+
+<!-- ══ Stat Cards ══ -->
+<div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6 animate-fade-up delay-1">
+    <!-- On Time -->
+    <div class="glass-card p-4 flex flex-col items-center justify-center text-center border-t border-emerald-500/30">
+        <div class="w-9 h-9 rounded-full bg-emerald-500/10 text-emerald-400 flex items-center justify-center mb-2 shadow-glow-emerald">
+            <i class="fa-solid fa-circle-check"></i>
+        </div>
+        <div class="font-display text-2xl font-extrabold text-emerald-400 leading-none mb-1"><%= stats.onTime %></div>
+        <div class="text-[0.6rem] font-bold uppercase tracking-widest text-tx-3">On Time</div>
+    </div>
+    <!-- Late -->
+    <div class="glass-card p-4 flex flex-col items-center justify-center text-center border-t border-gold-500/30">
+        <div class="w-9 h-9 rounded-full bg-gold-500/10 text-gold-400 flex items-center justify-center mb-2">
+            <i class="fa-solid fa-clock"></i>
+        </div>
+        <div class="font-display text-2xl font-extrabold text-gold-400 leading-none mb-1"><%= stats.late %></div>
+        <div class="text-[0.6rem] font-bold uppercase tracking-widest text-tx-3">Late</div>
+    </div>
+    <!-- Total Hours -->
+    <div class="glass-card p-4 flex flex-col items-center justify-center text-center border-t border-blue-500/30">
+        <div class="w-9 h-9 rounded-full bg-blue-500/10 text-blue-400 flex items-center justify-center mb-2">
+            <i class="fa-solid fa-hourglass-half"></i>
+        </div>
+        <div class="font-display text-2xl font-extrabold text-blue-400 leading-none mb-1"><%= parseFloat(stats.totalHours||0).toFixed(0) %>h</div>
+        <div class="text-[0.6rem] font-bold uppercase tracking-widest text-tx-3">Total Hours</div>
+    </div>
+    <!-- GPS Denied -->
+    <div class="glass-card p-4 flex flex-col items-center justify-center text-center border-t border-red-500/30">
+        <div class="w-9 h-9 rounded-full bg-red-500/10 text-red-400 flex items-center justify-center mb-2">
+            <i class="fa-solid fa-location-xmark"></i>
+        </div>
+        <div class="font-display text-2xl font-extrabold text-red-400 leading-none mb-1"><%= stats.denied %></div>
+        <div class="text-[0.6rem] font-bold uppercase tracking-widest text-tx-3">GPS Denied</div>
+    </div>
+</div>
+
+<!-- ══ History Table ══ -->
+<div class="glass-card animate-fade-up delay-2 mb-[80px]">
+    <div class="px-4 sm:px-5 py-4 border-b border-white/5 flex items-center gap-2">
+        <i class="fa-solid fa-table-list text-tx-3 text-sm"></i>
+        <h3 class="text-sm font-bold text-tx-1 uppercase tracking-widest">Log Archive</h3>
+    </div>
+    
+    <div class="overflow-x-auto custom-scrollbar">
+        <table class="w-full text-xs">
+            <thead>
+                <tr class="border-b border-white/5 bg-black/20">
+                    <th class="text-left px-4 sm:px-5 py-3 text-[0.6rem] font-bold uppercase tracking-widest text-tx-3 whitespace-nowrap">Date</th>
+                    <th class="text-left px-3 py-3 text-[0.6rem] font-bold uppercase tracking-widest text-tx-3 whitespace-nowrap">Clock In</th>
+                    <th class="text-left px-3 py-3 text-[0.6rem] font-bold uppercase tracking-widest text-tx-3 whitespace-nowrap">Clock Out</th>
+                    <th class="text-left px-3 py-3 text-[0.6rem] font-bold uppercase tracking-widest text-tx-3 whitespace-nowrap">Hours</th>
+                    <th class="text-left px-3 py-3 text-[0.6rem] font-bold uppercase tracking-widest text-tx-3 whitespace-nowrap">Status</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-white/5">
+                <% (history||[]).forEach(function(rec) { %>
+                    <tr class="hover:bg-white/[0.02] transition-colors">
+                        <td class="px-4 sm:px-5 py-3.5 font-mono font-bold text-tx-1 whitespace-nowrap">
+                            <%= new Date(rec.date).toLocaleDateString('en-GB',{weekday:'short',day:'2-digit',month:'short'}) %>
+                        </td>
+                        <td class="px-3 py-3.5 font-mono text-tx-2 whitespace-nowrap">
+                            <%= rec.clock_in ? new Date(rec.clock_in).toLocaleTimeString('en-KE',{hour:'2-digit',minute:'2-digit'}) : '—' %>
+                        </td>
+                        <td class="px-3 py-3.5 font-mono text-tx-2 whitespace-nowrap">
+                            <% if (!rec.clock_out) { %>
+                                <span class="text-[0.55rem] font-bold tracking-widest uppercase bg-gold-500/10 text-gold-400 border border-gold-500/30 px-1.5 py-0.5 rounded animate-pulse">ACTIVE</span>
+                            <% } else { %>
+                                <%= new Date(rec.clock_out).toLocaleTimeString('en-KE',{hour:'2-digit',minute:'2-digit'}) %>
+                            <% } %>
+                        </td>
+                        <td class="px-3 py-3.5 font-mono font-bold whitespace-nowrap <%= (rec.total_hours||0) >= 8 ? 'text-emerald-400' : 'text-tx-1' %>">
+                            <%= rec.total_hours ? rec.total_hours.toFixed(1)+'h' : '—' %>
+                        </td>
+                        <td class="px-3 py-3.5 whitespace-nowrap">
+                            <% 
+                                var sBadge = rec.status==='On Time' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' : rec.status==='Late' ? 'bg-gold-500/10 text-gold-400 border-gold-500/30' : 'bg-red-500/10 text-red-400 border-red-500/30';
+                            %>
+                            <span class="text-[0.55rem] font-bold tracking-widest uppercase border px-1.5 py-0.5 rounded <%= sBadge %>">
+                                <%= rec.status %>
+                            </span>
+                        </td>
+                    </tr>
+                <% }); %>
+            </tbody>
+        </table>
+        
+        <% if (!(history && history.length)) { %>
+            <div class="flex flex-col items-center justify-center py-12 text-tx-3 opacity-60">
+                <i class="fa-solid fa-clock-rotate-left text-4xl mb-4"></i>
+                <p class="text-xs font-bold uppercase tracking-wider">No Log Entries Found</p>
+            </div>
+        <% } %>
+    </div>
+</div>
+
+<script>
+    // Live clock
+    function updateClock() {
+        const now = new Date();
+        document.getElementById('liveClock').textContent = now.toLocaleTimeString('en-KE', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        document.getElementById('liveDate').textContent = now.toLocaleDateString('en-KE', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).toUpperCase();
+    }
+    setInterval(updateClock, 1000); updateClock();
+
+    let userLat = null, userLng = null;
+    const gpsDot = document.getElementById('clockGpsDot');
+    const gpsText = document.getElementById('clockGpsText');
+
+    navigator.geolocation.watchPosition(pos => {
+        userLat = pos.coords.latitude;
+        userLng = pos.coords.longitude;
+        gpsDot.className = 'gps-dot active';
+        gpsText.textContent = `SIGNAL LOCKED (±${Math.round(pos.coords.accuracy)}m)`;
+        gpsText.style.color = 'var(--emerald)';
+    }, err => {
+        gpsDot.className = 'gps-dot denied';
+        gpsText.textContent = 'SIGNAL BLOCKED';
+        gpsText.style.color = 'var(--danger)';
+    }, { enableHighAccuracy: true });
+
+    async function clockAction(type) {
+        if (!userLat) {
+            showToast('GPS location required. Enable location access and try again.', 'error');
+            return;
+        }
+        showToast(`${type === 'in' ? 'Initializing' : 'Terminating'} session...`, 'info');
+        const r = await fetch('/portal/staff/attendance/clock', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ type, lat: userLat, lng: userLng })
+        });
+        const d = await r.json();
+        if (d.success) { 
+            showToast(type === 'in' ? '✓ Session initialized.' : '✓ Session terminated.', 'success'); 
+            setTimeout(() => location.reload(), 1200); 
+        }
+        else if (d.proximityDenied) showToast('ACCESS DENIED: Too far from supervisor (' + d.distance + 'm)', 'error');
+        else showToast(d.error || 'System error.', 'error');
+    }
+</script>

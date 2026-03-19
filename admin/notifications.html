@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -345,9 +345,9 @@
             }
         }
 
-        /* ═══════════════════════════════════════════════════════════
+        /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
            MOBILE RESPONSIVENESS (Injected via Phase 10 Overhaul)
-           ═══════════════════════════════════════════════════════════ */
+           â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
         /* Hamburger Menu Icon (Hidden on Desktop) */
         .mobile-menu-btn {
@@ -441,9 +441,9 @@
         }
 
 
-        /* ═══════════════════════════════════════════════════════════
+        /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
            MOBILE QUICK ACTION FAB
-           ═══════════════════════════════════════════════════════════ */
+           â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
         .mobile-fab-container {
             display: none;
             position: fixed;
@@ -818,7 +818,19 @@
                     <span>Staff</span>
                 </a>
             </li>
+                        <li class="sidebar-nav-item">
+                <a href="http://localhost:3001" target="_blank" class="sidebar-nav-link" style="color: var(--accent); background: rgba(201, 168, 76, 0.05);">
+                    <span class="sidebar-nav-icon"><i class="fas fa-external-link-alt"></i></span>
+                    <span>Staff System</span>
+                </a>
+            </li>
             <li class="sidebar-nav-item">
+                <a href="/admin/pricing" class="sidebar-nav-link"><!-- add 'active' on pricing.html -->
+                    <span class="sidebar-nav-icon"><i class="fas fa-tags"></i></span>
+                    <span>Pricing & Rates</span>
+                </a>
+            </li>
+<li class="sidebar-nav-item">
                 <a href="/admin/settings" class="sidebar-nav-link"><!-- add 'active' on settings.html -->
                     <span class="sidebar-nav-icon"><i class="fas fa-cog"></i></span>
                     <span>Settings</span>
@@ -944,7 +956,7 @@
                 bulkBar.classList.remove('active');
                 list.innerHTML = `
                     <div class="empty-state">
-                        <div class="empty-state-icon">📭</div>
+                        <div class="empty-state-icon"><i class="fas fa-bell-slash"></i></div>
                         <div class="empty-state-text">No notifications found</div>
                     </div>
                 `;
@@ -961,12 +973,12 @@
                     <div class="notification-content">
                         <div class="notification-type">${notif.type.replace(/_/g, ' ')}</div>
                         <div class="notification-text">${notif.text}</div>
-                        ${notif.bookingId ? `<a href="/admin/bookings?highlight=${notif.bookingId}" class="view-booking-link" onclick="event.stopPropagation()">View Booking →</a>` : ''}
+                        ${notif.bookingId ? `<a href="/admin/bookings?highlight=${notif.bookingId}" class="view-booking-link" onclick="event.stopPropagation()">View Booking <i class="fas fa-arrow-right"></i></a>` : ''}
                         <div class="notification-time">${notif.time}</div>
                     </div>
                     <div class="notification-actions">
                         <button class="action-btn btn-mark" onclick="event.stopPropagation(); toggleRead('${notif.id}')">${notif.isRead ? 'Mark Unread' : 'Mark Read'}</button>
-                        <button class="action-btn btn-delete" onclick="event.stopPropagation(); deleteNotification('${notif.id}')">🗑️</button>
+                        <button class="action-btn btn-delete" onclick="event.stopPropagation(); deleteNotification('${notif.id}')"><i class="fas fa-trash"></i></button>
                     </div>
                 </div>
             `).join('');

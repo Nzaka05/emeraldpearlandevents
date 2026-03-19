@@ -11,7 +11,8 @@ const { sendFollowUpEmail, sendEventReminderEmail, sendStaffEventReminder } = re
 let cronJobs = {
     followUpJob: null,
     reminderJob: null,
-    staffReminderJob: null
+    staffReminderJob: null,
+    dualApprovalJob: null
 };
 
 /**
@@ -160,6 +161,60 @@ const initializeCronJobs = () => {
         }
     });
 
+    // ───────────────────────────────────────────────────────────
+    // JOB 4: Dual Approval Expiration Check
+    // Runs every 5 minutes to expire pending dual approvals > 30mins
+    // ───────────────────────────────────────────────────────────
+    cronJobs.dualApprovalJob = cron.schedule('*/5 * * * *', async () => {
+        console.log(`[CRON] Running dual approval expiration check at ${new Date().toISOString()}`);
+        try {
+            const EmergencyFundAudit = require('../../staff-system/models/EmergencyFundAudit');
+            const now = new Date();
+            
+            const expiredAudits = await EmergencyFundAudit.find({
+                dual_approval_required: true,
+                dual_approval_completed: false,
+                approval_status: 'pending',
+                dual_approval_expires_at: { $lt: now }
+            });
+
+            for (const audit of expiredAudits) {
+                audit.approval_status = 'expired';
+                audit.failure_reason = 'Dual approval window expired after 30 minutes';
+                await audit.save();
+
+                const AuditLog = require('../../staff-system/models/AuditLog');
+                await AuditLog.create({
+                    actionType: 'dual_approval_expired',
+                    targetModel: 'Staff',
+                    targetId: audit.admin_id,
+                    performedBy: audit.admin_id,
+                    details: { audit_id: audit._id, event_id: audit.event_id, amount: audit.amount }
+                }).catch(err => console.error(err));
+
+                if (global.io) {
+                    global.io.to('Admin').emit('cmd:dual_approval_expired', {
+                        audit_id: audit._id,
+                        event_id: audit.event_id,
+                        amount: audit.amount,
+                        timestamp: new Date().toISOString()
+                    });
+                    
+                    if (audit.first_admin_id) {
+                        global.io.to(`Staff:${audit.first_admin_id}`).emit('cmd:your_approval_expired', {
+                            audit_id: audit._id,
+                            event_id: audit.event_id,
+                            message: 'Your emergency fund request expired due to lack of secondary approval within 30 minutes.'
+                        });
+                    }
+                }
+                console.log(`[CRON] Expired pending dual approval ${audit._id}`);
+            }
+        } catch (error) {
+            console.error('[CRON] Error in dual approval expiration job:', error);
+        }
+    });
+
     console.log('[CRON] Cron jobs initialized successfully');
 };
 
@@ -172,6 +227,7 @@ const stopCronJobs = () => {
     if (cronJobs.followUpJob) { cronJobs.followUpJob.stop(); console.log('[CRON] Follow-up job stopped'); }
     if (cronJobs.reminderJob) { cronJobs.reminderJob.stop(); console.log('[CRON] Reminder job stopped'); }
     if (cronJobs.staffReminderJob) { cronJobs.staffReminderJob.stop(); console.log('[CRON] Staff reminder job stopped'); }
+    if (cronJobs.dualApprovalJob) { cronJobs.dualApprovalJob.stop(); console.log('[CRON] Dual approval check stopped'); }
 };
 
 module.exports = {

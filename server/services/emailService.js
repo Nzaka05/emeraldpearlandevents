@@ -462,5 +462,6 @@ module.exports = {
     sendEventReminderEmail,
     sendClientAppreciationEmail,
     sendStaffFeedbackRequestEmail,
-    sendStaffEventReminder
+    sendStaffEventReminder,
+    sendEmail
 };

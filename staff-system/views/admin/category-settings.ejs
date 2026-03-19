@@ -1,0 +1,75 @@
+<% currentPage = 'categories'; %>
+
+<div class="flex items-center justify-between mb-5 animate-fade-up">
+    <div>
+        <h1 class="font-display text-2xl font-extrabold text-tx-1 tracking-tight flex items-center gap-3">
+            <i class="fa-solid fa-tags text-teal-400"></i>
+            <span>Staff Category Settings</span>
+        </h1>
+        <p class="text-[0.7rem] text-tx-3 mt-1 uppercase tracking-widest font-mono">Enable or disable staff categories system-wide</p>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 mb-[80px]">
+    <% (settings||[]).forEach(function(cat) { 
+        var staffCount = countMap[cat.category] || 0;
+    %>
+    <div class="glass-card hover:border-teal-500/20 transition-colors border border-transparent animate-fade-up" id="cat-<%= cat._id %>">
+        <div class="px-4 py-3 flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style="background: <%= cat.color %>22; border: 1px solid <%= cat.color %>44;">
+                <i class="fa-solid <%= cat.icon || 'fa-user' %> text-base" style="color: <%= cat.color %>"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+                <div class="text-sm font-bold text-tx-1 truncate"><%= cat.category %></div>
+                <div class="text-[0.6rem] text-tx-3 truncate"><%= cat.description || '—' %></div>
+            </div>
+            <!-- Toggle Switch -->
+            <div class="shrink-0">
+                <label class="relative inline-flex items-center cursor-pointer" title="<%= cat.is_enabled ? 'Disable' : 'Enable' %> category">
+                    <input type="checkbox" class="sr-only category-toggle" data-category="<%= cat.category %>" 
+                        <%= cat.is_enabled ? 'checked' : '' %> onchange="toggleCategory('<%= cat.category %>', this.checked)">
+                    <div class="w-10 h-5 rounded-full transition-colors duration-200 category-track <%= cat.is_enabled ? 'bg-emerald-600' : 'bg-white/10' %> relative">
+                        <div class="w-4 h-4 rounded-full bg-white absolute top-0.5 transition-transform duration-200 <%= cat.is_enabled ? 'translate-x-5' : 'translate-x-0.5' %>"></div>
+                    </div>
+                </label>
+            </div>
+        </div>
+        <div class="px-4 pb-4">
+            <div class="flex items-center justify-between text-[0.6rem] font-mono">
+                <span class="text-tx-3"><%= staffCount %> staff member<%= staffCount !== 1 ? 's' : '' %></span>
+                <span class="<%= cat.is_enabled ? 'text-emerald-400' : 'text-tx-3 opacity-50' %> font-bold uppercase tracking-widest">
+                    <%= cat.is_enabled ? 'ACTIVE' : 'DISABLED' %>
+                </span>
+            </div>
+            <% if (!cat.is_enabled) { %>
+                <div class="mt-2 text-[0.6rem] text-orange-400/70 font-mono border border-orange-500/20 bg-orange-500/5 px-2 py-1 rounded-lg">
+                    <i class="fa-solid fa-triangle-exclamation text-[0.5rem] mr-1"></i>
+                    Category hidden from staff registration
+                </div>
+            <% } %>
+        </div>
+    </div>
+    <% }); %>
+</div>
+
+<script>
+async function toggleCategory(category, enabled) {
+    try {
+        const res = await fetch('/portal/admin/category-settings', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ category, is_enabled: enabled })
+        });
+        const data = await res.json();
+        if (data.success) {
+            showToast(`${category} ${enabled ? 'enabled' : 'disabled'}`, enabled ? 'success' : 'info');
+            // Update UI inline
+            setTimeout(() => location.reload(), 800);
+        } else {
+            showToast(data.error || 'Error', 'error');
+        }
+    } catch(e) {
+        showToast('Failed to update category', 'error');
+    }
+}
+</script>

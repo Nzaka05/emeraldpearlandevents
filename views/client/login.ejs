@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Client Portal Login | Emerald Pearland Events</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        emerald: {
+                            500: '#00c896',
+                            600: '#00a87e',
+                        },
+                        amber: {
+                            500: '#f59e0b',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50 flex flex-col min-h-screen font-sans">
+    <div class="flex-grow flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-md w-full space-y-8 bg-white p-8 rounded-xl shadow-lg">
+            <div>
+                <h2 class="mt-2 text-center text-3xl font-extrabold text-gray-900 border-b-4 border-emerald-500 pb-2 inline-block mx-auto">
+                    Emerald Pearland Events
+                </h2>
+                <p class="mt-4 text-center text-sm text-gray-600">
+                    Premium Client Portal
+                </p>
+            </div>
+            
+            <div id="error-alert" class="hidden rounded-md bg-red-50 p-4 border border-red-200">
+                <div class="flex">
+                    <div class="ml-3">
+                        <h3 class="text-sm font-medium text-red-800" id="error-message"></h3>
+                    </div>
+                </div>
+            </div>
+
+            <form class="mt-8 space-y-6" id="login-form">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <div class="rounded-md shadow-sm space-y-4">
+                    <div>
+                        <label for="email" class="block text-sm font-medium text-gray-700">Email Address</label>
+                        <input id="email" name="email" type="email" autocomplete="email" required class="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 focus:z-10 sm:text-sm mt-1" placeholder="client@company.com">
+                    </div>
+                    <div>
+                        <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
+                        <div class="relative">
+                            <input id="password" name="password" type="password" autocomplete="current-password" required class="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 focus:z-10 sm:text-sm mt-1" placeholder="••••••••">
+                            <button type="button" id="toggle-password" class="absolute inset-y-0 right-0 pr-3 flex items-center text-sm leading-5 text-gray-500 hover:text-emerald-500">
+                                Show
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between">
+                    <div class="text-sm">
+                        <a href="/client/password-reset/request" class="font-medium text-emerald-600 hover:text-emerald-500">
+                            Forgot your password?
+                        </a>
+                    </div>
+                </div>
+
+                <div>
+                    <button type="submit" id="submit-btn" class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-emerald-600 hover:bg-emerald-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-colors">
+                        Sign in Securely
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div class="text-center pb-6">
+        <a href="https://emeraldpearlandevents.netlify.app" class="text-sm text-emerald-600 hover:text-emerald-500 font-medium transition-colors">
+            &larr; Return to Main Website
+        </a>
+    </div>
+
+    <script>
+        document.getElementById('toggle-password').addEventListener('click', function() {
+            const passInput = document.getElementById('password');
+            if (passInput.type === 'password') {
+                passInput.type = 'text';
+                this.textContent = 'Hide';
+            } else {
+                passInput.type = 'password';
+                this.textContent = 'Show';
+            }
+        });
+
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('submit-btn');
+            const errAlert = document.getElementById('error-alert');
+            const errMsg = document.getElementById('error-message');
+            
+            btn.disabled = true;
+            btn.innerHTML = 'Signing in...';
+            errAlert.classList.add('hidden');
+
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            try {
+                const res = await fetch('/client/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+                
+                const data = await res.json();
+                
+                if (res.ok && data.success) {
+                    // Store refresh token securely in localStorage, access token in memory or just rely on httpOnly cookie
+                    localStorage.setItem('portal_refresh_token', data.data.refreshToken);
+                    window.location.href = '/client/dashboard';
+                } else {
+                    btn.disabled = false;
+                    btn.innerHTML = 'Sign in Securely';
+                    errMsg.textContent = data.data?.message || data.error?.message || data.error || 'Authentication failed';
+                    errAlert.classList.remove('hidden');
+                }
+            } catch (err) {
+                btn.disabled = false;
+                btn.innerHTML = 'Sign in Securely';
+                errMsg.textContent = 'Network error. Please try again.';
+                errAlert.classList.remove('hidden');
+            }
+        });
+    </script>
+</body>
+</html>

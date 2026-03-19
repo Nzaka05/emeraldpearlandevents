@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -827,9 +827,9 @@
 
 
 
-        /* ═══════════════════════════════════════════════════════════
+        /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
            MOBILE RESPONSIVENESS (Injected via Phase 10 Overhaul)
-           ═══════════════════════════════════════════════════════════ */
+           â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
         /* Hamburger Menu Icon (Hidden on Desktop) */
         .mobile-menu-btn {
@@ -912,9 +912,9 @@
         }
 
 
-        /* ═══════════════════════════════════════════════════════════
+        /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
            MOBILE QUICK ACTION FAB
-           ═══════════════════════════════════════════════════════════ */
+           â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
         .mobile-fab-container {
             display: none;
             position: fixed;
@@ -1002,9 +1002,9 @@
             }
         }
 
-        /* ═══════════════════════════════════════════════════════════
+        /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
            BULK ACTION TOOLBAR
-           ═══════════════════════════════════════════════════════════ */
+           â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
         .bulk-toolbar {
             display: none;
             align-items: center;
@@ -1389,7 +1389,19 @@
                     <span>Staff</span>
                 </a>
             </li>
+                        <li class="sidebar-nav-item">
+                <a href="http://localhost:3001" target="_blank" class="sidebar-nav-link" style="color: var(--accent); background: rgba(201, 168, 76, 0.05);">
+                    <span class="sidebar-nav-icon"><i class="fas fa-external-link-alt"></i></span>
+                    <span>Staff System</span>
+                </a>
+            </li>
             <li class="sidebar-nav-item">
+                <a href="/admin/pricing" class="sidebar-nav-link"><!-- add 'active' on pricing.html -->
+                    <span class="sidebar-nav-icon"><i class="fas fa-tags"></i></span>
+                    <span>Pricing & Rates</span>
+                </a>
+            </li>
+<li class="sidebar-nav-item">
                 <a href="/admin/settings" class="sidebar-nav-link"><!-- add 'active' on settings.html -->
                     <span class="sidebar-nav-icon"><i class="fas fa-cog"></i></span>
                     <span>Settings</span>
@@ -1424,7 +1436,7 @@
                 <div class="topbar-right">
                     <input type="text" class="search-bar" id="globalSearch" placeholder="Search bookings...">
                     <div class="today-date" id="todayDate"></div>
-                    <div class="notification-bell" style="cursor:pointer;" onclick="window.location.href='/admin/notifications'">🔔<span class="notification-badge">3</span></div>
+                    <div class="notification-bell" style="cursor:pointer;" onclick="window.location.href='/admin/notifications'"><i class="fas fa-bell"></i><span class="notification-badge">3</span></div>
                 </div>
             </div>
 
@@ -1454,7 +1466,7 @@
                             <option value="brand ambassador event">Brand Ambassador Event</option>
                             <option value="product launch">Product Launch</option>
                             <option value="private celebration">Private Celebration</option>
-                            <option value="luxury decor & styling">Luxury Décor & Styling</option>
+                            <option value="luxury decor & styling">Luxury Decor & Styling</option>
                             <option value="other">Other</option>
                         </select>
 
@@ -1466,17 +1478,17 @@
                     </div>
 
                     <div class="action-buttons">
-                        <button class="btn-secondary" onclick="exportBookings()">📥 Export</button>
-                        <button class="btn-primary" onclick="openNewBookingModal()">➕ New Booking</button>
+                        <button class="btn-secondary" onclick="exportBookings()"><i class="fas fa-download"></i> Export</button>
+                        <button class="btn-primary" onclick="openNewBookingModal()"><i class="fas fa-plus"></i> New Booking</button>
                     </div>
                 </div>
 
                 <!-- BULK ACTION TOOLBAR -->
                 <div class="bulk-toolbar" id="bulkToolbar">
                     <span class="bulk-count" id="bulkCount">0 selected</span>
-                    <button class="btn-bulk-paid" onclick="bulkMarkPaid()">✅ Mark as Paid</button>
-                    <button class="btn-bulk-delete" onclick="bulkDelete()">🗑️ Delete Selected</button>
-                    <button class="btn-bulk-clear" onclick="clearSelection()">✕ Clear</button>
+                    <button class="btn-bulk-paid" onclick="bulkMarkPaid()"><i class="fas fa-check-circle"></i> Mark as Paid</button>
+                    <button class="btn-bulk-delete" onclick="bulkDelete()"><i class="fas fa-trash"></i> Delete Selected</button>
+                    <button class="btn-bulk-clear" onclick="clearSelection()"><i class="fas fa-times"></i> Clear</button>
                 </div>
 
                 <!-- TABLE -->
@@ -1500,9 +1512,9 @@
 
                 <!-- PAGINATION -->
                 <div class="pagination">
-                    <button class="pagination-btn" onclick="previousPage()">←</button>
+                    <button class="pagination-btn" onclick="previousPage()"><i class="fas fa-chevron-left"></i></button>
                     <span id="pageInfo">Page 1 of 1</span>
-                    <button class="pagination-btn" onclick="nextPage()">→</button>
+                    <button class="pagination-btn" onclick="nextPage()"><i class="fas fa-arrow-right"></i></button>
                 </div>
             </div>
         </div>
@@ -1513,7 +1525,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h2 class="modal-title" id="modalTitle">Booking Details</h2>
-                <button class="modal-close" onclick="closeModal()">✕</button>
+                <button class="modal-close" onclick="closeModal()"><i class="fas fa-times"></i></button>
             </div>
 
             <div class="modal-body">
@@ -1619,7 +1631,7 @@
                 <div class="detail-section" id="staffAssignmentSection"
                     style="margin-top: 24px; border-top: 1px solid var(--border-color); padding-top: 16px;">
                     <div class="detail-label" style="color: var(--accent-gold); font-size: 16px; margin-bottom: 16px;">
-                        👥 Staff Assignment</div>
+                        <i class="fas fa-users"></i> Staff Assignment</div>
 
                     <div class="detail-grid">
                         <div class="form-group" style="grid-column: span 2;">
@@ -1649,7 +1661,7 @@
                     style="display: none; border: 1px solid var(--accent-gold); padding: 16px; border-radius: 8px; background: rgba(201, 168, 76, 0.05); margin-top: 24px;">
                     <div class="detail-label"
                         style="color: var(--accent-gold); font-size: 16px; border-bottom: 1px solid var(--accent-gold-hover); padding-bottom: 8px; margin-bottom: 16px;">
-                        ✨ Post-Event Actions</div>
+                        <i class="fas fa-star"></i> Post-Event Actions</div>
 
                     <div style="margin-bottom: 24px;">
                         <h4 style="font-size: 14px; margin-bottom: 8px; color: var(--text-main);">Client Appreciation &
@@ -1657,7 +1669,7 @@
                         <p style="font-size: 12px; color: #666; margin-bottom: 12px;">Send a beautifully crafted emails
                             thanking the client and requesting their feedback on the overall experience.</p>
                         <button onclick="sendAppreciationEmail()" class="btn-primary"
-                            style="background: var(--accent-gold); color: #fff; width: 100%; border: none; padding: 12px;">💌
+                            style="background: var(--accent-gold); color: #fff; width: 100%; border: none; padding: 12px;"><i class="fas fa-envelope"></i>
                             Send Appreciation Email to Client</button>
                     </div>
 
@@ -1684,7 +1696,7 @@
                         </div>
 
                         <button onclick="sendStaffFeedbackMessage()" class="btn-secondary"
-                            style="width: 100%; justify-content: center;">📨 Send Message to Selected Staff</button>
+                            style="width: 100%; justify-content: center;"><i class="fas fa-paper-plane"></i> Send Message to Selected Staff</button>
                     </div>
                 </div>
             </div>
@@ -1693,7 +1705,51 @@
                 <button class="btn-cancel" onclick="closeModal()">Cancel</button>
                 <button class="btn-save" onclick="saveBooking()">Save Changes</button>
             </div>
-        </div>
+                </div>
+    </div>
+
+    <!-- PAYMENT MODAL -->
+    <div class="modal" id="paymentModal">
+        <div class="modal-content" style="max-width: 400px;">
+            <div class="modal-header">
+                <h2 class="modal-title">Record Payment</h2>
+                <button class="modal-close" onclick="closePaymentModal()"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="paymentBookingId">
+                <div class="form-group">
+                    <label class="form-label">Amount Paid (KES)</label>
+                    <input type="number" class="form-input" id="paymentAmount" placeholder="e.g. 10000" min="0">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Payment Method</label>
+                    <select class="form-select" id="paymentMethod">
+                        <option value="MPesa">MPesa</option>
+                        <option value="Bank Transfer">Bank Transfer</option>
+                        <option value="Cash">Cash</option>
+                        <option value="PayPal">PayPal</option>
+                        <option value="Card">Card</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Transaction ID (Optional)</label>
+                    <input type="text" class="form-input" id="paymentTransactionId" placeholder="e.g. OXL123456">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Date</label>
+                    <input type="date" class="form-input" id="paymentDate">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Notes (Optional)</label>
+                    <input type="text" class="form-input" id="paymentNotes" placeholder="Any details...">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-cancel" onclick="closePaymentModal()">Cancel</button>
+                <button class="btn-save" onclick="submitPayment()">Save Payment</button>
+            </div>
+</div>
     </div>
 
     <!-- GSAP & SCRIPTS -->
@@ -1766,6 +1822,7 @@
         async function loadBookings() {
             try {
                 const response = await fetch('/api/admin/bookings?limit=100');
+                if (response.status === 401) { window.location.href = '/admin/login'; return; }
                 const result = await response.json();
                 if (result.success) {
                     allBookings = result.bookings || [];
@@ -1826,7 +1883,7 @@
             currentPage = 1;
         }
 
-        // ── Bulk Selection State ──
+        // â”€â”€ Bulk Selection State â”€â”€
         let selectedIds = new Set();
 
         function renderBookings() {
@@ -1851,8 +1908,9 @@
                     <div><span class="status-badge status-${booking.status}">${booking.status}</span></div>
                     <div><span class="paid-badge ${booking.isPaid ? 'paid-yes' : 'paid-no'}">${booking.isPaid ? 'Paid' : 'Pending'}</span></div>
                     <div class="row-actions" onclick="event.stopPropagation()">
-                        <button class="action-btn" title="Edit" onclick="openBookingModal('${booking._id}')">✏️</button>
-                        <button class="action-btn" title="Delete" onclick="deleteBooking('${booking._id}')">🗑️</button>
+                        <button class="action-btn" title="Record Payment" onclick="openPaymentModal('${booking._id}')"><i class="fas fa-money-bill-wave"></i></button>
+                        <button class="action-btn" title="Edit" onclick="openBookingModal('${booking._id}')"><i class="fas fa-edit"></i></button>
+                        <button class="action-btn" title="Delete" onclick="deleteBooking('${booking._id}')"><i class="fas fa-trash"></i></button>
                     </div>
                 </div>
                 `;
@@ -1924,7 +1982,7 @@
                 } catch (e) { console.error('Bulk paid error', e); }
             }
 
-            alert(`✅ ${successCount} of ${ids.length} bookings marked as Paid.`);
+            alert(`<i class="fas fa-check-circle"></i> ${successCount} of ${ids.length} bookings marked as Paid.`);
             clearSelection();
             await loadBookings();
         }
@@ -1944,7 +2002,7 @@
                 } catch (e) { console.error('Bulk delete error', e); }
             }
 
-            alert(`🗑️ ${successCount} of ${ids.length} bookings deleted.`);
+            alert(`<i class="fas fa-trash"></i> ${successCount} of ${ids.length} bookings deleted.`);
             clearSelection();
             await loadBookings();
         }
@@ -2046,7 +2104,7 @@
                 `).join('');
             }
 
-            // Post Event Actions Display logic — only show when status is 'completed'
+            // Post Event Actions Display logic  &mdash;  only show when status is 'completed'
             const postEventSection = document.getElementById('postEventActionsSection');
             if (postEventSection) {
                 if (booking.status === 'completed') {
@@ -2111,6 +2169,55 @@
             }
         }
 
+        function openPaymentModal(bookingId) {
+            document.getElementById('paymentBookingId').value = bookingId;
+            document.getElementById('paymentAmount').value = '';
+            document.getElementById('paymentMethod').value = 'MPesa';
+            document.getElementById('paymentTransactionId').value = '';
+            document.getElementById('paymentDate').valueAsDate = new Date();
+            document.getElementById('paymentNotes').value = '';
+            
+            document.getElementById('paymentModal').classList.add('show');
+        }
+
+        function closePaymentModal() {
+            document.getElementById('paymentModal').classList.remove('show');
+        }
+
+        async function submitPayment() {
+            const bookingId = document.getElementById('paymentBookingId').value;
+            const amount = parseFloat(document.getElementById('paymentAmount').value || 0);
+            const paymentMethod = document.getElementById('paymentMethod').value;
+            const transactionId = document.getElementById('paymentTransactionId').value.trim();
+            const date = document.getElementById('paymentDate').value;
+            const notes = document.getElementById('paymentNotes').value.trim();
+
+            if (!amount || amount <= 0) {
+                alert('Please enter a valid amount.');
+                return;
+            }
+
+            try {
+                const res = await fetch(`/api/admin/bookings/${bookingId}/payment`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ amount, paymentMethod, transactionId, paymentDate: date, notes })
+                });
+                
+                const result = await res.json();
+                if (result.success) {
+                    alert('Payment recorded successfully.');
+                    closePaymentModal();
+                    loadBookings();
+                } else {
+                    alert('Error: ' + (result.error || result.message));
+                }
+            } catch (err) {
+                console.error('Error submitting payment:', err);
+                alert('Failed to record payment.');
+            }
+        }
+
         async function assignStaffToBooking() {
             if (!currentBooking) return;
 
@@ -2134,7 +2241,7 @@
                 const result = await response.json();
                 if (result.success) {
                     const status = document.getElementById('staffAssignmentStatus');
-                    status.textContent = '✓ Staff assigned successfully.';
+                    status.textContent = '<i class="fas fa-check"></i> Staff assigned successfully.';
                     setTimeout(() => status.textContent = '', 4000);
                     // Update our local booking object
                     currentBooking.supervisor = supervisorId || null;

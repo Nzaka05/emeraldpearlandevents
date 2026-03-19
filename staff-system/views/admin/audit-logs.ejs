@@ -1,0 +1,198 @@
+<% currentPage='audit' %>
+
+<!-- ══ Page Header ══ -->
+<div class="flex items-center justify-between mb-6 animate-fade-up">
+  <div>
+    <h1 class="font-display text-2xl font-extrabold text-tx-1 tracking-tight flex items-center gap-3">
+      <span class="text-gradient-emerald">System Telemetry</span>
+      <span class="status-dot status-dot-active animate-pulse-dot bg-purple-500 shadow-glow-purple"></span>
+    </h1>
+    <p class="text-sm text-tx-3 mt-1">Immutable audit trails of network and terminal commands</p>
+  </div>
+</div>
+
+<!-- ══ Control Panel ══ -->
+<div class="glass-card mb-6 p-4 animate-fade-up delay-1">
+  <form method="GET" class="flex flex-col md:flex-row gap-4 w-full">
+    
+    <div class="relative flex-1 max-w-sm">
+      <i class="fa-solid fa-code-merge absolute left-3.5 top-1/2 -translate-y-1/2 text-tx-3 text-sm"></i>
+      <select name="actionType" class="form-input form-select pl-10 w-full font-bold">
+        <option value="">Query Entire Node Network (All Actions)</option>
+        <% (actionTypes||[]).forEach(function(t) { %>
+            <option value="<%= t %>" <%=(filters&&filters.actionType===t)?'selected':'' %> class="text-tx-2"><%= t %></option>
+        <% }); %>
+      </select>
+    </div>
+    
+    <div class="flex gap-2">
+      <button class="btn btn-primary shadow-glow-emerald" type="submit">
+         <i class="fa-solid fa-satellite-dish mr-2"></i> Execute Trace
+      </button>
+      <a href="/portal/admin-staff/audit-logs-page" class="btn btn-outline border-white/20 hover:bg-white/5">Clear Buffer</a>
+    </div>
+    
+  </form>
+</div>
+
+<!-- ══ Total Logs Header ══ -->
+<% if(pagination && pagination.total) { %>
+<div class="flex items-center gap-3 mb-4 px-5 py-3 rounded-xl border border-white/5 bg-black/20 text-sm animate-fade-up delay-2">
+    <i class="fa-solid fa-database text-purple-400"></i>
+    <span class="text-tx-3 font-medium">
+        Buffer Block: <strong class="text-tx-1 font-mono mx-1"><%= pagination.page %></strong> / <span class="font-mono text-tx-2 mx-1"><%= pagination.totalPages %></span>
+        <span class="opacity-50 mx-2">|</span>
+        Total Signatures Extracted: <strong class="text-purple-400 font-mono tracking-wider ml-1 text-[1.1em] drop-shadow-[0_0_8px_rgba(168,85,247,0.4)]"><%= pagination.total.toLocaleString() %></strong>
+    </span>
+</div>
+<% } %>
+
+<!-- ══ Audit Ledger Data Table ══ -->
+<div class="glass-card overflow-hidden animate-fade-up delay-3">
+
+  <div class="px-5 py-4 border-b border-white/5 bg-black/20 flex items-center justify-between">
+      <h3 class="text-sm font-bold text-tx-1 flex items-center gap-2">
+         <i class="fa-solid fa-server text-tx-2"></i> Event Trajectory Matrix
+      </h3>
+  </div>
+
+  <div class="overflow-x-auto">
+    <table class="data-table">
+        <thead>
+            <tr>
+               <th>Op Node (Action)</th>
+               <th>Originator (User)</th>
+               <th>Target Protocol</th>
+               <th>Payload Specs</th>
+               <th class="text-right">Time-Code</th>
+            </tr>
+        </thead>
+        <tbody>
+            <% (logs||[]).forEach(function(log) { %>
+                <% 
+                   var colorMap = {
+                       'CLOCK_IN': { bg: 'bg-emerald-500/10', txt:'text-emerald-400', border:'border-emerald-500/30' },
+                       'CLOCK_IN_DENIED': { bg: 'bg-red-500/10', txt:'text-red-400', border:'border-red-500/30' },
+                       'CLOCK_OUT': { bg: 'bg-blue-500/10', txt:'text-blue-400', border:'border-blue-500/30' },
+                       'PROXIMITY_OVERRIDE': { bg: 'bg-purple-500/10', txt:'text-purple-400', border:'border-purple-500/30' },
+                       'GPS_SPOOF_DETECTED': { bg: 'bg-gold-500/10', txt:'text-gold-400', border:'border-gold-500/30' },
+                       'PASSWORD_RESET': { bg: 'bg-gold-500/10', txt:'text-gold-400', border:'border-gold-500/30' },
+                       'STAFF_SUSPENDED': { bg: 'bg-red-500/10', txt:'text-red-400', border:'border-red-500/30' },
+                       'LOGIN_SUCCESS': { bg: 'bg-emerald-500/10', txt:'text-emerald-400', border:'border-emerald-500/30' },
+                       'LOGIN_FAILED': { bg: 'bg-red-500/10', txt:'text-red-400', border:'border-red-500/30' },
+                       'ACCOUNT_UPDATED': { bg: 'bg-blue-500/10', txt:'text-blue-400', border:'border-blue-500/30' },
+                       'PAYMENT_SENT': { bg: 'bg-emerald-500/10', txt:'text-emerald-400', border:'border-emerald-500/30' }
+                   };
+                   var styleNode = colorMap[log.actionType] || { bg: 'bg-white/5', txt:'text-tx-2', border:'border-white/10' };
+                %>
+                <tr class="hover:bg-white/5 transition-colors group cursor-default">
+                   <!-- Action Type cell -->
+                   <td>
+                       <span class="text-[0.6rem] font-bold tracking-widest uppercase px-2 py-1 rounded border <%= styleNode.bg %> <%= styleNode.txt %> <%= styleNode.border %> whitespace-nowrap shadow-sm">
+                           <%= log.actionType.replace(/_/g, " ") %>
+                       </span>
+                   </td>
+                   
+                   <!-- User Origiantor cell -->
+                   <td>
+                       <% if(log.performedBy && log.performedBy.name) { %>
+                          <div class="flex items-center gap-3">
+                              <div class="w-8 h-8 rounded-full bg-dark-bg border border-white/5 flex items-center justify-center text-[0.6rem] font-bold text-white uppercase group-hover:border-white/20 transition-colors shrink-0">
+                                   <%= log.performedBy.name.split(' ').map(n=>n[0]).join('').slice(0,2) %>
+                              </div>
+                              <div class="min-w-0">
+                                  <div class="text-sm font-bold text-tx-1 truncate"><%= log.performedBy.name %></div>
+                                  <div class="text-[0.65rem] text-tx-3 uppercase tracking-wider mt-0.5 truncate"><%= log.performedBy.role %></div>
+                              </div>
+                          </div>
+                       <% } else { %>
+                          <div class="flex items-center gap-2">
+                             <i class="fa-solid fa-robot text-purple-400 text-lg opacity-80"></i>
+                             <span class="text-xs font-bold text-tx-3 italic uppercase tracking-wider">Sys Command</span>
+                          </div>
+                       <% } %>
+                   </td>
+                   
+                   <!-- Target cell -->
+                   <td class="text-xs text-tx-2 font-mono font-medium">
+                       <%= log.targetModel || '— // NULL' %>
+                   </td>
+                   
+                   <!-- Payload/Details cell -->
+                   <td class="text-xs text-tx-3 max-w-[280px]">
+                       <% if(log.details) { %>
+                          <% var detail = typeof log.details==='object' ? (log.details.reason || log.details.message || JSON.stringify(log.details).slice(0,100)) : log.details; %>
+                          <div class="truncate text-tx-2 font-medium bg-black/30 p-1.5 px-2.5 rounded border border-white/5 hover:whitespace-normal hover:bg-black/60 transition-all cursor-crosshair">
+                              <i class="fa-solid fa-code text-[0.6rem] opacity-50 mr-1.5"></i> <%= detail %>
+                          </div>
+                       <% } else { %>
+                          <span class="opacity-30 italic">No packet data attached.</span>
+                       <% } %>
+                   </td>
+                   
+                   <!-- Temporal Data cell -->
+                   <td class="text-right whitespace-nowrap">
+                       <% var ts = new Date(log.timestamp); %>
+                       <div class="text-[0.7rem] font-bold text-tx-1 uppercase tracking-wide">
+                          <%= ts.toLocaleDateString('en-KE', {day:'2-digit', month:'short', year:'numeric'}) %>
+                       </div>
+                       <div class="text-[0.65rem] font-mono text-tx-3 mt-0.5">
+                          <%= ts.toLocaleTimeString('en-KE', {hour:'2-digit', minute:'2-digit', second:'2-digit'}) %>
+                       </div>
+                   </td>
+                </tr>
+            <% }); %>
+            
+            <% if(!(logs&&logs.length)) { %>
+               <tr>
+                   <td colspan="5" class="py-16 text-center text-tx-3">
+                       <i class="fa-solid fa-ghost text-4xl opacity-20 mb-4"></i>
+                       <p class="text-xs font-bold uppercase tracking-wider">No trace signals detected matching query parameters.</p>
+                   </td>
+               </tr>
+            <% } %>
+        </tbody>
+    </table>
+  </div>
+  
+  <!-- ══ Pagination Footing ══ -->
+  <% if(pagination && pagination.totalPages > 1) { %>
+    <div class="px-5 py-4 border-t border-white/10 bg-black/40 flex items-center justify-center sm:justify-between flex-wrap gap-4">
+        
+        <div class="text-xs text-tx-3 font-mono hidden sm:block">
+            Sys_Seq: <span class="text-tx-2">Buffer Execution Iteration <%=(pagination.page)%></span>
+        </div>
+        
+        <div class="flex items-center gap-1">
+            <% if(pagination.page > 1) { %>
+               <a href="?page=<%= pagination.page-1 %><%= filters&&filters.actionType?'&actionType='+filters.actionType:'' %>" 
+                  class="w-8 h-8 flex items-center justify-center rounded border border-white/10 bg-white/5 hover:bg-white/10 text-tx-2 transition-colors">
+                  <i class="fa-solid fa-chevron-left text-xs"></i>
+               </a>
+            <% } %>
+            
+            <% for(var p=1; p<=Math.min(pagination.totalPages,7); p++) { %>
+                <% if(p===pagination.page) { %>
+                   <span class="w-8 h-8 flex items-center justify-center rounded border border-emerald-500/30 bg-emerald-500/20 text-emerald-400 font-bold text-sm shadow-glow-emerald">
+                      <%= p %>
+                   </span>
+                <% } else { %>
+                   <a href="?page=<%= p %><%= filters&&filters.actionType?'&actionType='+filters.actionType:'' %>" 
+                      class="w-8 h-8 flex items-center justify-center rounded border border-transparent hover:bg-white/5 text-tx-2 font-medium text-sm transition-colors">
+                      <%= p %>
+                   </a>
+                <% } %>
+            <% } %>
+            
+            <% if(pagination.page < pagination.totalPages) { %>
+               <a href="?page=<%= pagination.page+1 %><%= filters&&filters.actionType?'&actionType='+filters.actionType:'' %>" 
+                  class="w-8 h-8 flex items-center justify-center rounded border border-white/10 bg-white/5 hover:bg-white/10 text-tx-2 transition-colors">
+                  <i class="fa-solid fa-chevron-right text-xs"></i>
+               </a>
+            <% } %>
+        </div>
+        
+    </div>
+  <% } %>
+
+</div>

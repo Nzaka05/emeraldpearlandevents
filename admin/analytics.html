@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -225,9 +225,9 @@
             .content { padding: 16px; }
         }
     
-        /* ═══════════════════════════════════════════════════════════
+        /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
            MOBILE RESPONSIVENESS (Injected via Phase 10 Overhaul)
-           ═══════════════════════════════════════════════════════════ */
+           â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
         
         /* Hamburger Menu Icon (Hidden on Desktop) */
         .mobile-menu-btn {
@@ -307,9 +307,9 @@
         }
 
     
-        /* ═══════════════════════════════════════════════════════════
+        /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
            MOBILE QUICK ACTION FAB
-           ═══════════════════════════════════════════════════════════ */
+           â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
         .mobile-fab-container {
             display: none;
             position: fixed;
@@ -658,7 +658,19 @@
                     <span>Staff</span>
                 </a>
             </li>
+                        <li class="sidebar-nav-item">
+                <a href="http://localhost:3001" target="_blank" class="sidebar-nav-link" style="color: var(--accent); background: rgba(201, 168, 76, 0.05);">
+                    <span class="sidebar-nav-icon"><i class="fas fa-external-link-alt"></i></span>
+                    <span>Staff System</span>
+                </a>
+            </li>
             <li class="sidebar-nav-item">
+                <a href="/admin/pricing" class="sidebar-nav-link"><!-- add 'active' on pricing.html -->
+                    <span class="sidebar-nav-icon"><i class="fas fa-tags"></i></span>
+                    <span>Pricing & Rates</span>
+                </a>
+            </li>
+<li class="sidebar-nav-item">
                 <a href="/admin/settings" class="sidebar-nav-link"><!-- add 'active' on settings.html -->
                     <span class="sidebar-nav-icon"><i class="fas fa-cog"></i></span>
                     <span>Settings</span>
@@ -695,7 +707,7 @@
                 <div class="charts-grid">
                     <!-- Monthly Bookings Line Chart -->
                     <div class="chart-card">
-                        <div class="chart-title">📈 Monthly Bookings Trend</div>
+                        <div class="chart-title"><i class="fas fa-chart-line"></i> Monthly Bookings Trend</div>
                         <div class="chart-container">
                             <canvas id="lineChart"></canvas>
                         </div>
@@ -703,7 +715,7 @@
 
                     <!-- Revenue by Event Type -->
                     <div class="chart-card">
-                        <div class="chart-title">💰 Revenue by Event Type</div>
+                        <div class="chart-title"><i class="fas fa-coins"></i> Revenue by Event Type</div>
                         <div class="chart-container">
                             <canvas id="doughnutChart"></canvas>
                         </div>
@@ -711,7 +723,7 @@
 
                     <!-- Event Type Distribution -->
                     <div class="chart-card">
-                        <div class="chart-title">🎪 Event Type Distribution</div>
+                        <div class="chart-title"><i class="fas fa-ticket-alt"></i> Event Type Distribution</div>
                         <div class="chart-container">
                             <canvas id="barChart"></canvas>
                         </div>
@@ -719,7 +731,7 @@
 
                     <!-- Booking Status Funnel -->
                     <div class="chart-card">
-                        <div class="chart-title">🔄 Booking Status Funnel</div>
+                        <div class="chart-title"><i class="fas fa-sync-alt"></i> Booking Status Funnel</div>
                         <div class="chart-container">
                             <canvas id="radarChart"></canvas>
                         </div>
@@ -727,14 +739,14 @@
 
                     <!-- Full Width Charts -->
                     <div class="chart-card full-width">
-                        <div class="chart-title">📊 Annual Revenue Comparison</div>
+                        <div class="chart-title"><i class="fas fa-chart-bar"></i> Annual Revenue Comparison</div>
                         <div class="chart-container" style="height: 250px;">
                             <canvas id="areaChart"></canvas>
                         </div>
                     </div>
 
                     <div class="chart-card full-width">
-                        <div class="chart-title">🎯 Conversion Funnel</div>
+                        <div class="chart-title"><i class="fas fa-bullseye"></i> Conversion Funnel</div>
                         <div class="chart-container" style="height: 250px;">
                             <canvas id="horizontalBarChart"></canvas>
                         </div>

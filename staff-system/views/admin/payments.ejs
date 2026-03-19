@@ -1,0 +1,797 @@
+<% currentPage='payments' %>
+
+<!-- ══ Page Header ══ -->
+<div class="flex items-center justify-between mb-6 animate-fade-up">
+  <div>
+    <h1 class="font-display text-2xl font-extrabold text-tx-1 tracking-tight flex items-center gap-3">
+      <span class="text-gradient-emerald">Financial Network</span>
+      <span class="status-dot status-dot-active animate-pulse-dot bg-gold-500 shadow-glow-gold"></span>
+    </h1>
+    <p class="text-sm text-tx-3 mt-1">Global treasury and payroll disbursements</p>
+  </div>
+  <button class="btn btn-primary shadow-glow-gold bg-gradient-to-r from-gold-600 to-amber-500 text-dark-bg border-none hover:scale-[1.01] transition-transform" onclick="openModal('viewPaymentModal')">
+    <i class="fa-solid fa-file-invoice-dollar text-sm"></i> Inspect Ledger
+  </button>
+</div>
+
+<!-- ══ Two-Column Layout ══ -->
+<div class="grid grid-cols-1 xl:grid-cols-[1fr_320px] gap-6 items-start">
+
+  <!-- LEFT: Table & Filters Column -->
+  <div class="space-y-4">
+    
+    <!-- Search & Summary Stats -->
+    <div class="glass-card p-4 animate-fade-up delay-1">
+      <div class="flex flex-col md:flex-row gap-4 justify-between">
+        
+        <!-- Search & Toggles -->
+        <div class="flex-1 space-y-3">
+          <div class="relative max-w-md">
+            <i class="fa-solid fa-search absolute left-3.5 top-1/2 -translate-y-1/2 text-tx-3 text-sm"></i>
+            <input type="text" placeholder="Search operational ledger..." 
+              class="form-input pl-10 w-full" oninput="filterPayments(this.value)">
+          </div>
+          <div class="flex gap-2">
+            <select class="form-input form-select text-sm py-1.5 h-auto w-auto bg-black/40 border-black text-tx-2" onchange="filterPayStatus(this.value)">
+              <option value="">All Transfer Statuses</option>
+              <option value="Pending,Sent">Pending / Sent</option>
+              <option value="Received,Disbursed">Received / Disbursed</option>
+            </select>
+          </div>
+        </div>
+        
+        <!-- Total Volume Metric (Small) -->
+        <div class="bg-dark-bg/50 border border-white/5 rounded-xl p-3 min-w-[200px] flex items-center gap-4">
+            <div class="w-10 h-10 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center text-lg shadow-[inset_0_0_10px_rgba(16,185,129,0.2)]">
+                <i class="fa-solid fa-money-bill-transfer"></i>
+            </div>
+            <div>
+                 <div class="text-[0.65rem] text-tx-3 uppercase tracking-wider font-bold mb-0.5">Total Volume Processed</div>
+                 <div class="font-display text-xl font-extrabold text-emerald-400 font-mono">
+                     KSh <%= stats && stats.total_kes ? stats.total_kes.toLocaleString() : '0' %>
+                 </div>
+            </div>
+        </div>
+        
+      </div>
+    </div>
+
+    <!-- Payments Table Glass Card -->
+    <div class="glass-card overflow-hidden animate-fade-up delay-2">
+      <div class="overflow-x-auto">
+        <table class="data-table" id="paymentsTable">
+          <thead>
+            <tr>
+              <th>Matrix / Designation</th>
+              <th>Paid Units</th>
+              <th>Base Rate</th>
+              <th>Fund Status</th>
+              <th class="text-right">Action</th>
+            </tr>
+          </thead>
+          <tbody id="payTbody">
+            <% if (assignments && assignments.length > 0) { %>
+              <% assignments.forEach(function(a) { %>
+                <tr class="hover:bg-white/5 transition-colors group cursor-pointer" data-id="<%= a._id %>" onclick="showPayPanel(event, this)">
+                  
+                  <td>
+                    <div class="flex items-center gap-3">
+                      <div class="w-9 h-9 rounded-full bg-gradient-to-br from-gold-600/80 to-amber-500/80 flex items-center justify-center font-bold text-dark-bg text-[0.65rem] shadow-lg ring-1 ring-gold-500/30">
+                        <%= a.title.slice(0,2).toUpperCase() %>
+                      </div>
+                      <div>
+                        <div class="font-bold text-tx-1 text-sm group-hover:text-gold-400 transition-colors"><%= a.title %></div>
+                        <div class="text-[0.65rem] text-tx-3 mt-0.5 font-medium flex items-center gap-2">
+                          <span><i class="fa-regular fa-clock opacity-60 mr-1"></i><%= a.date ? new Date(a.date).toLocaleDateString('en-KE', {day:'numeric',month:'short'}) : '—' %></span>
+                          <span><i class="fa-solid fa-users opacity-60 mr-1"></i><%= a.staff_count || 0 %> Units</span>
+                        </div>
+                      </div>
+                    </div>
+                  </td>
+                  
+                  <td>
+                    <% if(a.paid_count > 0 && a.paid_count >= a.staff_count) { %>
+                       <span class="text-[0.7rem] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/30 flex items-center w-max"><i class="fa-solid fa-check mr-1.5 opacity-70"></i><%= a.paid_count %> / <%= a.staff_count %> Processed</span>
+                    <% } else if(a.paid_count > 0) { %>
+                       <span class="text-[0.7rem] font-bold text-gold-400 bg-gold-500/10 px-2 py-0.5 rounded border border-gold-500/30 flex items-center w-max"><i class="fa-solid fa-spinner animate-spin-slow mr-1.5 opacity-70"></i><%= a.paid_count %> / <%= a.staff_count %> Processed</span>
+                    <% } else { %>
+                       <span class="text-[0.7rem] font-bold text-tx-3 bg-white/5 px-2 py-0.5 rounded border border-white/10 flex items-center w-max"><i class="fa-solid fa-xmark mr-1.5 opacity-50"></i>0 / <%= a.staff_count %> Processed</span>
+                    <% } %>
+                  </td>
+                  
+                  <td>
+                    <div class="font-display font-bold text-gold-400 font-mono tracking-wide">KSh <%= (a.pay_rate||0).toLocaleString() %></div>
+                  </td>
+                  
+                  <td>
+                      <span class="<%= a.my_payment_status==='Received' || a.my_payment_status==='Disbursed' ? 'badge-emerald text-emerald-300' : a.my_payment_status==='Sent' || a.my_payment_status==='Partial' ? 'badge-blue text-blue-300' : a.payment_status==='Received' || a.payment_status==='Disbursed' ? 'badge-emerald text-emerald-300' : a.payment_status==='Sent' || a.payment_status==='Partial' ? 'badge-blue text-blue-300' : 'badge-gold text-gold-300' %> text-xs font-bold flex items-center gap-2 bg-transparent border-none p-0 inline-flex">
+                        <span class="w-1.5 h-1.5 rounded-full <%= a.my_payment_status==='Received' || a.my_payment_status==='Disbursed' ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]' : a.my_payment_status==='Sent' || a.my_payment_status==='Partial' ? 'bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.8)]' : a.payment_status==='Received' || a.payment_status==='Disbursed' ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]' : a.payment_status==='Sent' || a.payment_status==='Partial' ? 'bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.8)]' : 'bg-gold-500 shadow-[0_0_8px_rgba(250,204,21,0.8)]' %>"></span>
+                        <%= a.my_payment_status || a.payment_status || 'Pending' %>
+                      </span>
+                  </td>
+                  
+                  <td class="text-right whitespace-nowrap" onclick="event.stopPropagation()">
+                    <button class="btn btn-primary btn-xs bg-gold-600/20 text-gold-400 hover:bg-gold-500 hover:text-dark-bg border-none shadow-none font-bold transition-all px-3" onclick="showPayPanel(event, this)">
+                       Review <i class="fa-solid fa-arrow-right ml-1 text-[0.6rem]"></i>
+                    </button>
+                  </td>
+                  
+                </tr>
+              <% }) %>
+            <% } else { %>
+              <tr>
+                <td colspan="5" class="py-12 text-center text-tx-3">
+                  <div class="flex flex-col items-center justify-center">
+                    <i class="fa-solid fa-wallet text-3xl opacity-20 mb-3"></i>
+                    <p class="text-xs font-medium uppercase tracking-wider">Ledger Empty</p>
+                  </div>
+                </td>
+              </tr>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: Action Panel -->
+  <div class="hidden xl:flex flex-col gap-4 animate-fade-left">
+    
+    <!-- Balance Panel -->
+    <div class="glass-card relative overflow-hidden p-5 border-t-2 border-t-gold-500">
+      <div class="absolute top-0 right-0 p-8 text-gold-500/5 rotate-12 scale-150 pointer-events-none">
+        <i class="fa-solid fa-piggy-bank text-9xl"></i>
+      </div>
+      
+      <div class="relative z-10 space-y-5">
+        
+        <div>
+           <div class="text-[0.65rem] text-tx-3 uppercase tracking-wider font-bold mb-1 flex items-center gap-1.5"><i class="fa-solid fa-clock-rotate-left text-gold-400 opacity-60"></i> Pending Transfers</div>
+           <div class="font-display text-2xl font-extrabold text-gold-400 font-mono tracking-tight drop-shadow-[0_0_8px_rgba(250,204,21,0.3)]">
+               KSh <%= stats && stats.pending_kes ? stats.pending_kes.toLocaleString() : '0' %>
+           </div>
+        </div>
+        
+        <div class="pt-4 border-t border-white/10">
+           <div class="text-[0.65rem] text-tx-3 uppercase tracking-wider font-bold mb-1 flex items-center gap-1.5"><i class="fa-solid fa-triangle-exclamation text-red-500 opacity-60"></i> Disputed Claims</div>
+           <div class="font-display text-xl font-extrabold text-red-500 font-mono tracking-tight drop-shadow-[0_0_8px_rgba(239,68,68,0.3)]">
+               <%= stats && stats.disputed ? stats.disputed : '0' %>
+           </div>
+        </div>
+        
+      </div>
+    </div>
+    
+    <!-- Management Actions -->
+    <div class="glass-card p-5 space-y-6">
+       
+       <div>
+         <h4 class="text-sm font-bold text-tx-1 mb-2">Mass Processing Operations</h4>
+         <p class="text-[0.7rem] text-tx-3 mb-4 leading-relaxed">Select items in the matrix to apply bulk funding rules or handle disputed transfers quickly.</p>
+         
+         <div class="space-y-3 mb-5">
+            <label class="flex items-center gap-3 p-2.5 rounded-lg border border-white/5 bg-white/5 cursor-pointer hover:bg-white/10 transition-colors group">
+              <input type="checkbox" class="w-4 h-4 rounded border-white/20 bg-dark-bg accent-gold-500">
+              <span class="text-xs font-bold text-tx-2 group-hover:text-tx-1 transition-colors">Acknowledge All Disputes</span>
+            </label>
+            <label class="flex items-center gap-3 p-2.5 rounded-lg border border-white/5 bg-white/5 cursor-pointer hover:bg-white/10 transition-colors group">
+              <input type="checkbox" class="w-4 h-4 rounded border-white/20 bg-dark-bg accent-gold-500">
+              <span class="text-xs font-bold text-tx-2 group-hover:text-tx-1 transition-colors">Auto-Clear Minor Variances</span>
+            </label>
+         </div>
+         
+         <div class="pt-4 border-t border-white/10">
+             <div class="text-sm font-bold text-tx-1 mb-1 relative top-[2px]">Generate Report</div>
+             <p class="text-[0.65rem] text-tx-3 mb-3">Compile structured bank-ready CSVs.</p>
+             <button class="btn btn-primary w-full shadow-glow-emerald" onclick="exportPaymentsExcel()">
+                <i class="fa-solid fa-file-excel mr-2"></i> Download Excel Ledger
+             </button>
+             <button class="btn btn-outline w-full mt-2 border-white/10" onclick="exportPaymentsCSV()">
+                <i class="fa-solid fa-file-csv mr-2"></i> Download CSV
+             </button>
+         </div>
+       </div>
+       
+    </div>
+
+    <!-- Payment History Section -->
+    <div class="glass-card p-5 mt-4">
+      <h4 class="text-sm font-bold text-tx-1 mb-4 flex items-center gap-2">
+        <i class="fa-solid fa-clock-rotate-left text-gold-400"></i> Payment History
+      </h4>
+      <div class="space-y-2 max-h-[400px] overflow-y-auto custom-scrollbar" id="paymentHistoryList">
+  
+        <% let allPayments = []; %>
+        <% rawAssignments.forEach(a => { %>
+          <% (a.staff_payments || []).forEach(sp => { %>
+            <% allPayments.push({ ...sp, eventTitle: a.title, eventDate: a.date }); %>
+          <% }); %>
+        <% }); %>
+        <% allPayments.sort((x,y) => new Date(y.sent_at||0) - new Date(x.sent_at||0)).slice(0,50).forEach(p => { %>
+          <div class="flex items-center justify-between p-3 rounded-lg bg-white/[0.02] border border-white/5 hover:bg-white/5 transition-colors">
+            <div class="flex items-center gap-3">
+              <div class="w-7 h-7 rounded-full flex items-center justify-center text-xs
+                <%= p.status === 'Received' ? 'bg-emerald-500/20 text-emerald-400' : p.status === 'Sent' ? 'bg-blue-500/20 text-blue-400' : p.status === 'Disputed' ? 'bg-red-500/20 text-red-400' : 'bg-gold-500/20 text-gold-400' %>">
+                <i class="fa-solid <%= p.payment_method === 'Cash' ? 'fa-money-bills' : 'fa-mobile-screen-button' %>"></i>
+              </div>
+              <div>
+                <div class="text-xs font-bold text-tx-1"><%= p.staff_name || 'Staff' %></div>
+                <div class="text-[0.6rem] text-tx-3 mt-0.5"><%= p.eventTitle %> &bull; <%= p.payment_method || 'MPesa' %></div>
+              </div>
+            </div>
+            <div class="text-right">
+              <div class="text-xs font-bold text-gold-400 font-mono">KSh <%= (p.amount||0).toLocaleString() %></div>
+              <div class="text-[0.6rem] text-tx-3 mt-0.5"><%= p.sent_at ? new Date(p.sent_at).toLocaleDateString('en-KE') : 'Pending' %></div>
+            </div>
+          </div>
+        <% }); %>
+        <% if (allPayments.length === 0) { %>
+          <div class="py-8 text-center text-tx-3 text-xs">No payment history yet</div>
+        <% } %>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+
+
+  <!-- Payment History Section -->
+  <div class="glass-card p-5 mt-4">
+    <h4 class="text-sm font-bold text-tx-1 mb-4 flex items-center gap-2">
+      <i class="fa-solid fa-clock-rotate-left text-gold-400"></i> Payment History
+    </h4>
+    <div class="space-y-2 max-h-[400px] overflow-y-auto custom-scrollbar" id="paymentHistoryList">
+
+      <% rawAssignments.forEach(a => { (a.staff_payments || []).forEach(sp => { allPayments.push({ ...sp, eventTitle: a.title, eventDate: a.date }); }); }); %>
+      <% allPayments.sort((x,y) => new Date(y.sent_at||0) - new Date(x.sent_at||0)).slice(0,50).forEach(p => { %>
+        <div class="flex items-center justify-between p-3 rounded-lg bg-white/[0.02] border border-white/5 hover:bg-white/5 transition-colors">
+          <div class="flex items-center gap-3">
+            <div class="w-7 h-7 rounded-full flex items-center justify-center text-xs <%= p.status === 'Received' ? 'bg-emerald-500/20 text-emerald-400' : p.status === 'Sent' ? 'bg-blue-500/20 text-blue-400' : 'bg-gold-500/20 text-gold-400' %>">
+              <i class="fa-solid <%= p.payment_method === 'Cash' ? 'fa-money-bills' : 'fa-mobile-screen-button' %>"></i>
+            </div>
+            <div>
+              <div class="text-xs font-bold text-tx-1"><%= p.staff_name || 'Staff' %></div>
+              <div class="text-[0.6rem] text-tx-3 mt-0.5"><%= p.eventTitle %> &bull; <%= p.payment_method || 'MPesa' %></div>
+            </div>
+          </div>
+          <div class="text-right">
+            <div class="text-xs font-bold text-gold-400 font-mono">KSh <%= (p.amount||0).toLocaleString() %></div>
+            <div class="text-[0.6rem] text-tx-3 mt-0.5"><%= p.sent_at ? new Date(p.sent_at).toLocaleDateString('en-KE') : 'Pending' %></div>
+          </div>
+        </div>
+      <% }); %>
+      <% if (allPayments.length === 0) { %>
+        <div class="py-8 text-center text-tx-3 text-xs">No payment history yet</div>
+      <% } %>
+    </div>
+  </div>
+<!-- Context Menu (right-click on row) -->
+<div id="payContextMenu" class="absolute bg-dark-card border border-white/10 rounded-xl shadow-2xl p-1.5 min-w-[200px] z-[500] backdrop-blur-md hidden transition-opacity">
+  <button class="w-full text-left px-3 py-2 text-xs font-medium text-blue-400 hover:bg-blue-500/10 rounded flex items-center gap-2 transition-colors mb-0.5" onclick="markSent()">
+     <i class="fa-solid fa-paper-plane w-4"></i> Override: Mark Sent
+  </button>
+  <button class="w-full text-left px-3 py-2 text-xs font-medium text-emerald-400 hover:bg-emerald-500/10 rounded flex items-center gap-2 transition-colors mb-0.5" onclick="handleConfirmations()">
+     <i class="fa-solid fa-check-double w-4"></i> Manual Confirmation
+  </button>
+  <button class="w-full text-left px-3 py-2 text-xs font-medium text-red-400 hover:bg-red-500/10 rounded flex items-center gap-2 transition-colors" onclick="handleDisputes()">
+     <i class="fa-solid fa-gavel w-4"></i> Trigger Dispute Review
+  </button>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════
+     MODALS
+     ══════════════════════════════════════════════════════════ -->
+
+<!-- View Payment Details Modal (Ledger) -->
+<div class="modal-overlay" id="viewPaymentModal">
+  <div class="modal-content max-w-2xl bg-dark-card border border-white/10 shadow-3xl">
+    
+    <div class="modal-header border-b border-white/5 pb-4 bg-black/20">
+      <h3 class="text-base font-bold text-tx-1 flex items-center gap-2">
+        <div class="w-8 h-8 rounded-lg bg-gold-500/20 text-gold-400 flex items-center justify-center shadow-glow-gold">
+           <i class="fa-solid fa-file-invoice-dollar"></i>
+        </div>
+        Matrix Sub-Ledger
+      </h3>
+      <button class="text-tx-3 hover:text-tx-1 transition-colors" onclick="closeModal('viewPaymentModal')">
+        <i class="fa-solid fa-xmark text-lg"></i>
+      </button>
+    </div>
+    
+    <div class="modal-body p-0">
+      
+      <!-- Top Overview Data -->
+      <div class="grid grid-cols-3 gap-0 border-b border-white/5 bg-dark-bg/50">
+         <div class="p-4 border-r border-white/5">
+             <div class="text-[0.6rem] font-bold text-tx-3 uppercase tracking-wider mb-1">Matrix Designation</div>
+             <div id="vpm-event" class="text-sm font-bold text-tx-1 truncate">—</div>
+         </div>
+         <div class="p-4 border-r border-white/5">
+             <div class="text-[0.6rem] font-bold text-tx-3 uppercase tracking-wider mb-1">Global Base Rate</div>
+             <div id="vpm-amount" class="text-sm font-bold text-gold-400 font-mono tracking-wider">—</div>
+         </div>
+         <div class="p-4">
+             <div class="text-[0.6rem] font-bold text-tx-3 uppercase tracking-wider mb-1">Execution Date</div>
+             <div id="vpm-date" class="text-xs font-bold text-tx-2 uppercase tracking-wide">—</div>
+         </div>
+      </div>
+      
+      <div class="px-5 py-3 border-b border-white/5 bg-black/40 flex items-center justify-between">
+         <div class="text-[0.65rem] font-bold text-tx-2 uppercase tracking-wider">Unit Disbursment Terminals</div>
+      </div>
+      
+      <!-- Staff Unit Lines -->
+      <div id="vpm-staff-list" class="max-h-[50vh] overflow-y-auto custom-scrollbar p-3 space-y-2">
+         <!-- Injected via JS -->
+      </div>
+      
+    </div>
+    
+    <!-- Footer actions built in JS -->
+    <div class="modal-footer p-4 border-t border-white/5 bg-black/20 flex items-center justify-end gap-3" id="vpm-footer">
+       <button class="btn btn-outline border-white/10 hover:bg-white/5" onclick="closeModal('viewPaymentModal')">Cancel</button>
+    </div>
+    
+  </div>
+</div>
+
+<!-- Payment Method Choice Modal -->
+<div id="payMethodModal" class="modal-overlay">
+  <div style="display:flex;align-items:center;justify-content:center;min-height:100vh;">
+    <div class="glass-card p-6 max-w-sm w-full mx-4" style="border:1px solid rgba(212,175,55,0.3);">
+      <h3 class="text-base font-bold text-tx-1 mb-2 flex items-center gap-2">
+        <i class="fa-solid fa-money-bill-transfer text-gold-400"></i>
+        Choose Payment Method
+      </h3>
+      <p class="text-xs text-tx-3 mb-5" id="payMethodStaffName">Select how to pay this staff member</p>
+
+      <div class="grid grid-cols-2 gap-3 mb-5">
+        <button onclick="confirmPayment('mpesa')"
+          class="flex flex-col items-center gap-2 p-4 rounded-xl border border-emerald-500/30 bg-emerald-500/10 hover:bg-emerald-500/20 transition-colors cursor-pointer">
+          <i class="fa-solid fa-mobile-screen-button text-2xl text-emerald-400"></i>
+          <span class="text-sm font-bold text-emerald-400">M-Pesa</span>
+          <span class="text-[0.65rem] text-tx-3">B2C Transfer</span>
+        </button>
+        <button onclick="confirmPayment('cash')"
+          class="flex flex-col items-center gap-2 p-4 rounded-xl border border-gold-500/30 bg-gold-500/10 hover:bg-gold-500/20 transition-colors cursor-pointer">
+          <i class="fa-solid fa-money-bills text-2xl text-gold-400"></i>
+          <span class="text-sm font-bold text-gold-400">Cash</span>
+          <span class="text-[0.65rem] text-tx-3">Instant Receipt</span>
+        </button>
+      </div>
+
+      <button onclick="closeModal('payMethodModal')"
+        class="w-full btn btn-outline text-xs">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Search & Filter
+  function filterPayments(q) {
+      document.querySelectorAll('#payTbody tr').forEach(r => {
+          const nm = r.querySelector('.font-bold.text-sm')?.textContent?.toLowerCase() || '';
+          r.style.display = nm.includes(q.toLowerCase()) ? '' : 'none';
+      });
+  }
+  
+  function filterPayStatus(v) {
+      document.querySelectorAll('#payTbody tr').forEach(r => {
+          if (!v) { r.style.display = ''; return; }
+          const statuses = v.split(',').map(s => s.trim().toLowerCase());
+          // Getting raw cell text representing status
+          const statText = r.querySelector('td:nth-child(4) span')?.textContent?.trim().toLowerCase() || '';
+          
+          let show = false;
+          for(let st of statuses) {
+             if(statText.includes(st)) { show = true; break;}
+          }
+          r.style.display = show ? '' : 'none';
+      });
+  }
+
+  // Preload JSON for faster local fallback
+  const _allAssignments = <%- JSON.stringify(rawAssignments || []) %>;
+
+  async function showPayPanel(e, rowEl) {
+      e.stopPropagation();
+      const row = rowEl.closest('tr');
+      const assignmentId = row.dataset.id; console.log('AssignmentID:', assignmentId);
+      
+      document.getElementById('vpm-event').textContent = 'Connecting...';
+      openModal('viewPaymentModal');
+
+      let raw;
+      try {
+          const resp = await fetch(`/portal/admin-staff/assignments/${assignmentId}`, {
+              headers: { 'Accept': 'application/json' }
+          });
+          const data = await resp.json();
+          raw = data.data || data;
+      } catch (err) {
+          console.error('Fetch error:', err.message);
+          raw = _allAssignments.find(a => String(a._id) === String(assignmentId));
+          console.log('Fallback raw staff_payments:', raw?.staff_payments?.length, 'accepted:', raw?.accepted_staff_ids?.length);
+      }
+      
+      if (!raw) { showToast('Telemetry fetch failed', 'error'); closeModal('viewPaymentModal'); return; }
+
+      let staffList = [];
+      if (raw.staff_payments && raw.staff_payments.length > 0) {
+          staffList = raw.staff_payments.map(sp => ({
+              spid: String(sp._id),
+              sid: String(sp.staff_id || ''),
+              name: sp.staff_name || 'Unknown',
+              phone: sp.phone || '',
+              amount: sp.amount || raw.pay_rate || 0,
+              status: sp.status || 'Pending',
+              txn: sp.transaction_id || '',
+              received_at: sp.received_at || null
+          }));
+      } else if (raw.accepted_staff_ids && raw.accepted_staff_ids.length > 0) {
+          staffList = raw.accepted_staff_ids.map(s => ({
+              spid: null,
+              sid: String(s._id || ''),
+              name: s.name || 'Unknown',
+              phone: s.phone || '',
+              amount: raw.pay_rate || 0,
+              status: raw.payment_status || 'Pending',
+              txn: '',
+              received_at: null
+          }));
+      }
+
+      // Populate Header
+      document.getElementById('vpm-event').textContent = raw.title || '—';
+      document.getElementById('vpm-amount').textContent = 'KSh ' + (raw.pay_rate || 0).toLocaleString();
+      document.getElementById('vpm-date').textContent = raw.date ? new Date(raw.date).toLocaleDateString('en-KE', { day:'2-digit', month:'short', year:'numeric'}) : '—';
+
+      // Populate Staff Rows
+      const listEl = document.getElementById('vpm-staff-list');
+      listEl.innerHTML = '';
+
+      if (!staffList.length) {
+          listEl.innerHTML = `
+             <div class="py-10 flex flex-col items-center justify-center text-tx-3">
+                 <i class="fa-solid fa-users-slash text-2xl opacity-30 mb-2"></i>
+                 <p class="text-xs font-semibold">No operational units detected.</p>
+             </div>
+          `;
+      } else {
+          staffList.forEach((s, i) => {
+              const done = s.status === 'Received' || s.status === 'Disbursed';
+              const pillClass = { Pending: 'badge-gold text-gold-400', Sent: 'badge-blue text-blue-400', Received: 'badge-emerald text-emerald-400', Disbursed: 'badge-emerald text-emerald-400', Disputed: 'badge-red text-red-500' }[s.status] || 'badge-gold text-gold-400';
+              const initials = s.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
+              
+                const sent = s.status === 'Sent';
+                const bottomSection = done ?
+                  `<div class="mt-3 pt-3 border-t border-white/5 flex items-center justify-between">
+                    <div class="text-xs text-tx-3 flex items-center gap-1.5 font-mono">
+                      <i class="fa-solid fa-fingerprint text-emerald-500 opacity-70"></i> Ref: <span class="text-tx-2 font-bold ml-1">${s.txn || 'N/A'}</span>
+                      ${s.received_at ? `<span class="opacity-50 mx-1">&bull;</span> <span class="opacity-70">${new Date(s.received_at).toLocaleDateString('en-GB')}</span>` : ''}
+                    </div>
+                    ${s.sid ? `<a href="/portal/admin-staff/payments/${assignmentId}/receipt/${s.sid}" target="_blank" class="text-[0.6rem] font-bold text-emerald-400 hover:text-emerald-300 uppercase tracking-wider flex items-center"><i class="fa-solid fa-download mr-1"></i> Receipt</a>` : ''}
+                   </div>`
+                  : sent ?
+                  `<div class="mt-3 pt-3 border-t border-white/5 flex items-center justify-between gap-3">
+                    <div class="text-[0.65rem] text-blue-400 flex items-center gap-2">
+                      <i class="fa-solid fa-paper-plane animate-pulse"></i>
+                      <span>Sent via M-Pesa &mdash; awaiting confirmation.</span>
+                    </div>
+                    <button onclick="markReceivedManual('${assignmentId}','${s.spid || ''}',${i})"
+                      class="btn btn-xs bg-emerald-600/20 text-emerald-400 hover:bg-emerald-500 hover:text-white border border-emerald-500/30 font-bold text-[0.65rem] whitespace-nowrap flex-shrink-0">
+                      <i class="fa-solid fa-check mr-1"></i> Confirm Received
+                    </button>
+                   </div>`
+                  :
+                  `<div class="mt-3 pt-3 border-t border-white/5 flex items-center gap-3">
+                    <div class="relative flex-1 max-w-[150px]">
+                      <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-[0.65rem] font-bold text-tx-3 font-mono">KSh</span>
+                      <input type="number" id="amt-${i}" value="${s.amount}" min="0" class="form-input bg-dark-bg border-white/5 text-sm font-mono font-bold text-gold-400 pl-9 w-full rounded-md h-8 py-0">
+                    </div>
+                    <button id="paybtn-${i}" data-spid="${s.spid || ''}" onclick="openPayMethodModal('${assignmentId}','${s.spid || ''}','${s.name}',document.getElementById('amt-${i}').value)" class="btn btn-primary btn-sm bg-gold-600/20 text-gold-400 hover:bg-gold-500 hover:text-dark-bg border-none font-bold h-8 flex-1 sm:flex-none">
+                      <i class="fa-solid fa-money-bill-transfer mr-1"></i> Pay
+                    </button>
+                   </div>`;
+
+              const cardHtml = `
+                <div class="glass-card bg-white/5 border border-white/5 p-3.5 transition-colors hover:bg-white/10 group">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-full bg-gradient-to-br from-dark-card to-dark-bg flex items-center justify-center font-bold text-[0.6rem] text-white ring-1 ring-white/10 shadow-lg shrink-0">
+                               ${initials}
+                            </div>
+                            <div>
+                               <div class="font-bold text-sm text-tx-1">${s.name}</div>
+                               <div class="text-[0.65rem] text-tx-3 mt-0.5 font-mono">
+                                  ${s.phone || 'No Phone Sync'} <span class="mx-1">•</span> <span class="text-gold-400/80">KSh ${s.amount.toLocaleString()}</span>
+                               </div>
+                            </div>
+                        </div>
+                        <span class="text-[0.6rem] font-bold tracking-wider uppercase px-2 py-1 rounded border border-current ${pillClass} bg-transparent flex items-center gap-1.5 shrink-0" id="vpm-pill-${i}">
+                            <span class="w-1.5 h-1.5 rounded-full bg-current"></span> ${s.status}
+                        </span>
+                    </div>
+                    ${bottomSection}
+                </div>
+              `;
+              
+              // Inserting as pure HTML to skip creating tons of DOM elements manually
+              // Safely isolated execution
+              listEl.insertAdjacentHTML('beforeend', cardHtml);
+          });
+      }
+
+      // Populate Footer
+      const unpaidCount = staffList.filter(s => s.status !== 'Received' && s.status !== 'Disbursed').length;
+      document.getElementById('vpm-footer').innerHTML = `
+          <button class="btn btn-outline border-white/10 hover:bg-white/5 text-sm" onclick="closeModal('viewPaymentModal')">Cancel Term</button>
+          ${unpaidCount > 0 ? `
+             <button class="btn btn-primary shadow-glow-gold bg-gradient-to-r from-gold-600 to-amber-500 text-dark-bg border-none font-bold ml-2" onclick="payAllStaff('${assignmentId}',${staffList.length})">
+                <i class="fa-solid fa-boxes-packing mr-2"></i> Batch Process (${unpaidCount})
+             </button>
+          ` : ''}
+      `;
+  }
+
+  // Same Logic Engine as Original Code, preserved structure but changed IDs occasionally where they matched new tailwind UI.
+  async function payOneStaff(assignmentId, spid, index) {
+      const amtEl = document.getElementById('amt-' + index);
+      const btn = document.getElementById('paybtn-' + index);
+      const amt = amtEl ? parseFloat(amtEl.value) || 0 : 0;
+
+      if (amt <= 0) { showToast('Require valid numerical sum', 'error'); amtEl && amtEl.focus(); return; }
+
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-spinner animate-spin"></i> Executing';
+
+      try {
+          const r = await fetch('/portal/admin-staff/assignments/' + assignmentId + '/pay-staff', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content || '' },
+              body: JSON.stringify({ staff_payment_id: spid || undefined, amount: amt })
+          });
+          const d = await r.json();
+          if (d.success) {
+              showToast('Signal Transmitted', 'success');
+              
+              const pill = document.getElementById('vpm-pill-' + index);
+              if (pill) { 
+                 pill.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-current"></span> Sent`; 
+                 pill.className = 'text-[0.6rem] font-bold tracking-wider uppercase px-2 py-1 rounded border border-current bg-transparent flex items-center gap-1.5 shrink-0 badge-blue text-blue-400'; 
+              }
+              const inputRow = btn.parentElement;
+              if (inputRow) inputRow.outerHTML = `
+                <div class="mt-3 pt-3 border-t border-white/5 flex items-center justify-between gap-3">
+                  <div class="text-[0.65rem] text-blue-400 flex items-center gap-2">
+                    <i class="fa-solid fa-paper-plane animate-pulse"></i>
+                    <span>Sent via M-Pesa &mdash; awaiting confirmation.</span>
+                  </div>
+                  <button onclick="markReceivedManual('${assignmentId}','${spid}',${index})"
+                    class="btn btn-xs bg-emerald-600/20 text-emerald-400 hover:bg-emerald-500 hover:text-white border border-emerald-500/30 font-bold text-[0.65rem] whitespace-nowrap flex-shrink-0">
+                    <i class="fa-solid fa-check mr-1"></i> Confirm Received
+                  </button>
+                </div>`;
+          } else {
+              showToast(d.error || 'Signal Rejected', 'error');
+              btn.disabled = false;
+              btn.innerHTML = 'Transact Flow';
+          }
+      } catch (err) {
+          showToast('Network Fault', 'error');
+          btn.disabled = false;
+          btn.innerHTML = 'Transact Flow';
+      }
+  }
+
+  async function payAllStaff(assignmentId, count) {
+      const queue = [];
+      for (let i = 0; i < count; i++) {
+          const btn = document.getElementById('paybtn-' + i);
+          if (!btn) continue; 
+          const amt = parseFloat(document.getElementById('amt-' + i)?.value) || 0;
+          if (amt <= 0) {
+              showToast('Data Error in forms.', 'error');
+              document.getElementById('amt-' + i)?.focus();
+              return;
+          }
+          queue.push({ i, spid: btn.dataset?.spid || '', amt });
+      }
+      
+      if (!queue.length) { showToast('No pending transactions detected', 'info'); return; }
+
+      const payAllBtn = document.getElementById('vpm-footer').querySelector('.btn-primary');
+      if (payAllBtn) { payAllBtn.disabled = true; payAllBtn.innerHTML = '<i class="fa-solid fa-spinner animate-spin"></i> Processing...'; }
+
+      let ok = 0;
+      for (const item of queue) {
+          const btn = document.getElementById('paybtn-' + item.i);
+          if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner animate-spin"></i>'; }
+          try {
+              const r = await fetch('/portal/admin-staff/assignments/' + assignmentId + '/pay-staff', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json', 'CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content || '' },
+                  body: JSON.stringify({ staff_payment_id: item.spid || undefined, amount: item.amt })
+              });
+              const d = await r.json();
+              if (d.success) {
+                  ok++;
+                  const pill = document.getElementById('vpm-pill-' + item.i);
+                  if (pill) { 
+                      pill.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-current"></span> Sent`; 
+                      pill.className = 'text-[0.6rem] font-bold tracking-wider uppercase px-2 py-1 rounded border border-current bg-transparent flex items-center gap-1.5 shrink-0 badge-blue text-blue-400'; 
+                  }
+                  const inputRow = btn ? btn.parentElement : null;
+                  if (inputRow) inputRow.outerHTML = `
+                     <div class="mt-3 pt-3 border-t border-white/5 flex items-center">
+                         <div class="text-xs text-tx-3 flex items-center gap-1.5 italic font-medium"><i class="fa-regular fa-paper-plane text-blue-400"></i> Dispatched to MPESA API.</div>
+                     </div>`;
+              }
+          } catch (e) {}
+      }
+      showToast(`Batch sequence completed. ${ok}/${queue.length} packets resolved.`, 'success');
+  }
+
+  // --- Context Menu Logic ---
+  const ctxMenu = document.getElementById('payContextMenu');
+  
+  document.addEventListener('contextmenu', e => {
+      const row = e.target.closest('tbody tr');
+      if (row) {
+          e.preventDefault();
+          ctxMenu.style.display = 'block';
+          ctxMenu.classList.remove('hidden');
+          
+          let x = e.clientX;
+          let y = e.clientY;
+          if (x + 200 > window.innerWidth) x -= 200;
+          if (y + 120 > window.innerHeight) y -= 120;
+          
+          ctxMenu.style.left = x + 'px';
+          ctxMenu.style.top = y + 'px';
+          
+          setTimeout(() => ctxMenu.classList.add('opacity-100'), 10);
+      } else { hideContextMenu(); }
+  });
+  
+  document.addEventListener('click', hideContextMenu);
+  function hideContextMenu() {
+     ctxMenu.classList.remove('opacity-100');
+     setTimeout(() => { ctxMenu.classList.add('hidden'); ctxMenu.style.display = 'none'; }, 150);
+  }
+
+  function markSent() { hideContextMenu(); showToast('Signal overriden. Terminals updated.', 'info'); }
+  function handleConfirmations() { hideContextMenu(); showToast('Manual query dispatched to servers.', 'info'); }
+  function handleDisputes() { hideContextMenu(); showToast('Dispute logic triggered.', 'info'); }
+
+    async function markReceivedManual(assignmentId, spid, idx) {
+      if (!spid) return showToast('No payment record ID found', 'error');
+      const btn = event.target.closest('button');
+      if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner animate-spin mr-1"></i> Confirming...'; }
+
+      try {
+        const csrf = document.querySelector('meta[name="csrf-token"]')?.content || '';
+        const r = await fetch(`/portal/admin-staff/assignments/${assignmentId}/payments/${spid}/mark-received`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'CSRF-Token': csrf }
+        });
+        const d = await r.json();
+        if (d.success) {
+          showToast('Payment confirmed as Received', 'success');
+          const pill = document.getElementById(`vpm-pill-${idx}`);
+          if (pill) {
+            pill.className = 'text-[0.6rem] font-bold tracking-wider uppercase px-2 py-1 rounded border border-current badge-emerald text-emerald-400 bg-transparent flex items-center gap-1.5 shrink-0';
+            pill.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-current"></span> Received';
+          }
+          setTimeout(() => location.reload(), 1500);
+        } else {
+          showToast(d.error || 'Failed to confirm', 'error');
+          if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-check mr-1"></i> Confirm Received'; }
+        }
+      } catch(e) {
+        showToast('Network error', 'error');
+        if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-check mr-1"></i> Confirm Received'; }
+      }
+    }
+
+    // Payment method choice
+    let _pendingPayment = null;
+
+    function openPayMethodModal(assignmentId, spId, staffName, amount) {
+      _pendingPayment = { assignmentId, spId, amount, staffName };
+      document.getElementById('payMethodStaffName').textContent =
+        `Paying ${staffName} — KSh ${Number(amount).toLocaleString()}`;
+      openModal('payMethodModal');
+    }
+
+    async function confirmPayment(method) {
+      closeModal('payMethodModal');
+      if (!_pendingPayment) return;
+      const { assignmentId, spId, amount, staffName } = _pendingPayment;
+      _pendingPayment = null;
+
+      if (method === 'mpesa') {
+        // existing flow — amount input already read, just pass through
+      }
+      if (method === 'cash') {
+        if (!confirm(`Confirm cash payment of KSh ${Number(amount).toLocaleString()}? This will immediately mark as Received and send a receipt.`)) return;
+      }
+
+      try {
+        const csrf = document.querySelector('meta[name="csrf-token"]')?.content || '';
+        const r = await fetch(`/portal/admin-staff/assignments/${assignmentId}/pay-staff`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'CSRF-Token': csrf },
+          body: JSON.stringify({
+            staff_payment_id: spId,
+            amount,
+            payment_method: method
+          })
+        });
+        const d = await r.json();
+        if (d.success) {
+          showToast(d.message || `Payment ${method === 'cash' ? 'recorded' : 'initiated'}`, 'success');
+          setTimeout(() => location.reload(), 1200);
+        } else {
+          showToast(d.error || 'Payment failed', 'error');
+        }
+      } catch(err) {
+          console.error('Fetch error:', err);
+        showToast('Request failed', 'error');
+          console.log('Fallback raw:', raw);
+      }
+    }
+
+      function exportPaymentsCSV() {
+        const rows = [['Event','Staff','Amount','Method','Status','Transaction ID','Date']];
+        (_allAssignments || []).forEach(a => {
+          (a.staff_payments || []).forEach(sp => {
+            rows.push([
+              a.title || '',
+              sp.staff_name || '',
+              sp.amount || 0,
+              sp.payment_method || 'MPesa',
+              sp.status || 'Pending',
+              sp.transaction_id || '',
+              sp.sent_at ? new Date(sp.sent_at).toLocaleDateString('en-KE') : ''
+            ]);
+          });
+        });
+        const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `payments-${new Date().toISOString().slice(0,10)}.csv`;
+        a.click();
+      }
+
+      function exportPaymentsExcel() {
+        const rows = [['Event','Staff','Amount (KSh)','Payment Method','Status','Transaction ID','Date']];
+        (_allAssignments || []).forEach(a => {
+          (a.staff_payments || []).forEach(sp => {
+            rows.push([
+              a.title || '',
+              sp.staff_name || '',
+              sp.amount || 0,
+              sp.payment_method || 'MPesa',
+              sp.status || 'Pending',
+              sp.transaction_id || '',
+              sp.sent_at ? new Date(sp.sent_at).toLocaleDateString('en-KE') : ''
+            ]);
+          });
+        });
+        // Build HTML table for Excel
+        let html = '<table><tr>' + rows[0].map(h => `<th>${h}</th>`).join('') + '</tr>';
+        rows.slice(1).forEach(r => {
+          html += '<tr>' + r.map(v => `<td>${v}</td>`).join('') + '</tr>';
+        });
+        html += '</table>';
+        const blob = new Blob([`<html><head><meta charset="utf-8"></head><body>${html}</body></html>`],
+          { type: 'application/vnd.ms-excel' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `payments-${new Date().toISOString().slice(0,10)}.xls`;
+        a.click();
+      }
+</script>

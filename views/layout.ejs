@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="csrf-token" content="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+    <title>Staff System - Emerald Events</title>
+
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+
+<body>
+
+    <% if (typeof user !=='undefined' ) { %>
+        <header>
+            <div class="logo">
+                <i class="fa-solid fa-users"></i>
+                Staff System
+            </div>
+            <div>
+                <a href="/portal/auth/logout" class="logout-btn">
+                    <i class="fa-solid fa-right-from-bracket"></i> Logout
+                </a>
+            </div>
+        </header>
+        <% } %>
+
+            <main>
+                <%- body %>
+                    <!-- Using EJS layouts or we can just include header/footer. Wait, standard EJS doesn't support layout without express-ejs-layouts. I will use standard includes. -->
+            </main>
+
+            <!-- Socket.io -->
+            <script src="/socket.io/socket.io.js"></script>
+            <script>
+                // Global socket connection
+                const socket = io();
+
+    <% if (typeof user !== 'undefined') { %>
+                    // Join self room and role room
+                    socket.emit('joinRoom', '<%= user._id %>');
+                    socket.emit('joinRoom', '<%= user.role %>');
+    <% } %>
+
+                // CSRF Fetch Interceptor
+                const originalFetch = window.fetch;
+                window.fetch = async function (url, options) {
+                    options = options || {};
+                    const method = options.method ? options.method.toUpperCase() : 'GET';
+                    if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(method)) {
+                        options.headers = options.headers || {};
+                        const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+                        if (token) {
+                            options.headers['CSRF-Token'] = token;
+                        }
+                    }
+                    return originalFetch(url, options);
+                };
+
+                // Helper for VAPID key conversion
+                function urlBase64ToUint8Array(base64String) {
+                    const padding = '='.repeat((4 - base64String.length % 4) % 4);
+                    const base64 = (base64String + padding)
+                        .replace(/\-/g, '+')
+                        .replace(/_/g, '/');
+                    const rawData = window.atob(base64);
+                    const outputArray = new Uint8Array(rawData.length);
+                    for (let i = 0; i < rawData.length; ++i) {
+                        outputArray[i] = rawData.charCodeAt(i);
+                    }
+                    return outputArray;
+                }
+
+                // Register Service Worker and subscribe to Push Notifications
+                if ('serviceWorker' in navigator && 'PushManager' in window) {
+                    navigator.serviceWorker.register('/sw.js')
+                        .then(function (registration) {
+                            console.log('Service Worker Registered');
+
+                            // Check if already subscribed
+                            return registration.pushManager.getSubscription()
+                                .then(async function (subscription) {
+                                    if (subscription) return subscription;
+
+                                    // Otherwise, subscribe
+                                    const vapidPublicKey = '<%= typeof vapidPublicKey !== "undefined" ? vapidPublicKey : "" %>';
+                                    if (!vapidPublicKey) return null;
+
+                                    const convertedVapidKey = urlBase64ToUint8Array(vapidPublicKey);
+                                    return registration.pushManager.subscribe({
+                                        userVisibleOnly: true,
+                                        applicationServerKey: convertedVapidKey
+                                    });
+                                });
+                        }).then(function (subscription) {
+                            if (subscription) {
+                                // Send subscription to server
+                                fetch('/portal/staff/push/subscribe', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify(subscription)
+                                }).catch(err => console.error('Failed to save push subscription', err));
+                            }
+                        }).catch(function (error) {
+                            console.error('Service Worker Error', error);
+                        });
+                }
+            </script>
+</body>
+
+</html>

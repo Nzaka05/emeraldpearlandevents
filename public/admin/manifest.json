@@ -1,0 +1,20 @@
+{
+  "name": "Live Event Command Center - Emerald Pearl Events",
+  "short_name": "CommandCenter",
+  "start_url": "/admin/command-center",
+  "display": "standalone",
+  "background_color": "#0a2f1c",
+  "theme_color": "#d4af37",
+  "icons": [
+    {
+      "src": "/assets/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/assets/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

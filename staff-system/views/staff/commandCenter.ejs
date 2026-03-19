@@ -1,0 +1,345 @@
+<style>
+    :root {
+        --c-bg: #f8fafc;
+        --c-card: #ffffff;
+        --c-text: #1e293b;
+        --c-muted: #64748b;
+        --c-border: #e2e8f0;
+        --c-primary: #0a2f1c;
+        --c-accent: #d4af37;
+        --c-danger: #ef4444;
+        --c-success: #10b981;
+    }
+    
+    .cmd-wrapper {
+        padding: 16px;
+        background: var(--c-bg);
+        min-height: calc(100vh - 60px);
+        color: var(--c-text);
+        max-width: 800px;
+        margin: 0 auto;
+    }
+
+    .glass-panel {
+        background: var(--c-card);
+        border: 1px solid var(--c-border);
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 16px;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.03);
+    }
+
+    .risk-banner {
+        background: rgba(239, 68, 68, 0.1);
+        border: 1px solid var(--c-danger);
+        color: var(--c-danger);
+        padding: 12px;
+        border-radius: 8px;
+        margin-bottom: 16px;
+        display: none;
+        align-items: center;
+        gap: 8px;
+    }
+    .risk-banner.visible { display: flex; }
+
+    /* Mobile-first tabs */
+    .mob-tabs {
+        display: flex;
+        overflow-x: auto;
+        gap: 8px;
+        padding-bottom: 8px;
+        margin-bottom: 16px;
+        border-bottom: 1px solid var(--c-border);
+    }
+    .mob-tab {
+        white-space: nowrap;
+        padding: 10px 16px;
+        background: none;
+        border: none;
+        color: var(--c-muted);
+        font-weight: 600;
+        cursor: pointer;
+        border-radius: 8px;
+        transition: all 0.2s;
+    }
+    .mob-tab.active {
+        background: var(--c-primary);
+        color: var(--c-accent);
+    }
+
+    .tab-section { display: none; }
+    .tab-section.active { display: block; }
+    
+    .roster-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 0;
+        border-bottom: 1px solid var(--c-border);
+    }
+    .roster-item:last-child { border-bottom: none; }
+</style>
+
+<div class="cmd-wrapper">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 16px;">
+        <h2 style="margin:0; font-size:1.4rem;">Command Center</h2>
+        <% if(eventInfo) { %>
+            <span style="background:var(--c-accent); color:var(--c-primary); padding:4px 12px; border-radius:12px; font-weight:700; font-size:0.8rem;">
+                <%= eventInfo.event.state %>
+            </span>
+        <% } %>
+    </div>
+    
+    <div id="riskBanner" class="risk-banner">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        <span><strong>HIGH RISK EVENT:</strong> Proceed with caution and ensure tight supervision.</span>
+    </div>
+
+    <% if (!eventInfo) { %>
+        <div class="glass-panel" style="text-align:center; padding: 40px 20px;">
+            <i class="fa-solid fa-satellite-dish" style="font-size: 3rem; color: var(--c-muted); margin-bottom:16px;"></i>
+            <h3 style="margin:0; color:var(--c-text);">Standby Mode</h3>
+            <p style="color:var(--c-muted);">No active LIVE or READY event assigned to you right now.</p>
+        </div>
+    <% } else { %>
+        <div class="glass-panel" style="display:flex; flex-direction:column; gap:8px;">
+            <h3 style="margin:0; font-size:1.3rem;"><%= eventInfo.event.title %></h3>
+            <div style="font-size:0.9rem; color:var(--c-muted);">
+                <i class="fa-solid fa-location-dot"></i> <%= eventInfo.event.location %><br>
+                <i class="fa-regular fa-clock"></i> <%= eventInfo.event.start_time %> - <%= eventInfo.event.end_time %>
+            </div>
+        </div>
+
+        <div class="mob-tabs">
+            <button class="mob-tab active" onclick="showTab('roster', this)"><i class="fa-solid fa-users"></i> Staff Roster</button>
+            <button class="mob-tab" onclick="showTab('finance', this)"><i class="fa-solid fa-sack-dollar"></i> Finance</button>
+            <button class="mob-tab" onclick="showTab('anomalies', this)"><i class="fa-solid fa-bolt"></i> Anomalies & Alerts</button>
+            <button class="mob-tab" onclick="showTab('reviews', this)"><i class="fa-solid fa-star"></i> Performance Reviews</button>
+        </div>
+
+        <div id="tab-roster" class="tab-section active glass-panel">
+            <h4 style="margin-top:0;">Team Attendance (<%= eventInfo.staffRoster.filter(s=>s.status==='Clocked In').length %>/<%= eventInfo.staffRoster.length %>)</h4>
+            <% eventInfo.staffRoster.forEach(s => { %>
+                <div class="roster-item">
+                    <div>
+                        <div style="font-weight:600;"><%= s.name %></div>
+                        <div style="font-size:0.8rem; color:var(--c-muted);"><%= s.role %></div>
+                    </div>
+                    <div style="text-align:right;">
+                        <% if(s.status === 'Clocked In') { %>
+                            <span style="color:var(--c-success); font-weight:700; font-size:0.85rem;"><i class="fa-solid fa-check"></i> Found</span>
+                        <% } else if (s.status === 'Missing') { %>
+                            <span style="color:var(--c-danger); font-weight:700; font-size:0.85rem;">Missing (<%= s.minutesLate %>m)</span>
+                        <% } else { %>
+                            <span style="color:var(--c-muted); font-size:0.85rem;">Pending</span>
+                        <% } %>
+                    </div>
+                </div>
+            <% }); %>
+        </div>
+
+        <div id="tab-finance" class="tab-section glass-panel">
+            <h4 style="margin-top:0;">Operational Budget Status</h4>
+            <div style="margin-bottom: 24px;">
+                <h5 style="color:var(--c-danger); margin:0 0 8px 0;">Emergency Funds Handled</h5>
+                <% if(eventInfo.financials.emergencies.length === 0) { %>
+                    <p style="font-size:0.85rem; color:var(--c-muted); border-left:3px solid var(--c-border); padding-left:12px;">No emergency payouts logged.</p>
+                <% } else { %>
+                    <% eventInfo.financials.emergencies.forEach(em => { %>
+                        <div style="font-size:0.85rem; border-left:3px solid var(--c-danger); padding-left:12px; margin-bottom:8px;">
+                            <strong>KES <%= em.amount.toLocaleString() %></strong> — <%= em.reason %>
+                        </div>
+                    <% }) %>
+                <% } %>
+            </div>
+            
+            <div>
+                <h5 style="color:var(--c-primary); margin:0 0 8px 0;">Standard Expenses</h5>
+                <% if(eventInfo.financials.expenses.length === 0) { %>
+                    <p style="font-size:0.85rem; color:var(--c-muted); border-left:3px solid var(--c-border); padding-left:12px;">No standard expenses logged.</p>
+                <% } else { %>
+                    <% eventInfo.financials.expenses.forEach(ex => { %>
+                        <div style="font-size:0.85rem; border-left:3px solid var(--c-primary); padding-left:12px; margin-bottom:8px;">
+                            <strong>KES <%= ex.amount.toLocaleString() %></strong> — <%= ex.description %>
+                        </div>
+                    <% }) %>
+                <% } %>
+            </div>
+        </div>
+
+        <div id="tab-anomalies" class="tab-section glass-panel">
+            <h4 style="margin-top:0;">Anomalies log</h4>
+            <% if(eventInfo.alerts.length === 0) { %>
+                <p style="color:var(--c-muted); font-size:0.9rem; text-align:center; padding:16px;">All systems nominal.</p>
+            <% } else { %>
+                <% eventInfo.alerts.forEach(a => { %>
+                    <div style="background: rgba(245, 158, 11, 0.1); border: 1px dashed var(--c-warning); padding:12px; border-radius:8px; margin-bottom:8px;">
+                        <div style="color:var(--cc-warning); font-weight:700; font-size:0.85rem;"><i class="fa-solid fa-triangle-exclamation"></i> Staff Missing</div>
+                        <div style="font-size:0.85rem; margin-top:4px;"><%= a.staff_name %> is <%= a.minutes_late %>m late over threshold.</div>
+                    </div>
+                <% }) %>
+            <% } %>
+        </div>
+
+        <div id="tab-reviews" class="tab-section glass-panel">
+            <h4 style="margin-top:0;">Staff Performance Evaluation</h4>
+            <div id="reviews-container">
+                <div style="text-align:center; padding: 24px; color:var(--c-muted);">
+                    <i class="fa-solid fa-circle-notch fa-spin"></i> Checking review eligibility...
+                </div>
+            </div>
+        </div>
+    <% } %>
+</div>
+
+<script>
+    function showTab(tabId, el) {
+        document.querySelectorAll('.mob-tab').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-section').forEach(s => s.classList.remove('active'));
+        el.classList.add('active');
+        document.getElementById('tab-' + tabId).classList.add('active');
+    }
+
+    if (typeof io !== 'undefined') {
+        const socket = io(); // Assuming connected handled globally
+        socket.on('cmd:staff_clocked_in', () => window.location.reload());
+        socket.on('cmd:emergency_fund_approved', () => window.location.reload());
+        socket.on('cmd:staff_missing_alert', () => window.location.reload());
+        socket.on('cmd:expense_logged', () => window.location.reload());
+        socket.on('cmd:event_state_change', () => window.location.reload());
+    }
+
+    <% if (eventInfo) { %>
+    const eventId = '<%= eventInfo.event._id %>';
+    
+    async function loadReviews() {
+        const container = document.getElementById('reviews-container');
+        try {
+            const res = await fetch(`/portal/supervisor/events/${eventId}/reviews/pending`);
+            const json = await res.json();
+            if (!json.success) throw new Error(json.error);
+
+            if (!json.data.window_open) {
+                container.innerHTML = `<div style="text-align:center; padding: 24px;">
+                    <i class="fa-solid fa-lock" style="font-size:2rem; color:var(--c-muted); margin-bottom:12px;"></i>
+                    <p>${json.data.reason}</p>
+                </div>`;
+                return;
+            }
+
+            if (json.data.pending_staff.length === 0) {
+                container.innerHTML = `<div style="text-align:center; padding: 24px;">
+                    <i class="fa-solid fa-check-circle" style="font-size:2rem; color:var(--c-success); margin-bottom:12px;"></i>
+                    <p>All staff reviewed for this event!</p>
+                </div>`;
+                return;
+            }
+
+            let html = '<form id="reviewForm" onsubmit="submitReviews(event)">';
+            json.data.pending_staff.forEach(s => {
+                html += `
+                    <div class="review-card" style="border:1px solid var(--c-border); padding:16px; border-radius:8px; margin-bottom:16px; background:#fafafa;">
+                        <h5 style="margin:0 0 12px 0; font-size:1.1rem;">${s.firstname} ${s.lastname} (${s.role})</h5>
+                        
+                        <input type="hidden" name="staff_id_${s._id}" value="${s._id}">
+                        
+                        <!-- Ratings -->
+                        <div style="display:grid; grid-template-columns:1fr; gap:8px; margin-bottom:12px;">
+                            ${['punctuality_rating', 'professionalism_rating', 'teamwork_rating', 'client_interaction_rating', 'task_completion_rating'].map(f => `
+                                <div style="display:flex; justify-content:space-between; align-items:center;">
+                                    <span style="font-size:0.85rem;">${f.replace('_rating','').replace('_',' ')}</span>
+                                    <input type="range" name="${f}_${s._id}" min="1" max="5" value="3" style="width:100px;">
+                                </div>
+                            `).join('')}
+                        </div>
+                        
+                        <!-- Categorical -->
+                        <div style="margin-bottom:12px;">
+                            <label style="font-size:0.8rem; display:block; margin-bottom:4px;">Strengths (comma separated)</label>
+                            <input type="text" name="strengths_${s._id}" style="width:100%; padding:6px; border-radius:4px; border:1px solid var(--c-border);">
+                        </div>
+                        
+                        <div style="margin-bottom:12px;">
+                            <label style="font-size:0.8rem; display:block; margin-bottom:4px;">Improvement Areas (comma separated)</label>
+                            <input type="text" name="improvement_areas_${s._id}" style="width:100%; padding:6px; border-radius:4px; border:1px solid var(--c-border);">
+                        </div>
+                        
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <input type="checkbox" name="would_rebook_${s._id}" checked>
+                            <label style="font-size:0.85rem;">Would Rebook?</label>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            html += `<button type="submit" style="width:100%; padding:12px; background:var(--c-primary); color:var(--c-accent); font-weight:bold; border-radius:8px; border:none; margin-top:16px; cursor:pointer;">Submit Batch Reviews</button></form>`;
+            
+            container.innerHTML = html;
+
+        } catch (e) {
+            container.innerHTML = `<p style="color:red; text-align:center;">Failed to load pending reviews: ${e.message}</p>`;
+        }
+    }
+
+    async function submitReviews(e) {
+        e.preventDefault();
+        const pd = new FormData(e.target);
+        
+        // Group by staff_id
+        const staffIds = [...new Set([...pd.keys()].filter(k => k.startsWith('staff_id_')).map(k => pd.get(k)))];
+        const payload = [];
+
+        staffIds.forEach(id => {
+            const getStr = (key) => {
+                const val = pd.get(`${key}_${id}`);
+                return val ? val.split(',').map(s=>s.trim()).filter(s=>s) : [];
+            };
+
+            payload.push({
+                staff_id: id,
+                punctuality_rating: parseInt(pd.get(`punctuality_rating_${id}`)),
+                professionalism_rating: parseInt(pd.get(`professionalism_rating_${id}`)),
+                teamwork_rating: parseInt(pd.get(`teamwork_rating_${id}`)),
+                client_interaction_rating: parseInt(pd.get(`client_interaction_rating_${id}`)),
+                task_completion_rating: parseInt(pd.get(`task_completion_rating_${id}`)),
+                strengths: getStr('strengths'),
+                improvement_areas: getStr('improvement_areas'),
+                would_rebook: pd.get(`would_rebook_${id}`) === 'on'
+            });
+        });
+
+        const btn = e.target.querySelector('button[type="submit"]');
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Submitting...';
+        btn.disabled = true;
+
+        try {
+            const res = await fetch(`/portal/supervisor/events/${eventId}/reviews/submit`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content || '' },
+                body: JSON.stringify({ reviews: payload })
+            });
+            const d = await res.json();
+            
+            if (d.success) {
+                if (d.data.failed > 0) {
+                    alert(`Submitted ${d.data.submitted}. Failed: ${d.data.failed}. Check errors in response logs.`);
+                } else {
+                    alert('All reviews submitted successfully!');
+                }
+                loadReviews(); // reload to clear successes
+            } else {
+                alert('Error: ' + d.error);
+                btn.innerHTML = 'Submit Batch Reviews';
+                btn.disabled = false;
+            }
+        } catch (err) {
+            alert('Fatal error: ' + err.message);
+            btn.innerHTML = 'Submit Batch Reviews';
+            btn.disabled = false;
+        }
+    }
+
+    // load on ready
+    document.addEventListener('DOMContentLoaded', loadReviews);
+    <% } %>
+</script>

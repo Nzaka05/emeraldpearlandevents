@@ -1,0 +1,126 @@
+<% currentPage='profile' ; %>
+
+<!-- ══ Profile Layout ══ -->
+<div class="flex items-center justify-between mb-5 animate-fade-up">
+    <div>
+        <h1 class="font-display text-2xl font-extrabold text-tx-1 tracking-tight flex items-center gap-3">
+            <i class="fa-solid fa-circle-user text-emerald-400"></i>
+            <span class="text-gradient-emerald">My Profile</span>
+        </h1>
+        <p class="text-[0.7rem] text-tx-3 mt-1 uppercase tracking-widest font-mono">Supervisor Account & GPS Status</p>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 sm:grid-cols-[300px,1fr] gap-4 mb-[80px] animate-fade-up">
+
+    <!-- Left: Avatar Card -->
+    <div class="space-y-4">
+        <div class="glass-card p-5 text-center border-t-2 border-emerald-500/30">
+            <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-emerald-700 to-emerald-500 flex items-center justify-center font-display text-3xl font-extrabold text-white shadow-glow-emerald mx-auto mb-4">
+                <%= user.name.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2) %>
+            </div>
+            <div class="font-display text-base font-extrabold text-tx-1 mb-1.5"><%= user.name %></div>
+            <span class="inline-block text-[0.6rem] font-bold uppercase tracking-widest px-2 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 rounded mb-4"><%= user.role %></span>
+            
+            <div class="border-t border-white/5 pt-4 space-y-2">
+                <div class="flex items-center justify-between text-[0.65rem]">
+                    <span class="text-tx-3 font-mono">Email</span>
+                    <span class="text-tx-2 font-medium truncate max-w-[160px]"><%= user.email %></span>
+                </div>
+                <% if(user.phone) { %>
+                    <div class="flex items-center justify-between text-[0.65rem]">
+                        <span class="text-tx-3 font-mono">Phone</span>
+                        <span class="text-tx-2 font-medium"><%= user.phone %></span>
+                    </div>
+                <% } %>
+            </div>
+
+            <!-- GPS Status Block -->
+            <div class="mt-4 bg-black/30 border border-white/5 rounded-xl p-3">
+                <div class="flex items-center justify-center gap-2 mb-1">
+                    <div class="gps-dot" id="profileGpsDot"></div>
+                    <span class="text-[0.7rem] font-mono font-bold text-tx-3" id="profileGpsText">GPS not sharing</span>
+                </div>
+                <% if(user.last_location && user.last_location.lat) { %>
+                    <div class="text-[0.6rem] text-tx-3 font-mono text-center opacity-60 mt-1">
+                        Last: <%= user.last_location.lat.toFixed(5) %>, <%= user.last_location.lng.toFixed(5) %>
+                    </div>
+                <% } %>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right: Forms -->
+    <div class="space-y-4">
+        <!-- Edit Profile -->
+        <div class="glass-card">
+            <div class="px-5 py-4 border-b border-white/5 flex items-center gap-2">
+                <i class="fa-solid fa-user-pen text-blue-400 text-sm"></i>
+                <h3 class="text-sm font-bold text-tx-1 uppercase tracking-widest">Edit Profile</h3>
+            </div>
+            <div class="p-5">
+                <form action="/portal/supervisor/profile/update" method="POST" class="space-y-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-[0.65rem] font-bold uppercase tracking-widest text-tx-3 mb-2">Full Name</label>
+                            <input type="text" name="name" value="<%= user.name %>" required
+                                class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-tx-1 placeholder-tx-3/50 focus:border-blue-500/50 focus:ring-0 focus:outline-none transition-colors">
+                        </div>
+                        <div>
+                            <label class="block text-[0.65rem] font-bold uppercase tracking-widest text-tx-3 mb-2">Phone</label>
+                            <input type="text" name="phone" value="<%= user.phone || '' %>" placeholder="+254 700 000 000"
+                                class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-tx-1 placeholder-tx-3/50 focus:border-blue-500/50 focus:ring-0 focus:outline-none transition-colors">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary bg-gradient-to-r from-blue-600 to-blue-400 text-white border-none font-bold shadow-[0_0_20px_rgba(59,130,246,0.2)]">
+                        <i class="fa-solid fa-floppy-disk mr-2"></i> Save Changes
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Change Password -->
+        <div class="glass-card">
+            <div class="px-5 py-4 border-b border-white/5 flex items-center gap-2">
+                <i class="fa-solid fa-lock text-gold-400 text-sm"></i>
+                <h3 class="text-sm font-bold text-tx-1 uppercase tracking-widest">Change Password</h3>
+            </div>
+            <div class="p-5">
+                <form action="/portal/supervisor/profile/password" method="POST" class="space-y-4">
+                    <div>
+                        <label class="block text-[0.65rem] font-bold uppercase tracking-widest text-tx-3 mb-2">Current Password</label>
+                        <input type="password" name="currentPassword" required placeholder="Enter current password"
+                            class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-tx-1 placeholder-tx-3/50 focus:border-gold-500/50 focus:ring-0 focus:outline-none transition-colors">
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-[0.65rem] font-bold uppercase tracking-widest text-tx-3 mb-2">New Password</label>
+                            <input type="password" name="newPassword" required minlength="8" placeholder="Min. 8 characters"
+                                class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-tx-1 placeholder-tx-3/50 focus:border-gold-500/50 focus:ring-0 focus:outline-none transition-colors">
+                        </div>
+                        <div>
+                            <label class="block text-[0.65rem] font-bold uppercase tracking-widest text-tx-3 mb-2">Confirm New</label>
+                            <input type="password" name="confirmPassword" required placeholder="Repeat new password"
+                                class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-tx-1 placeholder-tx-3/50 focus:border-gold-500/50 focus:ring-0 focus:outline-none transition-colors">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary bg-gradient-to-r from-gold-600 to-gold-400 text-dark-bg border-none font-bold shadow-[0_0_20px_rgba(245,158,11,0.2)]">
+                        <i class="fa-solid fa-key mr-2"></i> Update Password
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    navigator.geolocation.watchPosition(pos => {
+        document.getElementById('profileGpsDot').className = 'gps-dot active';
+        document.getElementById('profileGpsText').textContent = `GPS active (±${Math.round(pos.coords.accuracy)}m)`;
+        document.getElementById('profileGpsText').style.color = 'var(--emerald)';
+    }, err => {
+        document.getElementById('profileGpsDot').className = 'gps-dot denied';
+        document.getElementById('profileGpsText').textContent = 'GPS denied';
+        document.getElementById('profileGpsText').style.color = 'var(--danger)';
+    }, { enableHighAccuracy: true });
+</script>

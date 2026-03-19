@@ -1,0 +1,247 @@
+<%
+// Staff survey page — accessible via unique token link (no auth required)
+var submitted = typeof submitted !== 'undefined' ? submitted : false;
+%>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title || 'Post-Event Survey' %> — Emerald Pearland Events</title>
+    <script src="https://cdn.tailwindcss.com/4.0.0-alpha.20"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        :root { --emerald: #10b981; --gold: #f59e0b; }
+        body { font-family: 'Inter', sans-serif; background: #0a0e1a; color: #e2e8f0; min-height: 100vh; }
+        .glass-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; backdrop-filter: blur(12px); }
+        .star-btn { cursor: pointer; transition: transform 0.1s; }
+        .star-btn:hover, .star-btn.active { color: #f59e0b; transform: scale(1.2); }
+    </style>
+</head>
+<body class="flex items-center justify-center p-4">
+    <div class="max-w-xl w-full mx-auto py-8">
+
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <div class="mx-auto mb-4" style="width:70px;height:70px;">
+                <img src="https://i.ibb.co/spZpSgWp/logo-2.png" alt="Emerald Pearland Events" style="width:70px;height:70px;object-fit:contain;border-radius:14px;">
+            </div>
+            <h1 class="font-display text-2xl font-extrabold text-white mb-1" style="font-family: 'Plus Jakarta Sans', sans-serif;">Post-Event Survey</h1>
+            <% if (survey && survey.assignment_id) { %>
+            <p class="text-sm text-gray-400">
+                <i class="fa-solid fa-calendar-day mr-1 opacity-60"></i>
+                <%= survey.assignment_id.title %>
+                <% if (survey.assignment_id.date) { %> · <%= new Date(survey.assignment_id.date).toLocaleDateString('en-KE', {day:'numeric',month:'long',year:'numeric'}) %><% } %>
+            </p>
+            <% } %>
+        </div>
+
+        <% if (submitted) { %>
+        <!-- Already submitted -->
+        <div class="glass-card p-8 text-center">
+            <i class="fa-solid fa-circle-check text-emerald-400 text-4xl mb-4 block"></i>
+            <h2 class="text-xl font-bold text-white mb-2">Survey Already Submitted</h2>
+            <p class="text-gray-400 text-sm">Thank you for your feedback. Your responses have been recorded.</p>
+        </div>
+
+        <% } else if (!survey) { %>
+        <!-- Invalid/expired -->
+        <div class="glass-card p-8 text-center">
+            <i class="fa-solid fa-link-slash text-red-400 text-4xl mb-4 block"></i>
+            <h2 class="text-xl font-bold text-white mb-2">Survey Link Invalid</h2>
+            <p class="text-gray-400 text-sm">This survey link is invalid or has expired.</p>
+        </div>
+
+        <% } else { %>
+        <!-- Survey Form -->
+        <form id="surveyForm" class="space-y-4">
+
+            <% (survey.responses || []).forEach(function(resp, idx) { %>
+            <div class="glass-card p-4">
+                <p class="text-sm font-medium text-white mb-3">
+                    <span class="text-gray-400 mr-2 font-mono text-xs"><%= idx + 1 %>.</span>
+                    <%= resp.question %>
+                </p>
+
+                <% if (resp.answer_type === 'rating') { %>
+                <div class="flex gap-2" data-field="rating-<%= idx %>" data-idx="<%= idx %>">
+                    <% for (var s = 1; s <= 5; s++) { %>
+                        <button type="button" class="star-btn text-3xl text-white/20 transition-colors" data-rating-idx="<%= idx %>" data-val="<%= s %>">
+                            <i class="fa-solid fa-star"></i>
+                        </button>
+                    <% } %>
+                </div>
+                <input type="hidden" name="responses[<%= idx %>][answer]" id="ratingInput-<%= idx %>">
+                <input type="hidden" name="responses[<%= idx %>][answer_type]" value="rating">
+                <input type="hidden" name="responses[<%= idx %>][question]" value="<%= resp.question %>">
+
+                <% } else if (resp.answer_type === 'boolean') { %>
+                <div class="flex gap-3 mt-1">
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="radio" name="responses[<%= idx %>][answer]" value="true" class="accent-emerald-500"
+                            onchange="toggleFollowUp(<%= idx %>, true)">
+                        <span class="text-sm text-emerald-400 font-medium">Yes</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="radio" name="responses[<%= idx %>][answer]" value="false" class="accent-red-500"
+                            onchange="toggleFollowUp(<%= idx %>, false)">
+                        <span class="text-sm text-red-400 font-medium">No</span>
+                    </label>
+                </div>
+                <!-- Follow-up field shown only when Yes is selected -->
+                <div id="followup-<%= idx %>" class="hidden mt-3">
+                    <% if (resp.question && (resp.question.toLowerCase().includes('underperform') || resp.question.toLowerCase().includes('staff who'))) { %>
+                        <label class="text-xs text-gray-400 mb-1 block">Which staff member(s)?</label>
+                        <% if (survey.assignment_id && survey.assignment_id.accepted_staff_ids && survey.assignment_id.accepted_staff_ids.length) { %>
+                            <select name="responses[<%= idx %>][followup]" class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:border-emerald-500/40 focus:outline-none">
+                                <option value="">-- Select staff member --</option>
+                                <% survey.assignment_id.accepted_staff_ids.forEach(function(staffMember) { %>
+                                    <option value="<%= staffMember._id || staffMember %>"><%= staffMember.name || staffMember %></option>
+                                <% }); %>
+                            </select>
+                        <% } else { %>
+                            <textarea name="responses[<%= idx %>][followup]" rows="2" placeholder="Please specify..."
+                                class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:border-emerald-500/40 focus:outline-none resize-none"></textarea>
+                        <% } %>
+                    <% } else { %>
+                        <label class="text-xs text-gray-400 mb-1 block">Please provide details:</label>
+                        <textarea name="responses[<%= idx %>][followup]" rows="2" placeholder="Please explain..."
+                            class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:border-emerald-500/40 focus:outline-none resize-none"></textarea>
+                    <% } %>
+                </div>
+                <input type="hidden" name="responses[<%= idx %>][answer_type]" value="boolean">
+                <input type="hidden" name="responses[<%= idx %>][question]" value="<%= resp.question %>">
+
+                <% } else { %>
+                <textarea name="responses[<%= idx %>][answer]" rows="3" placeholder="Your answer…"
+                    class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:border-emerald-500/40 focus:outline-none resize-none mt-1"></textarea>
+                <input type="hidden" name="responses[<%= idx %>][answer_type]" value="text">
+                <input type="hidden" name="responses[<%= idx %>][question]" value="<%= resp.question %>">
+                <% } %>
+            </div>
+            <% }); %>
+
+            <!-- Overall Rating -->
+            <div class="glass-card p-4">
+                <p class="text-sm font-medium text-white mb-3">Overall Rating for this Event</p>
+                <div class="flex gap-2">
+                    <% for (var o = 1; o <= 5; o++) { %>
+                        <button type="button" class="star-btn text-3xl text-white/20" data-overall-val="<%= o %>">
+                            <i class="fa-solid fa-star"></i>
+                        </button>
+                    <% } %>
+                </div>
+                <input type="hidden" name="overall_rating" id="overallRatingInput">
+            </div>
+
+            <button type="submit" id="submitBtn" class="w-full py-4 rounded-2xl text-white font-bold text-base uppercase tracking-widest transition-all"
+                style="background: linear-gradient(135deg, #059669, #10b981); box-shadow: 0 0 20px rgba(16,185,129,0.3);">
+                <i class="fa-solid fa-paper-plane mr-2"></i>Submit Survey
+            </button>
+        </form>
+
+        <!-- Success Message -->
+        <div id="successMsg" class="hidden glass-card p-8 text-center border border-emerald-500/30">
+            <i class="fa-solid fa-circle-check text-emerald-400 text-5xl mb-4 block animate-bounce"></i>
+            <h2 class="text-xl font-bold text-white mb-2">Thank You!</h2>
+            <p class="text-gray-400 text-sm">Your feedback has been submitted. We appreciate your time!</p>
+        </div>
+        <% } %>
+    </div>
+
+    <script>
+    // Questions where "Yes" triggers follow-up (something bad happened)
+    const YES_TRIGGERS = ['underperform', 'staff who', 'safety', 'security concern', 'issues', 'concerns'];
+    // Questions where "No" triggers follow-up (something expected didn't happen)
+    const NO_TRIGGERS = ['clearly communicated', 'adequate equipment', 'requirements fulfilled', 'professional', 'punctual', 'recommend', 'work this type', 'prepared', 'logistics'];
+
+    function toggleFollowUp(idx, answeredYes) {
+        const el = document.getElementById('followup-' + idx);
+        if (!el) return;
+        const questionEl = document.querySelector(`input[name="responses[${idx}][question]"]`);
+        const question = (questionEl ? questionEl.value : '').toLowerCase();
+
+        const yesTrigger = YES_TRIGGERS.some(k => question.includes(k));
+        const noTrigger = NO_TRIGGERS.some(k => question.includes(k));
+
+        let shouldShow = false;
+        if (yesTrigger) shouldShow = answeredYes;
+        else if (noTrigger) shouldShow = !answeredYes;
+        else shouldShow = !answeredYes; // default: No triggers follow-up
+
+        el.classList.toggle('hidden', !shouldShow);
+    }
+
+    // Star rating for question fields
+    document.querySelectorAll('[data-rating-idx]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const idx = btn.dataset.ratingIdx;
+            const val = parseInt(btn.dataset.val);
+            document.getElementById(`ratingInput-${idx}`).value = val;
+            document.querySelectorAll(`[data-rating-idx="${idx}"]`).forEach((b, i) => {
+                b.classList.toggle('active', i < val);
+                b.style.color = i < val ? '#f59e0b' : 'rgba(255,255,255,0.2)';
+            });
+        });
+    });
+
+    // Star rating for overall
+    document.querySelectorAll('[data-overall-val]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const val = parseInt(btn.dataset.overallVal);
+            document.getElementById('overallRatingInput').value = val;
+            document.querySelectorAll('[data-overall-val]').forEach((b, i) => {
+                b.style.color = i < val ? '#f59e0b' : 'rgba(255,255,255,0.2)';
+            });
+        });
+    });
+
+    // Submit form
+    document.getElementById('surveyForm') && document.getElementById('surveyForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const btn = document.getElementById('submitBtn');
+        btn.disabled = true;
+        btn.textContent = 'Submitting…';
+
+        const formData = new FormData(e.target);
+        const overall  = formData.get('overall_rating');
+
+        // Build responses array
+        const responses = [];
+        let idx = 0;
+        while (formData.has(`responses[${idx}][question]`)) {
+            responses.push({
+                question:    formData.get(`responses[${idx}][question]`),
+                answer:      formData.get(`responses[${idx}][answer]`),
+                answer_type: formData.get(`responses[${idx}][answer_type]`),
+                followup:    formData.get(`responses[${idx}][followup]`) || ''
+            });
+            idx++;
+        }
+
+        try {
+            const res = await fetch(window.location.pathname + '/submit', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ responses, overall_rating: overall })
+            });
+            const data = await res.json();
+
+            if (data.success) {
+                document.getElementById('surveyForm').classList.add('hidden');
+                document.getElementById('successMsg').classList.remove('hidden');
+            } else {
+                btn.disabled = false;
+                btn.textContent = 'Try Again';
+                alert(data.error || 'Submission failed. Please try again.');
+            }
+        } catch(err) {
+            btn.disabled = false;
+            btn.textContent = 'Try Again';
+            alert('Error submitting survey. Please check your connection.');
+        }
+    });
+    </script>
+</body>
+</html>

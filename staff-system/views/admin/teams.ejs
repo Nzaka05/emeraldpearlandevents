@@ -1,0 +1,469 @@
+<% currentPage = 'teams'; %>
+
+<!-- ══ Page Header ══ -->
+<div class="flex items-center justify-between mb-6 animate-fade-up">
+  <div>
+    <h1 class="font-display text-2xl font-extrabold text-tx-1 tracking-tight flex items-center gap-3">
+      <span class="text-gradient-emerald">Event Teams</span>
+      <span class="status-dot status-dot-active animate-pulse-dot"></span>
+    </h1>
+    <p class="text-sm text-tx-3 mt-1">Configure deployments and unit readiness metrics</p>
+  </div>
+  <button class="btn btn-primary shadow-glow-emerald" onclick="openModal('addTeamModal')">
+    <i class="fa-solid fa-people-group"></i> Create Team
+  </button>
+</div>
+
+<!-- ══ Top Banner Stats ══ -->
+<div class="glass-card mb-6 flex flex-col md:flex-row items-center divide-y md:divide-y-0 md:divide-x divide-white/10 animate-fade-up delay-1">
+  <div class="flex-1 w-full flex items-center justify-between p-4">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-lg"><i class="fa-regular fa-calendar"></i></div>
+      <span class="text-sm font-semibold text-tx-2 uppercase tracking-wide">Events Recruiting</span>
+    </div>
+    <span class="font-display text-2xl font-extrabold text-emerald-400"><%= recruitingCount || 0 %></span>
+  </div>
+  
+  <div class="flex-1 w-full flex items-center justify-between p-4">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center text-lg"><i class="fa-solid fa-rotate"></i></div>
+      <span class="text-sm font-semibold text-tx-2 uppercase tracking-wide">Pending Replacements</span>
+    </div>
+    <span class="font-display text-2xl font-extrabold text-blue-400">0</span>
+  </div>
+  
+  <div class="flex-1 w-full flex items-center justify-between p-4">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-full bg-gold-500/20 text-gold-400 flex items-center justify-center text-lg"><i class="fa-solid fa-chart-bar"></i></div>
+      <span class="text-sm font-semibold text-tx-2 uppercase tracking-wide">Network Readiness</span>
+    </div>
+    <span class="font-display text-2xl font-extrabold text-gold-400"><%= typeof avgReadiness !== 'undefined' ? avgReadiness : 0 %>%</span>
+  </div>
+</div>
+
+<!-- ══ 3-Panel Grid ══ -->
+<div class="grid grid-cols-1 lg:grid-cols-[1fr_2fr_1fr] gap-4 items-start animate-fade-up delay-2">
+
+  <!-- LEFT: Current Events List -->
+  <div class="glass-card flex flex-col h-[600px] overflow-hidden">
+    <div class="p-4 border-b border-white/5 shrink-0 bg-white/5">
+      <h3 class="text-sm font-bold text-tx-1 flex items-center gap-2"><i class="fa-solid fa-layer-group text-emerald-400"></i> Event Matrices</h3>
+    </div>
+    
+    <div class="flex-1 overflow-y-auto custom-scrollbar p-2 space-y-1">
+      <% if (teams && teams.length > 0) { %>
+        <% teams.forEach(function(team, idx) { %>
+          <div class="flex items-center justify-between p-3 rounded-xl cursor-pointer transition-all border border-transparent hover:bg-white/5 group <%= idx === 0 ? 'bg-emerald-500/10 border-emerald-500/30' : '' %>" 
+               onclick="selectTeam(this,'<%= team._id %>')" id="teamRow-<%= team._id %>">
+            
+            <div class="flex-1 min-w-0 pr-2">
+              <div class="font-bold text-sm text-tx-1 truncate <%= idx === 0 ? 'text-emerald-400' : 'group-hover:text-emerald-300' %>">
+                <%= team.event_id ? team.event_id.title : 'Unknown Event' %>
+              </div>
+              <div class="text-[0.65rem] text-tx-3 mt-0.5 truncate flex items-center gap-1.5">
+                <i class="fa-regular fa-clock opacity-70"></i>
+                <%= team.event_id && team.event_id.date ? new Date(team.event_id.date).toLocaleDateString('en-GB',{day:'numeric',month:'short'}) : 'No Date' %>
+              </div>
+            </div>
+            
+            <div class="flex flex-col items-end gap-1 shrink-0">
+              <span class="<%= team.status==='Active'?'badge-emerald':team.status==='Forming'?'badge-gold':team.status==='Disbanded'?'badge-red':'badge-blue' %> text-[0.6rem] font-bold px-1.5 py-0.5 rounded flex items-center gap-1">
+                <span class="w-1 h-1 rounded-full bg-current"></span> <%= team.status || 'Pending' %>
+              </span>
+              
+              <% if(team.status !== 'Disbanded') { %>
+                <% var _tTitle = (team.event_id && team.event_id.title) ? team.event_id.title.replace(/'/g,"") : 'this event'; %>
+                <button onclick="event.stopPropagation();disbandTeamFromList('<%= team._id %>','<%= _tTitle %>')"
+                  class="opacity-0 group-hover:opacity-100 transition-opacity text-[0.6rem] text-red-400 hover:text-red-300 hover:bg-red-500/20 px-1.5 py-0.5 rounded uppercase tracking-wider font-bold" title="Terminate Team">
+                  Disband
+                </button>
+              <% } %>
+            </div>
+          </div>
+        <% }) %>
+      <% } else { %>
+        <div class="flex flex-col items-center justify-center h-full text-tx-3 p-6 text-center">
+          <div class="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center mb-3">
+             <i class="fa-solid fa-users-slash text-xl opacity-50"></i>
+          </div>
+          <p class="text-xs font-medium">No active teams constructed.</p>
+        </div>
+      <% } %>
+    </div>
+  </div>
+
+  <!-- CENTER: Team Assignments -->
+  <div class="glass-card flex flex-col h-[600px] overflow-hidden relative">
+    <!-- Header BG Gradient -->
+    <div class="absolute top-0 left-0 w-full h-32 bg-gradient-to-br from-emerald-500/10 to-transparent pointer-events-none"></div>
+    
+    <div class="px-5 py-4 border-b border-white/5 shrink-0 flex items-center justify-between relative z-10 bg-black/20">
+      <h3 id="centerPanelTitle" class="text-base font-bold text-tx-1 flex items-center gap-2">
+        <i class="fa-solid fa-network-wired text-blue-400"></i> Local Network
+      </h3>
+      <button class="btn btn-outline border-blue-500/30 text-blue-400 hover:bg-blue-500/20 text-xs py-1.5 h-auto" onclick="autoCreateTeams()">
+        <i class="fa-solid fa-bolt text-[0.7rem] mr-1"></i> Auto-Generate
+      </button>
+    </div>
+    
+    <!-- Readiness Bar -->
+    <div class="px-5 py-3 border-b border-white/5 shrink-0 bg-dark-bg/50">
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-[0.65rem] font-bold text-tx-3 uppercase tracking-wider">Combat Readiness</span>
+        <span id="selectedTeamReadinessPct" class="text-xs font-bold text-emerald-400 font-mono">0%</span>
+      </div>
+      <div class="h-1.5 w-full bg-white/5 rounded-full overflow-hidden shrink-0">
+        <div id="selectedTeamReadiness" class="h-full bg-gradient-to-r from-emerald-500 to-emerald-300 w-0 transition-all duration-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]"></div>
+      </div>
+    </div>
+    
+    <div class="flex-1 overflow-y-auto custom-scrollbar p-5 relative z-10 space-y-6">
+      
+      <!-- Supervisor Section -->
+      <div>
+        <div class="text-[0.65rem] font-bold text-tx-3 uppercase tracking-wider border-b border-white/10 pb-2 mb-3">Command Authority</div>
+        <div id="teamSupervisorInfo" class="min-h-[60px]">
+          <p class="text-xs text-tx-3 italic p-2 glass-panel rounded-xl text-center">Awaiting matrix selection...</p>
+        </div>
+      </div>
+      
+      <!-- Members Section -->
+      <div>
+        <div class="flex items-center justify-between border-b border-white/10 pb-2 mb-3">
+          <div class="text-[0.65rem] font-bold text-tx-3 uppercase tracking-wider">Deployed Units</div>
+          <button class="text-[0.6rem] text-emerald-400 hover:text-emerald-300 uppercase font-bold tracking-wider" onclick="openModal('addTeamModal')"><i class="fa-solid fa-plus mr-1"></i> Add Unit</button>
+        </div>
+        <div id="teamMembersList" class="space-y-2">
+          <p class="text-xs text-tx-3 italic p-8 glass-panel rounded-xl text-center">Focus on a team to display telemetry.</p>
+        </div>
+      </div>
+      
+    </div>
+  </div>
+
+  <!-- RIGHT: Team Readiness Overview -->
+  <div class="flex flex-col gap-4 h-[600px] overflow-hidden">
+    
+    <div class="glass-card flex-1 flex flex-col overflow-hidden">
+      <div class="p-4 border-b border-white/5 shrink-0 bg-white/5">
+        <h3 class="text-sm font-bold text-tx-1 flex items-center gap-2"><i class="fa-solid fa-chart-pie text-gold-400"></i> Overview Readiness</h3>
+      </div>
+      <div class="flex-1 overflow-y-auto custom-scrollbar p-3 space-y-4">
+        <% if(teams && teams.length > 0) { %>
+          <% teams.forEach(function(t){ %>
+            <div class="group">
+              <div class="flex justify-between items-end mb-1.5">
+                <span class="text-xs font-bold text-tx-1 truncate pr-2 group-hover:text-gold-400 transition-colors" title="<%= t.event_id ? t.event_id.title : 'Unknown' %>">
+                   <%= t.event_id ? t.event_id.title : 'Unknown' %>
+                </span>
+                <span class="text-[0.65rem] font-mono font-bold text-gold-400"><%= t.team_readiness||0 %>%</span>
+              </div>
+              <div class="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+                <div class="h-full bg-gradient-to-r from-gold-600 to-amber-400 transition-all duration-500 shadow-glow-gold" style="width:<%= t.team_readiness||0 %>%"></div>
+              </div>
+            </div>
+          <% }); %>
+        <% } else { %>
+          <div class="py-8 text-center text-tx-3 text-xs w-full">Data unavailable</div>
+        <% } %>
+      </div>
+    </div>
+    
+  </div>
+
+</div>
+
+
+<!-- Context Menu (right-click on row) -->
+<div id="teamContextMenu" class="absolute bg-dark-card border border-white/10 rounded-xl shadow-2xl p-1.5 min-w-[180px] z-[500] backdrop-blur-md hidden transition-opacity">
+  <button class="w-fulltext-left px-3 py-2 text-xs font-medium text-red-400 hover:bg-red-500/10 rounded flex items-center gap-2 w-full transition-colors" onclick="removeMember()">
+     <i class="fa-solid fa-user-minus w-4"></i> Dismiss Unit
+  </button>
+  <button class="w-full text-left px-3 py-2 text-xs font-medium text-tx-2 hover:text-tx-1 hover:bg-white/5 rounded flex items-center gap-2 w-full transition-colors mt-0.5" onclick="requestReplacement()">
+     <i class="fa-solid fa-rotate w-4 text-blue-400"></i> Alert Replacement
+  </button>
+</div>
+
+<!-- Add Team Modal -->
+<div class="modal-overlay" id="addTeamModal">
+  <div class="modal-content max-w-md">
+    <div class="modal-header border-b border-emerald-500/20 pb-4">
+      <h3 class="text-base font-bold text-tx-1 flex items-center gap-2">
+        <div class="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center shadow-glow-emerald"><i class="fa-solid fa-people-group"></i></div>
+        Construct Network
+      </h3>
+      <button class="text-tx-3 hover:text-tx-1 transition-colors" onclick="closeModal('addTeamModal')"><i class="fa-solid fa-xmark text-lg"></i></button>
+    </div>
+    <div class="modal-body pt-5">
+      <form action="/portal/admin-staff/event-teams/create" method="POST" class="space-y-4">
+        <div>
+          <label class="form-label text-tx-2">Target Matrix (Event)</label>
+          <select name="event_id" required id="teamEventSelect" class="form-input form-select font-bold">
+            <option value="">-- Accessing Events --</option>
+          </select>
+        </div>
+        <div>
+          <label class="form-label text-tx-2">Command Authority (Supervisor)</label>
+          <select name="supervisor_id" required id="teamSuperSelect" class="form-input form-select text-emerald-400 font-bold">
+            <option value="">-- Linking Officers --</option>
+          </select>
+        </div>
+        <div>
+          <div class="flex justify-between items-end mb-1">
+             <label class="form-label text-tx-2 !mb-0">Operating Units (Staff)</label>
+             <span class="text-[0.6rem] text-tx-3">CTRL/CMD+Click for multiple</span>
+          </div>
+          <select name="member_ids" id="teamMemberSelect" multiple class="form-input custom-scrollbar h-32 p-2">
+            <!-- options mapped from JS -->
+          </select>
+        </div>
+        
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <button type="submit" class="btn btn-primary w-full mt-4 shadow-glow-emerald font-bold text-lg py-3">
+          <i class="fa-solid fa-bolt mr-2"></i> INITIALIZE TEAM
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  let _selectedMemberIds = [];
+  let _selectedTeamId = null;
+  
+  // Clean JSON string passing
+  const _teamsData = <%- JSON.stringify(teams.map(t => ({
+      _id: t._id,
+      status: t.status,
+      team_readiness: t.team_readiness,
+      event_id: t.event_id ? { _id: t.event_id._id, title: t.event_id.title, date: t.event_id.date } : null,
+      supervisor_id: t.supervisor_id ? { _id: t.supervisor_id._id, name: t.supervisor_id.name, role: t.supervisor_id.role } : null,
+      member_ids: (t.member_ids||[]).map(m => ({ _id: m._id, name: m.name, role: m.role, specific_role: m.specific_role, status: m.status }))
+  }))).replace(/</g, '\\u003c') %>;
+
+  function selectTeam(el, id) {
+    // Styling toggle
+    document.querySelectorAll('[id^="teamRow-"]').forEach(r => {
+      r.classList.remove('bg-emerald-500/10', 'border-emerald-500/30');
+      r.classList.add('border-transparent');
+      const title = r.querySelector('.truncate');
+      if(title) {
+        title.classList.remove('text-emerald-400');
+        title.classList.add('group-hover:text-emerald-300');
+      }
+    });
+    el.classList.add('bg-emerald-500/10', 'border-emerald-500/30');
+    el.classList.remove('border-transparent');
+    const title = el.querySelector('.truncate');
+    if(title) {
+      title.classList.add('text-emerald-400');
+      title.classList.remove('group-hover:text-emerald-300');
+    }
+
+    _selectedTeamId = id;
+    const team = _teamsData.find(t => t._id === id);
+    if (!team) return;
+
+    // Header update
+    document.getElementById('centerPanelTitle').innerHTML = `
+      <i class="fa-solid fa-network-wired text-blue-400"></i> 
+      <span class="truncate pr-4">${team.event_id ? team.event_id.title : 'Unknown Event'}</span>
+    `;
+
+    // Members list
+    const membersList = document.getElementById('teamMembersList');
+    if (!team.member_ids || team.member_ids.length === 0) {
+        membersList.innerHTML = '<div class="py-8 text-center text-tx-3 text-xs glass-panel rounded-xl">No units connected to matrix.</div>';
+    } else {
+        const supId = team.supervisor_id ? team.supervisor_id._id.toString() : null;
+        const membersHtml = team.member_ids.filter(m => m._id.toString() !== supId).map(m => {
+          const initials = (m.name||'?').split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase();
+          const pilsClass = m.status==='Active' ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 'bg-red-500/20 text-red-400 border-red-500/30';
+          return `
+            <div class="member-assign-row flex items-center gap-3 p-2.5 rounded-xl border border-white/5 hover:bg-white/5 transition-colors cursor-context-menu" data-member-id="${m._id}">
+                <div class="w-9 h-9 rounded-full bg-gradient-to-br from-dark-card to-dark-bg flex items-center justify-center font-bold text-xs ring-1 ring-white/10 shadow-lg text-white flex-shrink-0">
+                    ${initials}
+                </div>
+                <div class="flex-1 min-w-0">
+                    <div class="font-bold text-sm text-tx-1 truncate">${m.name||'Unknown'}</div>
+                    <div class="text-[0.65rem] text-tx-3 truncate">${m.specific_role||m.role||'Staff'}</div>
+                </div>
+                <span class="text-[0.6rem] font-bold px-2 py-0.5 rounded border ${pilsClass} flex-shrink-0">
+                    ${m.status||'Active'}
+                </span>
+            </div>
+          `;
+        }).join('');
+        membersList.innerHTML = membersHtml || '<div class="text-xs text-tx-3 p-4 text-center">Only Commander Linked.</div>';
+    }
+
+    // Supervisor info
+    const sup = team.supervisor_id;
+    const supervisorContainer = document.getElementById('teamSupervisorInfo');
+    if(sup) {
+      const initials = (sup.name||'?').split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase();
+      supervisorContainer.innerHTML = `
+         <div class="flex items-center gap-3 p-3 rounded-xl border border-gold-500/20 bg-gold-500/5">
+             <div class="w-10 h-10 rounded-full bg-gradient-to-br from-gold-600 to-amber-500 flex items-center justify-center font-bold text-dark-bg shadow-glow-gold flex-shrink-0">
+                 ${initials}
+             </div>
+             <div>
+                 <div class="font-bold text-sm text-tx-1 truncate">${sup.name}</div>
+                 <div class="text-[0.65rem] text-gold-400 tracking-wider uppercase font-bold mt-0.5"><i class="fa-solid fa-star text-[0.55rem] mr-1"></i> Commander</div>
+             </div>
+         </div>
+      `;
+    } else {
+      supervisorContainer.innerHTML = '<div class="py-4 text-center text-red-400 border border-red-500/20 bg-red-500/5 rounded-xl text-xs font-bold"><i class="fa-solid fa-triangle-exclamation mr-1"></i> No Authority Linked</div>';
+    }
+
+    // Readiness update
+    const pct = team.team_readiness || 0;
+    const bar = document.getElementById('selectedTeamReadiness');
+    const pctText = document.getElementById('selectedTeamReadinessPct');
+    
+    // Color mapping based on pct
+    bar.className = `h-full w-0 transition-all duration-500 ${pct < 40 ? 'bg-gradient-to-r from-red-600 to-red-400 shadow-glow-red' : pct < 80 ? 'bg-gradient-to-r from-gold-600 to-gold-400 shadow-glow-gold' : 'bg-gradient-to-r from-emerald-500 to-emerald-300 shadow-glow-emerald'}`;
+    pctText.className = `text-xs font-bold font-mono ${pct < 40 ? 'text-red-400' : pct < 80 ? 'text-gold-400' : 'text-emerald-400'}`;
+    
+    setTimeout(() => {
+       bar.style.width = pct + '%';
+       pctText.textContent = pct + '%';
+    }, 50);
+  }
+
+  function autoCreateTeams() {
+    if (!confirm('Execute Auto-Generation Sequence? This maps teams to all unlinked active events.')) return;
+    
+    // Visual feedback
+    showToast('Executing protocol...', 'info');
+    
+    fetch('/portal/admin-staff/event-teams/auto-create', {
+        method: 'POST',
+        headers: { 'CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content || '' }
+    }).then(r => r.json()).then(d => {
+        showToast(d.message || 'Matrices Synced', d.success ? 'success' : 'error');
+        if (d.success) setTimeout(() => location.reload(), 1500);
+    }).catch(() => showToast('Command rejected', 'error'));
+  }
+
+  // --- Context Menu Logic ---
+  const ctxMenu = document.getElementById('teamContextMenu');
+  
+  document.addEventListener('contextmenu', e => {
+      const row = e.target.closest('.member-assign-row');
+      if (row) {
+          e.preventDefault();
+          _selectedMemberIds = [row.dataset.memberId]; // Store ID to act on
+          ctxMenu.style.display = 'block';
+          ctxMenu.classList.remove('hidden');
+          
+          // Ensure menu stays within window bounds
+          let x = e.clientX;
+          let y = e.clientY;
+          const mw = 180; // approximate menu width
+          const mh = 90; // approximate menu height
+          
+          if (x + mw > window.innerWidth) x -= mw;
+          if (y + mh > window.innerHeight) y -= mh;
+          
+          ctxMenu.style.left = x + 'px';
+          ctxMenu.style.top = y + 'px';
+          
+          // Add a tiny delay to trigger opacity transition
+          setTimeout(() => ctxMenu.classList.add('opacity-100'), 10);
+      } else {
+         hideContextMenu();
+      }
+  });
+  
+  document.addEventListener('click', hideContextMenu);
+  
+  function hideContextMenu() {
+     ctxMenu.classList.remove('opacity-100');
+     setTimeout(() => {
+        ctxMenu.classList.add('hidden');
+        ctxMenu.style.display = 'none';
+     }, 150); // match transition duration
+  }
+
+  function removeMember() {
+      if (!_selectedTeamId || _selectedMemberIds.length === 0) return showToast('Null reference', 'error');
+      if (!confirm('Disconnect unit from current matrix?')) return;
+      
+      fetch(`/portal/admin-staff/event-teams/${_selectedTeamId}/remove-member`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', 'CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content || '' },
+          body: JSON.stringify({ memberIds: _selectedMemberIds })
+      }).then(r => r.json()).then(d => {
+          showToast(d.message || 'Unit disconnected', d.success ? 'success' : 'error');
+          if (d.success) setTimeout(() => location.reload(), 1000);
+      }).catch(() => showToast('Command timed out', 'error'));
+  }
+
+  function requestReplacement() {
+      showToast('Replacement signal transmitted.', 'info');
+  }
+
+  async function disbandTeamFromList(teamId, eventTitle) {
+      try {
+          const csrf = document.querySelector('meta[name="csrf-token"]')?.content || '';
+          const check = await fetch(`/portal/admin-staff/event-teams/${teamId}/disband-check`);
+          const eligibility = await check.json();
+
+          let msg = `Terminate team mapping for [${eventTitle}]?`;
+          if (eligibility.success) {
+              if (!eligibility.eventCompleted) {
+                  msg = `WARNING: Event [${eventTitle}] is not designated as "Completed".\nOverride and terminate mapping regardless?`;
+              } else if (!eligibility.allPaymentsDone) {
+                  msg = `WARNING: Financial transfers pending for [${eventTitle}].\nOverride and terminate mapping regardless?`;
+              }
+          }
+
+          if (!confirm(msg)) return;
+
+          const r = await fetch(`/portal/admin-staff/event-teams/${teamId}/disband`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'CSRF-Token': csrf }
+          });
+          const d = await r.json();
+          if (d.success) {
+              showToast('Matrix unlinked permanently', 'success');
+              setTimeout(() => location.reload(), 1500);
+          } else {
+              showToast(d.error || 'Termination rejected', 'error');
+          }
+      } catch(err) {
+          showToast('Connection failed', 'error');
+      }
+  }
+
+  // Init Data
+  document.addEventListener('DOMContentLoaded', () => {
+      // Auto-select first row
+      const firstRow = document.querySelector('[id^="teamRow-"]');
+      if (firstRow && typeof _teamsData !== 'undefined' && _teamsData.length > 0) {
+          selectTeam(firstRow, _teamsData[0]._id);
+      }
+      
+      // Load Add Team Modal Data
+      fetch('/portal/admin-staff/teams/create-data').then(r => r.json()).then(data => {
+          if (!data.success) return;
+          const esel = document.getElementById('teamEventSelect');
+          const ssel = document.getElementById('teamSuperSelect');
+          const msel = document.getElementById('teamMemberSelect');
+          
+          if (esel) {
+             esel.innerHTML = '<option value="">-- Matrix --</option>';
+             data.assignments?.forEach(a => esel.innerHTML += `<option value="${a._id}">${a.title}</option>`);
+          }
+          if (ssel) {
+             ssel.innerHTML = '<option value="">-- Select Authority --</option>';
+             data.supervisors?.forEach(s => ssel.innerHTML += `<option value="${s._id}">${s.name} - ${s.specific_role || s.role || 'Staff'}</option>`);
+          }
+          if (msel) {
+             data.staff?.forEach(s => msel.innerHTML += `<option value="${s._id}">${s.name} (${s.specific_role || 'General'})</option>`);
+          }
+      }).catch(() => { console.log("Silent error loading form data") });
+  });
+</script>

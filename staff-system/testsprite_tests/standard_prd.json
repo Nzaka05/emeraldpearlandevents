@@ -1,0 +1,161 @@
+{
+  "projectName": "Staff Operations System (Port 3001)",
+  "version": "1.0",
+  "baseUrl": "http://localhost:3001",
+  "authentication": {
+    "type": "JWT Bearer",
+    "headerName": "Authorization",
+    "headerFormat": "Bearer <token>",
+    "cookieName": "portal_token",
+    "testCredentials": {
+      "admin": { "email": "testadmin@emerald.com", "password": "TestAdmin123!" },
+      "supervisor": { "email": "testsupervisor@emerald.com", "password": "TestSupervisor123!" },
+      "staff": { "email": "teststaff@emerald.com", "password": "TestStaff123!" }
+    }
+  },
+  "requirements": [
+    {
+      "id": "REQ-AUTH",
+      "title": "Staff Authentication",
+      "description": "JWT-based login/logout with role-based access (Staff, Supervisor, Admin)",
+      "endpoints": [
+        { "method": "POST", "path": "/portal/auth/login", "description": "Staff login returns JWT", "authRequired": false },
+        { "method": "POST", "path": "/portal/auth/logout", "description": "Invalidate session", "authRequired": true },
+        { "method": "GET", "path": "/portal/auth/me", "description": "Get current staff profile", "authRequired": true }
+      ],
+      "testScenarios": [
+        "Valid credentials return 200 with JWT",
+        "Wrong password returns 401",
+        "No token on protected route returns 401",
+        "Expired JWT returns 401"
+      ]
+    },
+    {
+      "id": "REQ-CLOCK",
+      "title": "Supervisor GPS Clock-In System",
+      "description": "Supervisor drops geo anchor for events, staff clock in within GPS radius",
+      "endpoints": [
+        { "method": "POST", "path": "/portal/supervisor/anchor/drop", "description": "Drop geo anchor", "authRequired": true },
+        { "method": "POST", "path": "/portal/supervisor/anchor/clear", "description": "Clear geo anchor", "authRequired": true },
+        { "method": "GET", "path": "/portal/supervisor/events/:eventId/team", "description": "Get staff roster", "authRequired": true },
+        { "method": "POST", "path": "/portal/supervisor/clock-in/override", "description": "Override denied clock-in", "authRequired": true },
+        { "method": "POST", "path": "/portal/supervisor/events/:eventId/complete", "description": "Mark event complete", "authRequired": true },
+        { "method": "POST", "path": "/portal/staff/clock-in", "description": "Staff clock-in attempt", "authRequired": true },
+        { "method": "POST", "path": "/portal/staff/clock-out", "description": "Staff clock-out", "authRequired": true },
+        { "method": "GET", "path": "/portal/staff/attendance/:eventId", "description": "Get attendance status", "authRequired": true }
+      ],
+      "testScenarios": [
+        "Drop anchor saves anchor_lat, anchor_lng, radius_meters",
+        "Staff GPS within 200m returns clock-in success",
+        "Staff GPS 201m+ returns clock-in denied",
+        "Clock-in without GPS returns 400",
+        "Clock-out calculates total_hours correctly",
+        "Supervisor override changes denied to approved"
+      ]
+    },
+    {
+      "id": "REQ-EMERGENCY",
+      "title": "Emergency Funds Security",
+      "description": "Secure emergency fund disbursement with biometric, OTP, and fraud detection",
+      "endpoints": [
+        { "method": "POST", "path": "/portal/admin-staff/auth/biometric-verify", "description": "Create BiometricSession", "authRequired": true },
+        { "method": "POST", "path": "/portal/admin-staff/emergency-funds/request-otp", "description": "Generate and send OTP", "authRequired": true },
+        { "method": "POST", "path": "/portal/admin-staff/emergency-funds/send", "description": "Send emergency funds", "authRequired": true },
+        { "method": "POST", "path": "/portal/admin-staff/emergency-funds/unlock-payout", "description": "Unlock payout lock", "authRequired": true }
+      ],
+      "testScenarios": [
+        "Rate limit: 4th request within 15 minutes returns 429",
+        "Event in PLANNED state returns 400",
+        "Request without GPS returns 400",
+        "BiometricSession older than 5 min returns 403"
+      ]
+    },
+    {
+      "id": "REQ-AI",
+      "title": "AI Event Prediction",
+      "description": "AI-powered event staffing prediction",
+      "endpoints": [
+        { "method": "GET", "path": "/portal/admin-staff/events/:id/prediction", "description": "Generate AI prediction", "authRequired": true }
+      ],
+      "testScenarios": [
+        "Returns predictedStaff as number",
+        "Returns riskLevel as LOW, MEDIUM, or HIGH",
+        "Returns confidenceScore between 0.0 and 1.0",
+        "Returns recommendations as array of strings"
+      ]
+    },
+    {
+      "id": "REQ-CMD",
+      "title": "Live Command Center",
+      "description": "Real-time supervisor command center",
+      "endpoints": [
+        { "method": "GET", "path": "/portal/supervisor/command-center/:eventId", "description": "Command center view", "authRequired": true },
+        { "method": "GET", "path": "/portal/supervisor/command-center/:eventId/data", "description": "Command center JSON", "authRequired": true }
+      ],
+      "testScenarios": [
+        "Returns only LIVE and READY events",
+        "Returns full staff roster with clock-in status",
+        "Returns command center metrics"
+      ]
+    },
+    {
+      "id": "REQ-PERF",
+      "title": "Performance Reviews",
+      "description": "Staff rating and performance intelligence",
+      "endpoints": [
+        { "method": "GET", "path": "/portal/supervisor/events/:eventId/reviews/pending", "description": "Pending review list", "authRequired": true },
+        { "method": "POST", "path": "/portal/supervisor/events/:eventId/reviews/submit", "description": "Batch submit reviews", "authRequired": true }
+      ],
+      "testScenarios": [
+        "Valid reviews return full success response",
+        "Duplicate review returns 409",
+        "Review after 48 hours returns 403"
+      ]
+    },
+    {
+      "id": "REQ-ETR",
+      "title": "ETR System",
+      "description": "Electronic Tax Receipt generation and delivery",
+      "endpoints": [
+        { "method": "GET", "path": "/portal/admin-staff/etr", "description": "List all ETRs", "authRequired": true },
+        { "method": "POST", "path": "/portal/admin-staff/etr/:eventId/generate", "description": "Generate ETR", "authRequired": true },
+        { "method": "POST", "path": "/portal/admin-staff/etr/:eventId/resend", "description": "Resend ETR", "authRequired": true }
+      ],
+      "testScenarios": [
+        "ETR number follows format ETR-YYYY-NNNNN",
+        "Regenerating ETR increments version number"
+      ]
+    },
+    {
+      "id": "REQ-FIN",
+      "title": "Finance Engine",
+      "description": "Event financials, expenses, and payroll",
+      "endpoints": [
+        { "method": "GET", "path": "/portal/admin-staff/events/:id/financials", "description": "Event financial summary", "authRequired": true },
+        { "method": "POST", "path": "/portal/admin-staff/expenses/log", "description": "Log expense", "authRequired": true },
+        { "method": "GET", "path": "/portal/admin-staff/payroll", "description": "Payroll list", "authRequired": true }
+      ],
+      "testScenarios": [
+        "Every money movement creates a Transaction record",
+        "EventLedger balance updates after expense",
+        "Payroll record generated from Attendance on clockOut"
+      ]
+    },
+    {
+      "id": "REQ-SYNC",
+      "title": "Internal Sync Endpoints",
+      "description": "Inter-service communication from port 3000",
+      "endpoints": [
+        { "method": "POST", "path": "/internal/sync-staff", "description": "Sync staff from main portal", "authRequired": false },
+        { "method": "POST", "path": "/internal/sync-booking", "description": "Sync booking as assignment", "authRequired": false },
+        { "method": "POST", "path": "/internal/sync-payment", "description": "Sync payment amount", "authRequired": false },
+        { "method": "POST", "path": "/internal/sync-pricing", "description": "Sync pricing settings", "authRequired": false }
+      ],
+      "testScenarios": [
+        "Sync calls use x-sync-secret header for internal auth",
+        "Missing x-sync-secret returns 401",
+        "Valid sync creates/updates records"
+      ]
+    }
+  ]
+}

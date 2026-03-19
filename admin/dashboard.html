@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -641,9 +641,9 @@
             }
         }
 
-        /* ═══════════════════════════════════════════════════════════
+        /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
            MOBILE RESPONSIVENESS (Injected via Phase 10 Overhaul)
-           ═══════════════════════════════════════════════════════════ */
+           â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
         /* Hamburger Menu Icon (Hidden on Desktop) */
         .mobile-menu-btn {
@@ -726,9 +726,9 @@
         }
 
 
-        /* ═══════════════════════════════════════════════════════════
+        /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
            MOBILE QUICK ACTION FAB
-           ═══════════════════════════════════════════════════════════ */
+           â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
         .mobile-fab-container {
             display: none;
             position: fixed;
@@ -923,7 +923,7 @@
         <div class="sidebar-logo">
             <img src="../images/logo%202.png" alt="Emerald Logo" class="sidebar-logo-img" />
             <!-- fallback icon if image fails -->
-            <div class="sidebar-logo-icon" style="display:none;">✨</div>
+            <div class="sidebar-logo-icon" style="display:none;"><i class="fas fa-star"></i></div>
             <h1>ADMIN PORTAL</h1>
             <p>Emerald Pearland</p>
         </div>
@@ -985,6 +985,19 @@
                 </a>
             </li>
             <li class="sidebar-nav-item">
+                <a href="/admin/staff-operations-sso" class="sidebar-nav-link"
+                    style="color: var(--accent); background: rgba(201, 168, 76, 0.05);">
+                    <span class="sidebar-nav-icon"><i class="fas fa-external-link-alt"></i></span>
+                    <span>Staff Operations</span>
+                </a>
+            </li>
+                        <li class="sidebar-nav-item">
+                <a href="/admin/pricing" class="sidebar-nav-link"><!-- add 'active' on pricing.html -->
+                    <span class="sidebar-nav-icon"><i class="fas fa-tags"></i></span>
+                    <span>Pricing & Rates</span>
+                </a>
+            </li>
+<li class="sidebar-nav-item">
                 <a href="/admin/settings" class="sidebar-nav-link">
                     <span class="sidebar-nav-icon"><i class="fas fa-cog"></i></span>
                     <span>Settings</span>
@@ -1135,13 +1148,13 @@
             <!-- Social Feed Widget -->
             <div class="section">
                 <div class="section-header">
-                    <div class="section-title">📸 Social Feed</div>
+                    <div class="section-title"><i class="fas fa-camera"></i> Social Feed</div>
                     <div class="section-actions">
                         <a id="igLink" href="#" target="_blank" class="social-quick-link ig">
-                            Instagram ↗
+                            Instagram <i class="fas fa-external-link-alt"></i>
                         </a>
                         <a id="fbLink" href="#" target="_blank" class="social-quick-link fb">
-                            Facebook ↗
+                            Facebook <i class="fas fa-external-link-alt"></i>
                         </a>
                     </div>
                 </div>
@@ -1353,13 +1366,13 @@
                     container.innerHTML = `
                         <div style="padding:32px;text-align:center;color:#999;
                             background:#fff;border-radius:8px;border:1px dashed #E9E5DB;">
-                            <div style="font-size:32px;margin-bottom:12px;">📸</div>
+                            <div style="font-size:32px;margin-bottom:12px;"><i class="fas fa-camera"></i></div>
                             <div style="font-weight:600;color:#0D2B1F;margin-bottom:8px;">
                                 Instagram feed not connected
                             </div>
                             <div style="font-size:13px;">
                                 Go to <a href="/admin/settings" 
-                                style="color:#C9A84C;font-weight:600;">Settings → Social Media
+                                style="color:#C9A84C;font-weight:600;">Settings <i class="fas fa-arrow-right"></i> Social Media
                                 </a> and paste your Behold feed ID to display your latest posts here.
                             </div>
                         </div>
@@ -1381,7 +1394,7 @@
         });
     </script>
     <script src="/admin/push-client.js"></script>
-        <script src="/js/mobile-sidebar.js?v=3"></script>
+    <script src="/js/mobile-sidebar.js?v=3"></script>
     <script src="/admin/admin-profile.js"></script>
 </body>
 

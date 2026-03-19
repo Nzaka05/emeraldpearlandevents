@@ -1,0 +1,7 @@
+<%- include('../clientBase') %>
+<h2>Payment Confirmed</h2>
+<p>Hello <%= clientName %>,</p>
+<p>We have successfully received a payment of <strong>$<%= paymentAmount %></strong> toward Invoice #<%= invoiceNumber %>.</p>
+<p>Your current outstanding balance on this invoice is <strong>$<%= remainingBalance %></strong>.</p>
+<p>Thank you for your prompt business! You may review your real-time payment history and outstanding invoices at any time through our security access portal.</p>
+<a href="<%= process.env.CLIENT_PORTAL_URL %>/client/invoices" class="btn">View My Invoices</a>

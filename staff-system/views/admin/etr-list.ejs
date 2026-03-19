@@ -1,0 +1,124 @@
+<% currentPage = 'etr'; %>
+
+<div class="flex items-center justify-between mb-6 animate-fade-up">
+  <div>
+    <h1 class="font-display text-2xl font-extrabold text-tx-1 tracking-tight flex items-center gap-3">
+      <span class="text-gradient-emerald">Event Transaction Reports</span>
+    </h1>
+    <p class="text-sm text-tx-3 mt-1">Manage executed event finances and tracking</p>
+  </div>
+</div>
+
+<div class="glass-card overflow-hidden animate-fade-up delay-2">
+  <div class="px-5 py-4 border-b border-white/5 flex items-center justify-between">
+    <h3 class="text-sm font-bold text-tx-1 flex items-center gap-2">
+      <i class="fa-solid fa-file-invoice text-emerald-400"></i> Generation Ledger
+    </h3>
+  </div>
+  
+  <div class="overflow-x-auto">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>ETR Sequence</th>
+          <th>Event Designation</th>
+          <th>Client</th>
+          <th>Generated At</th>
+          <th>Delivery Status</th>
+          <th class="text-right">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if (etrs.length === 0 && completedAssignments.length === 0) { %>
+          <tr><td colspan="6" class="text-center py-8 text-tx-3">No closed events available.</td></tr>
+        <% } %>
+        
+        <% etrs.forEach(function(etr) { %>
+          <tr class="hover:bg-white/5 transition-colors group">
+            <td class="font-mono text-emerald-400 text-sm"><%= etr.summary.etrNumber %> <span class="text-tx-3 text-xs">v<%= etr.version %></span></td>
+            <td class="font-bold text-tx-1"><%= etr.event_id ? etr.event_id.title : 'Deleted Event' %></td>
+            <td class="text-sm text-tx-2"><%= etr.summary.clientName %></td>
+            <td class="text-sm text-tx-2"><%= new Date(etr.generated_at).toLocaleDateString() %></td>
+            <td>
+              <% if (etr.delivery_status === 'sent') { %>
+                <span class="badge-blue px-2 py-0.5 rounded-full inline-block">Sent <%= new Date(etr.sent_at || etr.createdAt).toLocaleDateString() %></span>
+              <% } else if (etr.delivery_status === 'delivered') { %>
+                <span class="badge-emerald px-2 py-0.5 rounded-full inline-block">Opened <%- etr.opened_at ? new Date(etr.opened_at).toLocaleDateString() : '' %></span>
+              <% } else if (etr.delivery_status === 'failed') { %>
+                <span class="badge-red px-2 py-0.5 rounded-full inline-block">Failed</span>
+              <% } else { %>
+                <span class="badge-gold px-2 py-0.5 rounded-full inline-block"><%= etr.delivery_status %></span>
+              <% } %>
+            </td>
+            <td class="text-right space-x-2">
+              <a href="/portal/admin-staff/etr/<%= etr.event_id._id || etr.event_id %>" class="btn btn-ghost btn-xs text-blue-400 hover:bg-blue-500/20" title="View Detail"><i class="fa-solid fa-eye"></i></a>
+              <button onclick="resendETR('<%= etr.event_id._id || etr.event_id %>')" class="btn btn-ghost btn-xs text-emerald-400 hover:bg-emerald-500/20" title="Resend"><i class="fa-solid fa-paper-plane"></i></button>
+              <a href="/portal/admin-staff/etr/<%= etr.event_id._id || etr.event_id %>/download" class="btn btn-ghost btn-xs text-gold-400 hover:bg-gold-500/20" title="Download PDF"><i class="fa-solid fa-download"></i></a>
+            </td>
+          </tr>
+        <% }) %>
+        
+        <% 
+           const generatedIds = etrs.map(e => e.event_id ? e.event_id._id.toString() : '');
+           completedAssignments.forEach(function(a) { 
+             if (!generatedIds.includes(a._id.toString())) {
+        %>
+          <tr class="hover:bg-white/5 transition-colors opacity-75">
+            <td class="font-mono text-tx-3 text-sm">NOT_GENERATED</td>
+            <td class="font-bold text-tx-1"><%= a.title %></td>
+            <td class="text-sm text-tx-2"><%= a.client_name %></td>
+            <td class="text-sm text-tx-3">—</td>
+            <td><span class="badge-gray px-2 py-0.5 rounded-full inline-block">Pending</span></td>
+            <td class="text-right">
+              <button onclick="generateETR('<%= a._id %>')" class="btn btn-ghost btn-xs text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/20"><i class="fa-solid fa-gears mr-1"></i> Generate</button>
+            </td>
+          </tr>
+        <% } }) %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+async function generateETR(eventId) {
+    try {
+        const btn = event.currentTarget;
+        btn.innerHTML = '<i class="fa-solid fa-circle-notch animate-spin mr-1"></i> ...';
+        const r = await fetch(`/portal/admin-staff/etr/${eventId}/generate`, {
+            method: 'POST',
+            headers: { 'CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content || '' }
+        });
+        const data = await r.json();
+        if (data.success) {
+            showToast('ETR Generated successfully', 'success');
+            setTimeout(() => location.reload(), 800);
+        } else {
+            btn.innerHTML = 'Generate';
+            showToast(data.error || 'Failed to generate', 'error');
+        }
+    } catch (err) {
+        showToast('Network fault', 'error');
+    }
+}
+
+async function resendETR(eventId) {
+    try {
+        const btn = event.currentTarget;
+        btn.innerHTML = '<i class="fa-solid fa-circle-notch animate-spin"></i>';
+        const r = await fetch(`/portal/admin-staff/etr/${eventId}/resend`, {
+            method: 'POST',
+            headers: { 'CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content || '' }
+        });
+        const data = await r.json();
+        if (data.success) {
+            showToast('ETR Resent to Client', 'success');
+            setTimeout(() => location.reload(), 800);
+        } else {
+            btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i>';
+            showToast(data.error || 'Failed to resend', 'error');
+        }
+    } catch (err) {
+        showToast('Network fault', 'error');
+    }
+}
+</script>

@@ -1,0 +1,380 @@
+<!-- Staff Dashboard – Cinematic Mobile-first App Style -->
+<% currentPage='dashboard' %>
+
+<!-- ── Shift Overview Card ── -->
+<div class="glass-card mb-5 relative overflow-hidden animate-fade-up shadow-[0_8px_32px_rgba(0,0,0,0.5)] border-t-2 border-gold-500">
+    <!-- Subtle background effect -->
+    <div class="absolute -right-10 -top-10 w-40 h-40 bg-gold-500/10 blur-3xl rounded-full pointer-events-none"></div>
+    
+    <div class="p-4 sm:p-5 relative z-10 flex items-center justify-between">
+        
+        <!-- Left: Stats & Actions -->
+        <div>
+            <div class="text-[0.65rem] font-bold text-tx-3 uppercase tracking-wider mb-2">Shift Telemetry</div>
+            <div class="flex items-end gap-2 mb-1">
+                <span class="font-display text-3xl font-extrabold text-tx-1 leading-none tracking-tight"><%= user.hours_worked || 0 %></span>
+                <span class="text-xs font-bold text-tx-3 mb-1 uppercase tracking-widest bg-white/5 px-2 py-0.5 rounded">HRS</span>
+            </div>
+            <div class="text-[0.65rem] text-tx-3 mb-4 font-mono">
+                <span class="text-gold-400 font-bold"><%= user.hours_worked || 0 %>h</span> active <span class="mx-1">•</span> <%= Math.max(0, 160-(user.hours_worked||0)) %>h rem
+            </div>
+            
+            <% if (onShift) { %>
+                <button class="btn btn-primary bg-gradient-to-r from-red-600 to-red-500 text-white border-none shadow-glow-red hover:scale-105 transition-transform px-5 py-2 text-xs" onclick="clockInOut('out', '')">
+                    <i class="fa-solid fa-power-off mr-1.5 opacity-80"></i> Terminate Shift
+                </button>
+            <% } else { %>
+                <button class="btn btn-primary bg-gradient-to-r from-emerald-600 to-emerald-400 text-white border-none shadow-glow-emerald hover:scale-105 transition-transform px-5 py-2 text-xs" onclick="openClockInModal()">
+                    <i class="fa-solid fa-bolt mr-1.5 opacity-80"></i> Initialize Shift
+                </button>
+            <% } %>
+        </div>
+
+        <!-- Right: Circular progress (Tailwind + Inline SVG) -->
+        <div class="relative w-24 h-24 flex-shrink-0 drop-shadow-[0_0_15px_rgba(245,158,11,0.2)]">
+            <svg class="w-full h-full transform -rotate-90 drop-shadow-lg" viewBox="0 0 80 80">
+                <circle cx="40" cy="40" r="34" stroke="rgba(255,255,255,0.05)" stroke-width="6" fill="none" />
+                <circle class="transition-all duration-1000 ease-out" cx="40" cy="40" r="34" stroke="url(#gaugeGrad)" stroke-width="6" fill="none" 
+                    stroke-dasharray="214" stroke-dashoffset="<%= Math.max(10, 214 - ((user.hours_worked||0) / 160 * 214)).toFixed(0) %>" stroke-linecap="round" />
+                <defs>
+                    <linearGradient id="gaugeGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stop-color="#f59e0b" />
+                        <stop offset="100%" stop-color="#fbbf24" />
+                    </linearGradient>
+                </defs>
+            </svg>
+            <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                <i class="fa-regular fa-clock text-gold-400 text-xl drop-shadow-[0_0_8px_rgba(245,158,11,0.5)]"></i>
+            </div>
+        </div>
+        
+    </div>
+</div>
+
+<!-- ── Upcoming Events ── -->
+<div class="mb-6 animate-fade-up delay-1">
+    <div class="flex items-center gap-2 mb-3">
+        <i class="fa-solid fa-calendar-days text-blue-400"></i>
+        <h2 class="text-sm font-bold text-tx-1 uppercase tracking-wider">Upcoming Deployment</h2>
+    </div>
+
+    <% var upcomingAll = (pendingAssignments||[]).concat(acceptedAssignments||[]).slice(0,3); %>
+    <% if (upcomingAll.length > 0) { %>
+        <div class="space-y-3">
+            <% upcomingAll.forEach(function(a) { %>
+                <% var isAccepted = (acceptedAssignments||[]).some(function(x){ return x._id.toString() === a._id.toString(); }); %>
+                <div class="glass-card p-4 relative overflow-hidden group hover:border-white/10 transition-colors cursor-default block">
+                    <!-- Left Accent Border -->
+                    <div class="absolute left-0 top-0 bottom-0 w-1 <%= isAccepted ? 'bg-blue-500 shadow-[0_0_10px_#3b82f6]' : 'bg-gold-500 shadow-[0_0_10px_#f59e0b]' %>"></div>
+                    
+                    <div class="flex items-start justify-between mb-2">
+                        <div class="min-w-0 pr-3">
+                            <h3 class="font-bold text-sm text-tx-1 truncate group-hover:text-blue-300 transition-colors"><%= a.title %></h3>
+                            <div class="text-[0.65rem] text-tx-3 uppercase tracking-wider font-bold mt-1.5 flex items-center gap-1.5">
+                                <i class="fa-regular fa-calendar-check text-tx-2"></i> <%= new Date(a.date).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}) %>
+                            </div>
+                        </div>
+                        <div class="flex flex-col items-end gap-1 flex-shrink-0">
+                            <% if(a.vip_flag) { %>
+                                <span class="badge-gold text-[0.55rem] font-bold px-1.5 py-0.5 rounded uppercase tracking-widest"><i class="fa-solid fa-star text-[0.5rem] mr-0.5"></i> VIP</span>
+                            <% } %>
+                            <% if(!isAccepted) { %>
+                                <span class="badge-red text-[0.55rem] font-bold px-1.5 py-0.5 rounded uppercase tracking-widest animate-pulse"><i class="fa-solid fa-bell mr-0.5"></i> Action Req</span>
+                            <% } %>
+                        </div>
+                    </div>
+                    
+                    <div class="text-xs text-tx-2 bg-black/30 p-2 rounded border border-white/5 font-mono mb-3">
+                        <i class="fa-solid fa-location-dot text-blue-400 mr-1.5"></i> <%= a.location || 'Location TBD' %>
+                    </div>
+                    
+                    <% if(!isAccepted) { %>
+                        <div class="flex gap-2">
+                            <button class="btn btn-primary btn-sm flex-1 bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500 hover:text-dark-bg border border-emerald-500/30 flex justify-center shadow-none transition-colors" onclick="respondAssignment('<%= a._id %>','accept')">
+                                <i class="fa-solid fa-check mr-1.5"></i> Accept Target
+                            </button>
+                            <button class="btn btn-outline btn-sm flex-1 border-red-500/30 text-red-400 hover:bg-red-500/20 flex justify-center transition-colors" onclick="respondAssignment('<%= a._id %>','decline')">
+                                <i class="fa-solid fa-xmark mr-1.5"></i> Reject
+                            </button>
+                        </div>
+                    <% } else { %>
+                        <div class="text-[0.65rem] text-emerald-400 font-bold uppercase tracking-widest flex items-center gap-1.5">
+                            <i class="fa-solid fa-circle-check"></i> Commitment Locked
+                        </div>
+                    <% } %>
+                </div>
+            <% }); %>
+        </div>
+    <% } else { %>
+        <div class="glass-card p-6 flex flex-col items-center justify-center text-tx-3 opacity-70">
+            <i class="fa-solid fa-calendar-xmark text-3xl mb-3"></i>
+            <p class="text-xs font-bold uppercase tracking-wider">No active deployments.</p>
+        </div>
+    <% } %>
+</div>
+
+<!-- ── Available Events — Apply to Join ── -->
+<% if (openEvents && openEvents.length > 0) { %>
+<div class="mb-6 animate-fade-up delay-2">
+    <div class="flex items-center justify-between mb-3">
+        <div class="flex items-center gap-2">
+            <i class="fa-solid fa-door-open text-emerald-400"></i>
+            <h2 class="text-sm font-bold text-tx-1 uppercase tracking-wider">Open Network <span class="text-[0.6rem] bg-emerald-500/20 text-emerald-400 px-1.5 rounded ml-1"><%= openEvents.length %></span></h2>
+        </div>
+    </div>
+    
+    <div class="flex overflow-x-auto gap-3 pb-4 custom-scrollbar snap-x">
+        <% openEvents.slice(0,3).forEach(function(a) { %>
+            <div class="glass-card p-4 min-w-[260px] max-w-[280px] shrink-0 snap-start flex flex-col hover:border-emerald-500/30 transition-colors">
+                <div class="flex justify-between items-start mb-2">
+                    <h3 class="font-bold text-sm text-tx-1 truncate pr-2"><%= a.title %></h3>
+                    <% if(a.vip_flag) { %>
+                        <i class="fa-solid fa-star text-gold-400 text-xs shadow-glow-gold rounded-full bg-gold-500/20 p-1"></i>
+                    <% } %>
+                </div>
+                
+                <div class="text-[0.65rem] text-tx-3 uppercase tracking-wider font-bold mb-3 flex flex-col gap-1.5">
+                    <span class="flex items-center gap-1.5"><i class="fa-regular fa-calendar-check text-emerald-400"></i> <%= new Date(a.date).toLocaleDateString('en-GB',{day:'2-digit',month:'short'}) %></span>
+                    <span class="flex items-center gap-1.5 truncate"><i class="fa-solid fa-location-crosshairs text-blue-400"></i> <%= a.location || 'TBD' %></span>
+                </div>
+                
+                <div class="mt-auto pt-3 border-t border-white/5 flex items-center justify-between">
+                    <div class="font-mono text-emerald-400 font-bold text-sm">
+                        KSh <%= (a.pay_rate||0).toLocaleString() %>
+                    </div>
+                    <button class="btn btn-outline btn-sm py-1 px-3 text-[0.65rem] rounded-full border-white/20 hover:bg-white/10" onclick="respondAssignment('<%= a._id %>','apply')">
+                        <i class="fa-solid fa-paper-plane mr-1"></i> Apply
+                    </button>
+                </div>
+            </div>
+        <% }) %>
+    </div>
+</div>
+<% } %>
+
+<!-- ── My Stats Grid ── -->
+<div class="mb-[80px] animate-fade-up delay-3">
+    <div class="flex items-center gap-2 mb-3">
+        <i class="fa-solid fa-chart-pie text-purple-400"></i>
+        <h2 class="text-sm font-bold text-tx-1 uppercase tracking-wider">Personal Metrics</h2>
+    </div>
+    
+    <div class="grid grid-cols-2 gap-3">
+        <div class="glass-card p-3 flex flex-col justify-center items-center text-center">
+            <div class="w-8 h-8 rounded-full bg-blue-500/10 text-blue-400 flex items-center justify-center mb-2"><i class="fa-solid fa-clock"></i></div>
+            <div class="font-display text-xl font-extrabold text-tx-1"><%= user.hours_worked || 0 %>h</div>
+            <div class="text-[0.6rem] text-tx-3 uppercase tracking-wider font-bold mt-0.5">Chronology</div>
+        </div>
+        
+        <div class="glass-card p-3 flex flex-col justify-center items-center text-center">
+            <div class="w-8 h-8 rounded-full bg-emerald-500/10 text-emerald-400 flex items-center justify-center mb-2"><i class="fa-solid fa-sack-dollar"></i></div>
+            <div class="font-display text-[1rem] sm:text-lg font-extrabold text-emerald-400"><%= (totalEarnings||0).toLocaleString() %></div>
+            <div class="text-[0.6rem] text-tx-3 uppercase tracking-wider font-bold mt-0.5">Yield (KSh)</div>
+        </div>
+        
+        <div class="glass-card p-3 flex flex-col justify-center items-center text-center">
+            <div class="w-8 h-8 rounded-full bg-purple-500/10 text-purple-400 flex items-center justify-center mb-2"><i class="fa-solid fa-check-double"></i></div>
+            <div class="font-display text-xl font-extrabold text-tx-1"><%= acceptedAssignments ? acceptedAssignments.length : 0 %></div>
+            <div class="text-[0.6rem] text-tx-3 uppercase tracking-wider font-bold mt-0.5">Executed</div>
+        </div>
+        
+        <div class="glass-card p-3 flex flex-col justify-center items-center text-center">
+            <div class="w-8 h-8 rounded-full bg-gold-500/10 text-gold-400 flex items-center justify-center mb-2"><i class="fa-regular fa-folder-open"></i></div>
+            <div class="font-display text-xl font-extrabold text-tx-1"><%= pendingAssignments ? pendingAssignments.length : 0 %></div>
+            <div class="text-[0.6rem] text-tx-3 uppercase tracking-wider font-bold mt-0.5">Pending Nodes</div>
+        </div>
+    </div>
+</div>
+
+<!-- Camera / Clock-In Modal -->
+<div id="cameraModal" class="modal-overlay hidden bg-black/90 backdrop-blur-md">
+    <div class="flex flex-col items-center justify-center w-full h-full p-4">
+        <h3 class="text-white font-display text-xl mb-4 font-bold flex items-center gap-2 drop-shadow-lg"><i class="fa-solid fa-camera text-emerald-400"></i> Facial Baseline Required</h3>
+        
+        <div class="relative w-full max-w-[320px] aspect-[3/4] rounded-2xl overflow-hidden border-2 border-emerald-500/50 shadow-glow-emerald bg-black/50 mb-6">
+            <video id="cameraStream" autoplay playsinline class="w-full h-full object-cover transform scale-x-[-1]"></video>
+            
+            <!-- Target overlay -->
+            <div class="absolute inset-0 pointer-events-none flex items-center justify-center">
+                <div class="w-3/4 h-1/2 border-2 border-emerald-500/50 rounded-[40px] border-dashed opacity-50 relative">
+                    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-emerald-500 opacity-80"></div>
+                </div>
+            </div>
+            <div class="absolute top-3 left-3 flex items-center gap-2">
+                 <span class="w-2 h-2 rounded-full bg-red-500 animate-pulse shadow-glow-red"></span>
+                 <span class="text-[0.6rem] font-mono text-white tracking-widest uppercase font-bold drop-shadow-md">REC</span>
+            </div>
+        </div>
+        
+        <canvas id="snapshotCanvas" class="hidden"></canvas>
+        
+        <div class="flex gap-4 w-full max-w-[320px]">
+            <button onclick="captureSelfie()" class="btn btn-primary flex-1 shadow-glow-emerald text-sm font-bold h-12">
+                <i class="fa-solid fa-fingerprint mr-2"></i> AUTHORIZE
+            </button>
+            <button onclick="closeCameraModal()" class="btn btn-outline flex-none w-14 h-12 flex items-center justify-center border-white/20 hover:bg-white/10">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ── Clock In/Out ──
+    let pendingClockId = null, cameraStreamObj = null;
+
+    function openClockInModal(assignId) {
+        pendingClockId = assignId || (document.querySelector('.glass-card')?._assignId);
+        const modal = document.getElementById('cameraModal');
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        
+        navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } })
+            .then(stream => { cameraStreamObj = stream; document.getElementById('cameraStream').srcObject = stream; })
+            .catch(() => { closeCameraModal(); showToast('Hardware interface failed (Camera Blocked).', 'error'); });
+    }
+    
+    function closeCameraModal() {
+        const modal = document.getElementById('cameraModal');
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+        if (cameraStreamObj) { cameraStreamObj.getTracks().forEach(t => t.stop()); cameraStreamObj = null; }
+    }
+    
+    function captureSelfie() {
+        const v = document.getElementById('cameraStream'), c = document.getElementById('snapshotCanvas');
+        c.width = v.videoWidth; c.height = v.videoHeight; 
+        // Mirror the canvas draw as well
+        const ctx = c.getContext('2d');
+        ctx.translate(c.width, 0);
+        ctx.scale(-1, 1);
+        ctx.drawImage(v, 0, 0);
+        
+        const b64 = c.toDataURL('image/jpeg', .8);
+        closeCameraModal();
+        
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+               p => sendClockReq('in', pendingClockId, p.coords.latitude, p.coords.longitude, b64), 
+               () => sendClockReq('in', pendingClockId, null, null, b64),
+               { enableHighAccuracy: true, timeout: 5000 }
+            );
+        } else sendClockReq('in', pendingClockId, null, null, b64);
+    }
+    
+    function clockInOut(action, id) {
+        if (action === 'in') { openClockInModal(id); return; }
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+               p => sendClockReq(action, id, p.coords.latitude, p.coords.longitude, null), 
+               () => sendClockReq(action, id, null, null, null),
+               { enableHighAccuracy: true, timeout: 5000 }
+            );
+        } else sendClockReq(action, id, null, null, null);
+    }
+    
+    function sendClockReq(action, id, lat, lng, selfie) {
+        showToast('Transmitting telemetry...', 'info');
+        fetch('/portal/staff/attendance', { 
+            method: 'POST', 
+            headers: { 
+                'Content-Type': 'application/json',
+                'CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content || ''
+            }, 
+            body: JSON.stringify({ action, assignment_id: id, lat, lng, selfie_base64: selfie }) 
+        })
+        .then(r => r.json())
+        .then(d => { 
+            if (d.success) { 
+                showToast(`Network sync ${action === 'in' ? 'established' : 'terminated'}.`, 'success'); 
+                setTimeout(() => location.reload(), 1200); 
+            } else { 
+                showToast(d.error || 'Sync rejected.', 'error'); 
+            } 
+        })
+        .catch(() => showToast('Connection fault.', 'error'));
+    }
+
+    function respondAssignment(id, response) {
+        showToast('Processing mandate...', 'info');
+        fetch(`/portal/staff/assignments/${id}/response`, { 
+            method: 'POST', 
+            headers: { 
+                'Content-Type': 'application/json',
+                'CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content || ''
+            }, 
+            body: JSON.stringify({ response }) 
+        })
+        .then(r => r.json())
+        .then(d => { 
+            const msg = response === 'accepted' ? 'Target Accepted.' : response === 'apply' ? 'Application logged.' : 'Target Rejected.';
+            if (d.success) { showToast(msg, 'success'); setTimeout(() => location.reload(), 800); } 
+            else showToast(d.error || 'Command failed.', 'error'); 
+        })
+        .catch(() => showToast('Network disjointed.', 'error'));
+    }
+
+    // Socket listeners preserved
+    try {
+        if (typeof socket !== 'undefined') {
+            socket.on('newAssignment', d => { showToast('INCOMING MANDATE: ' + d.title, 'info'); setTimeout(() => location.reload(), 2000); });
+            socket.on('accountStatusChanged', d => { if (d.status === 'Suspended') { showToast('Account locked by SYSADMIN', 'error'); setTimeout(() => window.location.href = '/portal/auth/logout', 2000); } });
+        }
+    } catch (e) { }
+    
+    // Animate circular progress indicator
+    document.addEventListener('DOMContentLoaded', () => {
+        const fill = document.querySelector('circle.transition-all');
+        if (fill) { 
+            const targetOffset = parseFloat(fill.getAttribute('stroke-dashoffset')); 
+            fill.removeAttribute('stroke-dashoffset'); // Fallback to inline style transition
+            fill.style.strokeDashoffset = '214'; 
+            setTimeout(() => {
+                fill.style.strokeDashoffset = targetOffset; 
+            }, 100); 
+        }
+    });
+
+    // Push Notification Registration
+    async function registerPush() {
+        if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+        try {
+            const reg = await navigator.serviceWorker.register('/sw.js');
+            await navigator.serviceWorker.ready;
+
+            let sub = await reg.pushManager.getSubscription();
+            if (!sub) {
+                const vapidKey = '<%= vapidPublicKey %>';
+                if (!vapidKey) return;
+                const converted = urlBase64ToUint8Array(vapidKey);
+                sub = await reg.pushManager.subscribe({
+                    userVisibleOnly: true,
+                    applicationServerKey: converted
+                });
+            }
+
+            // Send subscription to server
+            const csrf = document.querySelector('meta[name="csrf-token"]')?.content || '';
+            await fetch('/portal/staff/push-subscribe', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'CSRF-Token': csrf },
+                body: JSON.stringify({ subscription: sub })
+            });
+            console.log('Push notifications registered');
+        } catch (err) {
+            console.log('Push registration failed:', err.message);
+        }
+    }
+
+    function urlBase64ToUint8Array(base64String) {
+        const padding = '='.repeat((4 - base64String.length % 4) % 4);
+        const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+        const rawData = atob(base64);
+        return Uint8Array.from([...rawData].map(c => c.charCodeAt(0)));
+    }
+
+    // Register on page load
+    window.addEventListener('load', () => {
+        registerPush().catch(() => {});
+    });
+</script>

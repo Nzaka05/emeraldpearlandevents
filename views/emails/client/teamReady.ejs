@@ -1,0 +1,6 @@
+<%- include('../clientBase') %>
+<h2>Your Team Is Assembled</h2>
+<p>Hello <%= clientName %>,</p>
+<p>Fantastic news! The staffing and coordination team for your upcoming event <strong><%= eventName %></strong> has been fully assembled and is actively preparing.</p>
+<p>Our resources have been briefed and are currently mapped to your event logistics. You can review the current team size and resource allocations directly in your portal.</p>
+<a href="<%= process.env.CLIENT_PORTAL_URL %>/client/events/<%= eventId %>" class="btn">View Logistics</a>

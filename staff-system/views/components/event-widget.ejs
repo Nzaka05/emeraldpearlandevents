@@ -1,0 +1,62 @@
+<%/* EVENT WIDGET — Live event card with status pulse and staff ring */%>
+<% const ev = locals.event || {}; %>
+<% const _accepted = (ev.accepted_staff_ids || []).length; %>
+<% const _assigned = (ev.assigned_staff_ids || []).length; %>
+<% const _required = ev.required_staff_count || _assigned || 1; %>
+<% const _pct = Math.min(100, Math.round((_accepted / _required) * 100)); %>
+<% const _isVip = ev.vip_flag; %>
+<% const _statusColor = ev.status === 'Active' ? 'emerald' : ev.status === 'Completed' ? 'blue' : 'red'; %>
+
+<div class="glass-card p-5 animate-fade-up relative overflow-hidden">
+  <!-- VIP Badge -->
+  <% if (_isVip) { %>
+    <div class="absolute top-3 right-3">
+      <span class="badge-gold text-xs font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
+        <i class="fa-solid fa-crown text-[0.6rem]"></i> VIP
+      </span>
+    </div>
+  <% } %>
+
+  <div class="flex items-start gap-4">
+    <!-- Staff fill ring -->
+    <div class="relative flex-shrink-0">
+      <svg class="progress-ring progress-ring-animated" width="52" height="52" viewBox="0 0 52 52"
+           style="--ring-circumference: 138; --ring-offset: <%= 138 - (138 * _pct / 100) %>">
+        <circle cx="26" cy="26" r="22" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="4"/>
+        <circle class="ring-fill" cx="26" cy="26" r="22" fill="none"
+                stroke="<%= _pct >= 100 ? '#10b981' : _pct >= 50 ? '#f59e0b' : '#ef4444' %>"
+                stroke-width="4" stroke-linecap="round"
+                stroke-dasharray="138" stroke-dashoffset="<%= 138 - (138 * _pct / 100) %>"
+                transform="rotate(-90 26 26)"/>
+      </svg>
+      <div class="absolute inset-0 flex items-center justify-center text-xs font-bold text-slate-300">
+        <%= _pct %>%
+      </div>
+    </div>
+
+    <div class="flex-1 min-w-0">
+      <div class="flex items-center gap-2 mb-1">
+        <span class="status-dot status-dot-<%= _statusColor === 'emerald' ? 'active' : _statusColor === 'blue' ? 'info' : 'danger' %> animate-pulse-dot"></span>
+        <h4 class="text-sm font-bold text-slate-100 truncate"><%= ev.title || 'Untitled Event' %></h4>
+      </div>
+
+      <div class="flex items-center gap-3 text-xs text-slate-500 mb-2">
+        <span><i class="fa-regular fa-calendar mr-1"></i><%= ev.date ? new Date(ev.date).toLocaleDateString('en-KE', {month:'short',day:'numeric'}) : '—' %></span>
+        <span><i class="fa-solid fa-location-dot mr-1"></i><%= ev.location || '—' %></span>
+      </div>
+
+      <div class="flex items-center gap-4 text-xs">
+        <span class="text-slate-400">
+          <i class="fa-solid fa-users mr-1 text-emerald-400/60"></i>
+          <strong class="text-slate-200"><%= _accepted %></strong>/<%= _required %> staff
+        </span>
+        <% if (ev.pay_rate) { %>
+          <span class="text-slate-400">
+            <i class="fa-solid fa-coins mr-1 text-amber-400/60"></i>
+            KSh <%= (ev.pay_rate || 0).toLocaleString() %>
+          </span>
+        <% } %>
+      </div>
+    </div>
+  </div>
+</div>

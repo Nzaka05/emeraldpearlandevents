@@ -1,0 +1,312 @@
+<% currentPage = 'invoices'; %>
+
+<div class="flex items-center justify-between mb-5 animate-fade-up">
+    <div>
+        <h1 class="font-display text-2xl font-extrabold text-tx-1 tracking-tight flex items-center gap-3">
+            <i class="fa-solid fa-file-invoice text-blue-400"></i>
+            <span>Client Invoices</span>
+        </h1>
+        <p class="text-[0.7rem] text-tx-3 mt-1 uppercase tracking-widest font-mono">Auto-Generated Invoice Management</p>
+    </div>
+    <button onclick="document.getElementById('generateModal').classList.remove('hidden')"
+        class="btn btn-primary text-xs font-bold shadow-glow-emerald">
+        <i class="fa-solid fa-file-plus mr-1.5"></i> Generate Invoice
+    </button>
+</div>
+
+<!-- Stats Bar -->
+<div class="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-4 animate-fade-up">
+    <% var statCards = [
+        { label: 'Total', val: stats.total, icon: 'fa-file-invoice', color: 'text-tx-1' },
+        { label: 'Draft', val: stats.draft, icon: 'fa-pencil', color: 'text-tx-3' },
+        { label: 'Sent', val: stats.sent, icon: 'fa-paper-plane', color: 'text-blue-400' },
+        { label: 'Paid', val: stats.paid, icon: 'fa-circle-check', color: 'text-emerald-400' },
+        { label: 'Revenue', val: 'KSh ' + stats.totalRevenue.toLocaleString(), icon: 'fa-coins', color: 'text-gold-400' }
+    ]; statCards.forEach(function(s) { %>
+        <div class="glass-card p-3 text-center">
+            <i class="fa-solid <%= s.icon %> <%= s.color %> text-lg mb-1 block"></i>
+            <div class="text-sm font-black font-mono <%= s.color %>"><%= s.val %></div>
+            <div class="text-[0.55rem] text-tx-3 uppercase tracking-wider"><%= s.label %></div>
+        </div>
+    <% }); %>
+</div>
+
+<!-- Invoice Table -->
+<div class="glass-card mb-[80px] animate-fade-up delay-1">
+    <div class="px-5 py-4 border-b border-white/5"><h3 class="text-xs font-bold text-tx-1 uppercase tracking-widest">All Invoices</h3></div>
+    <% if (!invoices.length) { %>
+        <div class="p-16 text-center text-tx-3 opacity-60">
+            <i class="fa-solid fa-file-circle-exclamation text-4xl mb-3 block opacity-20"></i>
+            <p class="text-sm">No invoices yet. Generate your first client invoice.</p>
+        </div>
+    <% } else { %>
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead>
+                    <tr class="border-b border-white/5">
+                        <% ['Invoice #','Client','Event','Amount','Status','Created','Actions'].forEach(h => { %>
+                            <th class="px-4 py-3 text-left text-[0.6rem] font-bold uppercase tracking-widest text-tx-3"><%= h %></th>
+                        <% }); %>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-white/5">
+                    <% invoices.forEach(function(inv) { 
+                        var stMap = {
+                            Draft: 'text-tx-3 border-white/10 bg-white/5',
+                            Sent:  'text-blue-400 border-blue-500/30 bg-blue-500/10',
+                            Paid:  'text-emerald-400 border-emerald-500/30 bg-emerald-500/10',
+                            Overdue: 'text-red-400 border-red-500/30 bg-red-500/10',
+                            Cancelled: 'text-tx-3 border-white/10 bg-white/3'
+                        };
+                    %>
+                        <tr class="hover:bg-white/[0.02] transition-colors">
+                            <td class="px-4 py-3 text-xs font-mono text-blue-400"><%= (inv.invoiceNumber || inv.invoice_number || '') %></td>
+                            <td class="px-4 py-3">
+                                <div class="text-xs font-bold text-tx-1"><%= inv.clientName || inv.client_name %></div>
+                                <div class="text-[0.6rem] text-tx-3"><%= inv.clientEmail || inv.client_email %></div>
+                            </td>
+                            <td class="px-4 py-3 text-xs text-tx-2 max-w-[160px] truncate"><%= inv.eventName || inv.event_name %></td>
+                            <td class="px-4 py-3 text-xs font-bold font-mono text-emerald-400">KSh <%= (inv.totalAmount || inv.total_amount || 0).toLocaleString() %></td>
+                            <td class="px-4 py-3">
+                                <span class="text-[0.6rem] font-bold uppercase tracking-wider border px-2 py-0.5 rounded <%= stMap[inv.invoiceStatus || inv.status] || stMap.Draft %>">
+                                    <%= (inv.invoiceStatus || inv.status || 'Draft') %>
+                                </span>
+                            </td>
+                            <td class="px-4 py-3 text-[0.65rem] text-tx-3 font-mono">
+                                <%= new Date(inv.createdAt).toLocaleDateString('en-KE') %>
+                            </td>
+                            <td class="px-4 py-3">
+                                <div class="flex items-center gap-1">
+                                    <a href="/portal/admin-staff/invoices/<%= inv._id %>/download" target="_blank"
+                                        class="btn btn-outline text-[0.6rem] py-1 px-2 border-blue-500/20 text-blue-400 hover:bg-blue-500/10" title="Download PDF">
+                                        <i class="fa-solid fa-download"></i>
+                                    </a>
+                                    <button onclick="sendInvoice('<%= inv._id %>')" title="Send Invoice to Client"
+                                        class="btn btn-outline text-[0.6rem] py-1 px-2 border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/10">
+                                        <i class="fa-solid fa-paper-plane"></i>
+                                    </button>
+                                    <button onclick="resendThankYou('<%= inv._id %>', '<%= inv.clientEmail || inv.client_email %>')" title="Resend Thank You + Survey"
+                                        class="btn btn-outline text-[0.6rem] py-1 px-2 border-gold-500/20 text-gold-400 hover:bg-gold-500/10">
+                                        <i class="fa-solid fa-heart"></i>
+                                    </button>
+                                    <select onchange="updateStatus('<%= inv._id %>', this.value)" class="bg-black/40 border border-white/10 rounded-lg px-1 py-0.5 text-[0.6rem] text-tx-3">
+                                        <% ['Draft','Sent','Paid','Overdue','Cancelled'].forEach(s => { %>
+                                            <option value="<%= s %>" <%= (inv.invoiceStatus || inv.status) === s ? 'selected' : '' %>><%= s %></option>
+                                        <% }); %>
+                                    </select>
+                                    <button onclick="deleteInvoice('<%= inv._id %>')" class="btn btn-outline text-[0.6rem] py-1 px-2 border-red-500/20 text-red-400 hover:bg-red-500/10">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    <% }); %>
+                </tbody>
+            </table>
+        </div>
+    <% } %>
+</div>
+
+<!-- Generate Invoice Modal -->
+<div id="generateModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-md z-[9999] flex items-center justify-center p-4">
+    <div class="bg-dark-card border border-blue-500/30 rounded-2xl shadow-[0_0_40px_rgba(59,130,246,0.1)] max-w-xl w-full max-h-[90vh] overflow-y-auto">
+        <div class="px-5 py-4 border-b border-blue-500/20 flex items-center justify-between sticky top-0 bg-dark-card">
+            <h3 class="text-sm font-bold text-tx-1 flex items-center gap-2">
+                <i class="fa-solid fa-file-invoice text-blue-400"></i> Generate Client Invoice
+            </h3>
+            <button onclick="document.getElementById('generateModal').classList.add('hidden')"
+                class="w-8 h-8 rounded-full border border-white/10 flex items-center justify-center text-tx-3 hover:text-tx-1 transition-colors">
+                <i class="fa-solid fa-xmark text-xs"></i>
+            </button>
+        </div>
+        <form id="invoiceForm" class="p-5 space-y-4">
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-[0.65rem] font-bold uppercase tracking-widest text-tx-3 mb-1.5">Client Name *</label>
+                    <input type="text" id="invClientName" required class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-tx-1 focus:border-blue-500/40 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-[0.65rem] font-bold uppercase tracking-widest text-tx-3 mb-1.5">Client Email *</label>
+                    <input type="email" id="invClientEmail" required class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-tx-1 focus:border-blue-500/40 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-[0.65rem] font-bold uppercase tracking-widest text-tx-3 mb-1.5">Event Name *</label>
+                    <input type="text" id="invEventName" required class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-tx-1 focus:border-blue-500/40 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-[0.65rem] font-bold uppercase tracking-widest text-tx-3 mb-1.5">Event Date</label>
+                    <input type="date" id="invEventDate" class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-tx-1 focus:border-blue-500/40 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-[0.65rem] font-bold uppercase tracking-widest text-tx-3 mb-1.5">Staff Count</label>
+                    <input type="number" id="invStaffCount" min="0" class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-tx-1 focus:border-blue-500/40 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-[0.65rem] font-bold uppercase tracking-widest text-tx-3 mb-1.5">Link to Event (optional)</label>
+                    <select id="invAssignment" onchange="autoFillFromEvent(this)" class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-tx-2 focus:outline-none">
+                        <option value="">None</option>
+                        <% (assignments||[]).forEach(a => { %>
+                            <option value="<%= a._id %>"
+                                data-title="<%= a.title %>"
+                                data-date="<%= a.date ? new Date(a.date).toISOString().split('T')[0] : '' %>"
+                                data-client="<%= a.client_name || '' %>"
+                                data-email="<%= a.client_email || '' %>"
+                                data-staff="<%= a.accepted_staff_ids ? a.accepted_staff_ids.length : 0 %>"
+                                data-rate="<%= a.pay_rate || 0 %>">
+                                <%= a.title %> — <%= a.date ? new Date(a.date).toLocaleDateString('en-KE') : 'No date' %>
+                            </option>
+                        <% }); %>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Services table builder -->
+            <div>
+                <div class="flex items-center justify-between mb-2">
+                    <label class="text-[0.65rem] font-bold uppercase tracking-widest text-tx-3">Services</label>
+                    <button type="button" onclick="addServiceRow()" class="text-[0.6rem] text-emerald-400 hover:text-emerald-300 font-bold">+ Add Line</button>
+                </div>
+                <div id="serviceRows" class="space-y-2">
+                    <div class="service-row grid grid-cols-[1fr,60px,80px,30px] gap-2 items-center">
+                        <input type="text" placeholder="Description" class="svc-desc bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs text-tx-1 focus:border-blue-500/40 focus:outline-none">
+                        <input type="number" placeholder="Qty" value="1" min="1" class="svc-qty bg-black/40 border border-white/10 rounded-lg px-2 py-2 text-xs text-tx-1 text-center focus:outline-none">
+                        <input type="number" placeholder="Rate" class="svc-price bg-black/40 border border-white/10 rounded-lg px-2 py-2 text-xs text-tx-1 focus:outline-none" oninput="updateTotal()">
+                        <button type="button" onclick="this.closest('.service-row').remove(); updateTotal()" class="text-red-400 hover:text-red-300 w-6 h-6 flex items-center justify-center text-xs">×</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-black/30 rounded-xl p-3 text-right space-y-1">
+                <div class="text-xs text-tx-3">Subtotal: <span id="displaySubtotal" class="font-mono text-tx-1">KSh 0</span></div>
+                <div class="text-xs text-tx-3">VAT (16%): <span id="displayVAT" class="font-mono text-tx-1">KSh 0</span></div>
+                <div class="text-sm font-bold text-emerald-400">Total: <span id="displayTotal" class="font-mono">KSh 0</span></div>
+            </div>
+
+            <div>
+                <label class="block text-[0.65rem] font-bold uppercase tracking-widest text-tx-3 mb-1.5">Notes</label>
+                <textarea id="invNotes" rows="2" class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-tx-1 focus:border-blue-500/40 focus:outline-none resize-none" placeholder="Payment terms, additional info…"></textarea>
+            </div>
+
+            <button type="submit" class="btn btn-primary w-full font-bold shadow-glow-emerald">
+                <i class="fa-solid fa-file-pdf mr-2"></i> Generate & Save Invoice
+            </button>
+        </form>
+    </div>
+</div>
+
+<script>
+function addServiceRow() {
+    document.getElementById('serviceRows').insertAdjacentHTML('beforeend', `
+        <div class="service-row grid grid-cols-[1fr,60px,80px,30px] gap-2 items-center">
+            <input type="text" placeholder="Description" class="svc-desc bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs text-tx-1 focus:border-blue-500/40 focus:outline-none">
+            <input type="number" placeholder="Qty" value="1" min="1" class="svc-qty bg-black/40 border border-white/10 rounded-lg px-2 py-2 text-xs text-tx-1 text-center focus:outline-none">
+            <input type="number" placeholder="Rate" class="svc-price bg-black/40 border border-white/10 rounded-lg px-2 py-2 text-xs text-tx-1 focus:outline-none" oninput="updateTotal()">
+            <button type="button" onclick="this.closest('.service-row').remove(); updateTotal()" class="text-red-400 hover:text-red-300 w-6 h-6 flex items-center justify-center text-xs">×</button>
+        </div>`);
+}
+function updateTotal() {
+    let sub = 0;
+    document.querySelectorAll('.service-row').forEach(r => {
+        const qty = parseFloat(r.querySelector('.svc-qty')?.value) || 1;
+        const price = parseFloat(r.querySelector('.svc-price')?.value) || 0;
+        sub += qty * price;
+    });
+    const vat = Math.round(sub * 0.16);
+    document.getElementById('displaySubtotal').textContent = 'KSh ' + sub.toLocaleString();
+    document.getElementById('displayVAT').textContent = 'KSh ' + vat.toLocaleString();
+    document.getElementById('displayTotal').textContent = 'KSh ' + (sub + vat).toLocaleString();
+}
+
+document.getElementById('invoiceForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const services = [...document.querySelectorAll('.service-row')].map(r => ({
+        description: r.querySelector('.svc-desc').value,
+        quantity:    r.querySelector('.svc-qty').value,
+        unit_price:  r.querySelector('.svc-price').value
+    })).filter(s => s.description && s.unit_price);
+
+    const body = {
+        client_name:   document.getElementById('invClientName').value,
+        client_email:  document.getElementById('invClientEmail').value,
+        event_name:    document.getElementById('invEventName').value,
+        event_date:    document.getElementById('invEventDate').value,
+        staff_count:   document.getElementById('invStaffCount').value,
+        assignment_id: document.getElementById('invAssignment').value,
+        notes:         document.getElementById('invNotes').value,
+        services_json: JSON.stringify(services)
+    };
+
+    try {
+        const csrf = document.querySelector('meta[name="csrf-token"]')?.content || '';
+        const res = await fetch('/portal/admin-staff/invoices/generate', { method: 'POST', headers: {'Content-Type':'application/json', 'CSRF-Token': csrf}, body: JSON.stringify(body) });
+        const data = await res.json();
+        if (data.success) {
+            showToast(`Invoice ${data.invoice.invoiceNumber || data.invoice.invoice_number} created!`, 'success');
+            setTimeout(() => location.reload(), 1500);
+        } else showToast(data.error, 'error');
+    } catch(e) { showToast('Error creating invoice', 'error'); }
+});
+
+async function sendInvoice(id) {
+    if (!confirm('Send invoice to client email?')) return;
+    const csrf = document.querySelector('meta[name="csrf-token"]')?.content || '';
+    const res = await fetch(`/portal/admin-staff/invoices/${id}/send-email`, { method: 'POST', headers: {'CSRF-Token': csrf} });
+    const data = await res.json();
+    if (data.success) { showToast(data.message, 'success'); location.reload(); }
+    else showToast(data.error, 'error');
+}
+async function updateStatus(id, status) {
+    const csrf = document.querySelector('meta[name="csrf-token"]')?.content || '';
+    const res = await fetch(`/portal/admin-staff/invoices/${id}/status`, { method: 'PUT', headers: {'Content-Type':'application/json', 'CSRF-Token': csrf}, body: JSON.stringify({ status }) });
+    const data = await res.json();
+    if (data.success) showToast('Status updated', 'success');
+    else showToast(data.error, 'error');
+}
+async function deleteInvoice(id) {
+    if (!confirm('Delete this invoice?')) return;
+    const csrf = document.querySelector('meta[name="csrf-token"]')?.content || '';
+    const res = await fetch(`/portal/admin-staff/invoices/${id}`, { method: 'DELETE', headers: {'CSRF-Token': csrf} });
+    const data = await res.json();
+    if (data.success) { showToast('Invoice deleted', 'success'); location.reload(); }
+    else showToast(data.error, 'error');
+}
+
+function autoFillFromEvent(select) {
+    const opt = select.options[select.selectedIndex];
+    if (!opt || !opt.value) return;
+
+    const title  = opt.dataset.title  || '';
+    const date   = opt.dataset.date   || '';
+    const client = opt.dataset.client || '';
+    const email  = opt.dataset.email  || '';
+    const staff  = opt.dataset.staff  || '0';
+    const rate   = parseFloat(opt.dataset.rate) || 0;
+
+    if (title)  document.getElementById('invEventName').value   = title;
+    if (date)   document.getElementById('invEventDate').value   = date;
+    if (client) document.getElementById('invClientName').value  = client;
+    if (email)  document.getElementById('invClientEmail').value = email;
+    if (staff)  document.getElementById('invStaffCount').value  = staff;
+
+    if (rate > 0 && parseInt(staff) > 0) {
+        document.getElementById('serviceRows').innerHTML = '';
+        document.getElementById('serviceRows').insertAdjacentHTML('beforeend', `
+            <div class="service-row grid grid-cols-[1fr,60px,80px,30px] gap-2 items-center">
+                <input type="text" value="Event Staffing - ${title}" class="svc-desc bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs text-tx-1 focus:border-blue-500/40 focus:outline-none">
+                <input type="number" value="${staff}" min="1" class="svc-qty bg-black/40 border border-white/10 rounded-lg px-2 py-2 text-xs text-tx-1 text-center focus:outline-none">
+                <input type="number" value="${rate}" class="svc-price bg-black/40 border border-white/10 rounded-lg px-2 py-2 text-xs text-tx-1 focus:outline-none" oninput="updateTotal()">
+                <button type="button" onclick="this.closest('.service-row').remove(); updateTotal()" class="text-red-400 hover:text-red-300 w-6 h-6 flex items-center justify-center text-xs">&times;</button>
+            </div>`);
+        updateTotal();
+    }
+}
+async function resendThankYou(id, email) {
+    if (!email) { showToast('No client email on this invoice', 'error'); return; }
+    if (!confirm('Resend thank you + invoice email to ' + email + '?')) return;
+    const csrf = document.querySelector('meta[name="csrf-token"]')?.content || '';
+    const res = await fetch(`/portal/admin-staff/invoices/${id}/send-email`, { method: 'POST', headers: {'CSRF-Token': csrf} });
+    const data = await res.json();
+    if (data.success) showToast('Emails resent to ' + email, 'success');
+    else showToast(data.error || 'Failed', 'error');
+}
+</script>

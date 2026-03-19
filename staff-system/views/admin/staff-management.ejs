@@ -1,0 +1,638 @@
+<% currentPage = 'staff'; %>
+
+<!-- ══ Page Header ══ -->
+<div class="flex items-center justify-between mb-6 animate-fade-up">
+  <div>
+    <h1 class="font-display text-2xl font-extrabold text-tx-1 tracking-tight flex items-center gap-3">
+      <span class="text-gradient-emerald">Staff Management</span>
+      <span class="status-dot status-dot-active animate-pulse-dot"></span>
+    </h1>
+    <p class="text-sm text-tx-3 mt-1">Manage personnel, roles, and shift assignments</p>
+  </div>
+  <button class="btn btn-primary shadow-glow-emerald" onclick="openModal('addStaffModal')">
+    <i class="fa-solid fa-plus"></i> Add Staff
+  </button>
+</div>
+
+<!-- ══ Two-Column Layout ══ -->
+<div class="grid grid-cols-1 xl:grid-cols-[1fr_320px] gap-6 items-start">
+
+  <!-- LEFT: Staff Table Column -->
+  <div class="space-y-4">
+    
+    <!-- Search & Filters -->
+    <div class="glass-card p-2 animate-fade-up delay-1">
+      <div class="flex flex-col md:flex-row gap-3">
+        <!-- Search -->
+        <div class="relative flex-1">
+          <i class="fa-solid fa-search absolute left-3.5 top-1/2 -translate-y-1/2 text-tx-3 text-sm"></i>
+          <input type="text" id="staffSearchInput" placeholder="Search staff members..." 
+            class="form-input pl-10 w-full" oninput="filterStaff(this.value)">
+        </div>
+        
+        <!-- Filters -->
+        <div class="flex flex-wrap gap-2 shrink-0">
+          <select class="form-input form-select min-w-[130px]" onchange="filterByRole(this.value)">
+            <option value="">All Roles</option>
+            <option value="Admin">Admins</option>
+            <option value="Supervisor">Supervisors</option>
+            <option value="Staff" selected>General Staff</option>
+          </select>
+          <select class="form-input form-select min-w-[130px]" onchange="filterByDept(this.value)">
+            <option value="">All Depts</option>
+            <option value="Security">Security</option>
+            <option value="Catering">Catering</option>
+            <option value="AV">AV Tech</option>
+            <option value="Logistics">Logistics</option>
+          </select>
+          <select class="form-input form-select min-w-[120px]" onchange="filterByStatus(this.value)">
+            <option value="">All Statuses</option>
+            <option value="Active">Active</option>
+            <option value="Suspended">Suspended</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Staff Table Glass Card -->
+    <div class="glass-card overflow-hidden animate-fade-up delay-2">
+      <div class="overflow-x-auto">
+        <table class="data-table" id="staffTable">
+          <thead>
+            <tr>
+              <th class="w-10"><input type="checkbox" id="selectAll" onclick="toggleAll(this)" class="w-4 h-4 rounded border-white/20 bg-dark-card accent-emerald-500"></th>
+              <th>Personnel</th>
+              <th>Role</th>
+              <th>Department</th>
+              <th>Status</th>
+              <th class="text-right">Manage</th>
+            </tr>
+          </thead>
+          <tbody id="staffTbody">
+            <% if (staffList && staffList.length > 0) { %>
+              <% staffList.forEach(function(s) { %>
+                <tr class="staff-row cursor-pointer hover:bg-white/5 transition-colors group" 
+                    data-role="<%= s.role %>" 
+                    data-status="<%= s.status %>"
+                    data-name="<%= s.name.toLowerCase() %>"
+                    onclick="showStaffPanel(event, this)" 
+                    data-staff="<%- JSON.stringify(s).replace(/"/g, '&quot;') %>">
+                  
+                  <td onclick="event.stopPropagation()">
+                    <input type="checkbox" class="w-4 h-4 rounded border-white/20 bg-dark-card accent-emerald-500 staff-cb" value="<%= s._id %>">
+                  </td>
+                  
+                  <td>
+                    <div class="flex items-center gap-3">
+                      <div class="w-9 h-9 rounded-full bg-gradient-to-br from-emerald-600 to-emerald-400 flex items-center justify-center font-bold text-white text-xs shadow-lg ring-2 ring-emerald-500/20 group-hover:ring-emerald-500/40 transition-all overflow-hidden">
+                        <% if (s.photo_url) { %>
+                          <img src="<%= s.photo_url %>" alt="<%= s.name %>" class="w-full h-full object-cover">
+                        <% } else { %>
+                          <%= s.name.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2) %>
+                        <% } %>
+                      </div>
+                      <div>
+                        <div class="font-bold text-tx-1 text-sm group-hover:text-emerald-300 transition-colors"><%= s.name %></div>
+                        <div class="text-[0.7rem] text-tx-3 mt-0.5 font-medium"><%= s.email %></div>
+                      </div>
+                    </div>
+                  </td>
+                  
+                  <td>
+                    <span class="<%= s.role === 'Admin' ? 'badge-purple' : s.role === 'Supervisor' ? 'badge-gold' : 'badge-emerald' %> text-[0.65rem] font-bold px-2 py-0.5 rounded-full inline-flex items-center gap-1.5">
+                      <i class="fa-solid <%= s.role === 'Admin' ? 'fa-shield-halved' : s.role === 'Supervisor' ? 'fa-user-tie' : 'fa-id-badge' %> text-[0.6rem]"></i>
+                      <%= s.specific_role || s.role %>
+                    </span>
+                  </td>
+                  
+                  <td class="text-xs text-tx-2 font-medium">
+                    <div><%= s.supervisor_id ? s.supervisor_id.name : (s.department || '—') %></div>
+                    <% if(s.category) { %>
+                      <div class="text-[0.6rem] text-teal-400 font-mono mt-0.5"><%= s.category %></div>
+                    <% } %>
+                  </td>
+                  
+                  <td>
+                    <span class="<%= s.status === 'Active' ? 'badge-emerald text-emerald-300' : 'badge-red text-red-300' %> text-xs font-bold flex items-center gap-2 bg-transparent border-none p-0 inline-flex">
+                      <span class="w-1.5 h-1.5 rounded-full <%= s.status === 'Active' ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]' : 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.8)]' %>"></span>
+                      <%= s.status %>
+                    </span>
+                  </td>
+                  
+                  <td class="text-right" onclick="event.stopPropagation()">
+                    <div class="flex gap-1.5 justify-end opacity-60 group-hover:opacity-100 transition-opacity">
+                      <button class="btn btn-ghost btn-xs w-8 h-8 p-0 flex items-center justify-center hover:bg-emerald-500/20 hover:text-emerald-400" title="Edit" onclick="openEditModal(this.parentElement.parentElement.parentElement.dataset.staff)">
+                        <i class="fa-solid fa-pen"></i>
+                      </button>
+                      <button class="btn btn-ghost btn-xs w-8 h-8 p-0 flex items-center justify-center hover:bg-blue-500/20 hover:text-blue-400" title="Assign Supervisor" onclick="openAssignModal('<%= s._id %>','<%= s.name %>')">
+                        <i class="fa-solid fa-user-tie"></i>
+                      </button>
+                      <button class="btn btn-ghost btn-xs w-8 h-8 p-0 flex items-center justify-center hover:bg-gold-500/20 hover:text-gold-400" title="Reset Password" onclick="openPasswordModal('<%= s._id %>','<%= s.name %>')">
+                        <i class="fa-solid fa-key"></i>
+                      </button>
+                      <% if (s.status === 'Active') { %>
+                        <button class="btn btn-ghost btn-xs w-8 h-8 p-0 flex items-center justify-center hover:bg-red-500/20 hover:text-red-400" title="Suspend" onclick="toggleSuspend('<%= s._id %>','<%= s.status %>')">
+                          <i class="fa-solid fa-ban"></i>
+                        </button>
+                      <% } else { %>
+                        <button class="btn btn-ghost btn-xs w-8 h-8 p-0 flex items-center justify-center hover:bg-emerald-500/20 hover:text-emerald-400" title="Unsuspend" onclick="toggleSuspend('<%= s._id %>','<%= s.status %>')">
+                          <i class="fa-solid fa-circle-check"></i>
+                        </button>
+                      <% } %>
+                    </div>
+                  </td>
+                  
+                </tr>
+              <% }) %>
+            <% } else { %>
+              <tr>
+                <td colspan="6" class="text-center py-12">
+                  <div class="flex flex-col items-center justify-center text-tx-3">
+                    <i class="fa-solid fa-users-slash text-4xl mb-3 opacity-20"></i>
+                    <p class="text-sm">No staff members found.</p>
+                  </div>
+                </td>
+              </tr>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: Profile Side Panel -->
+  <div class="glass-card sticky top-20 hidden xl:block min-h-[500px] animate-fade-left overflow-hidden">
+    <!-- Header BG Gradient -->
+    <div class="absolute top-0 left-0 w-full h-32 bg-gradient-to-br from-emerald-500/20 to-transparent pointer-events-none"></div>
+    
+    <div id="staffPanelContent" class="relative z-10 h-full">
+      <!-- Empty State -->
+      <div class="h-full flex flex-col items-center justify-center p-8 text-center text-tx-3">
+        <div class="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-4 ring-1 ring-white/10">
+          <i class="fa-solid fa-arrow-pointer text-2xl opacity-50"></i>
+        </div>
+        <h3 class="font-bold text-tx-1 mb-1">Select Personnel</h3>
+        <p class="text-xs">Click a staff member to view detailed profile and assignment history</p>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════════════
+     MODALS
+     ══════════════════════════════════════════════════════════ -->
+
+<!-- Add Staff Modal -->
+<div class="modal-overlay" id="addStaffModal">
+  <div class="modal-content max-w-lg">
+    <div class="modal-header border-b border-emerald-500/20 pb-4">
+      <h3 class="text-base font-bold text-tx-1 flex items-center gap-2">
+        <div class="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center"><i class="fa-solid fa-user-plus"></i></div>
+        Onboard New Staff
+      </h3>
+      <button class="text-tx-3 hover:text-tx-1 transition-colors" onclick="closeModal('addStaffModal')"><i class="fa-solid fa-xmark text-lg"></i></button>
+    </div>
+    <div class="modal-body pt-5">
+      <form id="addStaffForm" action="/portal/admin-staff/staff" method="POST" class="space-y-4">
+        <div class="grid grid-cols-2 gap-4">
+          <div><label class="form-label">Full Name</label><input type="text" name="name" class="form-input" required placeholder="Jane Doe"></div>
+          <div><label class="form-label">Email</label><input type="email" name="email" class="form-input" required placeholder="jane@emerald.com"></div>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div><label class="form-label">Role</label>
+            <select name="role" class="form-input form-select" required>
+              <option value="Staff">Staff</option>
+              <option value="Supervisor">Supervisor</option>
+              <option value="Admin">Admin</option>
+            </select>
+          </div>
+          <div><label class="form-label">Specialization</label>
+            <input type="text" name="specific_role" class="form-input" placeholder="e.g. Bartender, Driver" list="role_suggestions">
+            <datalist id="role_suggestions">
+              <option value="Director"><option value="Coordinator"><option value="IT Head"><option value="Usher"><option value="Bartender"><option value="Security"><option value="Brand Ambassador"><option value="Event Planner">
+            </datalist>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div><label class="form-label">Phone</label><input type="text" name="phone" class="form-input" placeholder="+254 700..."></div>
+          <div><label class="form-label">Department</label><input type="text" name="department" class="form-input" placeholder="Operations"></div>
+        </div>
+        <div>
+          <label class="form-label">Category</label>
+          <select name="category" class="form-input form-select">
+            <option value="">-- Select Category --</option>
+            <% (enabledCategories||[]).forEach(function(c) { %>
+              <option value="<%= c.category %>"><%= c.category %></option>
+            <% }); %>
+          </select>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div><label class="form-label">Shift Start</label><input type="time" name="shift_start" class="form-input" value="09:00"></div>
+          <div><label class="form-label">Shift End</label><input type="time" name="shift_end" class="form-input" value="17:00"></div>
+        </div>
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <button type="submit" class="btn btn-primary w-full mt-2 shadow-glow-emerald">Provision Account & Send Login</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Staff Modal -->
+<div class="modal-overlay" id="editStaffModal">
+  <div class="modal-content max-w-lg">
+    <div class="modal-header border-b border-gold-500/20 pb-4">
+      <h3 class="text-base font-bold text-tx-1 flex items-center gap-2">
+        <div class="w-8 h-8 rounded-lg bg-gold-500/20 text-gold-400 flex items-center justify-center"><i class="fa-solid fa-user-pen"></i></div>
+        Modify Staff Profile
+      </h3>
+      <button class="text-tx-3 hover:text-tx-1" onclick="closeModal('editStaffModal')"><i class="fa-solid fa-xmark text-lg"></i></button>
+    </div>
+    <div class="modal-body pt-5">
+      <form id="editStaffForm" method="POST" class="space-y-4">
+        <div class="grid grid-cols-2 gap-4">
+          <div><label class="form-label">Full Name</label><input type="text" name="name" id="edit_name" class="form-input" required></div>
+          <div><label class="form-label">Phone</label><input type="text" name="phone" id="edit_phone" class="form-input"></div>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div><label class="form-label">Role</label>
+            <select name="role" id="edit_role" class="form-input form-select" required>
+              <option value="Staff">Staff</option><option value="Supervisor">Supervisor</option><option value="Admin">Admin</option>
+            </select>
+          </div>
+          <div><label class="form-label">Specialization</label>
+            <input type="text" name="specific_role" id="edit_specific_role" class="form-input" list="role_suggestions">
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div><label class="form-label">Department</label><input type="text" name="department" id="edit_dept" class="form-input"></div>
+          <div><label class="form-label">Category</label>
+            <select name="category" id="edit_category" class="form-input form-select">
+              <option value="">-- Select Category --</option>
+              <% (enabledCategories||[]).forEach(function(c) { %>
+                <option value="<%= c.category %>"><%= c.category %></option>
+              <% }); %>
+            </select>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div><label class="form-label">Status</label>
+            <select name="status" id="edit_status" class="form-input form-select text-emerald-400">
+              <option value="Active">Active</option><option value="Suspended" class="text-red-400">Suspended</option>
+            </select>
+          </div>
+          <div></div>
+        </div>
+        <input type="hidden" name="_method" value="PUT">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <button type="submit" class="btn btn-primary w-full mt-2 shadow-glow-emerald">Save Modifications</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Password Reset Modal -->
+<div class="modal-overlay" id="passwordModal">
+  <div class="modal-content max-w-sm">
+    <div class="modal-header">
+      <h3 class="text-base font-bold text-tx-1 flex items-center gap-2">
+        <i class="fa-solid fa-key text-gold-400"></i> Reset Credentials
+      </h3>
+      <button class="text-tx-3 hover:text-tx-1" onclick="closeModal('passwordModal')"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <p class="text-xs text-tx-2 mb-4">Set a temporary password for <strong id="pwStaffName" class="text-emerald-400"></strong>. They will be forced to change it on next login.</p>
+      <form id="passwordForm" method="POST" class="space-y-4">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <div>
+          <label class="form-label">Temporary Password</label>
+          <div class="relative">
+            <i class="fa-solid fa-lock absolute left-3 top-1/2 -translate-y-1/2 text-tx-3 text-sm"></i>
+            <input type="password" name="newPassword" class="form-input pl-9" required minlength="8" placeholder="••••••••">
+          </div>
+        </div>
+        <button type="submit" class="btn btn-primary w-full bg-gold-600 hover:bg-gold-500 border-none shadow-glow-gold text-dark-bg font-bold">Force Password Reset</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Assign Supervisor Modal -->
+<div class="modal-overlay" id="assignSupervisorModal">
+  <div class="modal-content max-w-sm">
+    <div class="modal-header">
+      <h3 class="text-base font-bold text-tx-1 flex items-center gap-2">
+        <i class="fa-solid fa-user-tie text-blue-400"></i> Assign Link
+      </h3>
+      <button class="text-tx-3 hover:text-tx-1" onclick="closeModal('assignSupervisorModal')"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <p id="assignModalStaffName" class="text-sm font-bold text-emerald-400 mb-4 pb-2 border-b border-white/5"></p>
+      <input type="hidden" id="assignStaffId">
+      <div class="space-y-4">
+        <div>
+          <label class="form-label">Direct Supervisor</label>
+          <select id="supervisorSelect" class="form-input form-select">
+            <option value="">Loading supervisors...</option>
+          </select>
+        </div>
+        <button class="btn btn-primary w-full shadow-glow-blue bg-blue-600 hover:bg-blue-500 border-none" onclick="submitAssignSupervisor()">Link Supervisor</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════
+     SCRIPTS
+     ══════════════════════════════════════════════════════════ -->
+<script>
+  // ── FILTERING ──
+  function filterStaff(q) {
+    const rows = document.querySelectorAll('.staff-row');
+    q = q.toLowerCase();
+    rows.forEach(r => {
+      if (r.dataset.name?.includes(q)) {
+        r.style.display = '';
+      } else {
+        r.style.display = 'none';
+        r.classList.remove('selected');
+      }
+    });
+  }
+  
+  function filterByRole(v) {
+    document.querySelectorAll('.staff-row').forEach(r => r.style.display = (!v || r.dataset.role === v) ? '' : 'none');
+  }
+  
+  function filterByDept(v) {
+    // Basic implementation since dept isn't always reliable in dataset yet
+    const rows = document.querySelectorAll('.staff-row');
+    if (!v) { rows.forEach(r => r.style.display = ''); return; }
+    
+    rows.forEach(r => {
+      try {
+        const s = JSON.parse(r.dataset.staff.replace(/&quot;/g, '"'));
+        r.style.display = (s.department === v || s.specific_role?.includes(v)) ? '' : 'none';
+      } catch(e) { r.style.display = 'none'; }
+    });
+  }
+  
+  function filterByStatus(v) {
+    document.querySelectorAll('.staff-row').forEach(r => r.style.display = (!v || r.dataset.status === v) ? '' : 'none');
+  }
+  
+  function toggleAll(cb) { 
+    document.querySelectorAll('.staff-cb').forEach(c => {
+      // only check visible ones
+      if (c.closest('tr').style.display !== 'none') {
+        c.checked = cb.checked;
+      }
+    }); 
+  }
+
+  // ── SIDE PANEL UI ──
+  function showStaffPanel(event, el) {
+    // If clicked on checkbox, don't trigger panel
+    if (event.target.tagName.toLowerCase() === 'input') return;
+    
+    const s = typeof el === 'string' ? JSON.parse(el) : JSON.parse(el.dataset.staff.replace(/&quot;/g, '"'));
+    
+    // UI Selection
+    document.querySelectorAll('.staff-row').forEach(r => r.classList.remove('bg-emerald-500/10'));
+    event.currentTarget.classList.add('bg-emerald-500/10');
+    
+    const initials = s.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+    const statusColor = s.status === 'Active' ? 'emerald' : 'red';
+    const suspendAction = s.status === 'Active' ? 
+      `<button class="btn btn-outline border-red-500/30 text-red-400 hover:bg-red-500/10 w-full justify-center" onclick="toggleSuspend('${s._id}','${s.status}')"><i class="fa-solid fa-ban"></i> Suspend Access</button>` :
+      `<button class="btn btn-outline border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10 w-full justify-center" onclick="toggleSuspend('${s._id}','${s.status}')"><i class="fa-solid fa-circle-check"></i> Restore Access</button>`;
+    
+    const html = `
+      <div class="px-6 pt-8 pb-4 border-b border-white/5 text-center relative z-10">
+        <div class="w-20 h-20 rounded-full bg-gradient-to-br from-${statusColor}-600 to-${statusColor}-400 flex items-center justify-center text-2xl font-bold text-white shadow-lg mx-auto mb-3 ring-4 ring-dark-card overflow-hidden">
+          ${s.photo_url ? `<img src="${s.photo_url}" alt="${s.name}" class="w-full h-full object-cover">` : initials}
+        </div>
+        <h3 class="font-display font-bold text-lg text-tx-1 mb-0.5">${s.name}</h3>
+        <p class="text-xs text-tx-3 mb-3">${s.email}</p>
+        <span class="badge-${statusColor} text-xs font-bold px-3 py-1 rounded-full shadow-glow-${statusColor}">
+          <i class="fa-solid fa-circle text-[8px] mr-1"></i> ${s.status} Status
+        </span>
+      </div>
+      
+      <div class="p-6 space-y-4">
+        <div class="grid grid-cols-2 gap-3">
+          <div class="bg-white/5 rounded-xl p-3 border border-white/5">
+            <div class="text-[0.65rem] text-tx-3 uppercase tracking-wider font-bold mb-1">Role Group</div>
+            <div class="text-sm font-semibold text-tx-1">${s.role}</div>
+          </div>
+          <div class="bg-white/5 rounded-xl p-3 border border-white/5">
+            <div class="text-[0.65rem] text-tx-3 uppercase tracking-wider font-bold mb-1">Identifier</div>
+            <div class="text-sm font-semibold text-tx-1 truncate" title="${s._id}">${s._id.toString().slice(-6).toUpperCase()}</div>
+          </div>
+        </div>
+        
+        <div class="space-y-2">
+          <div class="flex justify-between items-center py-2 border-b border-white/5">
+            <span class="text-xs text-tx-3">Title / Specialization</span>
+            <span class="text-sm font-semibold text-tx-1">${s.specific_role || 'Not Specified'}</span>
+          </div>
+          <div class="flex justify-between items-center py-2 border-b border-white/5">
+            <span class="text-xs text-tx-3">Department</span>
+            <span class="text-sm font-semibold text-tx-1">${s.department || 'Not Assigned'}</span>
+          </div>
+          <div class="flex justify-between items-center py-2 border-b border-white/5">
+            <span class="text-xs text-tx-3">Contact Phone</span>
+            <span class="text-sm font-semibold text-emerald-400">${s.phone || '—'}</span>
+          </div>
+          <div class="flex justify-between items-center py-2 border-b border-white/5">
+            <span class="text-xs text-tx-3">Standard Shift</span>
+            <span class="text-sm font-semibold text-tx-1">${s.shift_start||'09:00'} - ${s.shift_end||'17:00'}</span>
+          </div>
+        </div>
+        
+        <div class="pt-4 space-y-2">
+          <button class="btn btn-primary w-full justify-center shadow-glow-emerald" onclick="openEditModal(this.dataset.staff)" data-staff='${JSON.stringify(s).replace(/'/g, '&#39;')}'>
+            <i class="fa-solid fa-pen"></i> Full Edit Profile
+          </button>
+          <div class="flex gap-2">
+            <button class="btn btn-outline flex-1 justify-center border-white/10" onclick="openPasswordModal('${s._id}','${s.name}')">
+              <i class="fa-solid fa-key text-gold-400"></i> Code
+            </button>
+            <button class="btn btn-outline flex-1 justify-center border-white/10" onclick="openAssignModal('${s._id}','${s.name}')">
+              <i class="fa-solid fa-user-tie text-blue-400"></i> Link
+            </button>
+          </div>
+          ${suspendAction}
+        </div>
+      </div>
+    `;
+    
+    document.getElementById('staffPanelContent').innerHTML = html;
+  }
+
+  // ── MODAL HELPERS ──
+  function openEditModal(btnOrData) {
+    const s = typeof btnOrData === 'string' ? JSON.parse(btnOrData) : btnOrData;
+    document.getElementById('edit_name').value = s.name;
+    document.getElementById('edit_phone').value = s.phone || '';
+    document.getElementById('edit_role').value = s.role;
+    document.getElementById('edit_specific_role').value = s.specific_role || '';
+    document.getElementById('edit_dept').value = s.department || '';
+    const editCategory = document.getElementById('edit_category');
+    if (editCategory) editCategory.value = s.category || '';
+    
+    const statusSelect = document.getElementById('edit_status');
+    statusSelect.value = s.status;
+    statusSelect.className = 'form-input form-select font-bold ' + (s.status === 'Active' ? 'text-emerald-400' : 'text-red-400');
+    
+    document.getElementById('editStaffForm').action = '/portal/admin-staff/staff/' + s._id;
+    openModal('editStaffModal');
+  }
+  
+  document.getElementById('edit_status')?.addEventListener('change', function() {
+    this.className = 'form-input form-select font-bold ' + (this.value === 'Active' ? 'text-emerald-400' : 'text-red-400');
+  });
+
+  function openPasswordModal(id, name) {
+    document.getElementById('pwStaffName').textContent = name;
+    document.getElementById('passwordForm').action = '/portal/admin-staff/staff/' + id + '/reset-password';
+    openModal('passwordModal');
+  }
+
+  // ── AJAX SUBMISSIONS ──
+  
+  // Password Reset
+  document.getElementById('passwordForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const res = await fetch(this.action, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content || ''
+      },
+      body: JSON.stringify({ newPassword: this.newPassword.value })
+    });
+    const d = await res.json();
+    if (d.success) {
+      showToast('Credentials updated. Temporary lock engaged.', 'success');
+      closeModal('passwordModal');
+      this.reset();
+    } else {
+      showToast(d.error || 'Security reset failed', 'error');
+    }
+  });
+
+  // Assign Supervisor
+  async function openAssignModal(staffId, staffName) {
+    const assignStaffIdEl = document.getElementById('assignStaffId');
+    const assignModalStaffNameEl = document.getElementById('assignModalStaffName');
+    const select = document.getElementById('supervisorSelect');
+    
+    if (!assignStaffIdEl || !select) return;
+    
+    assignStaffIdEl.value = staffId;
+    assignModalStaffNameEl.innerHTML = `<i class="fa-solid fa-link text-tx-3 mr-2"></i>Link to: <strong>${staffName}</strong>`;
+    select.innerHTML = '<option value="">Searching command chain...</option>';
+    
+    openModal('assignSupervisorModal');
+    
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
+    
+    try {
+      const r = await fetch('/portal/admin-staff/staff', { headers: { 'CSRF-Token': csrfToken } });
+      const data = await r.json();
+      if (data.success) {
+        const supervisors = data.data.filter(s => s.role === 'Supervisor' || s.role === 'Admin');
+        select.innerHTML = '<option value="">Select Command Authority</option>' +
+          supervisors.map(s => `<option value="${s._id}">${s.role === 'Admin' ? '[ADM] ' : ''}${s.name}</option>`).join('');
+      }
+    } catch(err) {
+      select.innerHTML = '<option value="">Network cascade failure</option>';
+    }
+  }
+
+  async function submitAssignSupervisor() {
+    const staffId = document.getElementById('assignStaffId').value;
+    const supervisorId = document.getElementById('supervisorSelect').value;
+    
+    if (!supervisorId) return showToast('Select an authority first', 'error');
+    
+    try {
+      const r = await fetch(`/portal/admin-staff/staff/${staffId}/assign-supervisor`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content || ''
+        },
+        body: JSON.stringify({ supervisorId })
+      });
+      const data = await r.json();
+      if (data.success) {
+        showToast('Chain of command updated', 'success');
+        closeModal('assignSupervisorModal');
+        setTimeout(() => location.reload(), 600);
+      } else {
+        showToast('Sync error: ' + (data.error || 'Failed'), 'error');
+      }
+    } catch(err) {
+      showToast('Request timeout: ' + err.message, 'error');
+    }
+  }
+
+  // Suspend
+  async function toggleSuspend(id, status) {
+    const action = status === 'Active' ? 'suspend' : 'unsuspend';
+    if (!confirm(`Are you sure you want to ${action.toUpperCase()} network access for this personnel?`)) return;
+    
+    const r = await fetch(`/portal/admin-staff/staff/${id}/suspend`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content || ''
+      }
+    });
+    const data = await r.json();
+    if (data.success) {
+      showToast(`Personnel access ${action}ed`, 'success');
+      setTimeout(() => location.reload(), 600);
+    } else {
+      showToast('Override rejected: ' + (data.error || 'Failed'), 'error');
+    }
+  }
+
+  // Edit Submit Logic
+  document.getElementById('editStaffForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const form = e.target;
+    // ... simulate native behavior logic through AJAX ...
+    // Because this codebase expects standard form submission, we map it back or handle
+    // Normally would rewrite, but matching existing system pattern handles better for node router
+
+    const formData = new FormData(form);
+    const body = {};
+    formData.forEach((v, k) => body[k] = v);
+    
+    try {
+      const r = await fetch(form.action, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content || ''
+        },
+        body: JSON.stringify(body)
+      });
+      const data = await r.json();
+      if (data.success) {
+        closeModal('editStaffModal');
+        showToast('Profile matrix updated', 'success');
+        setTimeout(() => location.reload(), 600);
+      } else {
+        showToast('Recompile error: ' + (data.error || 'Update failed'), 'error');
+      }
+    } catch(err) {
+      showToast('Network disruption: ' + err.message, 'error');
+    }
+  });
+
+</script>

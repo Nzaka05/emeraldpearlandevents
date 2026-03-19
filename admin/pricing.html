@@ -1,0 +1,324 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pricing & Rates - Emerald Admin</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        :root{--bg:#F7F4EF;--card:#FFF;--text:#0D2B1F;--border:#E9E5DB;--gold:#C9A84C;--gold2:#E9A825;--danger:#B5332A;--primary:#0D2B1F}
+        html.dark-mode{--bg:#0a1f16;--card:#0d2b1f;--text:#F7F4EF;--border:#1a3d2e}
+        body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text)}
+        .layout{display:flex;min-height:100vh}
+        .sidebar{width:260px;background:var(--primary);padding:28px 0;position:fixed;left:0;top:0;height:100vh;z-index:100;display:flex;flex-direction:column;overflow-y:auto}
+        .logo{padding:0 20px;margin-bottom:36px;font-family:'Cormorant Garamond',serif;color:#F7F4EF}
+        .logo img{width:36px;margin-bottom:6px;display:block}
+        .logo h1{font-size:20px;font-weight:700;letter-spacing:2px}
+        .logo p{font-size:10px;opacity:.6;letter-spacing:1px;margin-top:2px}
+        .nav{list-style:none;padding:0 10px;flex:1}
+        .nav li{margin-bottom:2px}
+        .nav a{display:flex;align-items:center;padding:10px 12px;border-radius:6px;color:rgba(247,244,239,.75);text-decoration:none;font-size:13px;font-weight:500;transition:all .2s;gap:9px}
+        .nav a:hover,.nav a.active{background:rgba(201,168,76,.12);color:#F7F4EF}
+        .nav a.active{border-left:3px solid var(--gold);padding-left:9px}
+        .nav .ico{width:16px;text-align:center;opacity:.8}
+        .sfooter{padding:16px 20px;margin-top:auto;border-top:1px solid rgba(201,168,76,.2)}
+        .aprofile{display:flex;align-items:center;gap:9px}
+        .aav{width:34px;height:34px;border-radius:50%;background:var(--gold);color:#0D2B1F;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0}
+        .aname{display:block;font-size:12px;font-weight:600;color:#F7F4EF;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+        .arole{font-size:10px;color:rgba(247,244,239,.5)}
+        .lbtn{background:none;border:none;color:rgba(247,244,239,.5);cursor:pointer;padding:4px;font-size:13px;transition:color .2s;margin-left:auto}
+        .lbtn:hover{color:var(--gold)}
+        .main{flex:1;margin-left:260px;display:flex;flex-direction:column}
+        .topbar{background:var(--card);border-bottom:1px solid var(--border);padding:14px 28px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:50}
+        .tbtitle{font-family:'Cormorant Garamond',serif;font-size:19px;font-weight:700}
+        .page{padding:28px;flex:1}
+        .card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:24px;margin-bottom:20px}
+        .ch{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+        .ct{font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:700}
+        .ct i{color:var(--gold);margin-right:8px}
+        .cs{font-size:11px;color:rgba(13,43,31,.5);margin-top:2px}
+        .g2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+        .g4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+        .fg{margin-bottom:14px}
+        .fl{display:block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:rgba(13,43,31,.6);margin-bottom:5px}
+        .fi{width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:7px;font-size:13px;font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);transition:border-color .2s}
+        .fi:focus{outline:none;border-color:var(--gold)}
+        .ipfx{display:flex;align-items:center}
+        .ipfxt{padding:9px 11px;background:var(--border);border:1px solid var(--border);border-right:none;border-radius:7px 0 0 7px;font-size:12px;font-weight:600;color:rgba(13,43,31,.6)}
+        .ipfx .fi{border-radius:0 7px 7px 0}
+        .btn{padding:8px 16px;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;border:none;transition:all .2s;font-family:'DM Sans',sans-serif;display:inline-flex;align-items:center;gap:6px}
+        .bp{background:var(--gold);color:#0D2B1F}.bp:hover{background:var(--gold2)}
+        .bo{background:transparent;border:1px solid var(--border);color:var(--text)}.bo:hover{border-color:var(--gold);color:var(--gold)}
+        .bd{background:transparent;border:1px solid rgba(181,51,42,.3);color:var(--danger)}.bd:hover{background:rgba(181,51,42,.08)}
+        .bsm{padding:5px 11px;font-size:11px}
+        .bxs{padding:3px 8px;font-size:10px;border-radius:5px}
+        .rtable{width:100%;border-collapse:collapse}
+        .rtable th{padding:9px 12px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:rgba(13,43,31,.5);border-bottom:2px solid var(--border);white-space:nowrap}
+        .rtable th.rate-col{text-align:right;background:rgba(201,168,76,.05)}
+        .rtable th.staff-col{text-align:right;background:rgba(34,197,94,.05)}
+        .rtable td{padding:9px 12px;border-bottom:1px solid var(--border);vertical-align:middle}
+        .rtable tr:last-child td{border-bottom:none}
+        .rtable tr:hover td{background:rgba(201,168,76,.03)}
+        .ri{padding:6px 9px;border:1px solid var(--border);border-radius:5px;font-size:12px;background:var(--bg);color:var(--text);width:100%;font-family:'DM Sans',sans-serif;text-align:right}
+        .ri:focus{outline:none;border-color:var(--gold)}
+        .ri.staff-rate{border-color:rgba(34,197,94,.3)}
+        .ri.staff-rate:focus{border-color:#22c55e}
+        .tgl{position:relative;display:inline-block;width:36px;height:20px}
+        .tgl input{opacity:0;width:0;height:0}
+        .tgls{position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:var(--border);border-radius:20px;transition:.3s}
+        .tgls:before{position:absolute;content:'';height:14px;width:14px;left:3px;bottom:3px;background:white;border-radius:50%;transition:.3s}
+        input:checked+.tgls{background:var(--gold)}
+        input:checked+.tgls:before{transform:translateX(16px)}
+        .sc{background:var(--card);border:1px solid var(--border);border-radius:9px;padding:16px;text-align:center}
+        .sv{font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:700;color:var(--gold)}
+        .sl{font-size:10px;color:rgba(13,43,31,.5);text-transform:uppercase;letter-spacing:.8px;margin-top:3px}
+        .pay-row{display:flex;align-items:center;gap:10px;padding:10px 14px;border:1px solid var(--border);border-radius:7px;margin-bottom:7px;background:var(--bg)}
+        .pay-ico{width:32px;height:32px;border-radius:7px;background:rgba(201,168,76,.1);display:flex;align-items:center;justify-content:center;color:var(--gold);font-size:14px;flex-shrink:0}
+        .badge-co{background:rgba(201,168,76,.1);color:#92701a;border:1px solid rgba(201,168,76,.3);font-size:10px;font-weight:700;padding:2px 7px;border-radius:12px}
+        .badge-ca{background:rgba(59,130,246,.1);color:#2563eb;border:1px solid rgba(59,130,246,.3);font-size:10px;font-weight:700;padding:2px 7px;border-radius:12px}
+        .badge-st{background:rgba(34,197,94,.1);color:#16a34a;border:1px solid rgba(34,197,94,.3);font-size:10px;font-weight:700;padding:2px 7px;border-radius:12px}
+        .slabel{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:rgba(13,43,31,.4);margin-bottom:14px;padding-bottom:7px;border-bottom:1px solid var(--border)}
+        #toast{position:fixed;bottom:20px;right:20px;padding:11px 18px;border-radius:9px;font-size:12px;font-weight:600;z-index:9999;display:none}
+        .ts{background:#0D2B1F;color:#F7F4EF;border-left:4px solid #22c55e}
+        .te{background:#0D2B1F;color:#F7F4EF;border-left:4px solid var(--danger)}
+        html.dark-mode .fi,.dark-mode .ri{background:rgba(255,255,255,.05);color:#F7F4EF;border-color:#1a3d2e}
+        html.dark-mode .pay-row{background:rgba(255,255,255,.03);border-color:#1a3d2e}
+        html.dark-mode .fl,.dark-mode .cs,.dark-mode .sl{color:rgba(247,244,239,.4)}
+        html.dark-mode .rtable th{color:rgba(247,244,239,.4);border-color:#1a3d2e}
+        html.dark-mode .rtable td{border-color:#1a3d2e}
+        html.dark-mode .ipfxt{background:rgba(255,255,255,.08);border-color:#1a3d2e;color:rgba(247,244,239,.5)}
+        html.dark-mode .slabel{color:rgba(247,244,239,.3);border-color:#1a3d2e}
+        @media(max-width:1024px){.g4{grid-template-columns:repeat(2,1fr)}}
+        @media(max-width:768px){.sidebar{display:none}.main{margin-left:0}.g2{grid-template-columns:1fr}}
+    </style>
+</head>
+<body>
+<div class="layout">
+<aside class="sidebar">
+    <div class="logo">
+        <img src="../images/logo%202.png" alt="" onerror="this.style.display='none'"/>
+        <h1>ADMIN PORTAL</h1><p>Emerald Pearland</p>
+    </div>
+    <nav><ul class="nav">
+        <li><a href="/admin/dashboard"><span class="ico"><i class="fas fa-home"></i></span><span>Dashboard</span></a></li>
+        <li><a href="/admin/bookings"><span class="ico"><i class="fas fa-calendar"></i></span><span>Bookings</span></a></li>
+        <li><a href="/admin/clients"><span class="ico"><i class="fas fa-users"></i></span><span>Clients</span></a></li>
+        <li><a href="/admin/calendar"><span class="ico"><i class="fas fa-calendar-alt"></i></span><span>Calendar</span></a></li>
+        <li><a href="/admin/analytics"><span class="ico"><i class="fas fa-chart-bar"></i></span><span>Analytics</span></a></li>
+        <li><a href="/admin/notifications"><span class="ico"><i class="fas fa-bell"></i></span><span>Notifications</span></a></li>
+        <li><a href="/admin/gallery"><span class="ico"><i class="fas fa-image"></i></span><span>Gallery</span></a></li>
+        <li><a href="/admin/testimonials"><span class="ico"><i class="fas fa-star"></i></span><span>Testimonials</span></a></li>
+        <li><a href="/admin/staff"><span class="ico"><i class="fas fa-user-tie"></i></span><span>Staff</span></a></li>
+        <li><a href="http://localhost:3001" target="_blank"><span class="ico"><i class="fas fa-external-link-alt"></i></span><span>Staff System</span></a></li>
+        <li><a href="/admin/pricing" class="active"><span class="ico"><i class="fas fa-tags"></i></span><span>Pricing &amp; Rates</span></a></li>
+        <li><a href="/admin/settings"><span class="ico"><i class="fas fa-cog"></i></span><span>Settings</span></a></li>
+    </ul></nav>
+    <div class="sfooter">
+        <div class="aprofile">
+            <div class="aav" id="adminAvatar">A</div>
+            <div><span class="aname" id="adminName">Admin</span><span class="arole">Super Admin</span></div>
+            <button class="lbtn" onclick="handleLogout()"><i class="fas fa-sign-out-alt"></i></button>
+        </div>
+    </div>
+</aside><div class="main">
+    <div class="topbar">
+        <div>
+            <div class="tbtitle"><i class="fas fa-tags" style="color:var(--gold);margin-right:9px;font-size:15px;"></i>Pricing &amp; Rates</div>
+            <div style="font-size:11px;color:rgba(13,43,31,.5);margin-top:2px;">Manage client rates, staff pay rates, VAT and payment methods</div>
+        </div>
+        <div style="display:flex;gap:9px;">
+            <button class="btn bo bsm" onclick="loadPricing()"><i class="fas fa-sync-alt"></i> Refresh</button>
+            <button class="btn bp" onclick="savePricing()"><i class="fas fa-save"></i> Save All Changes</button>
+        </div>
+    </div>
+    <div class="page">
+        <!-- STAT CARDS -->
+        <div class="g4" style="margin-bottom:20px;">
+            <div class="sc"><div class="sv" id="stCats">-</div><div class="sl">Categories</div></div>
+            <div class="sc"><div class="sv" id="stVAT">-</div><div class="sl">VAT Rate</div></div>
+            <div class="sc"><div class="sv" id="stSup">-</div><div class="sl">Supervisor Rate</div></div>
+            <div class="sc"><div class="sv" id="stPay">-</div><div class="sl">Payment Methods</div></div>
+        </div>
+
+        <!-- RATE CARD TABLE -->
+        <div class="card">
+            <div class="ch">
+                <div>
+                    <div class="ct"><i class="fas fa-table"></i>Rate Card</div>
+                    <div class="cs">Client invoice rates &amp; staff pay rates per category</div>
+                </div>
+                <div style="display:flex;gap:8px;align-items:center;">
+                    <span class="badge-co">Company Uniform</span>
+                    <span class="badge-ca">Catered Uniform</span>
+                    <span class="badge-st">Staff Pay</span>
+                    <button class="btn bp bsm" onclick="addCategory()"><i class="fas fa-plus"></i> Add</button>
+                </div>
+            </div>
+            <div style="overflow-x:auto;">
+                <table class="rtable">
+                    <thead>
+                        <tr>
+                            <th style="min-width:170px;">Category</th>
+                            <th class="rate-col" style="min-width:130px;"><i class="fas fa-shirt" style="color:var(--gold);margin-right:4px;"></i>Company Uniform (KES)</th>
+                            <th class="rate-col" style="min-width:130px;"><i class="fas fa-tshirt" style="color:#3b82f6;margin-right:4px;"></i>Catered Uniform (KES)</th>
+                            <th class="staff-col" style="min-width:120px;"><i class="fas fa-user" style="color:#22c55e;margin-right:4px;"></i>Staff Pay (KES)</th>
+                            <th style="text-align:center;min-width:60px;">Active</th>
+                            <th style="min-width:40px;"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="rateTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="g2">
+            <!-- GLOBAL SETTINGS -->
+            <div class="card">
+                <div class="ch">
+                    <div><div class="ct"><i class="fas fa-sliders"></i>Global Settings</div><div class="cs">VAT, supervisor rate and currency</div></div>
+                </div>
+                <div class="g2">
+                    <div class="fg"><label class="fl">Global Supervisor Rate (KES)</label><div class="ipfx"><span class="ipfxt">KES</span><input type="number" id="supervisorRate" class="fi" placeholder="5000" min="0" step="100"></div></div>
+                    <div class="fg"><label class="fl">VAT Rate (%)</label><div class="ipfx"><span class="ipfxt">%</span><input type="number" id="vatRate" class="fi" placeholder="16" min="0" max="100" step="0.5" oninput="updatePreview()"></div></div>
+                    <div class="fg"><label class="fl">Currency</label><select id="currency" class="fi" style="appearance:none;"><option value="KES">KES</option><option value="USD">USD</option><option value="EUR">EUR</option></select></div>
+                </div>
+                <div class="fg" style="margin-bottom:0"><label class="fl">Internal Notes</label><textarea id="pricingNotes" class="fi" rows="3" placeholder="Rate review notes..."></textarea></div>
+
+                <!-- INVOICE PREVIEW -->
+                <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border);">
+                    <div class="slabel">Sample Invoice Preview</div>
+                    <div style="background:var(--bg);border-radius:7px;padding:14px;font-size:12px;">
+                        <div style="display:flex;justify-content:space-between;margin-bottom:6px;padding-bottom:6px;border-bottom:1px solid var(--border);"><span style="font-weight:700;font-family:'Cormorant Garamond',serif;font-size:14px;">Sample Invoice</span><span style="color:var(--gold);font-size:10px;font-weight:600;">PREVIEW</span></div>
+                        <div style="margin-bottom:4px;font-size:11px;color:rgba(13,43,31,.5);">Package: <select id="previewPkg" onchange="updatePreview()" style="border:1px solid var(--border);border-radius:4px;padding:2px 6px;font-size:11px;background:var(--bg);color:var(--text);"><option value="company">Company Uniform</option><option value="catered">Catered Uniform</option></select> &nbsp; Staff: <input type="number" id="previewStaff" value="5" min="1" max="50" oninput="updatePreview()" style="width:45px;border:1px solid var(--border);border-radius:4px;padding:2px 5px;font-size:11px;background:var(--bg);color:var(--text);"></div>
+                        <div id="previewLines" style="margin:10px 0;"></div>
+                        <div style="border-top:1px solid var(--border);padding-top:8px;">
+                            <div style="display:flex;justify-content:space-between;margin-bottom:3px;font-size:11px;color:rgba(13,43,31,.5);"><span>Subtotal</span><span id="pvSub">KES 0</span></div>
+                            <div style="display:flex;justify-content:space-between;margin-bottom:3px;font-size:11px;color:rgba(13,43,31,.5);"><span>VAT (<span id="pvVatPct">16</span>%)</span><span id="pvVat">KES 0</span></div>
+                            <div style="display:flex;justify-content:space-between;font-weight:700;font-size:13px;margin-top:6px;"><span>Total</span><span style="color:var(--gold);" id="pvTotal">KES 0</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PAYMENT METHODS -->
+            <div class="card">
+                <div class="ch">
+                    <div><div class="ct"><i class="fas fa-credit-card"></i>Payment Methods</div><div class="cs">Methods clients can use to pay</div></div>
+                    <button class="btn bo bsm" onclick="addPayMethod()"><i class="fas fa-plus"></i> Add</button>
+                </div>
+                <div id="payMethodsList"></div>
+            </div>
+        </div>
+        <div style="text-align:center;font-size:11px;color:rgba(13,43,31,.4);margin-top:6px;" id="lastUpdated"></div>
+    </div>
+</div>
+</div>
+<div id="toast"></div><script>
+let pd=null;
+async function api(url,method='GET',body=null){
+    const o={method,headers:{'Content-Type':'application/json'},credentials:'include'};
+    if(body)o.body=JSON.stringify(body);
+    const r=await fetch(url,o);
+    if(r.status===401){window.location.href='/admin/login';return null;}
+    return r.json();
+}
+function handleLogout(){document.cookie='adminToken=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/';window.location.href='/admin/login';}
+async function loadPricing(){
+    try{
+        const d=await api('/api/admin/pricing');
+        if(!d)return;
+        pd=d.pricing||{};
+        document.getElementById('supervisorRate').value=pd.globalSupervisorRate||5000;
+        document.getElementById('vatRate').value=pd.vatRate||16;
+        document.getElementById('currency').value=pd.currency||'KES';
+        document.getElementById('pricingNotes').value=pd.notes||'';
+        renderRateTable(pd.categories||[]);
+        renderPayMethods(pd.paymentMethods||[]);
+        document.getElementById('stCats').textContent=(pd.categories||[]).filter(c=>c.isActive).length;
+        document.getElementById('stVAT').textContent=(pd.vatRate||16)+'%';
+        document.getElementById('stSup').textContent='KES '+((pd.globalSupervisorRate||0)).toLocaleString();
+        document.getElementById('stPay').textContent=(pd.paymentMethods||[]).filter(m=>m.isActive).length;
+        if(pd.updatedAt)document.getElementById('lastUpdated').textContent='Last updated: '+new Date(pd.updatedAt).toLocaleString('en-KE');
+        updatePreview();
+    }catch(e){toast('Failed to load pricing','e');}
+}
+function renderRateTable(cats){
+    const tb=document.getElementById('rateTableBody');
+    tb.innerHTML='';
+    if(!cats.length){tb.innerHTML='<tr><td colspan="6" style="text-align:center;padding:32px;color:rgba(13,43,31,.4);font-size:13px;"><i class="fas fa-inbox" style="font-size:22px;margin-bottom:8px;display:block;opacity:.3;"></i>No categories. Click Add to get started.</td></tr>';return;}
+    cats.forEach((c,i)=>{
+        const tr=document.createElement('tr');
+        tr.innerHTML=`
+        <td><input class="ri" style="text-align:left;" value="${c.name||''}" placeholder="Category name" oninput="upCat(${i},'name',this.value)" style="min-width:150px;"></td>
+        <td style="text-align:right"><input class="ri" type="number" value="${c.companyUniformRate||0}" min="0" step="100" oninput="upCat(${i},'companyUniformRate',parseFloat(this.value)||0);updatePreview()" style="border-color:rgba(201,168,76,.4);"></td>
+        <td style="text-align:right"><input class="ri" type="number" value="${c.cateredUniformRate||0}" min="0" step="100" oninput="upCat(${i},'cateredUniformRate',parseFloat(this.value)||0);updatePreview()" style="border-color:rgba(59,130,246,.4);"></td>
+        <td style="text-align:right"><input class="ri staff-rate" type="number" value="${c.staffPayRate||0}" min="0" step="100" oninput="upCat(${i},'staffPayRate',parseFloat(this.value)||0)"></td>
+        <td style="text-align:center"><label class="tgl"><input type="checkbox" ${c.isActive?'checked':''} onchange="upCat(${i},'isActive',this.checked)"><span class="tgls"></span></label></td>
+        <td><button class="btn bd bxs" onclick="removeCat(${i})"><i class="fas fa-trash"></i></button></td>`;
+        tb.appendChild(tr);
+    });
+    updatePreview();
+}
+function upCat(i,f,v){if(pd&&pd.categories)pd.categories[i][f]=v;}
+function addCategory(){if(!pd)pd={};if(!pd.categories)pd.categories=[];pd.categories.push({name:'',companyUniformRate:0,cateredUniformRate:0,staffPayRate:0,isActive:true});renderRateTable(pd.categories);}
+function removeCat(i){if(!confirm('Remove this category?'))return;pd.categories.splice(i,1);renderRateTable(pd.categories);}
+function renderPayMethods(methods){
+    if(!pd)pd={};
+    if(!pd.paymentMethods||!pd.paymentMethods.length)pd.paymentMethods=methods;
+    const list=document.getElementById('payMethodsList');
+    list.innerHTML=(methods.length?methods:[]).map((m,i)=>`
+    <div class="pay-row">
+        <div class="pay-ico"><i class="fas ${m.icon||'fa-money-bill'}"></i></div>
+        <div style="flex:1;min-width:0;">
+            <input class="ri" value="${m.name||''}" placeholder="Method name" oninput="upPay(${i},'name',this.value)" style="text-align:left;margin-bottom:5px;">
+            <input class="ri" value="${m.details||''}" placeholder="Account / details" oninput="upPay(${i},'details',this.value)" style="text-align:left;">
+        </div>
+        <label class="tgl" style="margin-left:8px;"><input type="checkbox" ${m.isActive?'checked':''} onchange="upPay(${i},'isActive',this.checked)"><span class="tgls"></span></label>
+        <button class="btn bd bxs" onclick="removePay(${i})" style="margin-left:4px;"><i class="fas fa-trash"></i></button>
+    </div>`).join('');
+}
+function upPay(i,f,v){if(pd&&pd.paymentMethods)pd.paymentMethods[i][f]=(f==='isActive'?!!v:v);}
+function addPayMethod(){if(!pd)pd={};if(!pd.paymentMethods)pd.paymentMethods=[];pd.paymentMethods.push({name:'',details:'',icon:'fa-money-bill',isActive:true});renderPayMethods(pd.paymentMethods);}
+function removePay(i){if(!confirm('Remove?'))return;pd.paymentMethods.splice(i,1);renderPayMethods(pd.paymentMethods);}
+function updatePreview(){
+    const vat=parseFloat(document.getElementById('vatRate')?.value)||16;
+    const cur=document.getElementById('currency')?.value||'KES';
+    const pkg=document.getElementById('previewPkg')?.value||'company';
+    const cnt=parseInt(document.getElementById('previewStaff')?.value)||5;
+    const cats=(pd?.categories||[]).filter(c=>c.isActive);
+    const supRate=parseFloat(document.getElementById('supervisorRate')?.value)||5000;
+    if(!cats.length){document.getElementById('previewLines').innerHTML='<div style="color:rgba(13,43,31,.4);font-size:11px;">Add categories to see preview</div>';return;}
+    const cat=cats[0];
+    const ratePerPerson=pkg==='company'?(cat.companyUniformRate||0):(cat.cateredUniformRate||0);
+    const staffTotal=ratePerPerson*cnt;
+    let html=`<div style="display:flex;justify-content:space-between;margin-bottom:5px;font-size:11px;"><span style="color:rgba(13,43,31,.6)">${cat.name} x${cnt} (${pkg==='company'?'Company':'Catered'} Uniform)</span><span>${cur} ${staffTotal.toLocaleString()}</span></div>`;
+    html+=`<div style="display:flex;justify-content:space-between;margin-bottom:5px;font-size:11px;"><span style="color:rgba(13,43,31,.6)">Supervisor</span><span>${cur} ${supRate.toLocaleString()}</span></div>`;
+    const sub=staffTotal+supRate;
+    const vatAmt=Math.round(sub*vat/100);
+    document.getElementById('previewLines').innerHTML=html;
+    document.getElementById('pvSub').textContent=cur+' '+sub.toLocaleString();
+    document.getElementById('pvVat').textContent=cur+' '+vatAmt.toLocaleString();
+    document.getElementById('pvTotal').textContent=cur+' '+(sub+vatAmt).toLocaleString();
+    document.getElementById('pvVatPct').textContent=vat;
+}
+async function savePricing(){
+    const payload={globalSupervisorRate:parseFloat(document.getElementById('supervisorRate').value)||5000,vatRate:parseFloat(document.getElementById('vatRate').value)||16,currency:document.getElementById('currency').value,notes:document.getElementById('pricingNotes').value,categories:pd?.categories||[],paymentMethods:pd?.paymentMethods||[]};
+    try{
+        const d=await api('/api/admin/pricing','PUT',payload);
+        if(!d)return;
+        if(d.success){toast('Pricing saved successfully!','s');pd=d.pricing||payload;document.getElementById('lastUpdated').textContent='Last updated: '+new Date().toLocaleString('en-KE');updatePreview();}
+        else toast(d.error||'Save failed','e');
+    }catch(e){toast('Error saving','e');}
+}
+function toast(msg,type='s'){const t=document.getElementById('toast');t.textContent=msg;t.className=type==='s'?'ts':'te';t.style.display='block';setTimeout(()=>t.style.display='none',3500);}
+document.addEventListener('DOMContentLoaded',()=>{
+    const dark=localStorage.getItem('emeraldDarkMode')==='true';document.documentElement.classList.toggle('dark-mode',dark);
+    loadPricing();
+    ['supervisorRate','vatRate','currency'].forEach(id=>document.getElementById(id)?.addEventListener('input',updatePreview));
+    try{const a=JSON.parse(localStorage.getItem('adminUser')||'{}');if(a.name){document.getElementById('adminName').textContent=a.name;document.getElementById('adminAvatar').textContent=a.name[0].toUpperCase();}}catch(e){}
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Event Details | Emerald Pearland Events</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = { theme: { extend: { colors: { emerald: { 500: '#00c896', 600: '#00a87e' } } } } }
+    </script>
+</head>
+<body class="bg-gray-50 flex flex-col min-h-screen font-sans">
+    
+    <nav class="bg-white shadow-sm border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between h-16">
+            <div class="flex items-center">
+                <span class="text-xl font-bold text-gray-900 border-l-4 border-emerald-500 pl-3">Client Portal</span>
+            </div>
+            <div class="flex items-center space-x-6">
+                <a href="/client/dashboard" class="text-gray-500 hover:text-gray-900">Dashboard</a>
+                <a href="/client/invoices" class="text-gray-500 hover:text-gray-900">Invoices</a>
+                <a href="/client/sessions" class="text-gray-500 hover:text-gray-900">Security</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="flex-grow max-w-4xl mx-auto px-4 py-8 w-full">
+        <div class="mb-4">
+            <a href="/client/dashboard" class="text-sm text-emerald-600 hover:text-emerald-700 font-medium">&larr; Back to Dashboard</a>
+        </div>
+        
+        <div id="event-container" class="bg-white shadow-sm rounded-lg border border-gray-100 overflow-hidden hidden">
+            <div class="p-6 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
+                <div>
+                    <h2 class="text-2xl font-bold text-gray-900" id="event-title"></h2>
+                    <p class="text-sm text-gray-500 mt-1" id="event-meta"></p>
+                </div>
+                <span id="event-status" class="px-3 py-1 rounded-full text-sm font-medium"></span>
+            </div>
+            
+            <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div>
+                    <h3 class="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-4 border-b pb-2">Logistics</h3>
+                    <dl class="space-y-4 text-sm text-gray-600">
+                        <div class="flex justify-between">
+                            <dt class="font-medium text-gray-900">Location:</dt>
+                            <dd id="ev-location" class="text-right"></dd>
+                        </div>
+                        <div class="flex justify-between">
+                            <dt class="font-medium text-gray-900">Type:</dt>
+                            <dd id="ev-type" class="text-right"></dd>
+                        </div>
+                        <div class="flex justify-between">
+                            <dt class="font-medium text-gray-900">Duration:</dt>
+                            <dd id="ev-duration" class="text-right"></dd>
+                        </div>
+                        <div class="flex justify-between">
+                            <dt class="font-medium text-gray-900">Staff Deployed:</dt>
+                            <dd id="ev-staff" class="text-right font-medium text-emerald-600"></dd>
+                        </div>
+                    </dl>
+                </div>
+                
+                <div>
+                    <h3 class="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-4 border-b pb-2">Financial Summary</h3>
+                    <div class="text-sm text-gray-600" id="finance-note">
+                        <p>No invoices generated yet.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-gray-50 px-6 py-4 border-t border-gray-200 flex justify-end gap-4" id="action-buttons">
+                <a href="mailto:support@emeraldpearlandevents.com" class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 hover:text-emerald-600">
+                    ✉️ Contact Support
+                </a>
+                <a id="etr-btn" href="#" class="hidden inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
+                    Download ETR Report
+                </a>
+            </div>
+        </div>
+        
+        <div id="loading" class="text-center py-12 text-gray-500 font-medium">Loading event details...</div>
+    </main>
+
+    <script>
+        const statusMap = {
+            'PLANNED': { label: 'Booking Confirmed', color: 'bg-blue-100 text-blue-800' },
+            'STAFFING': { label: 'Team Being Assembled', color: 'bg-purple-100 text-purple-800' },
+            'READY': { label: 'Your Team Is Ready', color: 'bg-indigo-100 text-indigo-800' },
+            'LIVE': { label: 'Event In Progress', color: 'bg-emerald-100 text-emerald-800 pulse-live border border-emerald-300' },
+            'COMPLETED': { label: 'Event Completed', color: 'bg-gray-100 text-gray-800' },
+            'FINANCE_SETTLED': { label: 'Fully Settled', color: 'bg-gray-100 text-gray-800' }
+        };
+
+        const eventId = "<%= eventId %>";
+
+        fetch(`/client/api/events/${eventId}`)
+            .then(r => { if (!r.ok) throw new Error('Auth'); return r.json(); })
+            .then(json => {
+                const ev = json.data.event;
+                document.getElementById('loading').classList.add('hidden');
+                document.getElementById('event-container').classList.remove('hidden');
+                
+                document.getElementById('event-title').textContent = ev.title || 'Private Event';
+                document.getElementById('event-meta').textContent = `${new Date(ev.date).toLocaleDateString()} at ${ev.time}`;
+                
+                const statusObj = statusMap[ev.status] || { label: ev.status, color: 'bg-gray-100 text-gray-800' };
+                const stEl = document.getElementById('event-status');
+                stEl.textContent = statusObj.label;
+                stEl.className = `px-3 py-1 rounded-full text-sm font-medium ${statusObj.color}`;
+                
+                document.getElementById('ev-location').textContent = ev.location;
+                document.getElementById('ev-type').textContent = ev.type || 'Custom';
+                document.getElementById('ev-duration').textContent = 'Standard Shift';
+                
+                // Show staff count, NEVER names
+                document.getElementById('ev-staff').textContent = ev.staff ? ev.staff.length + ' Members' : '0 Members';
+                
+                if (['COMPLETED', 'FINANCE_SETTLED'].includes(ev.status)) {
+                    document.getElementById('etr-btn').classList.remove('hidden');
+                    document.getElementById('etr-btn').href = `/client/etr/${ev._id}`;
+                }
+            })
+            .catch(() => window.location.href = '/client/dashboard');
+    </script>
+</body>
+</html>

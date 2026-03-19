@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -307,9 +307,9 @@
 
 
 
-        /* ═══════════════════════════════════════════════════════════
+        /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
            MOBILE RESPONSIVENESS (Injected via Phase 10 Overhaul)
-           ═══════════════════════════════════════════════════════════ */
+           â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
         /* Hamburger Menu Icon (Hidden on Desktop) */
         .mobile-menu-btn {
@@ -392,9 +392,9 @@
         }
 
 
-        /* ═══════════════════════════════════════════════════════════
+        /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
            MOBILE QUICK ACTION FAB
-           ═══════════════════════════════════════════════════════════ */
+           â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
         .mobile-fab-container {
             display: none;
             position: fixed;
@@ -770,7 +770,19 @@
                     <span>Staff</span>
                 </a>
             </li>
+                        <li class="sidebar-nav-item">
+                <a href="http://localhost:3001" target="_blank" class="sidebar-nav-link" style="color: var(--accent); background: rgba(201, 168, 76, 0.05);">
+                    <span class="sidebar-nav-icon"><i class="fas fa-external-link-alt"></i></span>
+                    <span>Staff System</span>
+                </a>
+            </li>
             <li class="sidebar-nav-item">
+                <a href="/admin/pricing" class="sidebar-nav-link"><!-- add 'active' on pricing.html -->
+                    <span class="sidebar-nav-icon"><i class="fas fa-tags"></i></span>
+                    <span>Pricing & Rates</span>
+                </a>
+            </li>
+<li class="sidebar-nav-item">
                 <a href="/admin/settings" class="sidebar-nav-link"><!-- add 'active' on settings.html -->
                     <span class="sidebar-nav-icon"><i class="fas fa-cog"></i></span>
                     <span>Settings</span>
@@ -810,7 +822,7 @@
                         <button id="vipFilterBtn" onclick="toggleVIPFilter()" class="vip-filter-btn">
                             <i class="fas fa-star"></i> VIP Only
                         </button>
-                        <button class="btn-primary" onclick="openNewClientModal()">➕ New Client</button>
+                        <button class="btn-primary" onclick="openNewClientModal()"><i class="fas fa-plus"></i> New Client</button>
                     </div>
                 </div>
                 <div class="clients-grid" id="clientsGrid">
@@ -826,7 +838,7 @@
             <div class="modal-header">
                 <h2 class="modal-title">New Client</h2>
                 <button class="action-btn" style="width: auto; background: none; color: #999; font-size: 20px;"
-                    onclick="closeClientModal()">✕</button>
+                    onclick="closeClientModal()"><i class="fas fa-times"></i></button>
             </div>
             <div class="modal-body">
                 <div class="form-group">
@@ -1087,7 +1099,7 @@
                                 <div class="client-event-type">${client.eventType}</div>
                                 <div class="client-email">${client.email}</div>
                                 <div class="client-phone">${client.phone}</div>
-                                <div class="client-info-row">📚 ${client.totalBookings} booking${client.totalBookings > 1 ? 's' : ''}</div>
+                                <div class="client-info-row"><i class="fas fa-book"></i> ${client.totalBookings} booking${client.totalBookings > 1 ? 's' : ''}</div>
                             </div>
                             <div class="flip-card-back">
                                 <div style="width: 100%;">

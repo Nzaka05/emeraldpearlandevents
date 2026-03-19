@@ -1,5 +1,6 @@
 const express = require('express');
 const rateLimit = require('express-rate-limit');
+const { body, validationResult } = require('express-validator');
 const Booking = require('../models/Booking');
 const Customer = require('../models/Customer');
 const AdminNotification = require('../models/AdminNotification');
@@ -11,6 +12,64 @@ const { sendPushNotificationToAdmins } = require('../services/notificationServic
 initializeEmailService();
 
 const router = express.Router();
+
+const EVENT_TYPE_ENUM = Booking.schema.path('eventType').enumValues;
+const BUDGET_RANGE_ENUM = Booking.schema.path('budgetRange').enumValues;
+const NEED_USHERS_ENUM = Booking.schema.path('needUshers').enumValues;
+
+const EVENT_TYPE_ALIASES = {
+    wedding: 'Wedding',
+    'wedding reception': 'Wedding',
+    anniversary: 'Anniversary',
+    birthday: 'Birthday Party',
+    'birthday party': 'Birthday Party',
+    'house party': 'Family & House Party',
+    'family party': 'Family & House Party',
+    'family & house party': 'Family & House Party',
+    'traditional ceremony': 'Traditional Ceremony',
+    memorial: 'Memorial Service',
+    'memorial service': 'Memorial Service',
+    corporate: 'Corporate Event',
+    'corporate event': 'Corporate Event',
+    conference: 'Corporate Event',
+    'brand ambassador event': 'Brand Ambassador Event',
+    'product launch': 'Product Launch',
+    celebration: 'Private Celebration',
+    'private celebration': 'Private Celebration',
+    'luxury decor': 'Luxury Decor & Styling',
+    'luxury decor & styling': 'Luxury Decor & Styling',
+    other: 'Other'
+};
+
+const BUDGET_RANGE_ALIASES = {
+    low: 'Under KES 50,000',
+    medium: 'KES 100,000 – 250,000',
+    mid: 'KES 100,000 – 250,000',
+    high: 'KES 250,000 – 500,000',
+    '$1000-$5000': 'KES 100,000 – 250,000',
+    '$5000-$10000': 'KES 250,000 – 500,000',
+    '$10,000-$15,000': 'KES 500,000+',
+    '$10000-$15000': 'KES 500,000+',
+    '$5000-$7000': 'KES 500,000+',
+    '$5000 - $7000': 'KES 500,000+',
+    '5000-7000': 'KES 500,000+',
+    '$10,000 - $15,000': 'KES 500,000+',
+    'under 50000': 'Under KES 50,000',
+    '50k-100k': 'KES 50,000 – 100,000',
+    '100k-250k': 'KES 100,000 – 250,000',
+    '250k-500k': 'KES 250,000 – 500,000',
+    '500k+': 'KES 500,000+',
+    unsure: 'Not Sure Yet',
+    'not sure': 'Not Sure Yet',
+    'not sure yet': 'Not Sure Yet'
+};
+
+const NEED_USHERS_ALIASES = {
+    yes: 'Yes',
+    no: 'No',
+    'not specified': 'Not specified',
+    unspecified: 'Not specified'
+};
 
 // ═══════════════════════════════════════════════════════════
 // RATE LIMITING FOR SPAM PROTECTION
@@ -33,64 +92,114 @@ const validateEmail = (email) => {
 };
 
 const validatePhone = (phone) => {
-    // Accepts international format: +254722446937 or 0722446937 or 722446937
-    const phoneRegex = /^(\+?254|0)?[1-9]\d{8,}$/;
-    return phoneRegex.test(phone.replace(/\s/g, ''));
-};
-
-const validateBookingData = (data) => {
-    const errors = [];
-
-    if (!data.fullName || data.fullName.trim().length < 2) {
-        errors.push('Full Name must be at least 2 characters');
-    }
-
-    if (!validatePhone(data.phone)) {
-        errors.push('Phone number format is invalid');
-    }
-
-    if (!validateEmail(data.email)) {
-        errors.push('Email address is invalid');
-    }
-
-    if (!data.eventType || data.eventType.trim() === '') {
-        errors.push('Event Type is required');
-    }
-
-    if (!data.eventDate) {
-        errors.push('Event Date is required');
-    } else {
-        const eventDate = new Date(data.eventDate);
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        if (eventDate < today) {
-            errors.push('Event Date must be in the future');
-        }
-    }
-
-    if (!data.eventDuration || data.eventDuration.trim() === '') {
-        errors.push('Event Duration is required');
-    }
-
-    if (!data.location || data.location.trim().length < 2) {
-        errors.push('Event Location must be at least 2 characters');
-    }
-
-    if (!data.guestCount || parseInt(data.guestCount) < 1) {
-        errors.push('Number of Guests must be at least 1');
-    }
-
-    if (!data.budgetRange || data.budgetRange.trim() === '') {
-        errors.push('Estimated Investment is required');
-    }
-
-    return errors;
+    // Accepts E.164 international numbers and common local digit-only formats.
+    const normalized = String(phone).replace(/[\s()-]/g, '');
+    const phoneRegex = /^\+?[1-9]\d{9,14}$/;
+    return phoneRegex.test(normalized);
 };
 
 // Sanitize input to prevent XSS
 const sanitizeInput = (str) => {
     if (typeof str !== 'string') return str;
     return str.trim().replace(/[<>]/g, '');
+};
+
+const canonicalizeEnum = (value, enumValues, aliases) => {
+    if (typeof value !== 'string') return value;
+    const trimmed = value.trim();
+    if (!trimmed) return trimmed;
+
+    const directMatch = enumValues.find(item => item.toLowerCase() === trimmed.toLowerCase());
+    if (directMatch) return directMatch;
+
+    const aliasMatch = aliases[trimmed.toLowerCase()];
+    return aliasMatch || trimmed;
+};
+
+const canonicalizeEnumOrDefault = (value, enumValues, aliases, fallbackValue) => {
+    const canonical = canonicalizeEnum(value, enumValues, aliases);
+    if (typeof canonical !== 'string') return fallbackValue;
+    return enumValues.includes(canonical) ? canonical : fallbackValue;
+};
+
+const bookingValidationRules = [
+    body('fullName')
+        .exists({ checkFalsy: true }).withMessage('Full Name is required')
+        .bail()
+        .isString().withMessage('Full Name must be a string')
+        .bail()
+        .isLength({ min: 2 }).withMessage('Full Name must be at least 2 characters'),
+    body('phone')
+        .exists({ checkFalsy: true }).withMessage('phone is required')
+        .bail()
+        .custom(value => validatePhone(String(value))).withMessage('Phone number format is invalid'),
+    body('email')
+        .exists({ checkFalsy: true }).withMessage('Email is required')
+        .bail()
+        .isEmail().withMessage('Email address is invalid'),
+    body('eventType')
+        .exists({ checkFalsy: true }).withMessage('Event Type is required')
+        .bail()
+        .customSanitizer(value => canonicalizeEnumOrDefault(value, EVENT_TYPE_ENUM, EVENT_TYPE_ALIASES, 'Other'))
+        .custom(value => EVENT_TYPE_ENUM.includes(value)).withMessage(`Event Type must be one of: ${EVENT_TYPE_ENUM.join(', ')}`),
+    body('eventDate')
+        .exists({ checkFalsy: true }).withMessage('eventDate is required')
+        .bail()
+        .isISO8601().withMessage('Event Date must be a valid date')
+        .bail()
+        .custom(value => {
+            const eventDate = new Date(value);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            return eventDate >= today;
+        }).withMessage('Event Date must be in the future'),
+    body('eventDuration')
+        .exists({ checkFalsy: true }).withMessage('Event Duration is required')
+        .bail()
+        .isString().withMessage('Event Duration must be a string'),
+    body('location')
+        .exists({ checkFalsy: true }).withMessage('Event Location is required')
+        .bail()
+        .isString().withMessage('Event Location must be a string')
+        .bail()
+        .isLength({ min: 2 }).withMessage('Event Location must be at least 2 characters'),
+    body('guestCount')
+        .exists({ checkFalsy: true }).withMessage('Number of Guests is required')
+        .bail()
+        .isInt({ min: 1 }).withMessage('Number of Guests must be at least 1'),
+    body('budgetRange')
+        .exists({ checkFalsy: true }).withMessage('Estimated Investment is required')
+        .bail()
+        .customSanitizer(value => canonicalizeEnumOrDefault(value, BUDGET_RANGE_ENUM, BUDGET_RANGE_ALIASES, 'Not Sure Yet'))
+        .custom(value => BUDGET_RANGE_ENUM.includes(value)).withMessage(`Budget Range must be one of: ${BUDGET_RANGE_ENUM.join(', ')}`),
+    body('needUshers')
+        .optional({ values: 'falsy' })
+        .customSanitizer(value => canonicalizeEnum(value, NEED_USHERS_ENUM, NEED_USHERS_ALIASES))
+        .custom(value => NEED_USHERS_ENUM.includes(value)).withMessage(`needUshers must be one of: ${NEED_USHERS_ENUM.join(', ')}`),
+    body('usherCount')
+        .optional({ values: 'falsy' })
+        .isInt({ min: 1 }).withMessage('usherCount must be at least 1 when provided')
+];
+
+const handleBookingValidationErrors = (req, res, next) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        const rawErrors = errors.array();
+        const fieldErrors = rawErrors.reduce((acc, err) => {
+            const field = err.path || 'general';
+            if (!acc[field]) acc[field] = [];
+            acc[field].push(err.msg);
+            return acc;
+        }, {});
+
+        return res.status(400).json({
+            success: false,
+            message: 'Validation failed',
+            errors: rawErrors.map(err => err.msg),
+            fieldErrors
+        });
+    }
+    return next();
 };
 
 // Generate dynamic WhatsApp message
@@ -118,36 +227,25 @@ router.get('/gallery', async (req, res) => {
 // MAIN BOOKING ENDPOINT
 // ═══════════════════════════════════════════════════════════
 
-router.post('/book-event', bookingLimiter, async (req, res) => {
+router.post('/book-event', bookingLimiter, bookingValidationRules, handleBookingValidationErrors, async (req, res) => {
     try {
         // Extract and sanitize data
-        const rawData = req.body;
+        const rawData = req.body || {};
+        const normalizedNeedUshers = canonicalizeEnum(rawData.needUshers, NEED_USHERS_ENUM, NEED_USHERS_ALIASES) || 'Not specified';
         const data = {
             fullName: sanitizeInput(rawData.fullName),
             phone: sanitizeInput(rawData.phone),
             email: sanitizeInput(rawData.email),
-            eventType: sanitizeInput(rawData.eventType),
+            eventType: canonicalizeEnumOrDefault(sanitizeInput(rawData.eventType), EVENT_TYPE_ENUM, EVENT_TYPE_ALIASES, 'Other'),
             eventDate: rawData.eventDate,
             eventDuration: sanitizeInput(rawData.eventDuration),
             location: sanitizeInput(rawData.location),
             guestCount: parseInt(rawData.guestCount),
-            budgetRange: sanitizeInput(rawData.budgetRange),
-            needUshers: sanitizeInput(rawData.needUshers),
-            usherCount: rawData.needUshers === 'Yes' ? parseInt(rawData.usherCount) : null,
+            budgetRange: canonicalizeEnumOrDefault(sanitizeInput(rawData.budgetRange), BUDGET_RANGE_ENUM, BUDGET_RANGE_ALIASES, 'Not Sure Yet'),
+            needUshers: normalizedNeedUshers,
+            usherCount: normalizedNeedUshers === 'Yes' && rawData.usherCount ? parseInt(rawData.usherCount) : null,
             specialRequests: sanitizeInput(rawData.specialRequests)
         };
-
-        // ───────────────────────────────────────────────────────────
-        // STEP 1: VALIDATE INPUT
-        // ───────────────────────────────────────────────────────────
-        const validationErrors = validateBookingData(data);
-        if (validationErrors.length > 0) {
-            return res.status(400).json({
-                success: false,
-                message: 'Validation failed',
-                errors: validationErrors
-            });
-        }
 
         // ───────────────────────────────────────────────────────────
         // STEP 2: CHECK FOR EXISTING CUSTOMER / CREATE NEW
@@ -267,8 +365,9 @@ router.post('/book-event', bookingLimiter, async (req, res) => {
         // ───────────────────────────────────────────────────────────
         res.status(200).json({
             success: true,
-            message: 'Booking request received successfully',
+            message: 'Booking received',
             whatsappUrl: whatsappUrl,
+            whatsappLink: whatsappUrl,
             bookingId: booking._id,
             bookingReference: booking.bookingReference,
             timestamp: new Date().toISOString()
@@ -276,6 +375,15 @@ router.post('/book-event', bookingLimiter, async (req, res) => {
 
     } catch (error) {
         console.error('[BOOKING] Error processing booking:', error);
+
+        if (error.name === 'ValidationError') {
+            return res.status(400).json({
+                success: false,
+                message: 'Validation failed',
+                errors: Object.values(error.errors).map(err => err.message)
+            });
+        }
+
         res.status(500).json({
             success: false,
             message: 'Server error processing booking',

@@ -5,6 +5,7 @@ node_modules
 # Logs
 *.log
 server.log
+logs/
 
 # IDEs and Editors
 .vscode/
@@ -33,3 +34,5 @@ seed-admin.js
 
 # Antigravity/AI resolved artifacts
 *.resolved
+
+nul

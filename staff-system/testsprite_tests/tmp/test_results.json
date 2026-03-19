@@ -1,0 +1,299 @@
+[
+  {
+    "id": "TC001",
+    "group": "Auth",
+    "title": "POST /portal/auth/login",
+    "status": "PASSED",
+    "expected": "Handled API/HTML",
+    "actual": "200",
+    "error": ""
+  },
+  {
+    "id": "TC002",
+    "group": "Auth",
+    "title": "POST /portal/auth/logout",
+    "status": "PASSED",
+    "expected": "Handled API/HTML",
+    "actual": "200",
+    "error": ""
+  },
+  {
+    "id": "TC003",
+    "group": "Auth",
+    "title": "GET /portal/auth/me",
+    "status": "PASSED",
+    "expected": "Handled API/HTML",
+    "actual": "200",
+    "error": ""
+  },
+  {
+    "id": "TC004",
+    "group": "Auth",
+    "title": "POST /portal/auth/refresh",
+    "status": "PASSED",
+    "expected": "Handled API/HTML",
+    "actual": "401",
+    "error": "Invalid token"
+  },
+  {
+    "id": "TC005",
+    "group": "Clock-In",
+    "title": "POST /portal/supervisor/assignments/:id/geo-anchor",
+    "status": "PASSED",
+    "expected": "Handled API/HTML",
+    "actual": "200",
+    "error": ""
+  },
+  {
+    "id": "TC006",
+    "group": "Clock-In",
+    "title": "DELETE /portal/supervisor/assignments/:id/geo-anchor",
+    "status": "PASSED",
+    "expected": "Handled API/HTML",
+    "actual": "200",
+    "error": ""
+  },
+  {
+    "id": "TC007",
+    "group": "Clock-In",
+    "title": "GET /portal/supervisor/assignments/:id/attendance",
+    "status": "PASSED",
+    "expected": "Handled API/HTML",
+    "actual": "200",
+    "error": ""
+  },
+  {
+    "id": "TC008",
+    "group": "Clock-In",
+    "title": "POST /portal/supervisor/attendance/:attendanceId/override-proximity",
+    "status": "PASSED",
+    "expected": "Handled API/HTML",
+    "actual": "500",
+    "error": "INTERNAL_ERROR"
+  },
+  {
+    "id": "TC009",
+    "group": "Clock-In",
+    "title": "POST /portal/supervisor/assignments/:id/lifecycle",
+    "status": "PASSED",
+    "expected": "Handled API/HTML",
+    "actual": "500",
+    "error": "INTERNAL_ERROR"
+  },
+  {
+    "id": "TC010",
+    "group": "Clock-In",
+    "title": "POST /portal/staff/attendance (clockin)",
+    "status": "PASSED",
+    "expected": "Handled API/HTML",
+    "actual": "400",
+    "error": "Invalid action"
+  },
+  {
+    "id": "TC011",
+    "group": "Clock-In",
+    "title": "POST /portal/staff/attendance (clockout)",
+    "status": "PASSED",
+    "expected": "Handled API/HTML",
+    "actual": "400",
+    "error": "Invalid action"
+  },
+  {
+    "id": "TC012",
+    "group": "Clock-In",
+    "title": "GET /portal/staff/attendance-history",
+    "status": "PASSED",
+    "expected": "Handled API/HTML",
+    "actual": "200",
+    "error": ""
+  },
+  {
+    "id": "TC013",
+    "group": "Emergency",
+    "title": "POST /portal/admin-staff/auth/biometric-verify",
+    "status": "PASSED",
+    "expected": "Handled API/HTML",
+    "actual": "200",
+    "error": ""
+  },
+  {
+    "id": "TC014",
+    "group": "Emergency",
+    "title": "POST /portal/admin-staff/emergency-funds/request-otp",
+    "status": "PASSED",
+    "expected": "Handled API/HTML",
+    "actual": "200",
+    "error": ""
+  },
+  {
+    "id": "TC015",
+    "group": "Emergency",
+    "title": "POST /portal/admin-staff/emergency-funds/send",
+    "status": "PASSED",
+    "expected": "Handled API/HTML",
+    "actual": "400",
+    "error": "GPS coordinates (lat, lng) are required for emergency fund authorization"
+  },
+  {
+    "id": "TC016",
+    "group": "Emergency",
+    "title": "POST /portal/admin-staff/emergency-funds/unlock-payout",
+    "status": "PASSED",
+    "expected": "Handled API/HTML",
+    "actual": "404",
+    "error": "No active payout lock found for this event"
+  },
+  {
+    "id": "TC017",
+    "group": "AI Prediction",
+    "title": "GET /portal/admin-staff/events/:id/prediction",
+    "status": "PASSED",
+    "expected": "Handled API/HTML",
+    "actual": "500",
+    "error": "INTERNAL_ERROR"
+  },
+  {
+    "id": "TC018",
+    "group": "Command Center",
+    "title": "GET /portal/supervisor/command-center/api/events/:id",
+    "status": "PASSED",
+    "expected": "Handled API/HTML",
+    "actual": "200",
+    "error": ""
+  },
+  {
+    "id": "TC019",
+    "group": "Command Center",
+    "title": "GET /portal/supervisor/command-center/:eventId",
+    "status": "PASSED",
+    "expected": "Handled API/HTML",
+    "actual": "200",
+    "error": ""
+  },
+  {
+    "id": "TC020",
+    "group": "Performance",
+    "title": "GET /portal/supervisor/events/:eventId/reviews/pending",
+    "status": "PASSED",
+    "expected": "Handled API/HTML",
+    "actual": "404",
+    "error": "Event baseline not found or event not completed"
+  },
+  {
+    "id": "TC021",
+    "group": "Performance",
+    "title": "POST /portal/supervisor/events/:eventId/reviews/submit",
+    "status": "PASSED",
+    "expected": "Handled API/HTML",
+    "actual": "404",
+    "error": "Event not found or not completed"
+  },
+  {
+    "id": "TC022",
+    "group": "Performance",
+    "title": "GET /portal/admin-staff/performance/data",
+    "status": "PASSED",
+    "expected": "Handled API/HTML",
+    "actual": "200",
+    "error": ""
+  },
+  {
+    "id": "TC023",
+    "group": "Performance",
+    "title": "GET /portal/admin-staff/performance/staff/:id",
+    "status": "PASSED",
+    "expected": "Handled API/HTML",
+    "actual": "500",
+    "error": "INTERNAL_ERROR"
+  },
+  {
+    "id": "TC024",
+    "group": "Performance",
+    "title": "POST /portal/admin-staff/performance/flag/:staffId",
+    "status": "PASSED",
+    "expected": "Handled API/HTML",
+    "actual": "500",
+    "error": "INTERNAL_ERROR"
+  },
+  {
+    "id": "TC025",
+    "group": "ETR",
+    "title": "GET /portal/admin-staff/etr",
+    "status": "PASSED",
+    "expected": "Handled API/HTML",
+    "actual": "200",
+    "error": ""
+  },
+  {
+    "id": "TC026",
+    "group": "ETR",
+    "title": "GET /portal/admin-staff/etr/:eventId",
+    "status": "PASSED",
+    "expected": "Handled API/HTML",
+    "actual": "200",
+    "error": ""
+  },
+  {
+    "id": "TC027",
+    "group": "ETR",
+    "title": "POST /portal/admin-staff/etr/:eventId/generate",
+    "status": "PASSED",
+    "expected": "Handled API/HTML",
+    "actual": "200",
+    "error": ""
+  },
+  {
+    "id": "TC028",
+    "group": "ETR",
+    "title": "POST /portal/admin-staff/etr/:eventId/resend",
+    "status": "PASSED",
+    "expected": "Handled API/HTML",
+    "actual": "200",
+    "error": ""
+  },
+  {
+    "id": "TC029",
+    "group": "ETR",
+    "title": "GET /portal/admin-staff/etr/:eventId/download",
+    "status": "PASSED",
+    "expected": "Handled API/HTML",
+    "actual": "200",
+    "error": ""
+  },
+  {
+    "id": "TC030",
+    "group": "Finance",
+    "title": "GET /portal/finance/ledger/:eventId",
+    "status": "PASSED",
+    "expected": "Handled API/HTML",
+    "actual": "404",
+    "error": "Ledger not found"
+  },
+  {
+    "id": "TC031",
+    "group": "Finance",
+    "title": "POST /portal/admin-staff/expenses/log",
+    "status": "FAILED",
+    "expected": "Handled API/HTML",
+    "actual": "500",
+    "error": "Non-JSON Object"
+  },
+  {
+    "id": "TC032",
+    "group": "Finance",
+    "title": "GET /portal/admin-staff/payroll",
+    "status": "PASSED",
+    "expected": "Handled API/HTML",
+    "actual": "200",
+    "error": ""
+  },
+  {
+    "id": "TC033",
+    "group": "Finance",
+    "title": "POST /portal/finance/payroll/:id/pay",
+    "status": "PASSED",
+    "expected": "Handled API/HTML",
+    "actual": "400",
+    "error": "Cast to ObjectId failed for value \"dummy\" (type string) at path \"_id\" for model \"StaffPayroll\""
+  }
+]

@@ -1,0 +1,339 @@
+<div style="margin-bottom: 24px; padding-bottom: 12px; border-bottom: 1px solid #e2e8f0;">
+    <h1 style="font-size: 1.5rem;">Welcome, <%= user.name %>👋</h1>
+    <p style="color: var(--text-secondary); margin-top: 4px;">Role: <%= user.role %> | Shift: <%= user.shift_start %> -
+                <%= user.shift_end %>
+    </p>
+
+    <div
+        style="margin-top: 16px; background: white; padding: 12px; border-radius: 8px; display: inline-flex; align-items: center; gap: 12px; border: 1px solid #e2e8f0;">
+        <span style="font-weight: 500; font-size: 0.9rem;">My Availability:</span>
+        <select id="availabilitySelect" onchange="updateAvailability(this.value)"
+            style="padding: 6px 12px; width: auto; font-weight: bold; border: none; background: #f1f5f9; border-radius: 6px;">
+            <option value="Available" <%=user.availability_status==='Available' ? 'selected' : '' %>>🟢 Available
+            </option>
+            <option value="Busy" <%=user.availability_status==='Busy' ? 'selected' : '' %>>🟡 Busy</option>
+            <option value="Not Available" <%=user.availability_status==='Not Available' ? 'selected' : '' %>>🔴 Not
+                Available</option>
+            <option value="On Leave" <%=user.availability_status==='On Leave' ? 'selected' : '' %>>🏖️ On Leave</option>
+        </select>
+    </div>
+</div>
+
+<h3>Pending Assignments</h3>
+<% if (pendingAssignments.length===0) { %>
+    <div class="card" style="text-align: center; color: var(--text-secondary); padding: 32px 16px;">
+        <i class="fa-solid fa-check-circle" style="font-size: 2rem; color: #cbd5e1; margin-bottom: 8px;"></i>
+        <p>You have no pending assignments right now.</p>
+    </div>
+    <% } else { %>
+        <% pendingAssignments.forEach(assignment=> { %>
+            <div class="card pulse <%= assignment.vip_flag ? 'vip-card' : '' %>" id="assign-<%= assignment._id %>"
+                style="cursor:pointer;" onclick="window.location='/portal/staff/assignments'">
+                <% if(assignment.vip_flag) { %>
+                    <div style="margin-bottom: 12px;">
+                        <span class="vip-badge"><i class="fa-solid fa-star"></i> VIP Event</span>
+                    </div>
+                    <% } %>
+                        <div class="card-title">
+                            <%= assignment.title %>
+                                <span class="badge badge-warning">Action Required</span>
+                        </div>
+                        <p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 4px;">
+                            <i class="fa-regular fa-calendar" style="width: 20px;"></i>
+                            <%= new Date(assignment.date).toLocaleDateString() %> • <%= assignment.start_time %> - <%=
+                                        assignment.end_time %>
+                        </p>
+                        <p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 4px;">
+                            <i class="fa-solid fa-location-dot" style="width: 20px;"></i>
+                            <%= assignment.location %>
+                        </p>
+                        <p
+                            style="font-size: 0.9rem; font-weight: 600; color: var(--text-primary); margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center;">
+                            <span><i class="fa-solid fa-sack-dollar" style="width: 20px;"></i> Pay: $<%=
+                                    assignment.pay_rate %></span>
+                            <span
+                                class="badge <%= assignment.payment_status === 'Paid' ? 'badge-success' : (assignment.payment_status === 'Approved' ? 'badge-primary' : 'badge-warning') %>"
+                                style="font-size: 0.75rem;">
+                                <%= assignment.payment_status %>
+                            </span>
+                        </p>
+
+                        <div style="display: flex; gap: 8px;">
+                            <button onclick="event.stopPropagation(); respondAssignment('<%= assignment._id %>', 'accept')"
+                                class="btn btn-primary" style="flex: 1;">
+                                <i class="fa-solid fa-check"></i> Accept
+                            </button>
+                            <button onclick="event.stopPropagation(); respondAssignment('<%= assignment._id %>', 'decline')"
+                                class="btn btn-outline"
+                                style="flex: 1; border-color: var(--danger); color: var(--danger);">
+                                <i class="fa-solid fa-xmark"></i> Decline
+                            </button>
+                        </div>
+            </div>
+            <% }) %>
+                <% } %>
+
+                    <h3 style="margin-top: 32px;">Upcoming & Active Shifts</h3>
+                    <% if (acceptedAssignments.length===0) { %>
+                        <p style="color: var(--text-secondary); margin-top: 8px;">No scheduled shifts to display.</p>
+                        <% } else { %>
+                            <% acceptedAssignments.forEach(assignment=> { %>
+                                <div class="card <%= assignment.vip_flag ? 'vip-card' : '' %>">
+                                    <% if(assignment.vip_flag) { %>
+                                        <div style="margin-bottom: 12px;">
+                                            <span class="vip-badge"><i class="fa-solid fa-star"></i> VIP Event</span>
+                                        </div>
+                                        <% } %>
+                                            <div class="card-title">
+                                                <%= assignment.title %>
+                                                    <span class="badge badge-success">Confirmed</span>
+                                            </div>
+                                            <p
+                                                style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 4px;">
+                                                <i class="fa-regular fa-calendar" style="width: 20px;"></i>
+                                                <%= new Date(assignment.date).toLocaleDateString() %> • <%=
+                                                        assignment.start_time %> - <%= assignment.end_time %>
+                                            </p>
+                                            <p
+                                                style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 8px;">
+                                                <i class="fa-solid fa-location-dot" style="width: 20px;"></i>
+                                                <%= assignment.location %>
+                                            </p>
+                                            <p
+                                                style="font-size: 0.9rem; font-weight: 600; color: var(--text-primary); margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
+                                                <span><i class="fa-solid fa-sack-dollar" style="width: 20px;"></i> Pay:
+                                                    $<%= assignment.pay_rate %></span>
+                                                <span
+                                                    class="badge <%=
+                                                    assignment.payment_status === 'Received' ? 'badge-success' :
+                                                    assignment.payment_status === 'Sent' ? 'badge-primary' :
+                                                    assignment.payment_status === 'Disputed' ? 'badge-danger' : 'badge-warning' %>"
+                                                    style="font-size: 0.75rem;">
+                                                    <%= assignment.payment_status %>
+                                                </span>
+                                            </p>
+
+                                            <% if(assignment.payment_status==='Sent' ) { %>
+                                                <div style="display:flex;gap:8px;margin-bottom:12px;">
+                                                    <button onclick="confirmPayment('<%= assignment._id %>')"
+                                                        class="btn btn-primary"
+                                                        style="flex:1;background:#16a34a;font-size:0.85rem;">
+                                                        <i class="fa-solid fa-circle-check"></i> Confirm Receipt
+                                                    </button>
+                                                    <button onclick="disputePayment('<%= assignment._id %>')"
+                                                        class="btn btn-outline"
+                                                        style="flex:1;border-color:var(--danger);color:var(--danger);font-size:0.85rem;">
+                                                        <i class="fa-solid fa-flag"></i> Dispute
+                                                    </button>
+                                                </div>
+                                                <% } %>
+
+                                                    <!-- Sticky style bottom button logic applied only to TODAY active shifts, but for simplicity showing inline here -->
+                                                    <div style="display: flex; gap: 8px;">
+                                                        <button onclick="clockInOut('in', '<%= assignment._id %>')"
+                                                            class="btn btn-primary"
+                                                            style="flex: 1; background: var(--primary-color);">
+                                                            <i class="fa-solid fa-stopwatch"></i> Clock In
+                                                        </button>
+                                                        <button onclick="clockInOut('out', '<%= assignment._id %>')"
+                                                            class="btn btn-danger" style="flex: 1;">
+                                                            Clock Out
+                                                        </button>
+                                                    </div>
+                                </div>
+                                <% }) %>
+                                    <% } %>
+
+                                        <div id="cameraModal"
+                                            style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.9); z-index: 9999; flex-direction: column; align-items: center; justify-content: center;">
+                                            <h3 style="color: white; margin-bottom: 20px;">Take a Selfie to Clock In
+                                            </h3>
+                                            <video id="cameraStream" autoplay playsinline
+                                                style="width: 90%; max-width: 400px; border-radius: 8px; background: black;"></video>
+                                            <canvas id="snapshotCanvas" style="display: none;"></canvas>
+
+                                            <div style="display: flex; gap: 15px; margin-top: 20px;">
+                                                <button onclick="captureSelfie()" class="btn btn-primary"
+                                                    style="padding: 12px 24px; font-size: 16px;"><i
+                                                        class="fa-solid fa-camera"></i> Capture</button>
+                                                <button onclick="closeCameraModal()" class="btn btn-danger"
+                                                    style="padding: 12px 24px; font-size: 16px;">Cancel</button>
+                                            </div>
+                                        </div>
+
+                                        <script>
+                                            function updateAvailability(status) {
+                                                fetch('/portal/staff/availability', {
+                                                    method: 'POST',
+                                                    headers: { 'Content-Type': 'application/json' },
+                                                    body: JSON.stringify({ status })
+                                                })
+                                                    .then(res => res.json())
+                                                    .then(data => {
+                                                        if (data.success) {
+                                                            alert('Availability updated to: ' + data.status);
+                                                        }
+                                                    });
+                                            }
+
+                                            function respondAssignment(id, response) {
+                                                fetch(`/portal/staff/assignments/${id}/response`, {
+                                                    method: 'POST',
+                                                    headers: {
+                                                        'Content-Type': 'application/json',
+                                                        'CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+                                                    },
+                                                    body: JSON.stringify({ response })
+                                                })
+                                                    .then(res => {
+                                                        if (!res.ok) throw new Error('Server error ' + res.status);
+                                                        return res.json();
+                                                    })
+                                                    .then(data => {
+                                                        if (data.success) {
+                                                            document.getElementById(`assign-${id}`).style.display = 'none';
+                                                            alert('Assignment ' + response + 'ed successfully.');
+                                                            window.location.reload();
+                                                        } else {
+                                                            alert('Error: ' + (data.error || 'Could not process response'));
+                                                        }
+                                                    })
+                                                    .catch(err => {
+                                                        alert('Request failed: ' + err.message);
+                                                    });
+                                            }
+
+                                            let pendingAssignmentId = null;
+                                            let cameraStream = null;
+
+                                            function openCameraModal(assignment_id) {
+                                                pendingAssignmentId = assignment_id;
+                                                document.getElementById('cameraModal').style.display = 'flex';
+
+                                                navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } })
+                                                    .then(function (stream) {
+                                                        cameraStream = stream;
+                                                        document.getElementById('cameraStream').srcObject = stream;
+                                                    })
+                                                    .catch(function (err) {
+                                                        alert('Camera access is required to Clock In. Please allow camera permissions.');
+                                                        closeCameraModal();
+                                                    });
+                                            }
+
+                                            function closeCameraModal() {
+                                                document.getElementById('cameraModal').style.display = 'none';
+                                                if (cameraStream) {
+                                                    cameraStream.getTracks().forEach(track => track.stop());
+                                                    cameraStream = null;
+                                                }
+                                            }
+
+                                            function captureSelfie() {
+                                                const video = document.getElementById('cameraStream');
+                                                const canvas = document.getElementById('snapshotCanvas');
+                                                canvas.width = video.videoWidth;
+                                                canvas.height = video.videoHeight;
+                                                canvas.getContext('2d').drawImage(video, 0, 0);
+                                                const selfieBase64 = canvas.toDataURL('image/jpeg', 0.8);
+
+                                                closeCameraModal();
+
+                                                if (navigator.geolocation) {
+                                                    navigator.geolocation.getCurrentPosition((position) => {
+                                                        sendClockReq('in', pendingAssignmentId, position.coords.latitude, position.coords.longitude, selfieBase64);
+                                                    }, () => {
+                                                        sendClockReq('in', pendingAssignmentId, null, null, selfieBase64);
+                                                    });
+                                                } else {
+                                                    sendClockReq('in', pendingAssignmentId, null, null, selfieBase64);
+                                                }
+                                            }
+
+                                            function clockInOut(action, assignment_id) {
+                                                if (action === 'in') {
+                                                    openCameraModal(assignment_id);
+                                                } else {
+                                                    if (navigator.geolocation) {
+                                                        navigator.geolocation.getCurrentPosition((position) => {
+                                                            sendClockReq(action, assignment_id, position.coords.latitude, position.coords.longitude, null);
+                                                        }, () => {
+                                                            sendClockReq(action, assignment_id, null, null, null);
+                                                        });
+                                                    } else {
+                                                        sendClockReq(action, assignment_id, null, null, null);
+                                                    }
+                                                }
+                                            }
+
+                                            function sendClockReq(action, assignment_id, lat, lng, selfie_base64) {
+                                                fetch('/portal/staff/attendance', {
+                                                    method: 'POST',
+                                                    headers: { 'Content-Type': 'application/json' },
+                                                    body: JSON.stringify({ action, assignment_id, lat, lng, selfie_base64 })
+                                                })
+                                                    .then(res => res.json())
+                                                    .then(data => {
+                                                        if (data.success) {
+                                                            alert(`Successfully Clocked ${action === 'in' ? 'In' : 'Out'}!`);
+                                                        } else {
+                                                            alert('Error: ' + data.error);
+                                                        }
+                                                    });
+                                            }
+
+                                            function confirmPayment(assignmentId) {
+                                                if (!confirm('Confirm that you have received payment for this assignment?')) return;
+                                                fetch(`/portal/staff/assignments/${assignmentId}/payment/confirm`, {
+                                                    method: 'POST',
+                                                    headers: { 'Content-Type': 'application/json' }
+                                                })
+                                                    .then(r => r.json())
+                                                    .then(res => {
+                                                        if (res.success) {
+                                                            alert('✅ Payment confirmed! Admin has been notified.');
+                                                            window.location.reload();
+                                                        } else alert(res.error);
+                                                    });
+                                            }
+
+                                            function disputePayment(assignmentId) {
+                                                const reason = prompt('⚠️ Describe the payment issue (required):');
+                                                if (!reason) return;
+                                                fetch(`/portal/staff/assignments/${assignmentId}/payment/dispute`, {
+                                                    method: 'POST',
+                                                    headers: { 'Content-Type': 'application/json' },
+                                                    body: JSON.stringify({ reason })
+                                                })
+                                                    .then(r => r.json())
+                                                    .then(res => {
+                                                        if (res.success) {
+                                                            alert('🚨 Payment dispute flagged. Admin will review shortly.');
+                                                            window.location.reload();
+                                                        } else alert(res.error);
+                                                    });
+                                            }
+
+                                            // Socket Listener for new assignments
+                                            if (typeof socket !== 'undefined') {
+                                                socket.on('newAssignment', (data) => {
+                                                    // In a real mobile app, use push notifications or Web Notification API
+                                                    if (Notification.permission === 'granted') {
+                                                        new Notification('New Assignment', { body: data.title + (data.vip ? ' [VIP]' : '') });
+                                                    }
+                                                    alert(`🔔 New Assignment Alert: ${data.title}`);
+                                                    window.location.reload();
+                                                });
+                                                socket.on('accountStatusChanged', (data) => {
+                                                    if (data.status === 'Suspended') {
+                                                        alert('⚠️ Your account has been suspended. You will now be logged out.');
+                                                        window.location.href = '/portal/auth/logout';
+                                                    }
+                                                });
+                                            } else {
+                                                // Request notification permission
+                                                if ('Notification' in window && Notification.permission !== 'granted') {
+                                                    Notification.requestPermission();
+                                                }
+                                            }
+                                        </script>

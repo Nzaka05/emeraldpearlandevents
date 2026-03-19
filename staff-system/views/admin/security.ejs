@@ -1,0 +1,200 @@
+<% currentPage='security' %>
+
+<!-- ══ Page Header ══ -->
+<div class="flex items-center justify-between mb-6 animate-fade-up">
+  <div>
+    <h1 class="font-display text-2xl font-extrabold text-tx-1 tracking-tight flex items-center gap-3">
+      <span class="text-gradient-emerald">Security Center</span>
+      <span class="status-dot status-dot-active animate-pulse-dot bg-red-500 shadow-glow-red"></span>
+    </h1>
+    <p class="text-sm text-tx-3 mt-1">Defense protocol monitoring, geofence breaches, and terminal lockouts</p>
+  </div>
+</div>
+
+<!-- ══ Stat Grid ══ -->
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+  <%- include('../components/metric-card', { value: proximityDenied.length, label: 'Geo-Fence Blocked', icon: 'fa-location-xmark', color: 'red', delay: 1 }) %>
+  <%- include('../components/metric-card', { value: overrides.length, label: 'Root Op Overrides', icon: 'fa-unlock-keyhole', color: 'purple', delay: 2 }) %>
+  <%- include('../components/metric-card', { value: spoofAttempts.length, label: 'Spoof Intercepts', icon: 'fa-satellite', color: 'gold', delay: 3 }) %>
+  <%- include('../components/metric-card', { value: suspendedStaff.length, label: 'Quarantined Units', icon: 'fa-user-lock', color: 'red', delay: 4 }) %>
+</div>
+
+<!-- ══ 4-Panel Security Grid ══ -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-fade-up delay-4">
+
+  <!-- 1. Geo-Fence Blocked (Proximity Denied) -->
+  <div class="glass-card flex flex-col h-[400px] overflow-hidden border-t-2 border-red-500 relative">
+     <div class="absolute top-0 right-0 p-4 opacity-5 pointer-events-none text-6xl">
+         <i class="fa-solid fa-ban"></i>
+     </div>
+     
+     <div class="px-5 py-4 border-b border-white/5 bg-black/20 shrink-0 flex items-center justify-between relative z-10">
+         <h3 class="text-sm font-bold text-tx-1 flex items-center gap-2">
+             <i class="fa-solid fa-location-xmark text-red-500 text-lg"></i> Geofence Breaches
+         </h3>
+         <span class="text-xs font-bold font-mono tracking-wider text-red-400 bg-red-500/10 px-2 py-0.5 rounded border border-red-500/30 shadow-[0_0_10px_rgba(239,68,68,0.2)]">VOL: <%= proximityDenied.length %></span>
+     </div>
+     
+     <div class="flex-1 overflow-y-auto custom-scrollbar p-3 space-y-2 relative z-10">
+         <% if(proximityDenied.length) { %>
+            <% proximityDenied.forEach(function(l) { %>
+               <div class="flex items-start gap-4 p-3 rounded-xl border border-red-500/10 bg-red-500/5 hover:bg-white/5 transition-colors">
+                   <div class="w-8 h-8 rounded bg-red-500/20 text-red-500 flex items-center justify-center shrink-0">
+                       <i class="fa-solid fa-ban text-xs"></i>
+                   </div>
+                   <div class="min-w-0">
+                       <div class="text-sm font-bold text-tx-1 truncate"><%= l.performedBy ? l.performedBy.name : 'Unknown Terminal' %></div>
+                       <div class="text-[0.65rem] text-tx-3 mt-1 bg-black/40 p-1.5 rounded font-mono truncate border border-white/5">
+                           <i class="fa-solid fa-terminal text-[0.55rem] mr-1 opacity-50"></i> <%= l.details && l.details.reason ? l.details.reason : 'Packet missing.' %>
+                       </div>
+                       <div class="text-[0.6rem] text-tx-3 uppercase tracking-wider mt-1.5 font-bold">
+                           <i class="fa-regular fa-clock mr-1"></i> <%= new Date(l.timestamp).toLocaleString('en-KE', {hour:'2-digit',minute:'2-digit',day:'2-digit',month:'short'}) %>
+                       </div>
+                   </div>
+               </div>
+            <% }); %>
+         <% } else { %>
+            <div class="flex flex-col flex-1 items-center justify-center h-full text-tx-3 py-10 opacity-60">
+                <i class="fa-solid fa-shield-check text-4xl mb-3 text-emerald-500"></i>
+                <p class="text-xs font-medium uppercase tracking-wider">Perimeter Secure.</p>
+            </div>
+         <% } %>
+     </div>
+  </div>
+
+  <!-- 2. Spoof Attempts (GPS Spoof) -->
+  <div class="glass-card flex flex-col h-[400px] overflow-hidden border-t-2 border-gold-500 relative">
+     <div class="absolute top-0 right-0 p-4 opacity-5 pointer-events-none text-6xl">
+         <i class="fa-solid fa-satellite"></i>
+     </div>
+     
+     <div class="px-5 py-4 border-b border-white/5 bg-black/20 shrink-0 flex items-center justify-between relative z-10">
+         <h3 class="text-sm font-bold text-tx-1 flex items-center gap-2">
+             <i class="fa-solid fa-triangle-exclamation text-gold-500 text-lg animate-pulse-slow"></i> GPS Spoofing Nodes
+         </h3>
+         <span class="text-xs font-bold font-mono tracking-wider text-gold-400 bg-gold-500/10 px-2 py-0.5 rounded border border-gold-500/30">HITS: <%= spoofAttempts.length %></span>
+     </div>
+     
+     <div class="flex-1 overflow-y-auto custom-scrollbar p-3 space-y-2 relative z-10">
+         <% if(spoofAttempts.length) { %>
+            <% spoofAttempts.forEach(function(l) { %>
+               <div class="flex items-start gap-4 p-3 rounded-xl border border-gold-500/10 bg-gold-500/5 hover:bg-white/5 transition-colors">
+                   <div class="w-8 h-8 rounded bg-gold-500/20 text-gold-500 flex items-center justify-center shrink-0">
+                       <i class="fa-solid fa-satellite text-xs"></i>
+                   </div>
+                   <div class="min-w-0">
+                       <div class="text-sm font-bold text-tx-1 truncate"><%= l.performedBy ? l.performedBy.name : 'Unknown Terminal' %></div>
+                       <div class="text-[0.65rem] text-tx-3 mt-1 bg-black/40 p-1.5 rounded font-mono truncate border border-white/5 text-gold-400/80">
+                           <i class="fa-solid fa-code text-[0.55rem] mr-1 opacity-50"></i> <%= l.details && l.details.reason ? l.details.reason : 'Mock location API injected.' %>
+                       </div>
+                       <div class="text-[0.6rem] text-tx-3 uppercase tracking-wider mt-1.5 font-bold">
+                           <i class="fa-regular fa-clock mr-1"></i> <%= new Date(l.timestamp).toLocaleString('en-KE', {hour:'2-digit',minute:'2-digit',day:'2-digit',month:'short'}) %>
+                       </div>
+                   </div>
+               </div>
+            <% }); %>
+         <% } else { %>
+            <div class="flex flex-col flex-1 items-center justify-center h-full text-tx-3 py-10 opacity-60">
+                <i class="fa-solid fa-radar text-4xl mb-3 text-emerald-500"></i>
+                <p class="text-xs font-medium uppercase tracking-wider">No mock signals found.</p>
+            </div>
+         <% } %>
+     </div>
+  </div>
+
+  <!-- 3. Root Op Overrides (Admin Overrides) -->
+  <div class="glass-card flex flex-col h-[400px] overflow-hidden border-t-2 border-purple-500 relative">
+     <div class="absolute top-0 right-0 p-4 opacity-5 pointer-events-none text-6xl">
+         <i class="fa-solid fa-unlock-keyhole"></i>
+     </div>
+     
+     <div class="px-5 py-4 border-b border-white/5 bg-black/20 shrink-0 flex items-center justify-between relative z-10">
+         <h3 class="text-sm font-bold text-tx-1 flex items-center gap-2">
+             <i class="fa-solid fa-unlock-keyhole text-purple-400 text-lg"></i> Logic Overrides (Admin)
+         </h3>
+         <span class="text-xs font-bold font-mono tracking-wider text-purple-400 bg-purple-500/10 px-2 py-0.5 rounded border border-purple-500/30">CMD: <%= overrides.length %></span>
+     </div>
+     
+     <div class="flex-1 overflow-y-auto custom-scrollbar p-3 space-y-2 relative z-10">
+         <% if(overrides.length) { %>
+            <% overrides.forEach(function(l) { %>
+               <div class="flex items-start gap-4 p-3 rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 transition-colors group">
+                   <div class="w-8 h-8 rounded bg-purple-500/20 text-purple-400 flex items-center justify-center shrink-0 border border-purple-500/30 group-hover:bg-purple-500/30">
+                       <i class="fa-solid fa-shield-halved text-xs"></i>
+                   </div>
+                   <div class="min-w-0">
+                       <div class="text-sm font-bold text-purple-100 truncate"><%= l.performedBy ? l.performedBy.name : 'Console execution' %></div>
+                       <div class="text-[0.65rem] text-tx-3 mt-1 bg-black/60 p-1.5 rounded font-mono truncate border border-white/5">
+                           >_ <%= l.details && l.details.reason ? l.details.reason : 'Force protocol applied.' %>
+                       </div>
+                       <div class="text-[0.6rem] text-tx-3 uppercase tracking-wider mt-1.5 font-bold">
+                           <i class="fa-regular fa-clock mr-1"></i> <%= new Date(l.timestamp).toLocaleString('en-KE', {hour:'2-digit',minute:'2-digit',day:'2-digit',month:'short'}) %>
+                       </div>
+                   </div>
+               </div>
+            <% }); %>
+         <% } else { %>
+            <div class="flex flex-col flex-1 items-center justify-center h-full text-tx-3 py-10 opacity-60">
+                <i class="fa-solid fa-server text-4xl mb-3"></i>
+                <p class="text-xs font-medium uppercase tracking-wider">System running routine logic.</p>
+            </div>
+         <% } %>
+     </div>
+  </div>
+
+  <!-- 4. Quarantined Units (Suspended Staff) -->
+  <div class="glass-card flex flex-col h-[400px] overflow-hidden relative">
+     <div class="px-5 py-4 border-b border-white/5 bg-black/20 shrink-0 flex items-center justify-between">
+         <h3 class="text-sm font-bold text-tx-1 flex items-center gap-2">
+             <i class="fa-solid fa-user-lock text-red-500 text-lg"></i> Quarantined Operator Nodes
+         </h3>
+         <span class="text-xs font-bold font-mono tracking-wider text-red-100 bg-red-600/40 px-2 py-0.5 rounded border border-red-500 shadow-glow-red shadow-inner">QTN: <%= suspendedStaff.length %></span>
+     </div>
+     
+     <div class="flex-1 overflow-y-auto custom-scrollbar p-3 space-y-2 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0IiBoZWlnaHQ9IjQiPgo8cmVjdCB3aWR0aD0iNCIgaGVpZ2h0PSI0IiBmaWxsPSIjMDcwMDwwMzAiPjwvcmVjdD4KPHBhdGggZD0iTTAgMEw0IDRaTTQgMEwwIDRaIiBzdHJva2U9IiMyMjAwMDAzMCIgc3Ryb2tlLXdpZHRoPSIxIj48L3BhdGg+Cjwvc3ZnPg==')]">
+         <% if(suspendedStaff.length) { %>
+            <% suspendedStaff.forEach(function(s) { %>
+               <div class="flex items-center gap-4 p-3 rounded-xl border border-red-500/20 bg-black/60 shadow-lg backdrop-blur hover:border-red-500/40 transition-colors">
+                   <div class="w-10 h-10 rounded bg-gradient-to-br from-red-600 to-red-900 border border-red-500/50 flex items-center justify-center font-bold text-white text-xs shadow-glow-red shrink-0 relative overflow-hidden">
+                       <div class="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0IiBoZWlnaHQ9IjQiPjwvc3ZnPg==')] opacity-30"></div>
+                       <span class="relative z-10"><%= s.name.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2) %></span>
+                   </div>
+                   
+                   <div class="flex-1 min-w-0">
+                       <div class="text-sm font-bold text-tx-1 truncate"><%= s.name %></div>
+                       <div class="text-[0.65rem] text-tx-3 mt-0.5 font-mono truncate"><i class="fa-regular fa-envelope mr-1 opacity-50"></i><%= s.email %></div>
+                   </div>
+                   
+                   <button class="btn btn-primary btn-xs bg-dark-bg text-emerald-400 hover:bg-emerald-500 hover:text-dark-bg border border-emerald-500/30 whitespace-nowrap shadow-none font-bold tracking-wider" onclick="unsuspend('<%= s._id %>')">
+                       <i class="fa-solid fa-power-off mr-1"></i> Reinstate
+                   </button>
+               </div>
+            <% }); %>
+         <% } else { %>
+            <div class="flex flex-col flex-1 items-center justify-center h-full text-tx-3 py-10 opacity-60">
+                <i class="fa-solid fa-users text-4xl mb-3 text-tx-2"></i>
+                <p class="text-xs font-medium uppercase tracking-wider text-center">No units detected in quarantine blocks.</p>
+            </div>
+         <% } %>
+     </div>
+  </div>
+
+</div>
+
+<script>
+    async function unsuspend(id) {
+        if (!confirm('SYS_PROMPT: Declassify unit and restore operational capacity to node?')) return;
+        try {
+           const r = await fetch('/portal/admin-staff/staff/' + id + '/unsuspend', { method: 'POST' });
+           const d = await r.json();
+           if (d.success) { 
+              showToast('Override success. Unit restored.', 'success'); 
+              setTimeout(() => location.reload(), 1000); 
+           } else {
+              showToast(d.error || 'Access denied.', 'error');
+           }
+        } catch(err) {
+            showToast('Network fault during protocol execution.', 'error');
+        }
+    }
+</script>

@@ -1,0 +1,6 @@
+<%- include('../clientBase') %>
+<h2>Event In Progress!</h2>
+<p>Hello <%= clientName %>,</p>
+<p>It's go time! Your event <strong><%= eventName %></strong> has officially transitioned to <strong>LIVE</strong> status.</p>
+<p>Our specialized teams have checked in at the venue and coordination operations are running in real time. We are committed to delivering an exceptional experience right now.</p>
+<a href="<%= process.env.CLIENT_PORTAL_URL %>/client/dashboard" class="btn">View Live Status</a>

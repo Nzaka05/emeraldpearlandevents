@@ -1,0 +1,42 @@
+<%/* METRIC CARD — Glassmorphism metric card with animated counter */%>
+<% const _c = locals.color || 'emerald'; %>
+<% const _delay = locals.delay || 0; %>
+<% const _colors = {
+  emerald: { glow: 'glow-emerald', icon: 'icon-bg-emerald', text: 'text-emerald-400', border: 'border-emerald-500/20' },
+  gold:    { glow: 'glow-gold',    icon: 'icon-bg-gold',    text: 'text-amber-400',   border: 'border-amber-500/20' },
+  blue:    { glow: 'glow-blue',    icon: 'icon-bg-blue',    text: 'text-blue-400',    border: 'border-blue-500/20' },
+  red:     { glow: 'glow-red',     icon: 'icon-bg-red',     text: 'text-red-400',     border: 'border-red-500/20' },
+  purple:  { glow: 'glow-purple',  icon: 'icon-bg-purple',  text: 'text-violet-400',  border: 'border-violet-500/20' },
+  cyan:    { glow: 'glow-blue',    icon: 'icon-bg-cyan',    text: 'text-cyan-400',    border: 'border-cyan-500/20' }
+}; %>
+<% const _cs = _colors[_c] || _colors.emerald; %>
+
+<div class="card-3d animate-fade-up delay-<%= _delay %>"
+     style="animation-delay: <%= _delay * 0.06 %>s">
+  <div class="glass-card card-3d-inner p-5 relative overflow-hidden group">
+    <!-- Accent glow -->
+    <div class="absolute -top-12 -right-12 w-32 h-32 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+         style="background: radial-gradient(circle, <%= _c === 'emerald' ? 'rgba(16,185,129,0.15)' : _c === 'gold' ? 'rgba(245,158,11,0.15)' : _c === 'blue' ? 'rgba(59,130,246,0.15)' : _c === 'red' ? 'rgba(239,68,68,0.15)' : 'rgba(139,92,246,0.15)' %>, transparent 70%)"></div>
+
+    <div class="flex items-start justify-between mb-3">
+      <div class="<%= _cs.icon %> w-10 h-10 rounded-xl flex items-center justify-center text-base">
+        <i class="fa-solid <%= locals.icon || 'fa-chart-bar' %>"></i>
+      </div>
+      <% if (locals.trend) { %>
+        <span class="text-xs font-semibold px-2 py-0.5 rounded-full
+          <%= String(locals.trend).startsWith('+') ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400' %>">
+          <%= locals.trend %>
+        </span>
+      <% } %>
+    </div>
+
+    <div class="metric-value text-3xl <%= _cs.text %> mb-1 animate-count-up"
+         data-count="<%= locals.value || 0 %>">
+      <%= locals.value || 0 %>
+    </div>
+
+    <div class="text-xs font-bold uppercase tracking-wider text-slate-500">
+      <%= locals.label || 'Metric' %>
+    </div>
+  </div>
+</div>

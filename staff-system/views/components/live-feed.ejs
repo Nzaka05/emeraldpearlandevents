@@ -1,0 +1,48 @@
+<%/* LIVE FEED — Scrolling real-time activity feed */%>
+<div class="glass-card overflow-hidden">
+  <div class="flex items-center justify-between px-5 py-3 border-b border-white/5">
+    <h3 class="text-sm font-bold text-slate-200 flex items-center gap-2">
+      <span class="status-dot status-dot-active animate-pulse-dot"></span>
+      <%= locals.title || 'Live Feed' %>
+    </h3>
+    <span class="text-[0.65rem] text-slate-500 font-semibold uppercase tracking-wider">
+      Real-time
+    </span>
+  </div>
+  <div class="max-h-80 overflow-y-auto px-4 py-3 space-y-2" id="<%= locals.feedId || 'liveFeed' %>">
+    <% const _items = locals.items || []; %>
+    <% if (_items.length === 0) { %>
+      <div class="text-center py-8 text-slate-600 text-sm">
+        <i class="fa-solid fa-signal fa-lg block mb-2 opacity-40"></i>
+        Waiting for activity...
+      </div>
+    <% } else { %>
+      <% _items.forEach(function(item, i) { %>
+        <div class="flex items-start gap-3 py-2 animate-fade-up" style="animation-delay: <%= i * 0.03 %>s">
+          <div class="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 text-xs
+            <%= item.actionType && item.actionType.includes('LOGIN') ? 'icon-bg-blue' :
+               item.actionType && item.actionType.includes('PAYMENT') ? 'icon-bg-gold' :
+               item.actionType && item.actionType.includes('DENIED') ? 'icon-bg-red' :
+               'icon-bg-emerald' %>">
+            <i class="fa-solid <%= item.actionType && item.actionType.includes('LOGIN') ? 'fa-right-to-bracket' :
+               item.actionType && item.actionType.includes('PAYMENT') ? 'fa-coins' :
+               item.actionType && item.actionType.includes('DENIED') ? 'fa-xmark' :
+               item.actionType && item.actionType.includes('ASSIGNMENT') ? 'fa-calendar-check' :
+               'fa-bolt' %>"></i>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="text-xs text-slate-300 leading-relaxed">
+              <% if (item.performedBy && item.performedBy.name) { %>
+                <strong class="text-slate-100"><%= item.performedBy.name %></strong>
+              <% } %>
+              <%= (item.actionType || '').replace(/_/g, ' ').toLowerCase() %>
+            </div>
+            <div class="text-[0.65rem] text-slate-600 mt-0.5">
+              <%= item.timestamp ? new Date(item.timestamp).toLocaleTimeString('en-KE', {hour:'2-digit',minute:'2-digit'}) : '' %>
+            </div>
+          </div>
+        </div>
+      <% }); %>
+    <% } %>
+  </div>
+</div>

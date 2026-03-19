@@ -1,0 +1,117 @@
+<% currentPage='ratings' ; %>
+
+<!-- ══ Header ══ -->
+<div class="flex items-center justify-between mb-5 animate-fade-up">
+    <div>
+        <h1 class="font-display text-2xl font-extrabold text-tx-1 tracking-tight flex items-center gap-3">
+            <i class="fa-solid fa-star text-gold-400"></i>
+            <span>Performance Ratings</span>
+        </h1>
+        <p class="text-[0.7rem] text-tx-3 mt-1 uppercase tracking-widest font-mono">Evaluate Team Members</p>
+    </div>
+</div>
+
+<!-- ══ Submit Rating ══ -->
+<div class="glass-card mb-4 animate-fade-up border-t-2 border-gold-500/30">
+    <div class="px-5 py-4 border-b border-white/5 flex items-center gap-2">
+        <i class="fa-solid fa-star-half-stroke text-gold-400 text-sm"></i>
+        <h3 class="text-sm font-bold text-tx-1 uppercase tracking-widest">Submit Evaluation</h3>
+    </div>
+    <div class="p-5">
+        <form action="/portal/supervisor/ratings/submit" method="POST" class="space-y-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-[0.65rem] font-bold uppercase tracking-widest text-tx-3 mb-2">Staff Member</label>
+                    <select name="staff_id" required
+                        class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-tx-2 focus:border-gold-500/40 focus:ring-0 focus:outline-none transition-colors cursor-pointer">
+                        <option value="">— Select member —</option>
+                        <% (teamMembers||[]).forEach(function(m) { %>
+                            <option value="<%= m._id %>"><%= m.name %></option>
+                        <% }); %>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-[0.65rem] font-bold uppercase tracking-widest text-tx-3 mb-2">Star Rating</label>
+                    <div id="starRating" class="flex gap-2 items-center h-[46px]">
+                        <% for(var s=1; s<=5; s++) { %>
+                            <i class="fa-solid fa-star text-[1.8rem] text-white/10 cursor-pointer hover:scale-110 transition-all duration-150" 
+                               data-val="<%= s %>" onmouseover="hoverStars(<%= s %>)" onmouseout="resetStars()" onclick="setRating(<%= s %>)"></i>
+                        <% } %>
+                        <input type="hidden" name="rating" id="ratingInput" value="0">
+                    </div>
+                </div>
+            </div>
+            <div>
+                <label class="block text-[0.65rem] font-bold uppercase tracking-widest text-tx-3 mb-2">Event <span class="font-normal opacity-60">(optional)</span></label>
+                <select name="event_id"
+                    class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-tx-2 focus:border-gold-500/40 focus:ring-0 focus:outline-none transition-colors cursor-pointer">
+                    <option value="">— General rating —</option>
+                    <% (myEvents||[]).forEach(function(e) { %>
+                        <option value="<%= e._id %>"><%= e.title || e._id %></option>
+                    <% }); %>
+                </select>
+            </div>
+            <div>
+                <label class="block text-[0.65rem] font-bold uppercase tracking-widest text-tx-3 mb-2">Comments</label>
+                <textarea name="comment" rows="3" placeholder="Specific performance feedback…"
+                    class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-tx-1 placeholder-tx-3/50 focus:border-gold-500/40 focus:ring-0 focus:outline-none transition-colors resize-none leading-relaxed"></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary bg-gradient-to-r from-gold-600 to-gold-400 text-dark-bg border-none font-bold shadow-[0_0_20px_rgba(245,158,11,0.2)]">
+                <i class="fa-solid fa-star mr-2"></i> Submit Rating
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- ══ Past Ratings ══ -->
+<div class="glass-card animate-fade-up delay-1 mb-[80px]">
+    <div class="px-5 py-4 border-b border-white/5 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+            <i class="fa-solid fa-rectangle-list text-tx-3 text-sm"></i>
+            <h3 class="text-sm font-bold text-tx-1 uppercase tracking-widest">Rating History</h3>
+        </div>
+        <span class="badge-blue text-[0.6rem] font-bold px-2 py-0.5 rounded"><%= (ratings||[]).length %></span>
+    </div>
+
+    <% if (!(ratings && ratings.length)) { %>
+        <div class="p-12 flex flex-col items-center justify-center text-tx-3 opacity-60">
+            <i class="fa-solid fa-star-slash text-4xl mb-4"></i>
+            <p class="text-xs font-bold uppercase tracking-wider">No ratings submitted yet.</p>
+        </div>
+    <% } else { %>
+        <div class="divide-y divide-white/5">
+            <% ratings.forEach(function(r) { %>
+                <div class="px-5 py-4 flex items-start gap-3 hover:bg-white/[0.02] transition-colors">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-gray-700 to-gray-600 flex items-center justify-center text-xs font-bold text-white flex-shrink-0">
+                        <%= r.staff_id && r.staff_id.name ? r.staff_id.name.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2) : '??' %>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-2 flex-wrap mb-1.5">
+                            <span class="text-xs font-bold text-tx-1"><%= r.staff_id ? r.staff_id.name : '—' %></span>
+                            <!-- Stars -->
+                            <div class="flex items-center gap-0.5">
+                                <% for(var i=1; i<=5; i++) { %>
+                                    <i class="fa-solid fa-star text-[0.65rem] <%= i <= r.rating ? 'text-gold-400' : 'text-white/10' %>"></i>
+                                <% } %>
+                            </div>
+                            <span class="text-[0.6rem] text-tx-3 font-mono opacity-70">
+                                <%= new Date(r.createdAt).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}) %>
+                            </span>
+                        </div>
+                        <% if(r.comment) { %>
+                            <div class="text-xs text-tx-3 leading-relaxed italic"><%= r.comment %></div>
+                        <% } %>
+                    </div>
+                </div>
+            <% }); %>
+        </div>
+    <% } %>
+</div>
+
+<script>
+    let currentRating = 0;
+    const stars = document.querySelectorAll('#starRating .fa-star');
+    function hoverStars(val) { stars.forEach((s, i) => s.style.color = i < val ? '#f59e0b' : ''); }
+    function resetStars() { stars.forEach((s, i) => s.style.color = i < currentRating ? '#f59e0b' : ''); }
+    function setRating(val) { currentRating = val; document.getElementById('ratingInput').value = val; resetStars(); }
+</script>

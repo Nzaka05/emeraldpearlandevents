@@ -1,0 +1,498 @@
+<% currentPage = 'live'; %>
+
+<!-- ══ LIVE EVENT COMMAND CENTER ══ -->
+<div class="flex items-center justify-between mb-3 animate-fade-up">
+    <div>
+        <h1 class="font-display text-2xl font-extrabold text-tx-1 tracking-tight flex items-center gap-3">
+            <span class="relative flex h-3 w-3"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span><span class="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span></span>
+            <span class="text-gradient-emerald">LIVE COMMAND CENTER</span>
+        </h1>
+        <p class="text-[0.7rem] text-tx-3 mt-0.5 uppercase tracking-widest font-mono">Real-Time Event Operations — <%= new Date().toLocaleDateString('en-KE', {weekday:'long', day:'numeric', month:'long', year:'numeric'}) %></p>
+    </div>
+    <div class="hidden sm:flex items-center gap-2">
+        <div class="flex items-center gap-1.5 text-[0.65rem] font-mono text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 px-2.5 py-1 rounded-full">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+            SOCKET LIVE
+        </div>
+        <div id="lastUpdated" class="text-[0.6rem] text-tx-3 font-mono opacity-60"></div>
+    </div>
+</div>
+
+<!-- ══ Emergency Alert Banner ══ -->
+<% if (emergencies && emergencies.length > 0) { %>
+    <div class="glass-card border border-red-500/40 bg-red-500/5 mb-3 animate-fade-up" id="emergencyBanner">
+        <div class="px-4 py-3 flex items-center gap-3">
+            <i class="fa-solid fa-triangle-exclamation text-red-400 text-xl animate-pulse"></i>
+            <div class="flex-1">
+                <div class="text-red-400 font-bold text-sm"><%= emergencies.length %> Unacknowledged Emergency Alert<%= emergencies.length > 1 ? 's' : '' %></div>
+                <div class="text-[0.65rem] text-tx-3"><%= emergencies[0].sender_name %> — <%= emergencies[0].content %></div>
+            </div>
+            <button onclick="ackEmergency('<%= emergencies[0]._id %>')" class="text-[0.65rem] font-bold uppercase tracking-wider border border-red-500/50 text-red-400 hover:bg-red-500/20 px-3 py-1.5 rounded-lg transition-colors">
+                Acknowledge
+            </button>
+        </div>
+    </div>
+<% } %>
+
+<!-- ══ 3-Column Command Layout ══ -->
+<div class="grid grid-cols-1 lg:grid-cols-[260px,1fr,300px] gap-3 mb-[80px]">
+
+    <!-- ══ LEFT PANEL: Active Events & Supervisors ══ -->
+    <div class="space-y-3">
+
+        <!-- Active Events List -->
+        <div class="glass-card animate-fade-up">
+            <div class="px-4 py-3 border-b border-white/5 flex items-center gap-2">
+                <i class="fa-solid fa-calendar-star text-emerald-400 text-sm"></i>
+                <h3 class="text-xs font-bold text-tx-1 uppercase tracking-widest flex-1">Active Events</h3>
+                <span class="badge-emerald text-[0.55rem] font-bold px-1.5 py-0.5 rounded"><%= (activeEvents||[]).length %></span>
+            </div>
+            <div class="divide-y divide-white/5 max-h-[320px] overflow-y-auto">
+                <% if (!(activeEvents && activeEvents.length)) { %>
+                    <div class="p-6 text-center text-tx-3 text-xs opacity-60">No active events</div>
+                <% } else { activeEvents.forEach(function(ev) { 
+                    var accepted = (ev.accepted_staff_ids||[]).length;
+                    var pct = ev.required_staff_count > 0 ? Math.round((accepted/ev.required_staff_count)*100) : 0;
+                    var evDate = new Date(ev.date);
+                    var isToday = evDate.toDateString() === new Date().toDateString();
+                %>
+                    <div class="px-3 py-2.5 hover:bg-white/[0.02] cursor-pointer transition-colors" onclick="focusEvent('<%= ev._id %>')">
+                        <div class="flex items-start justify-between gap-2 mb-1.5">
+                            <div class="text-[0.7rem] font-bold text-tx-1 truncate leading-tight"><%= ev.title %></div>
+                            <% if(isToday) { %><span class="text-[0.5rem] font-bold text-emerald-400 border border-emerald-500/30 px-1 rounded shrink-0 animate-pulse">TODAY</span><% } %>
+                        </div>
+                        <div class="text-[0.6rem] text-tx-3 font-mono mb-2 truncate"><i class="fa-solid fa-location-dot mr-1 opacity-50"></i><%= ev.location %></div>
+                        <div class="flex items-center gap-2 mb-1.5">
+                            <div class="flex-1 h-1 bg-white/5 rounded-full overflow-hidden">
+                                <div class="h-full rounded-full <%= pct >= 80 ? 'bg-emerald-500' : pct >= 50 ? 'bg-gold-400' : 'bg-red-500' %> transition-all" style="width:<%= pct %>%"></div>
+                            </div>
+                            <span class="text-[0.55rem] font-mono <%= pct >= 80 ? 'text-emerald-400' : 'text-tx-3' %>"><%= accepted %>/<%= ev.required_staff_count %></span>
+                        </div>
+                        <% if(ev.supervisor_id) { %>
+                            <div class="flex items-center gap-1.5 text-[0.6rem] text-tx-3">
+                                <i class="fa-solid fa-user-shield text-[0.5rem] opacity-60"></i>
+                                <span><%= ev.supervisor_id.name %></span>
+                                <% if(ev.supervisor_id.last_location && ev.supervisor_id.last_location.lat) { %>
+                                    <span class="text-emerald-400"><i class="fa-solid fa-location-crosshairs text-[0.5rem]"></i></span>
+                                <% } %>
+                            </div>
+                        <% } %>
+                    </div>
+                <% }); } %>
+            </div>
+        </div>
+
+        <!-- Active Supervisors GPS -->
+        <div class="glass-card animate-fade-up delay-1">
+            <div class="px-4 py-3 border-b border-white/5 flex items-center gap-2">
+                <i class="fa-solid fa-location-crosshairs text-blue-400 text-sm"></i>
+                <h3 class="text-xs font-bold text-tx-1 uppercase tracking-widest flex-1">Field Supervisors</h3>
+                <span class="text-[0.55rem] font-bold text-blue-400 border border-blue-500/30 px-1.5 py-0.5 rounded"><%= (activeSupervisors||[]).length %></span>
+            </div>
+            <div class="divide-y divide-white/5 max-h-[240px] overflow-y-auto">
+                <% if (!(activeSupervisors && activeSupervisors.length)) { %>
+                    <div class="p-5 text-center text-tx-3 text-xs opacity-60">No supervisors online</div>
+                <% } else { activeSupervisors.forEach(function(sup) { %>
+                    <div class="px-3 py-2.5 flex items-center gap-2.5 hover:bg-white/[0.02] transition-colors">
+                        <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-blue-700 to-blue-500 flex items-center justify-center text-[0.6rem] font-bold text-white shrink-0">
+                            <%= sup.name.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2) %>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="text-xs font-bold text-tx-1 truncate"><%= sup.name %></div>
+                            <div class="text-[0.6rem] text-blue-400 font-mono">
+                                <i class="fa-solid fa-location-dot mr-1 text-[0.5rem]"></i>
+                                <%= sup.last_location ? `${sup.last_location.lat.toFixed(4)}, ${sup.last_location.lng.toFixed(4)}` : 'GPS active' %>
+                            </div>
+                        </div>
+                        <div class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0"></div>
+                    </div>
+                <% }); } %>
+            </div>
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="grid grid-cols-2 gap-2 animate-fade-up delay-2">
+            <div class="glass-card p-3 text-center">
+                <div class="text-xl font-black font-mono text-emerald-400"><%= (activeTeams||[]).length %></div>
+                <div class="text-[0.55rem] text-tx-3 uppercase tracking-wider mt-0.5">Active Teams</div>
+            </div>
+            <div class="glass-card p-3 text-center">
+                <div class="text-xl font-black font-mono text-blue-400"><%= (todayAttendance||[]).length %></div>
+                <div class="text-[0.55rem] text-tx-3 uppercase tracking-wider mt-0.5">Checked In</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══ CENTER PANEL: Live Activity Feed ══ -->
+    <div class="space-y-3">
+
+        <!-- Team Readiness Overview -->
+        <div class="glass-card animate-fade-up">
+            <div class="px-4 py-3 border-b border-white/5 flex items-center gap-2">
+                <i class="fa-solid fa-gauge-high text-gold-400 text-sm"></i>
+                <h3 class="text-xs font-bold text-tx-1 uppercase tracking-widest">Team Readiness</h3>
+            </div>
+            <div class="p-4 space-y-3">
+                <% if (!(activeTeams && activeTeams.length)) { %>
+                    <div class="text-center py-4 text-tx-3 text-xs opacity-60">No active teams</div>
+                <% } else { activeTeams.slice(0,4).forEach(function(team) { 
+                    var asn = team.assignment_id || {};
+                    var members = team.member_ids || [];
+                    var ready = members.filter(m => m && m.availability_status === 'On Shift').length;
+                    var pct = members.length > 0 ? Math.round((ready/members.length)*100) : 0;
+                %>
+                    <div>
+                        <div class="flex items-center justify-between mb-1">
+                            <div class="text-xs font-bold text-tx-1 truncate flex-1"><%= asn.title || 'Event' %></div>
+                            <span class="text-xs font-black font-mono ml-3 <%= pct >= 80 ? 'text-emerald-400' : pct >= 50 ? 'text-gold-400' : 'text-red-400' %>"><%= pct %>%</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <div class="flex-1 h-2 bg-white/5 rounded-full overflow-hidden">
+                                <div class="h-full rounded-full transition-all duration-700 <%= pct >= 80 ? 'bg-gradient-to-r from-emerald-700 to-emerald-400' : pct >= 50 ? 'bg-gradient-to-r from-yellow-700 to-gold-400' : 'bg-gradient-to-r from-red-800 to-red-500' %>" style="width:<%= pct %>%"></div>
+                            </div>
+                            <span class="text-[0.6rem] text-tx-3 font-mono"><%= team.supervisor_id ? team.supervisor_id.name.split(' ')[0] : '—' %></span>
+                        </div>
+                    </div>
+                <% }); } %>
+            </div>
+        </div>
+
+        <!-- Live Attendance Feed -->
+        <div class="glass-card animate-fade-up delay-1">
+            <div class="px-4 py-3 border-b border-white/5 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <h3 class="text-xs font-bold text-tx-1 uppercase tracking-widest">Live Attendance Feed</h3>
+                </div>
+                <span class="text-[0.6rem] text-tx-3 font-mono">Today</span>
+            </div>
+            <div id="attendanceFeed" class="divide-y divide-white/5 max-h-[280px] overflow-y-auto">
+                <% if (!(todayAttendance && todayAttendance.length)) { %>
+                    <div class="p-6 text-center text-tx-3 text-xs opacity-60">
+                        <i class="fa-regular fa-clock text-2xl mb-2 block opacity-30"></i>
+                        No clock-ins today yet
+                    </div>
+                <% } else { todayAttendance.slice(0,20).forEach(function(att) { %>
+                    <div class="px-4 py-2.5 flex items-center gap-3 hover:bg-white/[0.02]">
+                        <div class="w-7 h-7 rounded-lg bg-gradient-to-br from-gray-700 to-gray-600 flex items-center justify-center text-[0.55rem] font-bold text-white shrink-0">
+                            <% if (att.staff_id && att.staff_id.name) { %><%= att.staff_id.name.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2) %><% } else { %>??<% } %>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="text-xs font-bold text-tx-1 truncate"><%= att.staff_id ? att.staff_id.name : '—' %></div>
+                            <div class="text-[0.6rem] text-tx-3 font-mono">
+                                <i class="fa-solid fa-arrow-right-to-bracket text-emerald-400 text-[0.5rem] mr-1"></i>
+                                <%= att.clock_in ? new Date(att.clock_in).toLocaleTimeString('en-KE', {hour:'2-digit', minute:'2-digit'}) : '—' %>
+                                <% if(att.clock_out) { %> <i class="fa-solid fa-arrow-right-from-bracket text-red-400 text-[0.5rem] ml-2 mr-1"></i> <%= new Date(att.clock_out).toLocaleTimeString('en-KE', {hour:'2-digit', minute:'2-digit'}) %><% } %>
+                            </div>
+                        </div>
+                        <% var stClass = att.status === 'On Time' ? 'text-emerald-400 border-emerald-500/30' : att.status === 'Late' ? 'text-gold-400 border-gold-500/30' : 'text-tx-3 border-white/10'; %>
+                        <span class="text-[0.5rem] font-bold uppercase tracking-wider border px-1 py-0.5 rounded shrink-0 <%= stClass %>"><%= att.status || '—' %></span>
+                    </div>
+                <% }); } %>
+            </div>
+        </div>
+
+        <!-- Activity Timeline (Socket live-updates here) -->
+        <div class="glass-card animate-fade-up delay-2">
+            <div class="px-4 py-3 border-b border-white/5 flex items-center gap-2">
+                <i class="fa-solid fa-timeline text-purple-400 text-sm"></i>
+                <h3 class="text-xs font-bold text-tx-1 uppercase tracking-widest">Live Activity Timeline</h3>
+            </div>
+            <div id="activityTimeline" class="p-3 space-y-2 max-h-[200px] overflow-y-auto">
+                <div class="text-[0.65rem] text-tx-3 opacity-50 text-center py-3 font-mono">Listening for live events…</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══ RIGHT PANEL: Admin ↔ Supervisor Comms ══ -->
+    <div class="space-y-3">
+
+        <!-- Emergency panel -->
+        <div id="emergencyPanel" class="glass-card border border-orange-500/20 animate-fade-up hidden">
+            <div class="px-4 py-3 border-b border-orange-500/20 flex items-center gap-2">
+                <i class="fa-solid fa-siren-on text-orange-400 animate-pulse text-sm"></i>
+                <h3 class="text-xs font-bold text-orange-400 uppercase tracking-widest">Emergency Alerts</h3>
+            </div>
+            <div id="emergencyList" class="divide-y divide-orange-500/10 max-h-[180px] overflow-y-auto"></div>
+        </div>
+
+        <!-- Admin → Supervisor Message Form -->
+        <div class="glass-card animate-fade-up delay-1">
+            <div class="px-4 py-3 border-b border-white/5 flex items-center gap-2">
+                <i class="fa-solid fa-paper-plane text-emerald-400 text-sm"></i>
+                <h3 class="text-xs font-bold text-tx-1 uppercase tracking-widest">Dispatch Message</h3>
+            </div>
+            <div class="p-3 space-y-2">
+                <select id="msgRecipient" class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-tx-2 focus:border-emerald-500/40 focus:outline-none">
+                    <option value="">📡 Broadcast (All Supervisors)</option>
+                    <% (activeSupervisors||[]).forEach(function(sup) { %>
+                        <option value="<%= sup._id %>"><%= sup.name %></option>
+                    <% }); %>
+                </select>
+                <textarea id="msgContent" rows="3" placeholder="Type message to field supervisors…"
+                    class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-tx-1 placeholder-tx-3/40 focus:border-emerald-500/40 focus:outline-none resize-none leading-relaxed font-mono"></textarea>
+                <!-- Attachment -->
+                <label class="flex items-center gap-2 cursor-pointer text-[0.65rem] text-tx-3 hover:text-tx-2 transition-colors">
+                    <i class="fa-solid fa-paperclip"></i>
+                    <span>Attach media</span>
+                    <input type="file" id="msgAttachment" class="hidden" accept="image/*,video/*">
+                </label>
+                <div id="attachPreview" class="hidden text-[0.6rem] text-emerald-400 font-mono"></div>
+                <button onclick="sendAdminMessage()" class="w-full btn btn-primary text-xs font-bold shadow-glow-emerald py-2">
+                    <i class="fa-solid fa-satellite-dish mr-1.5"></i> TRANSMIT
+                </button>
+            </div>
+        </div>
+
+        <!-- Live Chat Log -->
+        <div class="glass-card animate-fade-up delay-2 flex flex-col">
+            <div class="px-4 py-3 border-b border-white/5 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <span class="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse"></span>
+                    <h3 class="text-xs font-bold text-tx-1 uppercase tracking-widest">Command Comms</h3>
+                </div>
+                <span id="unreadBadge" class="hidden text-[0.55rem] font-bold bg-red-500 text-white px-1.5 py-0.5 rounded-full">0</span>
+            </div>
+            <div id="chatLog" class="flex-1 p-3 space-y-2 min-h-[280px] max-h-[400px] overflow-y-auto">
+                <% (liveMessages||[]).forEach(function(msg) { 
+                    var isAdmin = msg.sender_role === 'Admin';
+                    var isEmg = msg.is_emergency;
+                %>
+                    <div class="flex <%= isAdmin ? 'justify-end' : 'justify-start' %> gap-1.5" data-msg-id="<%= msg._id %>">
+                        <% if(!isAdmin) { %>
+                            <div class="w-6 h-6 rounded-full bg-gradient-to-br from-blue-700 to-blue-500 flex items-center justify-center text-[0.5rem] font-bold text-white shrink-0 mt-1">
+                                <%= msg.sender_name ? msg.sender_name.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2) : 'SV' %>
+                            </div>
+                        <% } %>
+                        <div class="max-w-[78%]">
+                            <div class="text-[0.55rem] text-tx-3 mb-0.5 <%= isAdmin ? 'text-right' : '' %> font-mono">
+                                <%= msg.sender_name %> · <%= new Date(msg.timestamp).toLocaleTimeString('en-KE', {hour:'2-digit',minute:'2-digit'}) %>
+                            </div>
+                            <div class="px-2.5 py-2 rounded-xl text-[0.7rem] leading-relaxed <%= isAdmin ? 'bg-emerald-500/20 border border-emerald-500/20 text-emerald-100' : isEmg ? 'bg-red-500/20 border border-red-500/40 text-red-200' : 'bg-white/5 border border-white/5 text-tx-2' %>">
+                                <% if(isEmg) { %><i class="fa-solid fa-triangle-exclamation text-red-400 mr-1"></i><% } %>
+                                <% if(msg.content) { %><%= msg.content %><% } %>
+                                <% if(msg.attachment_url) { %>
+                                    <% if(msg.attachment_type === 'image') { %>
+                                        <img src="<%= msg.attachment_url %>" class="mt-1.5 rounded-lg max-w-full max-h-32 object-cover" alt="attachment">
+                                    <% } else if(msg.attachment_type === 'video') { %>
+                                        <video src="<%= msg.attachment_url %>" class="mt-1.5 rounded-lg max-w-full max-h-32" controls></video>
+                                    <% } %>
+                                <% } %>
+                            </div>
+                        </div>
+                    </div>
+                <% }); %>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// ══ Socket.io setup ════════════════════════════════════════════════════════════
+const liveSocket = typeof socket !== 'undefined' ? socket : null;
+
+if (liveSocket) {
+    liveSocket.emit('joinRoom', 'Admin');
+
+    // Receive messages from supervisors
+    liveSocket.on('adminLiveMessage', (msg) => {
+        appendChatMessage(msg);
+        updateTimeline(`💬 ${msg.sender_name}: ${(msg.content||'').slice(0,60)}`);
+    });
+
+    // Emergency flag
+    liveSocket.on('emergencyFlag', (msg) => {
+        appendEmergency(msg);
+        appendChatMessage({ ...msg, is_emergency: true });
+        updateTimeline(`🚨 EMERGENCY from ${msg.sender_name}`, 'red');
+        // Show notification
+        showToast(`🚨 Emergency: ${msg.sender_name} — ${(msg.content||'').slice(0,80)}`, 'error');
+    });
+
+    // Emergency acknowledged
+    liveSocket.on('emergencyAcknowledged', (data) => {
+        const el = document.querySelector(`[data-emergency-id="${data.id}"]`);
+        if (el) el.remove();
+        showToast(`Emergency acknowledged by ${data.acked_by}`, 'success');
+    });
+
+    // Live attendance updates
+    liveSocket.on('liveAttendanceUpdate', (data) => {
+        const color = data.action === 'clock_in' ? 'emerald' : 'red';
+        updateTimeline(`${data.action === 'clock_in' ? '✅' : '🕐'} ${data.staff_name} ${data.action?.replace('_',' ')} at ${new Date().toLocaleTimeString('en-KE',{hour:'2-digit',minute:'2-digit'})}`, color);
+    });
+
+    // Supervisor GPS update
+    liveSocket.on('supervisorLocationUpdate', (data) => {
+        updateTimeline(`📍 ${data.name} location updated`, 'blue');
+    });
+
+    // General metric updates
+    liveSocket.on('adminAssignmentUpdate', (data) => {
+        if (data.type === 'AUTO_COMPLETED') {
+            updateTimeline(`🔒 Applications closed: ${data.title}`, 'gold');
+            showToast(`Applications auto-closed: ${data.title}`, 'success');
+        }
+    });
+}
+
+// ══ Timestamp ═════════════════════════════════════════════════════════════════
+function updateLastUpdated() {
+    const el = document.getElementById('lastUpdated');
+    if (el) el.textContent = 'UPDATED ' + new Date().toLocaleTimeString('en-KE', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+}
+setInterval(updateLastUpdated, 1000);
+updateLastUpdated();
+
+// ══ Chat append ════════════════════════════════════════════════════════════════
+function appendChatMessage(msg) {
+    const log  = document.getElementById('chatLog');
+    const isAdmin = msg.sender_role === 'Admin';
+    const isEmg   = msg.is_emergency;
+    const initials = msg.sender_name ? msg.sender_name.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2) : '??';
+    const timeStr  = new Date(msg.timestamp || Date.now()).toLocaleTimeString('en-KE',{hour:'2-digit',minute:'2-digit'});
+
+    const bubble = isAdmin
+        ? `bg-emerald-500/20 border border-emerald-500/20 text-emerald-100`
+        : isEmg
+            ? `bg-red-500/20 border border-red-500/40 text-red-200`
+            : `bg-white/5 border border-white/5 text-gray-300`;
+
+    const avatarHtml = !isAdmin ? `<div class="w-6 h-6 rounded-full bg-gradient-to-br from-blue-700 to-blue-500 flex items-center justify-center text-[0.5rem] font-bold text-white shrink-0 mt-1">${initials}</div>` : '';
+
+    let contentHtml = msg.content ? msg.content : '';
+    if (msg.attachment_url) {
+        if (msg.attachment_type === 'image') contentHtml += `<img src="${msg.attachment_url}" class="mt-1.5 rounded-lg max-w-full max-h-32 object-cover block" alt="img">`;
+        if (msg.attachment_type === 'video') contentHtml += `<video src="${msg.attachment_url}" class="mt-1.5 rounded-lg max-w-full max-h-32 block" controls></video>`;
+    }
+
+    const html = `
+        <div class="flex ${isAdmin ? 'justify-end' : 'justify-start'} gap-1.5">
+            ${avatarHtml}
+            <div class="max-w-[78%]">
+                <div class="text-[0.55rem] text-gray-500 mb-0.5 ${isAdmin ? 'text-right' : ''} font-mono">${msg.sender_name} · ${timeStr}</div>
+                <div class="px-2.5 py-2 rounded-xl text-[0.7rem] leading-relaxed ${bubble}">
+                    ${isEmg ? '<i class="fa-solid fa-triangle-exclamation text-red-400 mr-1"></i>' : ''}
+                    ${contentHtml}
+                </div>
+            </div>
+        </div>`;
+
+    log.insertAdjacentHTML('beforeend', html);
+    log.scrollTop = log.scrollHeight;
+    updateLastUpdated();
+}
+
+// ══ Emergency panel ════════════════════════════════════════════════════════════
+function appendEmergency(msg) {
+    const panel = document.getElementById('emergencyPanel');
+    const list  = document.getElementById('emergencyList');
+    panel.classList.remove('hidden');
+
+    list.insertAdjacentHTML('beforeend', `
+        <div class="px-3 py-2.5 flex items-start gap-2" data-emergency-id="${msg._id || ''}">
+            <i class="fa-solid fa-triangle-exclamation text-red-400 mt-0.5 animate-pulse text-xs"></i>
+            <div class="flex-1 min-w-0">
+                <div class="text-xs font-bold text-red-300">${msg.sender_name}</div>
+                <div class="text-[0.65rem] text-red-200/70">${msg.content || ''}</div>
+            </div>
+            <button onclick="ackEmergency('${msg._id}')" class="text-[0.55rem] font-bold border border-red-500/40 text-red-400 px-1.5 py-0.5 rounded hover:bg-red-500/20 transition-colors shrink-0">ACK</button>
+        </div>`);
+}
+
+// ══ Timeline ══════════════════════════════════════════════════════════════════
+function updateTimeline(msg, colorKey = 'emerald') {
+    const colors = { emerald: 'text-emerald-400', red: 'text-red-400', blue: 'text-blue-400', gold: 'text-gold-400' };
+    const tl   = document.getElementById('activityTimeline');
+    const time = new Date().toLocaleTimeString('en-KE', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+    const ph   = tl.querySelector('[data-placeholder]');
+    if (ph) ph.remove();
+
+    tl.insertAdjacentHTML('afterbegin', `
+        <div class="flex items-start gap-2 text-[0.6rem] font-mono">
+            <span class="text-tx-3 shrink-0 opacity-60">${time}</span>
+            <span class="${colors[colorKey] || colors.emerald}">${msg}</span>
+        </div>`);
+
+    // Keep only 30 entries
+    while (tl.children.length > 30) tl.removeChild(tl.lastChild);
+    updateLastUpdated();
+}
+
+// ══ Send admin message ════════════════════════════════════════════════════════
+async function sendAdminMessage() {
+    const content    = document.getElementById('msgContent').value.trim();
+    const recipient  = document.getElementById('msgRecipient').value;
+    const fileInput  = document.getElementById('msgAttachment');
+    const attachment = fileInput.files[0];
+
+    if (!content && !attachment) { showToast('Enter a message to transmit', 'error'); return; }
+
+    const fd = new FormData();
+    if (content)    fd.append('content', content);
+    if (recipient)  fd.append('recipient_id', recipient);
+    if (attachment) fd.append('attachment', attachment);
+
+    try {
+        const res = await fetch('/portal/admin/live/message', { method: 'POST', body: fd });
+        const data = await res.json();
+
+        if (data.success) {
+            document.getElementById('msgContent').value = '';
+            fileInput.value = '';
+            document.getElementById('attachPreview').classList.add('hidden');
+            appendChatMessage(data.message);
+            if (liveSocket) liveSocket.emit('adminToSupervisor', { ...data.message, recipientId: recipient || null });
+            showToast('Transmitted ✓', 'success');
+        } else {
+            showToast('Error: ' + data.error, 'error');
+        }
+    } catch (err) {
+        showToast('Transmission failed', 'error');
+    }
+}
+
+// ══ Acknowledge emergency ══════════════════════════════════════════════════════
+async function ackEmergency(id) {
+    try {
+        await fetch(`/portal/admin/live/emergency-ack/${id}`, { method: 'POST' });
+        if (liveSocket) liveSocket.emit('emergencyAck', { id, acked_by: '<%= user.name %>' });
+        document.querySelector(`[data-emergency-id="${id}"]`)?.remove();
+        document.getElementById('emergencyBanner')?.remove();
+        showToast('Emergency acknowledged', 'success');
+    } catch(e) { showToast('Error', 'error'); }
+}
+
+// ══ File attachment preview ════════════════════════════════════════════════════
+document.getElementById('msgAttachment').addEventListener('change', function() {
+    const preview = document.getElementById('attachPreview');
+    if (this.files[0]) {
+        preview.textContent = `📎 ${this.files[0].name}`;
+        preview.classList.remove('hidden');
+    } else {
+        preview.classList.add('hidden');
+    }
+});
+
+// ══ Focus on event (scroll left panel) ════════════════════════════════════════
+function focusEvent(eventId) {
+    updateTimeline(`🎯 Focused: event ${eventId.slice(-6)}`);
+}
+
+// ══ Auto-refresh messages every 60s (fallback) ════════════════════════════════
+let lastFetch = Date.now();
+setInterval(async () => {
+    try {
+        const res  = await fetch(`/portal/admin/live/messages?since=${new Date(lastFetch).toISOString()}`);
+        const data = await res.json();
+        if (data.success && data.messages.length > 0) {
+            data.messages.forEach(appendChatMessage);
+            lastFetch = Date.now();
+        }
+    } catch(e) { /* silent */ }
+}, 60000);
+
+// Scroll chat to bottom on load
+const chatLog = document.getElementById('chatLog');
+chatLog.scrollTop = chatLog.scrollHeight;
+</script>

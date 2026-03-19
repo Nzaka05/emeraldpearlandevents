@@ -1,0 +1,254 @@
+<style>
+    :root {
+        --bg-main: #0a0e1a;
+        --card-bg: rgba(30, 41, 59, 0.7);
+        --text-main: #f8fafc;
+        --text-muted: #94a3b8;
+        --border-color: rgba(51, 65, 85, 0.8);
+        --accent: #10b981;
+        --danger: #ef4444;
+        --warning: #f59e0b;
+        --gold: #d4af37;
+    }
+    
+    .perf-container {
+        padding: 24px;
+        color: var(--text-main);
+    }
+    
+    .glass-panel {
+        background: var(--card-bg);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid var(--border-color);
+        border-radius: 16px;
+        padding: 20px;
+        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
+    }
+
+    .metric-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 16px;
+        margin-bottom: 24px;
+    }
+    
+    .metric-box {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .metric-title { font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600; }
+    .metric-val { font-size: 2.2rem; font-weight: 700; color: var(--accent); }
+    .metric-val.bad { color: var(--danger); }
+    .metric-val.neutral { color: var(--gold); }
+    
+    table.perf-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 12px;
+    }
+    table.perf-table th { text-align: left; padding: 12px; border-bottom: 2px solid var(--border-color); color: var(--text-muted); font-size: 0.85rem; }
+    table.perf-table td { padding: 12px; border-bottom: 1px solid var(--border-color); font-size: 0.95rem; }
+    
+    .trend-up { color: var(--accent); }
+    .trend-down { color: var(--danger); }
+    .trend-flat { color: var(--text-muted); }
+
+    .btn-action {
+        background: rgba(255,255,255,0.1);
+        border: 1px solid var(--border-color);
+        color: var(--text-main);
+        padding: 6px 12px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 0.8rem;
+        transition: all 0.2s;
+    }
+    .btn-action:hover { background: rgba(255,255,255,0.2); }
+</style>
+
+<div class="perf-container">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 24px;">
+        <div>
+            <h1 style="margin:0; font-size:1.8rem;">Performance Intelligence Hub</h1>
+            <p style="color:var(--text-muted); margin:4px 0 0 0;">AI Staff Evaluation & Risk Assessment Feed</p>
+        </div>
+        <button class="btn-action" onclick="loadDashboardData()"><i class="fa-solid fa-rotate-right"></i> Refresh</button>
+    </div>
+
+    <!-- Section 1: Overview -->
+    <div class="glass-panel metric-grid" id="sectOverview">
+        <!-- populated by JS -->
+    </div>
+
+    <div style="display:grid; grid-template-columns:2fr 1fr; gap:24px; margin-bottom: 24px;">
+        <!-- Section 2: Chart Distribution -->
+        <div class="glass-panel">
+            <h3 style="margin-top:0;">Score Distribution</h3>
+            <canvas id="distChart" style="height:250px; width:100%;"></canvas>
+        </div>
+        
+        <!-- Section 4: Best Supervisors -->
+        <div class="glass-panel">
+            <h3 style="margin-top:0;">Top AI-Matched Supervisors</h3>
+            <div id="sectSupervisors"></div>
+        </div>
+    </div>
+
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:24px; margin-bottom: 24px;">
+        <!-- Top Performers -->
+        <div class="glass-panel">
+            <h3 style="margin-top:0;"><i class="fa-solid fa-crown" style="color:var(--gold);"></i> Platform Leaderboard</h3>
+            <table class="perf-table" id="tableTop">
+                <thead><tr><th>Rank</th><th>Staff</th><th>Rating</th><th>Trend</th></tr></thead>
+                <tbody></tbody>
+            </table>
+        </div>
+        
+        <!-- Underperformer Alerts -->
+        <div class="glass-panel">
+            <h3 style="margin-top:0; color:var(--danger);"><i class="fa-solid fa-triangle-exclamation"></i> Underperformer Watchlist</h3>
+            <div id="sectUnderperformers"></div>
+        </div>
+    </div>
+    
+    <!-- Section 6: Compatibility Matrix Placeholder -->
+    <div class="glass-panel" style="text-align:center; padding: 40px;">
+        <i class="fa-solid fa-network-wired" style="font-size:3rem; color:var(--text-muted); margin-bottom:16px; opacity:0.5;"></i>
+        <h3 style="margin:0;">Team Compatibility Matrix</h3>
+        <p style="color:var(--text-muted);">Predictive team synergy models will populate here after sufficient event pairings are logged.</p>
+        <div style="display:inline-block; margin-top:8px; padding:4px 12px; border-radius:12px; background:rgba(212, 175, 55, 0.1); color:var(--gold); font-size:0.8rem; font-weight:700;">Coming Soon</div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    let distChartInstance = null;
+
+    async function flagStaff(staffId) {
+        const reason = prompt("Enter disciplinary reason for this flag (affects AI risk models):");
+        if (!reason) return;
+        try {
+            const res = await fetch(`/portal/admin-staff/performance/flag/${staffId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content || '' },
+                body: JSON.stringify({ reason })
+            });
+            const data = await res.json();
+            if (data.success) {
+                alert('Flag applied. Risk baseline updated.');
+                loadDashboardData();
+            } else {
+                alert('Failed: ' + data.error);
+            }
+        } catch (e) { alert(e); }
+    }
+
+    async function loadDashboardData() {
+        try {
+            const res = await fetch('/portal/admin-staff/performance/data');
+            const d = await res.json();
+            if (!d.success) throw new Error(d.error);
+
+            const payload = d.data;
+
+            // 1. Overview
+            let impText = payload.most_improved ? `${payload.most_improved.staff_id.firstname} ${payload.most_improved.staff_id.lastname} (${payload.most_improved.average_overall_score})` : 'N/A';
+            let decText = payload.most_declined ? `${payload.most_declined.staff_id.firstname} ${payload.most_declined.staff_id.lastname} (${payload.most_declined.average_overall_score})` : 'N/A';
+
+            document.getElementById('sectOverview').innerHTML = `
+                <div class="metric-box"><span class="metric-title">Platform Average</span><span class="metric-val ${payload.platform_average >= 4 ? '' : (payload.platform_average < 3 ? 'bad' : 'neutral')}">${payload.platform_average}</span></div>
+                <div class="metric-box"><span class="metric-title">Above 4.0</span><span class="metric-val neutral">${payload.pct_above_4}%</span></div>
+                <div class="metric-box"><span class="metric-title">Below 3.0</span><span class="metric-val bad">${payload.pct_below_3}%</span></div>
+                <div class="metric-box"><span class="metric-title">Most Improved</span><span class="metric-val neutral" style="font-size:1.2rem; align-items:center; display:flex;"><i class="fa-solid fa-arrow-trend-up trend-up" style="margin-right:8px;"></i> ${impText}</span></div>
+                <div class="metric-box"><span class="metric-title">Needs Coaching</span><span class="metric-val bad" style="font-size:1.2rem; align-items:center; display:flex;"><i class="fa-solid fa-arrow-trend-down trend-down" style="margin-right:8px;"></i> ${decText}</span></div>
+            `;
+
+            // 2. Chart
+            const ctx = document.getElementById('distChart').getContext('2d');
+            if (distChartInstance) distChartInstance.destroy();
+            distChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['1-2', '2-3', '3-4', '4-5'],
+                    datasets: [{
+                        label: 'Staff Count',
+                        data: [payload.distribution['1-2'], payload.distribution['2-3'], payload.distribution['3-4'], payload.distribution['4-5']],
+                        backgroundColor: ['#ef4444', '#f59e0b', '#3b82f6', '#10b981'],
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: '#94a3b8' } }, x: { grid: { display: false }, ticks: { color: '#94a3b8' } } }
+                }
+            });
+
+            // 4. Supervisors
+            let supHtml = '';
+            if(payload.best_supervisors.length === 0) supHtml = '<div style="color:var(--text-muted); font-size:0.9rem;">No rated supervisors yet.</div>';
+            payload.best_supervisors.forEach(s => {
+                supHtml += `
+                    <div style="padding:12px; border:1px solid rgba(255,255,255,0.05); border-radius:8px; margin-bottom:8px; background:rgba(0,0,0,0.2);">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <strong>${s.staff_id.firstname} ${s.staff_id.lastname}</strong>
+                            <span style="color:var(--gold); font-weight:700;"><i class="fa-solid fa-star"></i> ${s.supervisor_rating.toFixed(1)}</span>
+                        </div>
+                        <div style="font-size:0.8rem; color:var(--text-muted); margin-top:4px;">Events: ${s.total_events_supervised} | Avg Team Score: ${s.average_team_score.toFixed(1)}</div>
+                    </div>
+                `;
+            });
+            document.getElementById('sectSupervisors').innerHTML = supHtml;
+
+            // 5. Leaderboard
+            let lbHtml = '';
+            if (payload.top_performers.length === 0) lbHtml = '<tr><td colspan="4" style="text-align:center; color:var(--text-muted);">No profiles yet.</td></tr>';
+            payload.top_performers.forEach((p, idx) => {
+                let trendIcon = p.score_trend === 'improving' ? '<i class="fa-solid fa-arrow-trend-up trend-up"></i>' : (p.score_trend === 'declining' ? '<i class="fa-solid fa-arrow-trend-down trend-down"></i>' : '<i class="fa-solid fa-minus trend-flat"></i>');
+                lbHtml += `
+                    <tr>
+                        <td style="font-weight:700;">#${idx+1}</td>
+                        <td>
+                            <div style="font-weight:600;">${p.staff_id.firstname} ${p.staff_id.lastname}</div>
+                            <div style="font-size:0.75rem; color:var(--text-muted);">${(p.would_rebook_percentage||0).toFixed(0)}% Rebook Rate</div>
+                        </td>
+                        <td style="font-weight:700; color:var(--accent);">${p.average_overall_score.toFixed(2)}</td>
+                        <td>${trendIcon} <span style="font-size:0.8rem; text-transform:capitalize; margin-left:4px;">${p.score_trend}</span></td>
+                    </tr>
+                `;
+            });
+            document.querySelector('#tableTop tbody').innerHTML = lbHtml;
+
+            // 6. Underperformers
+            let upHtml = '';
+            if (payload.underperformers.length === 0) upHtml = '<div style="color:var(--accent); padding:16px; text-align:center; font-weight:600;"><i class="fa-solid fa-check-circle"></i> No staff currently in risk zone</div>';
+            payload.underperformers.sort((a,b)=>a.average_overall_score - b.average_overall_score);
+            payload.underperformers.forEach(u => {
+                let issues = u.latest_improvement_areas && u.latest_improvement_areas.length > 0 ? u.latest_improvement_areas.join(', ') : 'Overall performance lacking';
+                upHtml += `
+                    <div style="padding:16px; border:1px solid rgba(239, 68, 68, 0.3); border-radius:12px; margin-bottom:12px; background:rgba(239, 68, 68, 0.05);">
+                        <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+                            <strong style="font-size:1.1rem;">${u.staff_id.firstname} ${u.staff_id.lastname}</strong>
+                            <span style="background:var(--danger); color:white; padding:2px 8px; border-radius:12px; font-weight:bold; font-size:0.85rem;">${u.average_overall_score.toFixed(2)}</span>
+                        </div>
+                        <div style="font-size:0.85rem; color:var(--text-muted); margin-bottom:12px;">
+                            <strong>Latest Issues:</strong> ${issues}
+                        </div>
+                        <div style="display:flex; gap:8px;">
+                            <button class="btn-action" onclick="flagStaff('${u.staff_id._id}')"><i class="fa-solid fa-flag"></i> Add Disciplinary Flag</button>
+                        </div>
+                    </div>
+                `;
+            });
+            document.getElementById('sectUnderperformers').innerHTML = upHtml;
+
+        } catch (e) {
+            console.error(e);
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', loadDashboardData);
+</script>

@@ -1,0 +1,40 @@
+<% currentPage='notifications' %>
+
+<div class="flex items-center justify-between mb-5 animate-fade-up">
+    <div>
+        <h1 class="font-display text-2xl font-extrabold text-tx-1 tracking-tight flex items-center gap-3">
+            <i class="fa-regular fa-bell text-emerald-400"></i>
+            <span class="text-gradient-emerald">Notifications</span>
+        </h1>
+        <p class="text-[0.7rem] text-tx-3 mt-1 uppercase tracking-widest font-mono">Alerts & Updates</p>
+    </div>
+    <% if(notifications && notifications.length > 0) { %>
+    <span class="badge-emerald text-xs font-bold px-3 py-1 rounded-full"><%= notifications.length %> unread</span>
+    <% } %>
+</div>
+
+<% if(!notifications || notifications.length === 0) { %>
+    <div class="glass-card p-12 flex flex-col items-center justify-center text-tx-3 opacity-60 text-center animate-fade-up">
+        <i class="fa-regular fa-bell-slash text-4xl mb-4"></i>
+        <h4 class="text-sm font-bold text-tx-1 mb-1">All Clear</h4>
+        <p class="text-xs">No notifications right now.</p>
+    </div>
+<% } else { %>
+    <div class="flex flex-col gap-3 animate-fade-up">
+        <% notifications.forEach(function(n) { %>
+        <a href="<%= n.url || '#' %>" class="glass-card p-4 flex items-start gap-4 hover:border-emerald-500/30 transition-colors no-underline">
+            <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0
+                <%= n.type==='payment' ? 'bg-emerald-500/20 text-emerald-400' : n.type==='announcement' ? 'bg-gold-500/20 text-gold-400' : 'bg-blue-500/20 text-blue-400' %>">
+                <i class="fa-solid <%= n.icon || 'fa-bell' %>"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+                <div class="text-sm text-tx-1 font-medium leading-snug"><%= n.message %></div>
+                <div class="text-[0.65rem] text-tx-3 mt-1">
+                    <%= n.timestamp ? new Date(n.timestamp).toLocaleString('en-KE', {day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}) : '' %>
+                </div>
+            </div>
+            <i class="fa-solid fa-chevron-right text-tx-3 text-xs mt-1 flex-shrink-0"></i>
+        </a>
+        <% }); %>
+    </div>
+<% } %>

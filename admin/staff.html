@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -430,9 +430,9 @@
             }
         }
 
-        /* ═══════════════════════════════════════════════════════════
+        /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
            MOBILE RESPONSIVENESS (Injected via Phase 10 Overhaul)
-           ═══════════════════════════════════════════════════════════ */
+           â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
         /* Hamburger Menu Icon (Hidden on Desktop) */
         .mobile-menu-btn {
@@ -516,9 +516,9 @@
         }
 
 
-        /* ═══════════════════════════════════════════════════════════
+        /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
            MOBILE QUICK ACTION FAB
-           ═══════════════════════════════════════════════════════════ */
+           â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
         .mobile-fab-container {
             display: none;
             position: fixed;
@@ -893,7 +893,19 @@
                     <span>Staff</span>
                 </a>
             </li>
+                        <li class="sidebar-nav-item">
+                <a href="http://localhost:3001" target="_blank" class="sidebar-nav-link" style="color: var(--accent); background: rgba(201, 168, 76, 0.05);">
+                    <span class="sidebar-nav-icon"><i class="fas fa-external-link-alt"></i></span>
+                    <span>Staff System</span>
+                </a>
+            </li>
             <li class="sidebar-nav-item">
+                <a href="/admin/pricing" class="sidebar-nav-link"><!-- add 'active' on pricing.html -->
+                    <span class="sidebar-nav-icon"><i class="fas fa-tags"></i></span>
+                    <span>Pricing & Rates</span>
+                </a>
+            </li>
+<li class="sidebar-nav-item">
                 <a href="/admin/settings" class="sidebar-nav-link"><!-- add 'active' on settings.html -->
                     <span class="sidebar-nav-icon"><i class="fas fa-cog"></i></span>
                     <span>Settings</span>
@@ -977,7 +989,7 @@
                                     <option value="unavailable">Unavailable</option>
                                 </select>
                             </div>
-                            <button class="btn-primary" onclick="addStaff()">➕ Add Staff Member</button>
+                            <button class="btn-primary" onclick="addStaff()"><i class="fas fa-plus"></i> Add Staff Member</button>
                         </div>
 
                         <div class="staff-grid" id="staffGrid">
@@ -993,7 +1005,7 @@
                     <div class="modal-header">
                         <h2 class="modal-title">Add Staff Member</h2>
                         <button class="action-btn" style="width: auto; background: none; color: #999; font-size: 20px;"
-                            onclick="closeModal()">✕</button>
+                            onclick="closeModal()"><i class="fas fa-times"></i></button>
                     </div>
                     <div class="modal-body">
                         <div class="form-group">
@@ -1128,7 +1140,7 @@
                             <div class="staff-info" style="margin-top:4px;">
                                 <span class="staff-label">WhatsApp:</span><br>
                                 <a href="https://wa.me/${member.whatsapp.replace(/\D/g, '')}" target="_blank" style="color:#25D366;font-size:12px;text-decoration:none;font-weight:600;">
-                                    💬 Message on WhatsApp
+                                    <i class="fas fa-comment"></i> Message on WhatsApp
                                 </a>
                             </div>` : ''}
                             <div class="staff-info" style="margin-top:8px;">
@@ -1137,7 +1149,7 @@
                             </div>
                             <button class="availability-toggle ${member.available ? 'available' : 'unavailable'}" 
                                     onclick="toggleAvailability(${member.id})">
-                                ${member.available ? '✓ Available' : '✗ Unavailable'}
+                                ${member.available ? '<i class="fas fa-check"></i> Available' : '<i class="fas fa-times"></i> Unavailable'}
                             </button>
                                 <button class="action-btn" onclick="deleteStaff('${member.id}')" style="background: var(--accent-danger); margin-top: 8px;">Delete Access</button>
                             </div>

@@ -1,0 +1,16 @@
+{
+  "status": "commited",
+  "type": "backend",
+  "scope": "codebase",
+  "localEndpoint": "http://127.0.0.1:3001",
+  "backendAuthType": "public",
+  "executionArgs": {
+    "projectName": "staff-system",
+    "projectPath": "c:\\My Web Sites\\school\\live.themewild.com\\emerald\\staff-system",
+    "testIds": [],
+    "additionalInstruction": "This is the Port 3001 Staff Operations System only. Test all /portal/* and /internal/* endpoints.",
+    "serverMode": "development",
+    "envs": {}
+  },
+  "serverPort": 62265
+}

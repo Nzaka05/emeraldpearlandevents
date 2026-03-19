@@ -1,0 +1,100 @@
+<% currentPage='comms' ; %>
+
+<!-- ══ Header ══ -->
+<div class="flex items-center justify-between mb-5 animate-fade-up">
+    <div>
+        <h1 class="font-display text-2xl font-extrabold text-tx-1 tracking-tight flex items-center gap-3">
+            <i class="fa-solid fa-satellite-dish text-emerald-400"></i>
+            <span class="text-gradient-emerald">Communications</span>
+        </h1>
+        <p class="text-[0.7rem] text-tx-3 mt-1 uppercase tracking-widest font-mono">Broadcast Dispatch Center</p>
+    </div>
+</div>
+
+<!-- ══ Compose Message ══ -->
+<div class="glass-card mb-4 animate-fade-up">
+    <div class="px-5 py-4 border-b border-white/5 flex items-center gap-2">
+        <i class="fa-solid fa-paper-plane text-emerald-400 text-sm"></i>
+        <h3 class="text-sm font-bold text-tx-1 uppercase tracking-widest">New Transmission</h3>
+    </div>
+    <div class="p-5">
+        <form action="/portal/supervisor/communications/send" method="POST" class="space-y-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-[0.65rem] font-bold uppercase tracking-widest text-tx-3 mb-2">Target Team</label>
+                    <select name="event_team_id" required
+                        class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-tx-2 focus:border-emerald-500/40 focus:ring-0 focus:outline-none transition-colors cursor-pointer">
+                        <option value="">— Select team —</option>
+                        <% (teams||[]).forEach(function(t) { %>
+                            <option value="<%= t._id %>">
+                                <%= (t.assignment_id && t.assignment_id.title) ? t.assignment_id.title : 'Team' %>
+                            </option>
+                        <% }); %>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-[0.65rem] font-bold uppercase tracking-widest text-tx-3 mb-2">Message Type</label>
+                    <select name="message_type" required
+                        class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-tx-2 focus:border-emerald-500/40 focus:ring-0 focus:outline-none transition-colors cursor-pointer">
+                        <option value="Announcement">📢 Announcement</option>
+                        <option value="Alert">🚨 Alert</option>
+                        <option value="Reminder">⏰ Reminder</option>
+                        <option value="Logistics">📦 Logistics</option>
+                    </select>
+                </div>
+            </div>
+            <div>
+                <label class="block text-[0.65rem] font-bold uppercase tracking-widest text-tx-3 mb-2">Message Body</label>
+                <textarea name="message_content" rows="4" required placeholder="Write your transmission for the team…"
+                    class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-tx-1 placeholder-tx-3/50 focus:border-emerald-500/40 focus:ring-0 focus:outline-none transition-colors resize-none leading-relaxed font-mono"></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary shadow-glow-emerald font-bold tracking-wider">
+                <i class="fa-solid fa-paper-plane mr-2"></i> TRANSMIT
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- ══ Message History ══ -->
+<div class="glass-card animate-fade-up delay-1 mb-[80px]">
+    <div class="px-5 py-4 border-b border-white/5 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+            <i class="fa-solid fa-clock-rotate-left text-tx-3 text-sm"></i>
+            <h3 class="text-sm font-bold text-tx-1 uppercase tracking-widest">Dispatch History</h3>
+        </div>
+        <span class="badge-blue text-[0.6rem] font-bold px-2 py-0.5 rounded"><%= (communications||[]).length %></span>
+    </div>
+
+    <% if (!(communications && communications.length)) { %>
+        <div class="p-12 flex flex-col items-center justify-center text-tx-3 opacity-60">
+            <i class="fa-solid fa-comment-slash text-4xl mb-4"></i>
+            <p class="text-xs font-bold uppercase tracking-wider">No transmissions sent yet.</p>
+        </div>
+    <% } else { %>
+        <div class="divide-y divide-white/5">
+            <% 
+                var typeColors = { Announcement: 'text-blue-400 border-blue-500/30 bg-blue-500/10', Alert: 'text-red-400 border-red-500/30 bg-red-500/10', Reminder: 'text-gold-400 border-gold-500/30 bg-gold-500/10', Logistics: 'text-purple-400 border-purple-500/30 bg-purple-500/10' };
+                var typeEmoji  = { Announcement: '📢', Alert: '🚨', Reminder: '⏰', Logistics: '📦' };
+                communications.forEach(function(msg) {
+                    var tColor = typeColors[msg.message_type] || 'text-tx-3 border-white/10 bg-white/5';
+                    var tIcon  = typeEmoji[msg.message_type] || '💬';
+            %>
+                <div class="px-5 py-4 flex items-start gap-3 hover:bg-white/[0.02] transition-colors">
+                    <div class="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-base flex-shrink-0 border border-white/5"><%= tIcon %></div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-2 flex-wrap mb-1.5">
+                            <span class="text-[0.55rem] font-bold tracking-widest uppercase border px-1.5 py-0.5 rounded <%= tColor %>"><%= msg.message_type %></span>
+                            <% if(msg.event_team_id && msg.event_team_id.assignment_id) { %>
+                                <span class="text-[0.65rem] text-tx-3 font-mono"><%= msg.event_team_id.assignment_id.title || '' %></span>
+                            <% } %>
+                        </div>
+                        <div class="text-xs text-tx-1 leading-relaxed mb-1"><%= msg.message_content %></div>
+                        <div class="text-[0.6rem] text-tx-3 font-mono opacity-60">
+                            <%= new Date(msg.createdAt).toLocaleString('en-GB',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}) %>
+                        </div>
+                    </div>
+                </div>
+            <% }); %>
+        </div>
+    <% } %>
+</div>

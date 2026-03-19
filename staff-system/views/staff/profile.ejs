@@ -1,0 +1,210 @@
+<% currentPage='profile' ; %>
+<% var portalBase = user.role === 'Admin' ? '/portal/admin-staff' : user.role === 'Supervisor' ? '/portal/supervisor' : '/portal/staff'; %>
+
+<!-- ══ Profile Hero ══ -->
+<div class="relative mb-5 animate-fade-up">
+    <!-- Background glow accent -->
+    <div class="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-emerald-950/30 to-transparent rounded-2xl pointer-events-none"></div>
+    
+    <div class="glass-card p-5 sm:p-7 relative z-10 border-t-2 border-emerald-500/30">
+        <div class="flex flex-col sm:flex-row items-center sm:items-start gap-5">
+            
+            <!-- Avatar -->
+            <div class="relative shrink-0">
+                <label class="cursor-pointer block group" for="photoUpload" title="Change Photo">
+                    <% if (user.photo_url) { %>
+                        <img src="<%= user.photo_url %>" id="profileAvatar" class="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl object-cover border-2 border-emerald-500/40 shadow-glow-emerald group-hover:border-emerald-500/80 transition-colors">
+                    <% } else { %>
+                        <div id="profileAvatar" class="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-gradient-to-br from-emerald-700 to-emerald-500 flex items-center justify-center font-display text-3xl font-extrabold text-white shadow-glow-emerald border-2 border-emerald-500/40 group-hover:border-emerald-500/80 transition-colors">
+                            <%= user.name.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2) %>
+                        </div>
+                    <% } %>
+                    <div class="absolute -bottom-2 -right-2 w-7 h-7 rounded-full bg-dark-card border border-emerald-500/50 flex items-center justify-center shadow-md group-hover:scale-110 transition-transform">
+                        <i class="fa-solid fa-camera text-emerald-400 text-[0.6rem]"></i>
+                    </div>
+                </label>
+                <input type="file" id="photoUpload" accept="image/*" class="hidden" onchange="uploadPhoto(this)">
+            </div>
+            
+            <!-- Info -->
+            <div class="flex-1 min-w-0 text-center sm:text-left">
+                <h1 class="font-display text-xl sm:text-2xl font-extrabold text-tx-1 tracking-tight leading-tight mb-1.5"><%= user.name %></h1>
+                <div class="flex flex-wrap items-center justify-center sm:justify-start gap-2 mb-4">
+                    <span class="text-[0.6rem] font-bold uppercase tracking-widest px-2 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 rounded"><%= user.role %></span>
+                    <span class="text-[0.6rem] font-mono text-tx-3"><i class="fa-solid fa-envelope mr-1 opacity-60"></i><%= user.email %></span>
+                    <% if(user.phone) { %><span class="text-[0.6rem] font-mono text-tx-3"><i class="fa-solid fa-phone mr-1 opacity-60"></i><%= user.phone %></span><% } %>
+                </div>
+                
+                <!-- Availability Toggle -->
+                <div class="flex items-center gap-2 bg-black/30 border border-white/5 rounded-xl px-3 py-2 w-max mx-auto sm:mx-0">
+                    <i class="fa-solid fa-signal text-tx-3 text-xs"></i>
+                    <span class="text-[0.65rem] font-bold uppercase tracking-widest text-tx-3">Status</span>
+                    <select id="availSelect" class="bg-transparent border-none outline-none text-[0.7rem] font-bold text-tx-2 cursor-pointer ml-1 focus:ring-0 hover:text-tx-1 transition-colors" onchange="updateAvailability(this.value)">
+                        <option value="Available" <%= user.availability_status==='Available' ? 'selected' : '' %> class="bg-black">✅ Available</option>
+                        <option value="Not Available" <%= user.availability_status==='Not Available' ? 'selected' : '' %> class="bg-black">❌ Not Available</option>
+                        <option value="On Shift" <%= user.availability_status==='On Shift' ? 'selected' : '' %> class="bg-black">🔄 On Shift</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ══ Edit Info ══ -->
+<div class="glass-card mb-4 animate-fade-up delay-1">
+    <div class="px-5 py-4 border-b border-white/5 flex items-center gap-2">
+        <i class="fa-solid fa-user-pen text-blue-400 text-sm"></i>
+        <h3 class="text-sm font-bold text-tx-1 uppercase tracking-widest">Edit Profile</h3>
+    </div>
+    <div class="p-5">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
+            <div>
+                <label class="block text-[0.65rem] font-bold uppercase tracking-widest text-tx-3 mb-2">Full Name</label>
+                <input type="text" id="profileName" value="<%= user.name %>" class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-tx-1 placeholder-tx-3/50 focus:border-blue-500/50 focus:ring-0 focus:outline-none transition-colors" required>
+            </div>
+            <div>
+                <label class="block text-[0.65rem] font-bold uppercase tracking-widest text-tx-3 mb-2">Phone</label>
+                <input type="text" id="profilePhone" value="<%= user.phone||'' %>" placeholder="+254 700 000 000" class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-tx-1 placeholder-tx-3/50 focus:border-blue-500/50 focus:ring-0 focus:outline-none transition-colors">
+            </div>
+        </div>
+        <button type="button" class="btn btn-primary bg-gradient-to-r from-blue-600 to-blue-400 text-white border-none shadow-[0_0_20px_rgba(59,130,246,0.2)] font-bold" onclick="saveProfile()">
+            <i class="fa-solid fa-floppy-disk mr-2"></i> Save Changes
+        </button>
+    </div>
+</div>
+
+<!-- ══ Change Password ══ -->
+<div class="glass-card mb-[80px] animate-fade-up delay-2">
+    <div class="px-5 py-4 border-b border-white/5 flex items-center gap-2">
+        <i class="fa-solid fa-lock text-gold-400 text-sm"></i>
+        <h3 class="text-sm font-bold text-tx-1 uppercase tracking-widest">Security</h3>
+    </div>
+    <div class="p-5 space-y-4">
+        <!-- Current Password -->
+        <div class="relative">
+            <label class="block text-[0.65rem] font-bold uppercase tracking-widest text-tx-3 mb-2">Current Password</label>
+            <input type="password" id="current_password" placeholder="Your current access key" class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 pr-12 text-sm text-tx-1 placeholder-tx-3/50 focus:border-gold-500/50 focus:ring-0 focus:outline-none transition-colors">
+            <button type="button" onclick="togglePwd('current_password',this)" class="absolute right-3 top-[2.35rem] bg-none border-none cursor-pointer text-tx-3 hover:text-tx-1 transition-colors w-8 h-8 flex items-center justify-center rounded hover:bg-white/5">
+                <i class="fa-regular fa-eye text-sm"></i>
+            </button>
+        </div>
+        
+        <!-- New Password -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="relative">
+                <label class="block text-[0.65rem] font-bold uppercase tracking-widest text-tx-3 mb-2">New Password</label>
+                <input type="password" id="new_password" placeholder="Min. 8 characters" oninput="checkStrength(this.value)" class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 pr-12 text-sm text-tx-1 placeholder-tx-3/50 focus:border-gold-500/50 focus:ring-0 focus:outline-none transition-colors">
+                <button type="button" onclick="togglePwd('new_password',this)" class="absolute right-3 top-[2.35rem] bg-none border-none cursor-pointer text-tx-3 hover:text-tx-1 transition-colors w-8 h-8 flex items-center justify-center rounded hover:bg-white/5">
+                    <i class="fa-regular fa-eye text-sm"></i>
+                </button>
+            </div>
+            <div class="relative">
+                <label class="block text-[0.65rem] font-bold uppercase tracking-widest text-tx-3 mb-2">Confirm New</label>
+                <input type="password" id="confirm_new_password" placeholder="Repeat new password" class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 pr-12 text-sm text-tx-1 placeholder-tx-3/50 focus:border-gold-500/50 focus:ring-0 focus:outline-none transition-colors">
+                <button type="button" onclick="togglePwd('confirm_new_password',this)" class="absolute right-3 top-[2.35rem] bg-none border-none cursor-pointer text-tx-3 hover:text-tx-1 transition-colors w-8 h-8 flex items-center justify-center rounded hover:bg-white/5">
+                    <i class="fa-regular fa-eye text-sm"></i>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Password Strength Checklist -->
+        <div class="bg-black/30 border border-white/5 rounded-xl p-3 grid grid-cols-2 gap-x-4 gap-y-1.5">
+            <div id="req-length"  class="text-[0.65rem] flex items-center gap-1.5 text-tx-3 font-mono"><i class="fa-solid fa-circle-xmark text-[0.55rem]"></i> 8+ characters</div>
+            <div id="req-upper"   class="text-[0.65rem] flex items-center gap-1.5 text-tx-3 font-mono"><i class="fa-solid fa-circle-xmark text-[0.55rem]"></i> Uppercase letter</div>
+            <div id="req-lower"   class="text-[0.65rem] flex items-center gap-1.5 text-tx-3 font-mono"><i class="fa-solid fa-circle-xmark text-[0.55rem]"></i> Lowercase letter</div>
+            <div id="req-number"  class="text-[0.65rem] flex items-center gap-1.5 text-tx-3 font-mono"><i class="fa-solid fa-circle-xmark text-[0.55rem]"></i> A number</div>
+            <div id="req-special" class="text-[0.65rem] flex items-center gap-1.5 text-tx-3 font-mono col-span-2"><i class="fa-solid fa-circle-xmark text-[0.55rem]"></i> Special character</div>
+        </div>
+        
+        <button class="btn btn-primary bg-gradient-to-r from-gold-600 to-gold-400 text-dark-bg border-none font-bold shadow-[0_0_20px_rgba(245,158,11,0.2)] hover:scale-[1.02] transition-transform" onclick="changePassword()">
+            <i class="fa-solid fa-key mr-2"></i> Update Security Key
+        </button>
+    </div>
+</div>
+
+<script>
+    const portalBase = '<%= portalBase %>';
+
+    async function saveProfile() {
+        try {
+            const r = await fetch(portalBase + '/profile', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content || ''
+                },
+                body: JSON.stringify({
+                    name: document.getElementById('profileName').value,
+                    phone: document.getElementById('profilePhone').value
+                })
+            });
+            const result = await r.json();
+            if (result.success) showToast('Profile saved successfully!', 'success');
+            else showToast(result.error || 'Save failed', 'error');
+        } catch(err) { showToast('Save failed', 'error'); }
+    }
+
+    function togglePwd(id, btn) {
+        const input = document.getElementById(id);
+        const isHidden = input.type === 'password';
+        input.type = isHidden ? 'text' : 'password';
+        btn.querySelector('i').className = isHidden ? 'fa-regular fa-eye-slash text-sm' : 'fa-regular fa-eye text-sm';
+    }
+
+    function checkStrength(val) {
+        const set = (id, pass) => {
+            const el = document.getElementById(id);
+            el.style.color = pass ? '#10b981' : '';
+            el.querySelector('i').className = (pass ? 'fa-solid fa-circle-check' : 'fa-solid fa-circle-xmark') + ' text-[0.55rem]';
+        };
+        set('req-length',  val.length >= 8);
+        set('req-upper',   /[A-Z]/.test(val));
+        set('req-lower',   /[a-z]/.test(val));
+        set('req-number',  /[0-9]/.test(val));
+        set('req-special', /[^A-Za-z0-9]/.test(val));
+    }
+
+    async function changePassword() {
+        const current_password     = document.getElementById('current_password').value;
+        const new_password         = document.getElementById('new_password').value;
+        const confirm_new_password = document.getElementById('confirm_new_password').value;
+        if (new_password !== confirm_new_password) { showToast('Key sequences do not match.', 'error'); return; }
+        const r = await fetch(`${portalBase}/change-password`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content || '' },
+            body: JSON.stringify({ current_password, new_password, confirm_new_password })
+        });
+        const d = await r.json();
+        if (d.success) { showToast('Security key updated.', 'success'); setTimeout(() => window.location.href = `${portalBase}/profile`, 1500); }
+        else showToast(d.details ? d.details.join(', ') : d.error, 'error');
+    }
+
+    async function updateAvailability(val) {
+        const r = await fetch(`${portalBase}/availability`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', 'CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content || '' },
+            body: JSON.stringify({ availability_status: val })
+        });
+        const d = await r.json();
+        if (d.success) showToast('Status: ' + val, 'success');
+        else showToast(d.error || 'Error', 'error');
+    }
+
+    async function uploadPhoto(input) {
+        const file = input.files[0];
+        if (!file) return;
+        showToast('Uploading...', 'info');
+        const formData = new FormData();
+        formData.append('photo', file);
+        try {
+            const r = await fetch(`${portalBase}/profile/photo`, {
+                method: 'POST',
+                headers: { 'CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content || '' },
+                body: formData
+            });
+            const data = await r.json();
+            if (data.success) { showToast('Photo updated!', 'success'); setTimeout(() => location.reload(), 800); }
+            else showToast(data.error || 'Upload failed', 'error');
+        } catch(err) { showToast('Upload failed', 'error'); }
+    }
+</script>

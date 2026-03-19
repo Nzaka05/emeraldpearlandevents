@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -454,9 +454,9 @@
             border-color: var(--accent-gold)
         }
 
-        /* ═══════════════════════════════════════════════════════════
+        /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
            PRE-UPLOAD EDITOR MODAL
-           ═══════════════════════════════════════════════════════════ */
+           â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
         .editor-modal {
             display: none;
             position: fixed;
@@ -644,9 +644,9 @@
             }
         }
 
-        /* ═══════════════════════════════════════════════════════════
+        /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
            MOBILE RESPONSIVENESS (Injected via Phase 10 Overhaul)
-           ═══════════════════════════════════════════════════════════ */
+           â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
         /* Hamburger Menu Icon (Hidden on Desktop) */
         .mobile-menu-btn {
@@ -729,9 +729,9 @@
         }
 
 
-        /* ═══════════════════════════════════════════════════════════
+        /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
            MOBILE QUICK ACTION FAB
-           ═══════════════════════════════════════════════════════════ */
+           â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
         .mobile-fab-container {
             display: none;
             position: fixed;
@@ -967,7 +967,7 @@
         <div class="editor-content">
             <div class="editor-header">
                 <h2 class="editor-title">Edit Image Details</h2>
-                <button class="editor-close" onclick="closeEditorModal()">✕</button>
+                <button class="editor-close" onclick="closeEditorModal()"><i class="fas fa-times"></i></button>
             </div>
             <div class="editor-body">
                 <div class="editor-image-area">
@@ -975,9 +975,9 @@
                         <img id="cropperImage" src="" alt="Image to Edit">
                     </div>
                     <div class="cropper-toolbar">
-                        <button class="cropper-btn" onclick="cropper.zoom(0.1)">🔍+</button>
-                        <button class="cropper-btn" onclick="cropper.zoom(-0.1)">🔍-</button>
-                        <button class="cropper-btn" onclick="cropper.rotate(90)">↻</button>
+                        <button class="cropper-btn" onclick="cropper.zoom(0.1)"><i class="fas fa-search"></i>+</button>
+                        <button class="cropper-btn" onclick="cropper.zoom(-0.1)"><i class="fas fa-search"></i>-</button>
+                        <button class="cropper-btn" onclick="cropper.rotate(90)"><i class="fas fa-redo"></i></button>
                         <button class="cropper-btn" onclick="cropper.setAspectRatio(16/9)">16:9</button>
                         <button class="cropper-btn" onclick="cropper.setAspectRatio(4/3)">4:3</button>
                         <button class="cropper-btn" onclick="cropper.setAspectRatio(1)">1:1</button>
@@ -1003,7 +1003,7 @@
                     </div>
                     <div class="editor-actions">
                         <button class="btn-primary" onclick="saveEditedImage()"
-                            style="justify-content:center; width: 100%;">💾 Save & Upload</button>
+                            style="justify-content:center; width: 100%;"><i class="fas fa-save"></i> Save & Upload</button>
                     </div>
                 </div>
             </div>
@@ -1088,7 +1088,19 @@
                     <span>Staff</span>
                 </a>
             </li>
+                        <li class="sidebar-nav-item">
+                <a href="http://localhost:3001" target="_blank" class="sidebar-nav-link" style="color: var(--accent); background: rgba(201, 168, 76, 0.05);">
+                    <span class="sidebar-nav-icon"><i class="fas fa-external-link-alt"></i></span>
+                    <span>Staff System</span>
+                </a>
+            </li>
             <li class="sidebar-nav-item">
+                <a href="/admin/pricing" class="sidebar-nav-link"><!-- add 'active' on pricing.html -->
+                    <span class="sidebar-nav-icon"><i class="fas fa-tags"></i></span>
+                    <span>Pricing & Rates</span>
+                </a>
+            </li>
+<li class="sidebar-nav-item">
                 <a href="/admin/settings" class="sidebar-nav-link"><!-- add 'active' on settings.html -->
                     <span class="sidebar-nav-icon"><i class="fas fa-cog"></i></span>
                     <span>Settings</span>
@@ -1117,16 +1129,16 @@
                 <h1 class="page-title">Gallery</h1>
                 <div style="display:flex;gap:12px;align-items:center">
                     <span style="font-style:italic;color:var(--accent-gold);font-weight:600" id="todayDate"></span>
-                    <button class="btn-primary" onclick="document.getElementById('fileInput').click()">📸 Upload
+                    <button class="btn-primary" onclick="document.getElementById('fileInput').click()"><i class="fas fa-camera"></i> Upload
                         Images</button>
                 </div>
             </div>
 
             <div class="content">
                 <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()">
-                    <div class="upload-icon">⬆️</div>
+                    <div class="upload-icon"><i class="fas fa-arrow-up"></i></div>
                     <div style="font-size:14px;font-weight:600">Drop images here or click to upload</div>
-                    <div style="font-size:12px;color:#999;margin-top:8px">PNG, JPG, GIF, WebP up to 10MB — instantly
+                    <div style="font-size:12px;color:#999;margin-top:8px">PNG, JPG, GIF, WebP up to 10MB  &mdash;  instantly
                         visible to clients</div>
                 </div>
                 <input type="file" id="fileInput" multiple accept="image/*">
@@ -1169,7 +1181,7 @@
 
                 <div class="gallery-grid" id="galleryGrid">
                     <div class="empty-state" style="grid-column:1/-1">
-                        <div class="empty-icon">🖼️</div>
+                        <div class="empty-icon"><i class="fas fa-image"></i></div>
                         <p>Loading gallery...</p>
                     </div>
                 </div>
@@ -1179,7 +1191,7 @@
 
     <div class="lightbox" id="lightbox">
         <img class="lightbox-img" id="lightboxImg" alt="">
-        <button class="lightbox-close" onclick="closeLightbox()">✕</button>
+        <button class="lightbox-close" onclick="closeLightbox()"><i class="fas fa-times"></i></button>
     </div>
 
     <script>
@@ -1221,7 +1233,7 @@
             document.getElementById('totalCount').textContent = `${allGallery.length} image${allGallery.length !== 1 ? 's' : ''}`;
 
             if (!items.length) {
-                grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">🖼️</div><p>No images yet. Upload your first photo above!</p></div>`;
+                grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon"><i class="fas fa-image"></i></div><p>No images yet. Upload your first photo above!</p></div>`;
                 return;
             }
 
@@ -1231,9 +1243,9 @@
             <div class="gallery-item" id="img-${item._id}" draggable="true" ondragstart="handleDragStart(event, '${item._id}')">
                 <img class="gallery-img" src="${item.url}" alt="${item.caption || item.filename}" loading="lazy">
                 <div class="gallery-overlay">
-                    <button class="btn-view" onclick="openLightbox('${item.url}')">👁 Preview</button>
-                    <button class="btn-view" style="background:rgba(201,168,76,0.85);" onclick="openEditModal('${item._id}', this)">✏️ Edit</button>
-                    <button class="btn-delete-img" onclick="deleteImage('${item._id}')">🗑 Delete</button>
+                    <button class="btn-view" onclick="openLightbox('${item.url}')"><i class="fas fa-eye"></i> Preview</button>
+                    <button class="btn-view" style="background:rgba(201,168,76,0.85);" onclick="openEditModal('${item._id}', this)"><i class="fas fa-edit"></i> Edit</button>
+                    <button class="btn-delete-img" onclick="deleteImage('${item._id}')"><i class="fas fa-trash"></i> Delete</button>
                 </div>
                 <div class="gallery-meta">
                     <div class="gallery-caption">${item.caption || item.filename}</div>
@@ -1244,9 +1256,9 @@
         }).join('');
         }
 
-        // ═══════════════════════════════════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         // CROPPER & UPLOAD LOGIC
-        // ═══════════════════════════════════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         let cropper = null;
         let currentFile = null;
 
@@ -1287,7 +1299,7 @@
             if (!cropper) return;
 
             const btn = document.querySelector('.editor-actions .btn-primary');
-            btn.innerHTML = '⏳ Uploading...';
+            btn.innerHTML = '<i class="fas fa-hourglass-half"></i> Uploading...';
             btn.disabled = true;
 
             const canvas = cropper.getCroppedCanvas({
@@ -1320,7 +1332,7 @@
                 console.error('Error uploading:', err);
                 alert('Error uploading image.');
             } finally {
-                btn.innerHTML = '💾 Save & Upload';
+                btn.innerHTML = '<i class="fas fa-save"></i> Save & Upload';
                 btn.disabled = false;
             }
         }
@@ -1382,7 +1394,7 @@
                 .catch(err => console.error(err));
         }
 
-        // ═══ CATEGORY DRAG & DROP LOGIC ═══
+        // â•â•â• CATEGORY DRAG & DROP LOGIC â•â•â•
         function handleDragStart(e, id) {
             e.dataTransfer.setData('image_id', id);
             e.target.style.opacity = '0.5';
@@ -1424,7 +1436,7 @@
                 allGallery[idx].eventType = category;
 
                 const origText = e.currentTarget.textContent;
-                e.currentTarget.textContent = '✅ Moved!';
+                e.currentTarget.textContent = '<i class="fas fa-check-circle"></i> Moved!';
                 setTimeout(() => e.currentTarget.textContent = origText, 1500);
 
                 if (currentFilter && currentFilter !== category) {
@@ -1445,7 +1457,7 @@
             }
         }
 
-        // ═══ EDIT METADATA MODAL LOGIC ═══
+        // â•â•â• EDIT METADATA MODAL LOGIC â•â•â•
         let editingImageId = null;
 
         function openEditModal(id) {
@@ -1467,7 +1479,7 @@
             const caption = document.getElementById('editCaption').value.trim();
             const eventType = document.getElementById('editEventType').value;
             const btn = document.getElementById('saveEditMetaBtn');
-            btn.textContent = '⏳ Saving...';
+            btn.textContent = '<i class="fas fa-hourglass-half"></i> Saving...';
             btn.disabled = true;
             try {
                 const res = await fetch(`/api/admin/gallery/${editingImageId}`, {
@@ -1483,7 +1495,7 @@
                     closeEditModal();
                 } else { alert('Save failed: ' + result.message); }
             } catch (e) { alert('Error saving changes.'); }
-            finally { btn.textContent = '💾 Save Changes'; btn.disabled = false; }
+            finally { btn.textContent = '<i class="fas fa-save"></i> Save Changes'; btn.disabled = false; }
         }
     </script>
 
@@ -1493,7 +1505,7 @@
         <div
             style="background:#fff;border-radius:12px;padding:36px;max-width:460px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.3);position:relative;">
             <button onclick="closeEditModal()"
-                style="position:absolute;top:16px;right:16px;background:none;border:none;font-size:20px;cursor:pointer;color:#888;">✕</button>
+                style="position:absolute;top:16px;right:16px;background:none;border:none;font-size:20px;cursor:pointer;color:#888;"><i class="fas fa-times"></i></button>
             <h3
                 style="font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600;color:#0D2B1F;margin-bottom:6px;">
                 Edit Image Details</h3>
@@ -1511,18 +1523,18 @@
                     Type</label>
                 <select id="editEventType"
                     style="width:100%;padding:12px 14px;border:1px solid #e0e0e0;border-radius:6px;font-size:14px;font-family:'Outfit',sans-serif;outline:none;background:#fff;cursor:pointer;">
-                    <option value="">— Select Category —</option>
-                    <option value="Wedding">💍 Wedding</option>
-                    <option value="Birthday Party">🎂 Birthday</option>
-                    <option value="Corporate Event">🏢 Corporate</option>
-                    <option value="Traditional Ceremony">🌿 Traditional Ceremony</option>
-                    <option value="Private Celebration">🎉 Private Celebration</option>
-                    <option value="Other">📸 Other</option>
+                    <option value=""> &mdash;  Select Category  &mdash; </option>
+                    <option value="Wedding"><i class="fas fa-ring"></i> Wedding</option>
+                    <option value="Birthday Party"><i class="fas fa-birthday-cake"></i> Birthday</option>
+                    <option value="Corporate Event"><i class="fas fa-building"></i> Corporate</option>
+                    <option value="Traditional Ceremony"><i class="fas fa-leaf"></i> Traditional Ceremony</option>
+                    <option value="Private Celebration"><i class="fas fa-glass-cheers"></i> Private Celebration</option>
+                    <option value="Other"><i class="fas fa-camera"></i> Other</option>
                 </select>
             </div>
             <div style="display:flex;gap:12px;">
                 <button id="saveEditMetaBtn" onclick="saveEditedMetadata()"
-                    style="flex:1;padding:13px;background:linear-gradient(135deg,#C9A84C,#A3822E);color:#fff;border:none;border-radius:6px;font-size:13px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;transition:all 0.3s;">💾
+                    style="flex:1;padding:13px;background:linear-gradient(135deg,#C9A84C,#A3822E);color:#fff;border:none;border-radius:6px;font-size:13px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;transition:all 0.3s;"><i class="fas fa-save"></i>
                     Save Changes</button>
                 <button onclick="closeEditModal()"
                     style="padding:13px 20px;background:#f5f5f5;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-weight:500;color:#555;">Cancel</button>

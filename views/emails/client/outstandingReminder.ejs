@@ -1,0 +1,7 @@
+<%- include('../clientBase') %>
+<h2>Outstanding Balance Reminder</h2>
+<p>Hello <%= clientName %>,</p>
+<p>We are reaching out regarding the completed event <strong><%= eventName %></strong> that wrapped up on <strong><%= completionDate %></strong>.</p>
+<p>Our records indicate an outstanding balance of <strong>$<%= outstandingBalance %></strong> remains on the associated invoice.</p>
+<p>Please log in to your Client Portal to review the invoice details, or reply to this message directly if you require assistance with your account.</p>
+<a href="<%= process.env.CLIENT_PORTAL_URL %>/client/invoices" class="btn">Review Billing Now</a>

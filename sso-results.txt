@@ -1,0 +1,28 @@
+🧪 Starting SSO Security and UI Flow Tests
+
+--- UI FLOW START ---
+1. Navigating to admin login...
+2. Logging in...
+3. Waiting for dashboard to load...
+4. Clicking "Staff Operations"...
+5. Confirm redirect. Current URL: http://localhost:3001/portal/auth/login?error=No%20matching%20Staff%20Operations%20admin%20account
+✅ Redirect to 3001 confirmed
+6. Checking cookies for 3001 domain...
+   Cookies found:
+     - adminToken
+     - _csrf
+❌ `portal_token` is NOT set
+--- UI FLOW COMPLETE ---
+
+--- MANUAL SECURITY TESTS START ---
+7. Testing Expired SSO token...
+   Redirected to: http://localhost:3001/portal/auth/login?error=SSO%20link%20expired%20or%20invalid
+✅ Token expired check PASSED
+8. Testing No Type SSO token...
+   Redirected to: http://localhost:3001/portal/auth/login?error=Invalid%20SSO%20token
+✅ Missing type check PASSED
+9. Testing Altered Email SSO token...
+   Redirected to: http://localhost:3001/portal/auth/login?error=No%20matching%20Staff%20Operations%20admin%20account
+✅ Altered email check PASSED
+
+✅ All tests complete.

@@ -1,0 +1,13 @@
+{
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "Failed to generate backend test plan: {\"error\":\"AUTH_FAILED\",\"message\":\"Unauthorized: Please create a new API_KEY.\",\"next_action\":\"STOP AND COMPLETE THIS STEP FIRST: use tool testsprite_check_account_info to check user account info.\",\"status_code\":401,\"instructions\":\"stop execution immediately, and check user testsprite account info\",\"user_action_required\":\"CREATE_API_KEY\",\"mcp_terminate\":true,\"force_stop\":true,\"no_fallback\":true,\"stop_all_tools\":true}"
+      }
+    ],
+    "isError": true
+  },
+  "jsonrpc": "2.0",
+  "id": 30
+}

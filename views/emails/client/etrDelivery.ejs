@@ -1,0 +1,7 @@
+<%- include('../clientBase') %>
+<h2>Your Electronic Tax Receipt Is Ready</h2>
+<p>Hello <%= clientName %>,</p>
+<p>The Electronic Tax Receipt (ETR) representing the final financial breakdown for your recently concluded event <strong><%= eventName %></strong> has been securely generated.</p>
+<p>You may download the official verified PDF directly from your Client Portal.</p>
+<p>If you have any questions regarding the final costs or service log, please contact your account manager directly.</p>
+<a href="<%= process.env.CLIENT_PORTAL_URL %>/client/etr/<%= eventId %>" class="btn">View & Download ETR</a>

@@ -1,0 +1,134 @@
+<!-- ══ Settings ══ -->
+<div class="flex items-center justify-between mb-6 animate-fade-up">
+    <div>
+        <h1 class="font-display text-2xl font-extrabold text-tx-1 tracking-tight flex items-center gap-3">
+            <i class="fa-solid fa-sliders text-blue-400"></i>
+            <span>Settings</span>
+        </h1>
+        <p class="text-[0.7rem] text-tx-3 mt-1 uppercase tracking-widest">Account Configuration</p>
+    </div>
+</div>
+
+<!-- ══ Profile Section ══ -->
+<div class="glass-card mb-4 animate-fade-up delay-1">
+    <div class="px-5 py-4 border-b border-white/5 flex items-center gap-2">
+        <i class="fa-solid fa-user-pen text-blue-400 text-sm"></i>
+        <h3 class="text-sm font-bold text-tx-1 uppercase tracking-widest">Profile Information</h3>
+    </div>
+    <div class="p-5">
+        <form id="profileForm" onsubmit="updateProfile(event)" class="space-y-4">
+            <div>
+                <label class="block text-[0.65rem] font-bold uppercase tracking-widest text-tx-3 mb-2">Full Name</label>
+                <input type="text" id="profileName" value="<%= user.name %>" required
+                    class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-tx-1 placeholder-tx-3/50 focus:border-blue-500/50 focus:ring-0 focus:outline-none transition-colors">
+            </div>
+            <div>
+                <label class="block text-[0.65rem] font-bold uppercase tracking-widest text-tx-3 mb-2">Email Address</label>
+                <input type="email" value="<%= user.email %>" disabled
+                    class="w-full bg-black/20 border border-white/5 rounded-xl px-4 py-3 text-sm text-tx-3 cursor-not-allowed opacity-60">
+                <p class="text-[0.6rem] text-tx-3 mt-1.5 font-mono opacity-70">Contact an administrator to change email.</p>
+            </div>
+            <div>
+                <label class="block text-[0.65rem] font-bold uppercase tracking-widest text-tx-3 mb-2">Phone Number</label>
+                <input type="tel" id="profilePhone" value="<%= user.phone || '' %>" placeholder="e.g. +254 700 000 000"
+                    class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-tx-1 placeholder-tx-3/50 focus:border-blue-500/50 focus:ring-0 focus:outline-none transition-colors">
+            </div>
+            <button type="submit" class="btn btn-primary bg-gradient-to-r from-blue-600 to-blue-400 border-none text-white font-bold shadow-[0_0_20px_rgba(59,130,246,0.2)]">
+                <i class="fa-solid fa-floppy-disk mr-2"></i> Update Profile
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- ══ Security Section ══ -->
+<div class="glass-card mb-[80px] animate-fade-up delay-2">
+    <div class="px-5 py-4 border-b border-white/5 flex items-center gap-2">
+        <i class="fa-solid fa-lock text-gold-400 text-sm"></i>
+        <h3 class="text-sm font-bold text-tx-1 uppercase tracking-widest">Security & Password</h3>
+    </div>
+    <div class="p-5">
+        <% if (user.mustChangePassword) { %>
+            <div class="bg-gold-500/10 border border-gold-500/40 rounded-xl px-4 py-3 mb-4 flex items-start gap-3">
+                <i class="fa-solid fa-triangle-exclamation text-gold-400 mt-0.5"></i>
+                <div>
+                    <div class="text-[0.65rem] font-bold text-gold-400 uppercase tracking-wider mb-0.5">Security Notice</div>
+                    <p class="text-xs text-tx-2">You must change your default password before accessing all features.</p>
+                </div>
+            </div>
+        <% } %>
+        
+        <form id="passwordForm" onsubmit="changePassword(event)" class="space-y-4">
+            <div>
+                <label class="block text-[0.65rem] font-bold uppercase tracking-widest text-tx-3 mb-2">Current Password</label>
+                <input type="password" id="currentPassword" required
+                    class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-tx-1 placeholder-tx-3/50 focus:border-gold-500/50 focus:ring-0 focus:outline-none transition-colors">
+            </div>
+            <div>
+                <label class="block text-[0.65rem] font-bold uppercase tracking-widest text-tx-3 mb-2">New Password</label>
+                <input type="password" id="newPassword" required minlength="8"
+                    class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-tx-1 placeholder-tx-3/50 focus:border-gold-500/50 focus:ring-0 focus:outline-none transition-colors">
+            </div>
+            <div>
+                <label class="block text-[0.65rem] font-bold uppercase tracking-widest text-tx-3 mb-2">Confirm New Password</label>
+                <input type="password" id="confirmPassword" required minlength="8"
+                    class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-tx-1 placeholder-tx-3/50 focus:border-gold-500/50 focus:ring-0 focus:outline-none transition-colors">
+            </div>
+            <button type="submit" class="btn btn-primary bg-gradient-to-r from-gold-600 to-gold-400 border-none text-dark-bg font-bold shadow-[0_0_20px_rgba(245,158,11,0.2)]">
+                <i class="fa-solid fa-key mr-2"></i> Change Password
+            </button>
+        </form>
+    </div>
+</div>
+
+<script>
+    const _portalBase = '/portal/<%= user.role === "Admin" ? "admin-staff" : (user.role === "Supervisor" ? "supervisor" : "staff") %>';
+    
+    function updateProfile(e) {
+        e.preventDefault();
+        const name = document.getElementById('profileName').value;
+        const phone = document.getElementById('profilePhone').value;
+
+        fetch(_portalBase + '/profile', {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content || ''
+            },
+            body: JSON.stringify({ name, phone })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) showToast('Profile updated!', 'success');
+            else showToast('Error: ' + data.error, 'error');
+        })
+        .catch(() => showToast('An error occurred.', 'error'));
+    }
+
+    function changePassword(e) {
+        e.preventDefault();
+        const current_password = document.getElementById('currentPassword').value;
+        const new_password = document.getElementById('newPassword').value;
+        const confirm_new_password = document.getElementById('confirmPassword').value;
+
+        if (new_password !== confirm_new_password) { showToast('Passwords do not match.', 'error'); return; }
+
+        fetch(_portalBase + '/change-password', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content || ''
+            },
+            body: JSON.stringify({ current_password, new_password, confirm_new_password })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                showToast('Password changed! Redirecting...', 'success');
+                setTimeout(() => window.location.href = _portalBase + '/dashboard', 1500);
+            } else {
+                showToast('Error: ' + data.error, 'error');
+            }
+        })
+        .catch(() => showToast('An error occurred.', 'error'));
+    }
+</script>

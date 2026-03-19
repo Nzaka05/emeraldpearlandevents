@@ -1,0 +1,168 @@
+<% currentPage='attendance' ; %>
+
+<!-- ══ Page Header ══ -->
+<div class="flex items-center justify-between mb-6 animate-fade-up">
+  <div>
+    <h1 class="font-display text-2xl font-extrabold text-tx-1 tracking-tight flex items-center gap-3">
+      <span class="text-gradient-emerald">Chronology System</span>
+      <span class="status-dot status-dot-active animate-pulse-dot"></span>
+    </h1>
+    <p class="text-sm text-tx-3 mt-1">Global monitoring of unit clock-in/out telemetry</p>
+  </div>
+  <a href="/portal/admin-staff/export/attendance" class="btn btn-outline border-white/20 hover:bg-white/5 shadow-none transition-colors">
+    <i class="fa-solid fa-file-csv"></i> Export Data
+  </a>
+</div>
+
+<!-- ══ Metric Cards ══ -->
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-7">
+  <%- include('../components/metric-card', { value: onTimeCount || 0, label: 'Synchronized (On Time)', icon: 'fa-circle-check', color: 'emerald', delay: 1 }) %>
+  <%- include('../components/metric-card', { value: lateCount || 0, label: 'Desynchronized (Late)', icon: 'fa-clock', color: 'gold', delay: 2 }) %>
+  <%- include('../components/metric-card', { value: parseFloat(allHours||0).toFixed(1) + 'h', label: 'Total Operational Hours', icon: 'fa-hourglass-half', color: 'blue', delay: 3 }) %>
+  <%- include('../components/metric-card', { value: proximityDenied || 0, label: 'Out of Bounds', icon: 'fa-location-xmark', color: 'red', delay: 4 }) %>
+</div>
+
+<!-- ══ Filter System ══ -->
+<div class="glass-card p-4 mb-6 animate-fade-up delay-4">
+  <form method="GET" class="flex flex-col md:flex-row gap-3">
+    
+    <div class="relative flex-1 md:max-w-xs">
+      <i class="fa-solid fa-filter absolute left-3.5 top-1/2 -translate-y-1/2 text-tx-3 text-sm"></i>
+      <select name="status" class="form-input form-select pl-10 w-full font-bold">
+        <option value="">All Status Configurations</option>
+        <option value="On Time" <%= (filter&&filter.status==='On Time') ? 'selected' : '' %> class="text-emerald-400">On Time</option>
+        <option value="Late" <%= (filter&&filter.status==='Late') ? 'selected' : '' %> class="text-gold-400">Late</option>
+        <option value="Absent" <%= (filter&&filter.status==='Absent') ? 'selected' : '' %> class="text-red-400">Absent</option>
+      </select>
+    </div>
+    
+    <div class="relative flex-1 md:max-w-xs">
+      <i class="fa-solid fa-calendar-day absolute left-3.5 top-1/2 -translate-y-1/2 text-tx-3 text-sm"></i>
+      <input type="date" name="date" class="form-input pl-10 w-full font-mono text-sm" value="<%= (filter&&filter.date)||'' %>">
+    </div>
+
+    <div class="flex gap-2">
+      <button class="btn btn-primary shadow-glow-emerald flex-1 md:w-auto" type="submit">Execute Filter</button>
+      <a href="/portal/admin-staff/attendance" class="btn btn-outline flex-1 md:w-auto mt-0">Reset</a>
+    </div>
+  </form>
+</div>
+
+<!-- ══ Telemetry Records Table ══ -->
+<div class="glass-card overflow-hidden animate-fade-up delay-5">
+  <div class="px-5 py-4 border-b border-white/5 flex items-center justify-between">
+    <h3 class="text-sm font-bold text-tx-1 flex items-center gap-2">
+      <i class="fa-solid fa-satellite-dish text-blue-400"></i> Operation Logs
+    </h3>
+    <span class="badge-blue text-[0.65rem] font-bold px-2 py-0.5 rounded-full"><%= (attendance||[]).length %> Registered</span>
+  </div>
+  
+  <div class="overflow-x-auto">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Unit ID</th>
+          <th>Matrix Target</th>
+          <th>Date</th>
+          <th>Deployment (IN)</th>
+          <th>Extraction (OUT)</th>
+          <th>Duration</th>
+          <th>Proximity</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if(attendance && attendance.length > 0) { %>
+          <% attendance.forEach(function(rec) { %>
+            <tr class="hover:bg-white/5 transition-colors group">
+              <td>
+                <div class="flex items-center gap-3">
+                  <div class="w-8 h-8 rounded-full bg-gradient-to-br from-dark-card to-dark-bg flex items-center justify-center font-bold text-white text-[0.65rem] ring-1 ring-white/10 group-hover:ring-emerald-500/30 transition-shadow">
+                    <% if(rec.staff_id && rec.staff_id.name) { %>
+                      <%= rec.staff_id.name.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2) %>
+                    <% } else { %>?<% } %>
+                  </div>
+                  <div class="font-bold text-sm text-tx-1 group-hover:text-emerald-300 transition-colors">
+                    <%- rec.staff_id && rec.staff_id.name ? rec.staff_id.name : '<span class="text-tx-3 italic text-xs">Deleted Staff</span>' %>
+                  </div>
+                </div>
+              </td>
+              
+              <td class="text-[0.7rem] text-tx-2 font-medium max-w-[140px] truncate">
+                 <%= rec.assignment_id ? rec.assignment_id.title||'Unlinked' : '—' %>
+              </td>
+              
+              <td class="text-xs text-tx-3 font-mono">
+                 <%= rec.date %>
+              </td>
+              
+              <td>
+                <% if(rec.clock_in) { %>
+                  <div class="flex items-center gap-2">
+                     <span class="text-[0.8rem] font-bold text-emerald-400 font-mono tracking-wider">
+                         <%= new Date(rec.clock_in).toLocaleTimeString('en-KE',{hour:'2-digit',minute:'2-digit'}) %>
+                     </span>
+                     <% if(rec.override_by_admin) { %>
+                         <span class="badge-purple text-[0.55rem] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider">SYS Override</span>
+                     <% } %>
+                  </div>
+                <% } else { %>
+                  <span class="text-xs text-tx-3 italic opacity-50">Pending</span>
+                <% } %>
+              </td>
+              
+              <td>
+                <% if(rec.clock_out) { %>
+                  <span class="text-[0.8rem] font-bold text-tx-1 font-mono tracking-wider">
+                      <%= new Date(rec.clock_out).toLocaleTimeString('en-KE',{hour:'2-digit',minute:'2-digit'}) %>
+                  </span>
+                <% } else if(rec.clock_in) { %>
+                  <span class="badge-gold text-[0.6rem] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider animate-pulse flex items-center w-max"><i class="fa-regular fa-clock text-[0.5rem] mr-1"></i> Active</span>
+                <% } else { %>
+                  <span class="text-xs text-tx-3 italic opacity-50">—</span>
+                <% } %>
+              </td>
+              
+              <td>
+                <% if(rec.total_hours) { %>
+                  <span class="text-[0.8rem] font-bold font-mono tracking-wider <%= rec.total_hours >= 8 ? 'text-emerald-400 text-shadow-glow-emerald' : 'text-tx-1' %>">
+                      <%= rec.total_hours.toFixed(1) %><span class="text-xs text-tx-3 ml-0.5">h</span>
+                  </span>
+                <% } else { %>
+                   <span class="text-xs text-tx-3 italic opacity-50">—</span>
+                <% } %>
+              </td>
+              
+              <td>
+                <% if(rec.supervisor_distance_m != null) { %>
+                  <% var distColor = rec.supervisor_distance_m > 500 ? 'text-red-400 border-red-500/20 bg-red-500/10' : 'text-emerald-400 border-emerald-500/20 bg-emerald-500/10'; %>
+                  <span class="text-[0.65rem] font-bold font-mono tracking-wider px-2 py-0.5 rounded border <%= distColor %>">
+                      <%= rec.supervisor_distance_m %>m
+                  </span>
+                <% } else { %>
+                  <span class="text-xs text-tx-3 italic opacity-50">—</span>
+                <% } %>
+              </td>
+              
+              <td>
+                <span class="<%= rec.status==='On Time' ? 'badge-emerald text-emerald-300' : rec.status==='Late' ? 'badge-gold text-gold-300' : 'badge-red text-red-300' %> text-xs font-bold flex items-center gap-2 bg-transparent border-none p-0 inline-flex">
+                  <span class="w-1.5 h-1.5 rounded-full <%= rec.status==='On Time' ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]' : rec.status==='Late' ? 'bg-gold-500 shadow-[0_0_8px_rgba(250,204,21,0.8)]' : 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.8)]' %>"></span>
+                  <%= rec.status || 'Unknown' %>
+                </span>
+              </td>
+            </tr>
+          <% }); %>
+        <% } else { %>
+          <tr>
+            <td colspan="8" class="text-center py-12">
+              <div class="flex flex-col items-center justify-center text-tx-3">
+                <i class="fa-solid fa-clock-rotate-left text-4xl mb-3 opacity-20"></i>
+                <p class="text-sm">No telemetry records match current parameters.</p>
+              </div>
+            </td>
+          </tr>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+</div>

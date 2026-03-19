@@ -1,0 +1,202 @@
+<% currentPage='dashboard' ; %>
+
+<!-- ══ Header ══ -->
+<div class="flex items-center justify-between mb-5 animate-fade-up">
+    <div>
+        <h1 class="font-display text-2xl font-extrabold text-tx-1 tracking-tight flex items-center gap-3">
+            <i class="fa-solid fa-clipboard-user text-emerald-400"></i>
+            <span class="text-gradient-emerald">Command Overview</span>
+        </h1>
+        <p class="text-[0.7rem] text-tx-3 mt-1 uppercase tracking-widest font-mono">Supervisor Operations Center</p>
+    </div>
+</div>
+
+<!-- ══ No Teams State ══ -->
+<% if (teams.length === 0) { %>
+    <div class="glass-card p-12 flex flex-col items-center justify-center text-tx-3 opacity-60 text-center animate-fade-up">
+        <i class="fa-solid fa-users-slash text-4xl mb-4"></i>
+        <h4 class="text-sm font-bold text-tx-1 mb-1">No Teams Assigned</h4>
+        <p class="text-xs">You are not currently leading any event teams.</p>
+    </div>
+<% } else { %>
+    <div class="space-y-4 mb-[80px]">
+        <% teams.forEach(team => { %>
+        <div class="glass-card border-l-2 border-emerald-500 animate-fade-up">
+            <!-- Team Header -->
+            <div class="px-4 sm:px-5 py-4 border-b border-white/5 flex items-center justify-between gap-3">
+                <div class="min-w-0">
+                    <h3 class="text-sm font-bold text-tx-1 truncate">
+                        <i class="fa-solid fa-users text-tx-3 mr-2 text-xs"></i>
+                        <%= team.event_id && team.event_id.title ? team.event_id.title : 'Legacy Event' %>
+                    </h3>
+                    <div class="flex items-center gap-2 mt-1.5 flex-wrap">
+                        <!-- Readiness Score -->
+                        <div class="flex items-center gap-1.5 bg-black/30 border border-white/5 rounded-full px-2.5 py-0.5">
+                            <i class="fa-solid fa-gauge text-[0.6rem] text-tx-3"></i>
+                            <span class="text-[0.6rem] font-bold font-mono text-tx-3">READINESS</span>
+                            <span class="text-[0.6rem] font-black font-mono text-emerald-400" id="readiness-<%= team._id %>"><%= team.team_readiness %>%</span>
+                            <button onclick="refreshReadiness('<%= team._id %>')" class="text-tx-3 hover:text-emerald-400 transition-colors ml-0.5">
+                                <i class="fa-solid fa-rotate-right text-[0.55rem]"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <% var tsBadge = team.status === 'Active' ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30 animate-pulse' : 'text-tx-3 bg-white/5 border-white/10'; %>
+                <span class="text-[0.55rem] font-bold tracking-widest uppercase border px-1.5 py-0.5 rounded shrink-0 <%= tsBadge %>"><%= team.status %></span>
+            </div>
+
+            <!-- Roster -->
+            <div class="px-4 sm:px-5 py-3">
+                <div class="text-[0.6rem] font-bold uppercase tracking-widest text-tx-3 mb-2.5 opacity-70">Unit Roster</div>
+                <% if (team.member_ids.length === 0) { %>
+                    <p class="text-xs text-tx-3 italic opacity-60 py-2">No members assigned yet.</p>
+                <% } else { %>
+                    <div class="divide-y divide-white/5">
+                        <% team.member_ids.forEach(member => { %>
+                        <div class="flex items-center justify-between py-2.5 gap-3" id="member-row-<%= member._id %>">
+                            <div class="flex items-center gap-2.5 min-w-0">
+                                <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-gray-700 to-gray-600 flex items-center justify-center text-[0.6rem] font-bold text-white flex-shrink-0">
+                                    <%= member.name ? member.name.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2) : '??' %>
+                                </div>
+                                <div class="min-w-0">
+                                    <div class="text-xs font-bold text-tx-1 truncate"><%= member.name %></div>
+                                    <% var avColor = member.availability_status === 'Available' ? 'text-emerald-400' : member.availability_status === 'On Shift' ? 'text-blue-400' : 'text-tx-3'; %>
+                                    <div class="text-[0.6rem] font-mono <%= avColor %>"><%= member.availability_status || '—' %></div>
+                                </div>
+                            </div>
+                            <button onclick="removeMember('<%= team._id %>', '<%= member._id %>', '<%= member.name %>')"
+                                class="shrink-0 text-[0.6rem] font-bold uppercase tracking-wider border border-red-500/30 text-red-400 hover:bg-red-500/10 px-2 py-1 rounded-lg transition-colors">
+                                Remove
+                            </button>
+                        </div>
+                        <% }) %>
+                    </div>
+                <% } %>
+            </div>
+
+            <!-- Actions -->
+            <div class="px-4 sm:px-5 pb-4 pt-2 border-t border-white/5 mt-1">
+                <button class="btn btn-outline text-xs font-bold border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10" onclick="broadcastMessage('<%= team._id %>')">
+                    <i class="fa-solid fa-satellite-dish mr-1.5 text-[0.65rem]"></i> Broadcast Announcement
+                </button>
+            </div>
+        </div>
+        <% }) %>
+    </div>
+<% } %>
+
+<!-- ══ Remove/Replace Member Modal ══ -->
+<div id="replacementModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-md z-[9999] flex items-center justify-center p-4">
+    <div class="bg-dark-card border border-red-500/30 rounded-2xl shadow-[0_0_40px_rgba(239,68,68,0.1)] max-w-md w-full">
+        <div class="px-5 py-4 border-b border-red-500/20 bg-black/30 flex items-center justify-between">
+            <h3 class="text-sm font-bold text-red-400 flex items-center gap-2" id="replaceModalTitle">
+                <i class="fa-solid fa-user-minus"></i> Remove Member
+            </h3>
+            <button onclick="closeReplacementModal()" class="w-8 h-8 rounded-full border border-white/10 flex items-center justify-center text-tx-3 hover:text-tx-1 hover:bg-white/5 transition-colors">
+                <i class="fa-solid fa-xmark text-xs"></i>
+            </button>
+        </div>
+        <div class="p-5">
+            <form id="replacementForm" onsubmit="submitReplacement(event)" class="space-y-4">
+                <input type="hidden" id="replaceTeamId">
+                <input type="hidden" id="replaceMemberId">
+                <div>
+                    <label class="block text-[0.65rem] font-bold uppercase tracking-widest text-tx-3 mb-2">Reason for Removal <span class="text-red-400">*</span></label>
+                    <input type="text" id="replaceReason" required placeholder="e.g., No Show, Sick, Underperforming"
+                        class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-tx-1 placeholder-tx-3/50 focus:border-red-500/40 focus:ring-0 focus:outline-none transition-colors">
+                </div>
+                <div>
+                    <label class="block text-[0.65rem] font-bold uppercase tracking-widest text-tx-3 mb-1.5 flex items-center gap-1.5">
+                        <i class="fa-solid fa-lightbulb text-gold-400"></i> Suggest Replacement <span class="opacity-60 font-normal normal-case tracking-normal">(optional)</span>
+                    </label>
+                    <p class="text-[0.6rem] text-tx-3 mb-2 opacity-70">Select an available staff member to recommend as a replacement.</p>
+                    <select id="replaceSuggestion" class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-tx-2 focus:border-gold-500/40 focus:ring-0 focus:outline-none transition-colors">
+                        <option value="">— No suggestion / Do not replace —</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary w-full bg-gradient-to-r from-red-700 to-red-500 border-none text-white font-bold shadow-[0_0_20px_rgba(239,68,68,0.2)] tracking-wider">
+                    <i class="fa-solid fa-paper-plane mr-2"></i> Submit to Admin
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    function removeMember(teamId, memberId, name) {
+        document.getElementById('replaceTeamId').value = teamId;
+        document.getElementById('replaceMemberId').value = memberId;
+        document.getElementById('replaceModalTitle').innerHTML = `<i class="fa-solid fa-user-minus mr-1"></i> Remove ${name}?`;
+        document.getElementById('replaceReason').value = '';
+
+        fetch(`/supervisor/teams/${teamId}/suggest-replacements`)
+            .then(r => r.json())
+            .then(res => {
+                const select = document.getElementById('replaceSuggestion');
+                select.innerHTML = '<option value="">— No suggestion —</option>';
+                if (res.success && res.data.length > 0) {
+                    res.data.forEach(staff => {
+                        const opt = document.createElement('option');
+                        opt.value = staff._id;
+                        opt.innerText = staff.name;
+                        select.appendChild(opt);
+                    });
+                }
+                document.getElementById('replacementModal').classList.remove('hidden');
+                document.getElementById('replacementModal').classList.add('flex');
+            });
+    }
+
+    function closeReplacementModal() {
+        document.getElementById('replacementModal').classList.add('hidden');
+        document.getElementById('replacementModal').classList.remove('flex');
+    }
+
+    function submitReplacement(e) {
+        e.preventDefault();
+        const teamId = document.getElementById('replaceTeamId').value;
+        const memberId = document.getElementById('replaceMemberId').value;
+        const reason = document.getElementById('replaceReason').value;
+        const suggestedReplacementId = document.getElementById('replaceSuggestion').value;
+
+        fetch(`/supervisor/teams/${teamId}/remove-member`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ memberId, reason, suggestedReplacementId })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                closeReplacementModal();
+                showToast('Replacement request sent to Admin.', 'success');
+                const row = document.getElementById(`member-row-${memberId}`);
+                if (row) row.style.opacity = '0.4';
+            } else { showToast('Error: ' + data.error, 'error'); }
+        });
+    }
+
+    function refreshReadiness(teamId) {
+        fetch(`/supervisor/teams/${teamId}/readiness`, { method: 'POST' })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById(`readiness-${teamId}`).innerText = `${data.readiness}%`;
+                    showToast('Readiness score refreshed.', 'success');
+                }
+            });
+    }
+
+    function broadcastMessage(teamId) {
+        const msg = prompt('Broadcast to all team members:');
+        if (msg) {
+            if (typeof socket !== 'undefined') {
+                socket.emit('teamMessage', { team_id: teamId, type: 'announcement', content: msg });
+                showToast('Announcement broadcasted!', 'success');
+            }
+        }
+    }
+
+    if (typeof socket !== 'undefined') {
+        socket.on('teamAttendanceUpdate', () => { location.reload(); });
+    }
+</script>

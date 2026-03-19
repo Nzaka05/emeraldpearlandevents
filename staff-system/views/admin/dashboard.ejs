@@ -1,0 +1,589 @@
+<% currentPage = 'dashboard'; %>
+
+<!-- Staffing Alert Toast Container -->
+<div id="staffingAlertContainer" class="fixed top-16 right-4 z-[300] max-w-[400px] space-y-3"></div>
+
+<!-- ══ Page Header ══ -->
+<div class="flex items-center justify-between mb-6 animate-fade-up">
+  <div>
+    <h1 class="font-display text-2xl font-extrabold text-tx-1 tracking-tight flex items-center gap-3">
+      <span class="text-gradient-emerald">Command Center</span>
+      <span class="status-dot status-dot-active animate-pulse-dot"></span>
+    </h1>
+    <p class="text-sm text-tx-3 mt-1">Real-time workforce monitoring & operations</p>
+  </div>
+  <button class="btn btn-primary" onclick="openModal('newAssignModal')">
+    <i class="fa-solid fa-plus"></i> New Assignment
+  </button>
+</div>
+
+<!-- ══ Metric Cards ══ -->
+<div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-7">
+  <%- include('../components/metric-card', { value: metrics.totalStaff, label: 'Total Staff', icon: 'fa-users', color: 'emerald', delay: 1 }) %>
+  <%- include('../components/metric-card', { value: metrics.availableStaff, label: 'Available Now', icon: 'fa-circle-check', color: 'emerald', delay: 2 }) %>
+  <%- include('../components/metric-card', { value: metrics.busyStaff, label: 'On Shift', icon: 'fa-user-clock', color: 'gold', delay: 3 }) %>
+  <%- include('../components/metric-card', { value: metrics.activeAssignments, label: 'Active Events', icon: 'fa-calendar-days', color: 'blue', delay: 4 }) %>
+  <%- include('../components/metric-card', { value: metrics.clockedInStaff, label: 'Clocked In', icon: 'fa-fingerprint', color: 'cyan', delay: 5 }) %>
+  <%- include('../components/metric-card', { value: metrics.pendingPayments, label: 'Pending Pay', icon: 'fa-money-bills', color: 'gold', delay: 6 }) %>
+</div>
+
+<!-- ══ Main Grid: Events + Live Feed ══ -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-6">
+
+  <!-- Events Table (spans 2 cols) -->
+  <div class="lg:col-span-2 glass-card overflow-hidden animate-fade-up delay-3">
+    <div class="flex items-center justify-between px-5 py-3 border-b border-white/5">
+      <h3 class="text-sm font-bold text-tx-1 flex items-center gap-2">
+        <i class="fa-solid fa-calendar-days text-emerald-400"></i> Active Assignments
+      </h3>
+      <span class="text-[0.65rem] text-tx-3 font-semibold"><%= (assignments || []).length %> events</span>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Event</th>
+            <th>Date</th>
+            <th>Location</th>
+            <th>Pay</th>
+            <th>Status</th>
+            <th>Payment</th>
+            <th class="text-center">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (assignments && assignments.length > 0) { %>
+            <% assignments.forEach(function(assignment) { %>
+              <tr>
+                <td>
+                  <div class="flex items-center gap-2">
+                    <span class="font-semibold text-tx-1"><%= assignment.title %></span>
+                    <% if (assignment.vip_flag) { %>
+                      <span class="badge-gold text-[0.6rem] font-bold px-1.5 py-0.5 rounded-full"><i class="fa-solid fa-crown text-[0.5rem]"></i></span>
+                    <% } %>
+                  </div>
+                </td>
+                <td><%= new Date(assignment.date).toLocaleDateString('en-KE', {month:'short', day:'numeric'}) %></td>
+                <td class="text-tx-3"><%= assignment.location %></td>
+                <td class="font-semibold">KSh <%= (assignment.pay_rate || 0).toLocaleString() %></td>
+                <td>
+                  <span class="<%= assignment.status === 'Active' ? 'badge-emerald' : assignment.status === 'Completed' ? 'badge-blue' : 'badge-gold' %> text-[0.65rem] font-bold px-2.5 py-1 rounded-full">
+                    <%= assignment.status %>
+                  </span>
+                </td>
+                <td>
+                  <select onchange="updatePaymentStatus('<%= assignment._id %>', this.value)"
+                    class="form-input form-select text-xs py-1 px-2 w-28">
+                    <option value="Pending"  <%= assignment.payment_status === 'Pending'  ? 'selected' : '' %>>Pending</option>
+                    <option value="Sent"     <%= assignment.payment_status === 'Sent'     ? 'selected' : '' %>>Sent</option>
+                    <option value="Received" <%= assignment.payment_status === 'Received' ? 'selected' : '' %>>Received</option>
+                    <option value="Disputed" <%= assignment.payment_status === 'Disputed' ? 'selected' : '' %>>Disputed</option>
+                  </select>
+                </td>
+                <td class="text-center">
+                  <div class="flex gap-1.5 justify-center">
+                    <button class="btn btn-ghost btn-xs" onclick="openEditAssignment('<%= assignment._id %>','<%= assignment.title %>','<%= assignment.location %>','<%= new Date(assignment.date).toISOString().split('T')[0] %>','<%= assignment.start_time %>','<%= assignment.end_time %>','<%= assignment.pay_rate %>','<%= assignment.vip_flag %>','<%= (assignment.special_instructions||'').replace(/'/g,'') %>','<%= (assignment.dress_code||'').replace(/'/g,'') %>')">
+                      <i class="fa-solid fa-pen-to-square"></i>
+                    </button>
+                    <button class="btn btn-ghost btn-xs" onclick="viewEventReport('<%= assignment._id %>')">
+                      <i class="fa-solid fa-chart-line"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            <% }) %>
+          <% } else { %>
+            <tr><td colspan="7" class="text-center py-8 text-tx-3">No assignments yet.</td></tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Live Activity Feed -->
+  <div class="animate-fade-up delay-4">
+    <%- include('../components/live-feed', {
+      items: metrics.recentAuditLogs || [],
+      title: 'Live Activity',
+      feedId: 'liveFeed'
+    }) %>
+  </div>
+
+</div>
+
+<!-- ══ Second Row: Arrivals + Replacement Requests ══ -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-6">
+
+  <!-- Live Arrivals -->
+  <div class="glass-card overflow-hidden animate-fade-up delay-5">
+    <div class="flex items-center justify-between px-5 py-3 border-b border-white/5">
+      <h3 class="text-sm font-bold text-tx-1 flex items-center gap-2">
+        <i class="fa-solid fa-location-crosshairs text-blue-400"></i>
+        Live Arrivals
+        <span class="status-dot status-dot-active animate-pulse-dot"></span>
+      </h3>
+    </div>
+    <div id="liveArrivalsPanel" class="flex flex-wrap gap-3 p-4 min-h-[120px]">
+      <div class="w-full text-center py-8 text-tx-3 text-sm">
+        <i class="fa-solid fa-satellite-dish text-2xl block mb-2 opacity-30"></i>
+        Waiting for staff clock-ins...
+      </div>
+    </div>
+  </div>
+
+  <!-- Replacement Requests -->
+  <div class="glass-card overflow-hidden animate-fade-up delay-6">
+    <div class="flex items-center justify-between px-5 py-3 border-b border-white/5">
+      <h3 class="text-sm font-bold text-tx-1 flex items-center gap-2">
+        <i class="fa-solid fa-user-minus text-red-400"></i> Replacement Requests
+      </h3>
+      <% if (pendingReplacements && pendingReplacements.length) { %>
+        <span class="badge-red text-[0.6rem] font-bold px-2 py-0.5 rounded-full"><%= pendingReplacements.length %></span>
+      <% } %>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="data-table">
+        <thead><tr><th>Event</th><th>By</th><th>Remove</th><th>Replace</th><th class="text-center">Actions</th></tr></thead>
+        <tbody>
+          <% if (pendingReplacements && pendingReplacements.length > 0) { %>
+            <% pendingReplacements.forEach(function(req) { %>
+              <tr>
+                <td class="font-semibold text-tx-1"><%= req.event_id ? req.event_id.title : 'Unknown' %></td>
+                <td><%= req.submitted_by ? req.submitted_by.name : 'Unknown' %></td>
+                <td class="text-red-400"><%= req.member_to_remove ? req.member_to_remove.name : '' %></td>
+                <td class="text-emerald-400"><%= req.suggested_replacement ? req.suggested_replacement.name : 'None' %></td>
+                <td class="text-center">
+                  <div class="flex gap-2 justify-center">
+                    <button class="btn btn-primary btn-xs" onclick="processReplacement('<%= req._id %>','approve')">Approve</button>
+                    <button class="btn btn-outline btn-xs text-red-400 border-red-400/30" onclick="processReplacement('<%= req._id %>','reject')">Reject</button>
+                  </div>
+                </td>
+              </tr>
+            <% }) %>
+          <% } else { %>
+            <tr><td colspan="5" class="text-center py-6 text-tx-3 text-sm">No pending requests</td></tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<!-- ══ Quick Actions ══ -->
+<div class="glass-card p-5 animate-fade-up delay-7 mb-6">
+  <h3 class="text-sm font-bold text-tx-1 mb-3 flex items-center gap-2">
+    <i class="fa-solid fa-bolt text-gold-500"></i> Quick Actions
+  </h3>
+  <div class="flex flex-wrap gap-3">
+    <button class="btn btn-outline" onclick="openModal('addStaffModal')">
+      <i class="fa-solid fa-user-plus text-emerald-400"></i> Provision Staff
+    </button>
+    <a href="/portal/admin-staff/export/payments" class="btn btn-outline">
+      <i class="fa-solid fa-file-csv text-blue-400"></i> Export Payments
+    </a>
+    <a href="/portal/admin-staff/reports" class="btn btn-outline">
+      <i class="fa-solid fa-chart-bar text-purple-400"></i> View Reports
+    </a>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════
+     MODALS
+     ══════════════════════════════════════════════════════════ -->
+
+<!-- Modal: Add Staff -->
+<div class="modal-overlay" id="addStaffModal">
+  <div class="modal-content max-w-lg">
+    <div class="modal-header">
+      <h3 class="text-base font-bold text-tx-1"><i class="fa-solid fa-user-plus text-emerald-400 mr-2"></i>Provision Staff Account</h3>
+      <button onclick="closeModal('addStaffModal')" class="text-tx-3 hover:text-tx-1 transition-colors"><i class="fa-solid fa-xmark text-lg"></i></button>
+    </div>
+    <div class="modal-body">
+      <form id="addStaffForm" onsubmit="submitStaff(event)" enctype="multipart/form-data" class="space-y-4">
+        <div class="grid grid-cols-2 gap-4">
+          <div><label class="form-label">Full Name *</label><input type="text" name="name" class="form-input" required></div>
+          <div><label class="form-label">Email *</label><input type="email" name="email" class="form-input" required></div>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div><label class="form-label">Phone</label><input type="tel" name="phone" class="form-input" placeholder="+254 722 446 937"></div>
+          <div><label class="form-label">Role</label>
+            <select name="role" class="form-input form-select"><option>Staff</option><option>Supervisor</option><option>Admin</option></select>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div><label class="form-label">Department</label><input type="text" name="department" class="form-input" placeholder="Events, Security..."></div>
+          <div><label class="form-label">Skills</label><input type="text" name="skills" class="form-input" placeholder="bartending, hosting..."></div>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div><label class="form-label">Shift Start</label><input type="time" name="shift_start" class="form-input"></div>
+          <div><label class="form-label">Shift End</label><input type="time" name="shift_end" class="form-input"></div>
+        </div>
+        <div><label class="form-label">Profile Photo</label><input type="file" name="photo" accept="image/jpeg,image/png,image/webp" class="form-input text-sm"></div>
+        <button type="submit" class="btn btn-primary w-full">Create Account & Send Credentials</button>
+      </form>
+      <div id="staffCreds" class="hidden mt-4 p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-sm text-emerald-300"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Create Assignment -->
+<div class="modal-overlay" id="newAssignModal">
+  <div class="modal-content max-w-lg">
+    <div class="modal-header">
+      <h3 class="text-base font-bold text-tx-1"><i class="fa-solid fa-calendar-plus text-emerald-400 mr-2"></i>Create Event Assignment</h3>
+      <button onclick="closeModal('newAssignModal')" class="text-tx-3 hover:text-tx-1 transition-colors"><i class="fa-solid fa-xmark text-lg"></i></button>
+    </div>
+    <div class="modal-body">
+      <form id="assignForm" onsubmit="submitAssignment(event)" class="space-y-4">
+        <div><label class="form-label">Event Title *</label><input type="text" name="title" class="form-input" required></div>
+        <div><label class="form-label">Location *</label><input type="text" name="location" class="form-input" required></div>
+        <div class="grid grid-cols-3 gap-4">
+          <div><label class="form-label">Date *</label><input type="date" name="date" class="form-input" required></div>
+          <div><label class="form-label">Start *</label><input type="time" name="start_time" class="form-input" required></div>
+          <div><label class="form-label">End *</label><input type="time" name="end_time" class="form-input" required></div>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div><label class="form-label">Pay Rate (KSh) *</label><input type="number" name="pay_rate" class="form-input" step="0.01" required></div>
+          <div><label class="form-label">Dress Code</label><input type="text" name="dress_code" class="form-input" placeholder="Black Tie..."></div>
+        </div>
+        <div><label class="form-label">Description</label><textarea name="description" rows="2" class="form-input"></textarea></div>
+        <div><label class="form-label">Special Instructions</label><textarea name="special_instructions" rows="2" class="form-input" placeholder="VIP styling details..."></textarea></div>
+        <div class="p-3 rounded-xl bg-gold-500/8 border border-gold-500/15">
+          <label class="flex items-center gap-2 text-sm font-medium text-gold-400 cursor-pointer">
+            <input type="checkbox" name="vip_flag" class="w-4 h-4 accent-gold-500"> Mark as VIP Event
+          </label>
+        </div>
+        <div><label class="form-label">Assign To</label>
+          <select name="assign_to_role" class="form-input form-select">
+            <option value="">All Staff</option><option value="Staff">Regular Staff</option><option value="Supervisor">Supervisors</option>
+          </select>
+        </div>
+        <button type="submit" class="btn btn-primary w-full mt-2">Push Assignment Live</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Edit Assignment -->
+<div class="modal-overlay" id="editAssignModal">
+  <div class="modal-content max-w-lg">
+    <div class="modal-header">
+      <h3 class="text-base font-bold text-tx-1"><i class="fa-solid fa-pen text-gold-500 mr-2"></i>Edit Assignment</h3>
+      <button onclick="closeModal('editAssignModal')" class="text-tx-3 hover:text-tx-1"><i class="fa-solid fa-xmark text-lg"></i></button>
+    </div>
+    <div class="modal-body">
+      <form id="editAssignForm" onsubmit="submitEditAssignment(event)" class="space-y-4">
+        <input type="hidden" id="editAssignId">
+        <div><label class="form-label">Event Title</label><input type="text" id="editAssignTitle" class="form-input" required></div>
+        <div><label class="form-label">Location</label><input type="text" id="editAssignLocation" class="form-input" required></div>
+        <div class="grid grid-cols-3 gap-4">
+          <div><label class="form-label">Date</label><input type="date" id="editAssignDate" class="form-input" required></div>
+          <div><label class="form-label">Start</label><input type="time" id="editAssignStart" class="form-input" required></div>
+          <div><label class="form-label">End</label><input type="time" id="editAssignEnd" class="form-input" required></div>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div><label class="form-label">Pay Rate (KSh)</label><input type="number" id="editAssignPay" class="form-input" step="0.01" required></div>
+          <div><label class="form-label">Dress Code</label><input type="text" id="editAssignDress" class="form-input"></div>
+        </div>
+        <div><label class="form-label">Special Instructions</label><textarea id="editAssignInstructions" rows="2" class="form-input"></textarea></div>
+        <div class="p-3 rounded-xl bg-gold-500/8 border border-gold-500/15">
+          <label class="flex items-center gap-2 text-sm font-medium text-gold-400 cursor-pointer">
+            <input type="checkbox" id="editAssignVip" class="w-4 h-4 accent-gold-500"> VIP Event
+          </label>
+        </div>
+        <button type="submit" class="btn btn-primary w-full">Save Changes & Notify Staff</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Event Report -->
+<div class="modal-overlay" id="reportModal">
+  <div class="modal-content max-w-2xl">
+    <div class="modal-header">
+      <h3 class="text-base font-bold text-tx-1"><i class="fa-solid fa-chart-line text-emerald-400 mr-2"></i>Event Report</h3>
+      <button onclick="closeModal('reportModal')" class="text-tx-3 hover:text-tx-1"><i class="fa-solid fa-xmark text-lg"></i></button>
+    </div>
+    <div class="modal-body">
+      <div id="reportContent" class="text-sm text-tx-2">Loading report data...</div>
+      <div id="reportExportBtns" class="hidden mt-6 flex gap-2 justify-end">
+        <a id="exportPdfBtn" href="#" class="btn btn-primary btn-sm"><i class="fa-solid fa-file-pdf"></i> PDF</a>
+        <a id="exportCsvBtn" href="#" class="btn btn-outline btn-sm"><i class="fa-solid fa-file-csv"></i> CSV</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Edit Staff -->
+<div class="modal-overlay" id="editStaffModal">
+  <div class="modal-content max-w-lg">
+    <div class="modal-header">
+      <h3 class="text-base font-bold text-tx-1"><i class="fa-solid fa-user-pen text-gold-500 mr-2"></i>Edit Staff</h3>
+      <button onclick="closeModal('editStaffModal')" class="text-tx-3 hover:text-tx-1"><i class="fa-solid fa-xmark text-lg"></i></button>
+    </div>
+    <div class="modal-body">
+      <form onsubmit="submitEditStaff(event)" enctype="multipart/form-data" class="space-y-4">
+        <input type="hidden" id="editStaffId">
+        <div class="grid grid-cols-2 gap-4">
+          <div><label class="form-label">Full Name</label><input type="text" id="editStaffName" class="form-input" required></div>
+          <div><label class="form-label">Email</label><input type="email" id="editStaffEmail" class="form-input" required></div>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div><label class="form-label">Phone</label><input type="tel" id="editStaffPhone" class="form-input"></div>
+          <div><label class="form-label">Role</label>
+            <select id="editStaffRole" class="form-input form-select"><option>Staff</option><option>Supervisor</option><option>Admin</option></select>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div><label class="form-label">Department</label><input type="text" id="editStaffDept" class="form-input"></div>
+          <div><label class="form-label">Skills</label><input type="text" id="editStaffSkills" class="form-input"></div>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div><label class="form-label">Shift Start</label><input type="time" id="editStaffShiftStart" class="form-input"></div>
+          <div><label class="form-label">Shift End</label><input type="time" id="editStaffShiftEnd" class="form-input"></div>
+        </div>
+        <div><label class="form-label">Photo</label><input type="file" id="editStaffPhoto" name="photo" accept="image/jpeg,image/png,image/webp" class="form-input text-sm"></div>
+        <button type="submit" class="btn btn-primary w-full">Save Changes</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════
+     SCRIPTS — All original functionality preserved
+     ══════════════════════════════════════════════════════════ -->
+<script>
+const _csrf = document.querySelector('meta[name="csrf-token"]')?.content || '';
+
+// ── Add Staff ──
+function submitStaff(e) {
+  e.preventDefault();
+  const form = e.target;
+  const fd = new FormData(form);
+  fetch('/portal/admin-staff/staff', { method: 'POST', headers: { 'CSRF-Token': _csrf }, body: fd })
+    .then(r => r.json()).then(res => {
+      if (res.success) {
+        const creds = document.getElementById('staffCreds');
+        creds.classList.remove('hidden');
+        creds.innerHTML = '<strong>Account Created!</strong><br>Welcome email with login credentials sent to <strong>' + res.data.email + '</strong>.<br><br><small>Staff must change password on first login.</small>';
+        form.reset();
+        showToast('Staff account created!', 'success');
+      } else showToast(res.error, 'error');
+    }).catch(err => showToast('Error: ' + err.message, 'error'));
+}
+
+// ── Create Assignment ──
+function submitAssignment(e) {
+  e.preventDefault();
+  const fd = new FormData(e.target);
+  const data = Object.fromEntries(fd.entries());
+  data.vip_flag = !!data.vip_flag;
+  fetch('/portal/admin-staff/assignments', { method: 'POST', body: JSON.stringify(data), headers: { 'Content-Type': 'application/json', 'CSRF-Token': _csrf } })
+    .then(r => r.json()).then(res => {
+      if (res.success) { showToast('Assignment broadcasted!', 'success'); closeModal('newAssignModal'); setTimeout(() => window.location.reload(), 800); }
+      else showToast(res.error, 'error');
+    });
+}
+
+// ── Edit Assignment ──
+function openEditAssignment(id,title,location,date,start,end,pay,vip,instructions,dress) {
+  document.getElementById('editAssignId').value = id;
+  document.getElementById('editAssignTitle').value = title;
+  document.getElementById('editAssignLocation').value = location;
+  document.getElementById('editAssignDate').value = date;
+  document.getElementById('editAssignStart').value = start;
+  document.getElementById('editAssignEnd').value = end;
+  document.getElementById('editAssignPay').value = pay;
+  document.getElementById('editAssignVip').checked = vip === 'true';
+  document.getElementById('editAssignInstructions').value = instructions;
+  document.getElementById('editAssignDress').value = dress;
+  openModal('editAssignModal');
+}
+
+function submitEditAssignment(e) {
+  e.preventDefault();
+  const id = document.getElementById('editAssignId').value;
+  const data = {
+    title: document.getElementById('editAssignTitle').value,
+    location: document.getElementById('editAssignLocation').value,
+    date: document.getElementById('editAssignDate').value,
+    start_time: document.getElementById('editAssignStart').value,
+    end_time: document.getElementById('editAssignEnd').value,
+    pay_rate: document.getElementById('editAssignPay').value,
+    vip_flag: document.getElementById('editAssignVip').checked,
+    special_instructions: document.getElementById('editAssignInstructions').value,
+    dress_code: document.getElementById('editAssignDress').value
+  };
+  fetch('/portal/admin-staff/assignments/' + id, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'CSRF-Token': _csrf }, body: JSON.stringify(data) })
+    .then(r => r.json()).then(res => {
+      if (res.success) { showToast('Assignment updated!', 'success'); closeModal('editAssignModal'); setTimeout(() => window.location.reload(), 800); }
+      else showToast(res.error, 'error');
+    });
+}
+
+// ── Payment Status ──
+function updatePaymentStatus(id, newStatus) {
+  fetch('/portal/admin-staff/assignments/' + id + '/payment', {
+    method: 'PUT', headers: { 'Content-Type': 'application/json', 'CSRF-Token': _csrf },
+    body: JSON.stringify({ payment_status: newStatus })
+  }).then(r => r.json()).then(res => {
+    if (res.success) showToast('Payment status updated', 'success');
+    else showToast(res.error || 'Failed', 'error');
+  });
+}
+
+// ── Replacement Requests ──
+function processReplacement(reqId, action) {
+  if (confirm('Are you sure you want to ' + action + ' this replacement request?')) {
+    fetch('/portal/admin-staff/replacements/' + reqId + '/' + action, { method: 'POST', headers: { 'Content-Type': 'application/json', 'CSRF-Token': _csrf } })
+      .then(r => r.json()).then(res => {
+        if (res.success) { showToast('Request ' + action + 'd!', 'success'); setTimeout(() => window.location.reload(), 800); }
+        else showToast(res.error, 'error');
+      });
+  }
+}
+
+// ── Event Report ──
+function viewEventReport(assignmentId) {
+  openModal('reportModal');
+  document.getElementById('reportContent').innerHTML = '<div class="text-center py-8"><i class="fa-solid fa-spinner animate-spin text-2xl text-emerald-400"></i></div>';
+  document.getElementById('exportPdfBtn').href = '/portal/admin-staff/assignments/' + assignmentId + '/report/export?format=pdf';
+  document.getElementById('exportCsvBtn').href = '/portal/admin-staff/assignments/' + assignmentId + '/report/export?format=csv';
+  document.getElementById('reportExportBtns').classList.remove('hidden');
+
+  fetch('/portal/admin-staff/assignments/' + assignmentId + '/report').then(r => r.json()).then(res => {
+    if (!res.success) { document.getElementById('reportContent').innerHTML = '<p class="text-red-400">Error: ' + res.error + '</p>'; return; }
+    const d = res.data;
+    const readinessLabel = d.team_readiness === 0 ? 'Waiting' : d.team_readiness < 50 ? 'Incomplete' : d.team_readiness < 100 ? 'Ready' : 'Deployed';
+    document.getElementById('reportContent').innerHTML =
+      '<div class="grid grid-cols-2 gap-4 mb-6">' +
+        '<div class="space-y-1 text-sm"><p><span class="text-tx-3">Event:</span> <strong class="text-tx-1">' + d.event_title + '</strong></p><p><span class="text-tx-3">Date:</span> ' + new Date(d.date).toLocaleDateString() + '</p><p><span class="text-tx-3">Location:</span> ' + d.location + '</p></div>' +
+        '<div class="space-y-1 text-sm"><p><span class="text-tx-3">Supervisor:</span> ' + d.supervisor + '</p><p><span class="text-tx-3">Readiness:</span> <span class="badge-emerald text-xs px-2 py-0.5 rounded-full">' + d.team_readiness + '% ' + readinessLabel + '</span></p><p><span class="text-tx-3">Staff:</span> ' + d.total_accepted + '/' + d.total_assigned + ' accepted</p></div>' +
+      '</div>' +
+      '<h4 class="text-sm font-bold text-tx-1 mb-2 pb-1 border-b border-white/5">Attendance</h4>' +
+      '<table class="data-table mb-6"><thead><tr><th>Staff</th><th>In</th><th>Out</th><th>Hrs</th><th>Status</th></tr></thead><tbody>' +
+      (d.attendances.length ? d.attendances.map(a => '<tr><td>' + a.staff + '</td><td>' + (a.clock_in ? new Date(a.clock_in).toLocaleTimeString() : 'N/A') + '</td><td>' + (a.clock_out ? new Date(a.clock_out).toLocaleTimeString() : 'N/A') + '</td><td>' + (a.total_hours || 0) + '</td><td class="' + (a.status === 'Late' ? 'text-red-400' : 'text-emerald-400') + '">' + (a.status || 'N/A') + '</td></tr>').join('') : '<tr><td colspan="5" class="text-center py-4 text-tx-3">No records</td></tr>') +
+      '</tbody></table>';
+  });
+}
+
+// ── Edit Staff ──
+function openEditStaff(id,name,email,role,phone,dept,shiftStart,shiftEnd,skills) {
+  document.getElementById('editStaffId').value = id;
+  document.getElementById('editStaffName').value = name;
+  document.getElementById('editStaffEmail').value = email;
+  document.getElementById('editStaffRole').value = role;
+  document.getElementById('editStaffPhone').value = phone;
+  document.getElementById('editStaffDept').value = dept;
+  document.getElementById('editStaffShiftStart').value = shiftStart;
+  document.getElementById('editStaffShiftEnd').value = shiftEnd;
+  document.getElementById('editStaffSkills').value = skills || '';
+  openModal('editStaffModal');
+}
+
+function submitEditStaff(e) {
+  e.preventDefault();
+  const id = document.getElementById('editStaffId').value;
+  const fd = new FormData();
+  fd.append('name', document.getElementById('editStaffName').value);
+  fd.append('email', document.getElementById('editStaffEmail').value);
+  fd.append('role', document.getElementById('editStaffRole').value);
+  fd.append('phone', document.getElementById('editStaffPhone').value);
+  fd.append('department', document.getElementById('editStaffDept').value);
+  fd.append('skills', document.getElementById('editStaffSkills').value);
+  fd.append('shift_start', document.getElementById('editStaffShiftStart').value);
+  fd.append('shift_end', document.getElementById('editStaffShiftEnd').value);
+  const photoFile = document.getElementById('editStaffPhoto').files[0];
+  if (photoFile) fd.append('photo', photoFile);
+  fetch('/portal/admin-staff/staff/' + id, { method: 'PUT', headers: { 'CSRF-Token': _csrf }, body: fd })
+    .then(r => r.json()).then(res => {
+      if (res.success) { closeModal('editStaffModal'); showToast('Staff updated!', 'success'); }
+      else showToast(res.error, 'error');
+    });
+}
+
+function toggleSuspend(id) {
+  fetch('/portal/admin-staff/staff/' + id + '/suspend', { method: 'PUT', headers: { 'Content-Type': 'application/json', 'CSRF-Token': _csrf } })
+    .then(r => r.json()).then(res => {
+      if (res.success) { showToast('Account: ' + res.status, 'success'); }
+      else showToast(res.error, 'error');
+    });
+}
+
+function adminResetPassword(id, name) {
+  if (!confirm('Reset password for ' + name + '?')) return;
+  fetch('/portal/admin-staff/staff/' + id + '/reset-password', { method: 'POST', headers: { 'Content-Type': 'application/json', 'CSRF-Token': _csrf } })
+    .then(r => r.json()).then(res => {
+      if (res.success) showToast(res.message, 'success');
+      else showToast(res.error, 'error');
+    });
+}
+
+function deleteStaff(id, name) {
+  if (!confirm('PERMANENTLY DELETE ' + name + '?')) return;
+  fetch('/portal/admin-staff/staff/' + id, { method: 'DELETE', headers: { 'Content-Type': 'application/json', 'CSRF-Token': _csrf } })
+    .then(r => r.json()).then(res => {
+      if (res.success) showToast('Deleted.', 'success');
+      else showToast(res.error, 'error');
+    });
+}
+
+// ── Live Feed ──
+function addFeedItem(msg, icon, color) {
+  const feed = document.getElementById('liveFeed');
+  if (!feed) return;
+  const waiting = feed.querySelector('.text-center');
+  if (waiting) waiting.remove();
+  const item = document.createElement('div');
+  item.className = 'flex items-start gap-3 py-2 animate-slide-right';
+  item.innerHTML = '<div class="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 text-xs" style="background:' + color + '15;color:' + color + '"><i class="' + icon + '"></i></div>' +
+    '<div class="flex-1"><div class="text-xs text-slate-300">' + msg + '</div><div class="text-[0.65rem] text-slate-600 mt-0.5">Just now</div></div>';
+  feed.prepend(item);
+  while (feed.children.length > 20) feed.removeChild(feed.lastChild);
+}
+
+// ── Socket Live Updates ──
+try {
+  const socket = io();
+
+  socket.on('metricUpdate', function(d) {
+    ['totalStaff','availableStaff','busyStaff','activeAssignments','clockedInStaff','pendingPayments'].forEach(k => {
+      if (typeof d[k] !== 'undefined') {
+        const els = document.querySelectorAll('[data-count]');
+        // Update metric card values when available
+      }
+    });
+  });
+
+  socket.on('assignmentResponse', d => addFeedItem(d.staff + ' ' + d.response + ' "' + d.assignment + '"', 'fa-solid fa-reply', d.response === 'accepted' ? '#10b981' : '#ef4444'));
+  socket.on('staffAttendance', d => addFeedItem(d.staff + ' ' + d.action + ' for "' + d.assignment + '"', 'fa-solid fa-fingerprint', d.status === 'Late' ? '#ea580c' : '#10b981'));
+  socket.on('paymentConfirmed', d => addFeedItem(d.staff + ' confirmed payment for "' + d.assignment + '"', 'fa-solid fa-check-circle', '#10b981'));
+  socket.on('paymentDisputed', d => addFeedItem('DISPUTED: ' + d.staff + ' flagged "' + d.assignment + '"', 'fa-solid fa-triangle-exclamation', '#ef4444'));
+  socket.on('replacementRequest', d => addFeedItem('Replacement: ' + d.supervisor + ' → remove ' + d.member, 'fa-solid fa-user-minus', '#ef4444'));
+
+  // Staffing Alert Toast
+  socket.on('staffingAlert', function(d) {
+    const suggestions = d.suggestedReplacements.map(r => r.name).join(', ') || 'None';
+    const toast = document.createElement('div');
+    toast.className = 'glass-card p-4 animate-slide-right border-l-4 border-gold-500';
+    toast.innerHTML = '<div class="flex justify-between items-start"><div><div class="text-sm font-bold text-gold-400 mb-1"><i class="fa-solid fa-triangle-exclamation"></i> Staffing Alert</div><p class="text-xs text-tx-2"><strong>' + d.assignmentTitle + '</strong></p><p class="text-xs text-tx-3">' + d.acceptedCount + '/' + d.assignedCount + ' confirmed. ' + d.declinedBy + ' declined.</p><p class="text-xs text-tx-2 mt-1"><strong>Suggested:</strong> ' + suggestions + '</p></div><button onclick="this.parentElement.parentElement.remove()" class="text-tx-3 hover:text-tx-1"><i class="fa-solid fa-xmark"></i></button></div>';
+    document.getElementById('staffingAlertContainer').prepend(toast);
+    addFeedItem('STAFFING ALERT: "' + d.assignmentTitle + '" - ' + d.acceptedCount + '/' + d.assignedCount, 'fa-solid fa-triangle-exclamation', '#f59e0b');
+  });
+
+  // Live Arrivals
+  socket.on('clockInVerification', function(d) {
+    const isLate = d.status === 'Late';
+    const panel = document.getElementById('liveArrivalsPanel');
+    const placeholder = panel.querySelector('.text-center');
+    if (placeholder) placeholder.remove();
+    const card = document.createElement('div');
+    card.className = 'glass-card p-3 w-52 flex-shrink-0 animate-scale-in';
+    card.style.borderLeft = '3px solid ' + (isLate ? '#fb923c' : '#22c55e');
+    const selfieHtml = d.selfie ? '<img src="' + d.selfie + '" class="w-full aspect-square object-cover rounded-lg mb-2">' : '';
+    card.innerHTML = '<span class="' + (isLate ? 'badge-gold' : 'badge-emerald') + ' text-[0.6rem] font-bold px-2 py-0.5 rounded-full mb-2 inline-block">' + (isLate ? 'LATE' : 'ON TIME') + '</span>' + selfieHtml + '<div class="text-sm font-bold text-tx-1">' + d.staffName + '</div><div class="text-xs text-tx-3">' + d.assignmentTitle + '</div><div class="text-sm font-semibold mt-1 ' + (isLate ? 'text-amber-400' : 'text-emerald-400') + '">' + d.clockInTime + '</div><button onclick="this.parentElement.remove()" class="btn btn-ghost btn-xs w-full mt-2">Dismiss</button>';
+    panel.prepend(card);
+  });
+} catch(e) {}
+</script>

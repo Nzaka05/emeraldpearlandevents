@@ -1,0 +1,171 @@
+<% currentPage = 'leaderboard'; %>
+
+<div class="flex items-center justify-between mb-5 animate-fade-up">
+    <div>
+        <h1 class="font-display text-2xl font-extrabold text-tx-1 tracking-tight flex items-center gap-3">
+            <i class="fa-solid fa-trophy text-gold-400"></i>
+            <span>Performance Leaderboard</span>
+        </h1>
+        <p class="text-[0.7rem] text-tx-3 mt-1 uppercase tracking-widest font-mono">Rankings, Awards & Metrics</p>
+    </div>
+</div>
+
+<!-- Top 3 Podium -->
+<% if (leaderboard && leaderboard.length >= 3) { %>
+<div class="grid grid-cols-3 gap-3 mb-4 animate-fade-up">
+    <!-- 2nd Place -->
+    <div class="glass-card p-4 text-center border-t-2 border-gray-400/50 order-1">
+        <div class="text-2xl font-black font-mono text-gray-400 mb-2">2</div>
+        <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-gray-600 to-gray-400 flex items-center justify-center text-xl font-bold text-white mx-auto mb-2 shadow-[0_0_20px_rgba(156,163,175,0.3)]">
+            <%= leaderboard[1].name.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2) %>
+        </div>
+        <div class="text-xs font-bold text-tx-1 mb-0.5"><%= leaderboard[1].name.split(' ')[0] %></div>
+        <div class="text-[0.65rem] text-tx-3 mb-1.5"><%= leaderboard[1].category %></div>
+        <div class="flex justify-center gap-0.5 mb-1">
+            <% for(var i=1;i<=5;i++) { %><i class="fa-solid fa-star text-[0.6rem] <%= i <= Math.round(leaderboard[1].avg_rating) ? 'text-gold-400' : 'text-white/10' %>"></i><% } %>
+        </div>
+        <div class="text-[0.7rem] font-black font-mono text-gray-400"><%= leaderboard[1].avg_rating %> ⭐</div>
+    </div>
+    <!-- 1st Place -->
+    <div class="glass-card p-4 text-center border-t-2 border-gold-500/80 order-0 sm:order-1 scale-105 shadow-[0_0_30px_rgba(245,158,11,0.15)]">
+        <div class="text-3xl mb-1">👑</div>
+        <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-gold-600 to-gold-400 flex items-center justify-center text-2xl font-bold text-dark-bg mx-auto mb-2 shadow-[0_0_30px_rgba(245,158,11,0.4)]">
+            <%= leaderboard[0].name.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2) %>
+        </div>
+        <div class="text-sm font-bold text-tx-1 mb-0.5"><%= leaderboard[0].name.split(' ')[0] %></div>
+        <div class="text-[0.65rem] text-tx-3 mb-1.5"><%= leaderboard[0].category %></div>
+        <div class="flex justify-center gap-0.5 mb-1">
+            <% for(var i=1;i<=5;i++) { %><i class="fa-solid fa-star text-[0.7rem] <%= i <= Math.round(leaderboard[0].avg_rating) ? 'text-gold-400' : 'text-white/10' %>"></i><% } %>
+        </div>
+        <div class="text-sm font-black font-mono text-gold-400"><%= leaderboard[0].avg_rating %> ⭐</div>
+        <div class="text-[0.6rem] text-tx-3 mt-1 font-mono"><%= leaderboard[0].events_worked %> events worked</div>
+    </div>
+    <!-- 3rd Place -->
+    <div class="glass-card p-4 text-center border-t-2 border-amber-700/50 order-2">
+        <div class="text-2xl font-black font-mono text-amber-700 mb-2">3</div>
+        <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-800 to-amber-600 flex items-center justify-center text-xl font-bold text-white mx-auto mb-2 shadow-[0_0_20px_rgba(180,83,9,0.3)]">
+            <%= leaderboard[2].name.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2) %>
+        </div>
+        <div class="text-xs font-bold text-tx-1 mb-0.5"><%= leaderboard[2].name.split(' ')[0] %></div>
+        <div class="text-[0.65rem] text-tx-3 mb-1.5"><%= leaderboard[2].category %></div>
+        <div class="flex justify-center gap-0.5 mb-1">
+            <% for(var i=1;i<=5;i++) { %><i class="fa-solid fa-star text-[0.6rem] <%= i <= Math.round(leaderboard[2].avg_rating) ? 'text-gold-400' : 'text-white/10' %>"></i><% } %>
+        </div>
+        <div class="text-[0.7rem] font-black font-mono text-amber-600"><%= leaderboard[2].avg_rating %> ⭐</div>
+    </div>
+</div>
+<% } %>
+
+<!-- Full Rankings Table -->
+<div class="glass-card mb-4 animate-fade-up delay-1">
+    <div class="px-5 py-4 border-b border-white/5 flex items-center gap-2">
+        <i class="fa-solid fa-ranking-star text-gold-400"></i>
+        <h3 class="text-sm font-bold text-tx-1 uppercase tracking-widest">Full Rankings</h3>
+    </div>
+    <% if (!leaderboard || !leaderboard.length) { %>
+        <div class="p-12 text-center text-tx-3 opacity-60">
+            <i class="fa-solid fa-star text-4xl mb-4 block opacity-20"></i>
+            <p class="text-sm">No performance reviews yet. Supervisors can rate staff from their portal.</p>
+        </div>
+    <% } else { %>
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead>
+                    <tr class="border-b border-white/5">
+                        <th class="px-4 py-3 text-left text-[0.6rem] font-bold uppercase tracking-widest text-tx-3">Rank</th>
+                        <th class="px-4 py-3 text-left text-[0.6rem] font-bold uppercase tracking-widest text-tx-3">Staff Member</th>
+                        <th class="px-4 py-3 text-left text-[0.6rem] font-bold uppercase tracking-widest text-tx-3 hidden sm:table-cell">Category</th>
+                        <th class="px-4 py-3 text-center text-[0.6rem] font-bold uppercase tracking-widest text-tx-3">Rating</th>
+                        <th class="px-4 py-3 text-center text-[0.6rem] font-bold uppercase tracking-widest text-tx-3 hidden md:table-cell">Reviews</th>
+                        <th class="px-4 py-3 text-center text-[0.6rem] font-bold uppercase tracking-widest text-tx-3 hidden md:table-cell">Events</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-white/5">
+                    <% leaderboard.forEach(function(entry) { 
+                        var rankColors = { 1: 'text-gold-400', 2: 'text-gray-400', 3: 'text-amber-600' };
+                        var rColor = rankColors[entry.rank] || 'text-tx-3';
+                    %>
+                        <tr class="hover:bg-white/[0.02] transition-colors">
+                            <td class="px-4 py-3">
+                                <span class="text-lg font-black font-mono <%= rColor %>">
+                                    <%= entry.rank <= 3 ? ['🥇','🥈','🥉'][entry.rank-1] : '#' + entry.rank %>
+                                </span>
+                            </td>
+                            <td class="px-4 py-3">
+                                <div class="flex items-center gap-2.5">
+                                    <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-gray-700 to-gray-600 flex items-center justify-center text-xs font-bold text-white shrink-0">
+                                        <%= entry.name.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2) %>
+                                    </div>
+                                    <div>
+                                        <div class="text-sm font-bold text-tx-1"><%= entry.name %></div>
+                                        <div class="text-[0.6rem] text-tx-3 font-mono hidden sm:block">ID: <%= String(entry.staff_id).slice(-6) %></div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-4 py-3 hidden sm:table-cell">
+                                <span class="text-[0.65rem] text-tx-3"><%= entry.category || '—' %></span>
+                            </td>
+                            <td class="px-4 py-3 text-center">
+                                <div class="flex items-center justify-center gap-1">
+                                    <span class="text-sm font-black font-mono <%= rColor %>"><%= entry.avg_rating %></span>
+                                    <i class="fa-solid fa-star text-gold-400 text-xs"></i>
+                                </div>
+                            </td>
+                            <td class="px-4 py-3 text-center hidden md:table-cell">
+                                <span class="text-sm font-bold text-tx-2"><%= entry.total_reviews %></span>
+                            </td>
+                            <td class="px-4 py-3 text-center hidden md:table-cell">
+                                <span class="text-sm font-bold text-emerald-400"><%= entry.events_worked %></span>
+                            </td>
+                        </tr>
+                    <% }); %>
+                </tbody>
+            </table>
+        </div>
+    <% } %>
+</div>
+
+<!-- Monthly Trend Chart -->
+<% if (monthlyTrend && monthlyTrend.length > 0) { %>
+<div class="glass-card mb-[80px] animate-fade-up delay-2">
+    <div class="px-5 py-4 border-b border-white/5 flex items-center gap-2">
+        <i class="fa-solid fa-chart-line text-blue-400"></i>
+        <h3 class="text-sm font-bold text-tx-1 uppercase tracking-widest">6-Month Rating Trend</h3>
+    </div>
+    <div class="p-4">
+        <canvas id="trendChart" height="100"></canvas>
+    </div>
+</div>
+
+<script>
+const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const trendData = <%- JSON.stringify(monthlyTrend) %>;
+
+const ctx = document.getElementById('trendChart').getContext('2d');
+new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: trendData.map(d => `${months[d._id.month-1]} ${d._id.year}`),
+        datasets: [{
+            label: 'Avg Rating',
+            data: trendData.map(d => parseFloat(d.avg_rating.toFixed(2))),
+            borderColor: '#f59e0b',
+            backgroundColor: 'rgba(245,158,11,0.1)',
+            borderWidth: 2,
+            tension: 0.4,
+            fill: true,
+            pointBackgroundColor: '#f59e0b',
+            pointRadius: 4
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: { legend: { labels: { color: '#94a3b8', font: { family: 'Inter' } } } },
+        scales: {
+            x: { ticks: { color: '#64748b' }, grid: { color: 'rgba(255,255,255,0.03)' } },
+            y: { min: 0, max: 5, ticks: { color: '#64748b' }, grid: { color: 'rgba(255,255,255,0.03)' } }
+        }
+    }
+});
+</script>
+<% } %>

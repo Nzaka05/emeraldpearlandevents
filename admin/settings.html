@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -345,9 +345,9 @@
 
 
 
-        /* ═══════════════════════════════════════════════════════════
+        /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
            MOBILE RESPONSIVENESS (Injected via Phase 10 Overhaul)
-           ═══════════════════════════════════════════════════════════ */
+           â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
         /* Hamburger Menu Icon (Hidden on Desktop) */
         .mobile-menu-btn {
@@ -430,9 +430,9 @@
         }
 
 
-        /* ═══════════════════════════════════════════════════════════
+        /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
            MOBILE QUICK ACTION FAB
-           ═══════════════════════════════════════════════════════════ */
+           â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
         .mobile-fab-container {
             display: none;
             position: fixed;
@@ -807,7 +807,19 @@
                     <span>Staff</span>
                 </a>
             </li>
+                        <li class="sidebar-nav-item">
+                <a href="http://localhost:3001" target="_blank" class="sidebar-nav-link" style="color: var(--accent); background: rgba(201, 168, 76, 0.05);">
+                    <span class="sidebar-nav-icon"><i class="fas fa-external-link-alt"></i></span>
+                    <span>Staff System</span>
+                </a>
+            </li>
             <li class="sidebar-nav-item">
+                <a href="/admin/pricing" class="sidebar-nav-link"><!-- add 'active' on pricing.html -->
+                    <span class="sidebar-nav-icon"><i class="fas fa-tags"></i></span>
+                    <span>Pricing & Rates</span>
+                </a>
+            </li>
+<li class="sidebar-nav-item">
                 <a href="/admin/settings" class="sidebar-nav-link active"><!-- add 'active' on settings.html -->
                     <span class="sidebar-nav-icon"><i class="fas fa-cog"></i></span>
                     <span>Settings</span>
@@ -845,11 +857,11 @@
                     <!-- Admin Profile -->
                     <div class="settings-section">
                         <div class="settings-header">
-                            <div class="settings-title">👤 My Profile</div>
+                            <div class="settings-title"><i class="fas fa-user"></i> My Profile</div>
                         </div>
                         <div class="settings-body">
                             <div id="profileSuccessMessage" class="success-message">
-                                ✓ Profile updated successfully!
+                                <i class="fas fa-check"></i> Profile updated successfully!
                             </div>
                             <div id="profileErrorMessage" class="error-message"></div>
 
@@ -864,7 +876,7 @@
                                     </div>
                                     <div
                                         style="position:absolute;bottom:0;right:0;background:#C9A84C;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px solid #fff;font-size:12px;">
-                                        📷</div>
+                                        <i class="fas fa-camera"></i></div>
                                 </div>
                                 <div>
                                     <div style="font-weight:600;font-size:14px;color:var(--text-main);">Profile Photo
@@ -893,14 +905,14 @@
                                     style="background-color: var(--bg-primary); cursor: not-allowed; text-transform: capitalize;">
                             </div>
                             <div style="margin-top: 16px;">
-                                <button class="btn-save" onclick="updateAdminProfile()" style="width: 200px;">💾 Update
+                                <button class="btn-save" onclick="updateAdminProfile()" style="width: 200px;"><i class="fas fa-save"></i> Update
                                     Profile</button>
                             </div>
                         </div>
                     </div>
                     <div class="settings-section">
                         <div class="settings-header">
-                            <div class="settings-title">🏢 Business Information</div>
+                            <div class="settings-title"><i class="fas fa-building"></i> Business Information</div>
                         </div>
                         <div class="settings-body">
                             <div class="form-group">
@@ -948,7 +960,7 @@
                     <!-- Notification Preferences -->
                     <div class="settings-section">
                         <div class="settings-header">
-                            <div class="settings-title">🔔 Notification Preferences</div>
+                            <div class="settings-title"><i class="fas fa-bell"></i> Notification Preferences</div>
                         </div>
                         <div class="settings-body">
                             <div class="form-group">
@@ -998,7 +1010,7 @@
                     <!-- Social Media -->
                     <div class="settings-section">
                         <div class="settings-header">
-                            <div class="settings-title">📱 Social Media</div>
+                            <div class="settings-title"><i class="fas fa-mobile-alt"></i> Social Media</div>
                         </div>
                         <div class="settings-body">
                             <div class="form-row">
@@ -1024,16 +1036,16 @@
                                     <input type="text" class="form-input" id="beholdfeedId"
                                         placeholder="Paste your Behold.so feed UUID here">
                                     <div class="info-text" style="font-size: 11px; color: #666; margin-top: 4px;">Get
-                                        your free feed ID at behold.so — no token refresh needed</div>
+                                        your free feed ID at behold.so  &mdash;  no token refresh needed</div>
                                 </div>
                             </div>
                             <div class="form-row" style="margin-top: 16px; gap: 12px; display: flex;">
                                 <button class="btn-secondary"
                                     onclick="window.open(document.getElementById('instagramUrl').value, '_blank')"
-                                    style="flex: 1;">📸 Preview Instagram</button>
+                                    style="flex: 1;"><i class="fas fa-camera"></i> Preview Instagram</button>
                                 <button class="btn-secondary"
                                     onclick="window.open(document.getElementById('facebookUrl').value, '_blank')"
-                                    style="flex: 1;">👥 Preview Facebook</button>
+                                    style="flex: 1;"><i class="fas fa-users"></i> Preview Facebook</button>
                             </div>
                         </div>
                     </div>
@@ -1041,7 +1053,7 @@
                     <!-- Display Preferences -->
                     <div class="settings-section">
                         <div class="settings-header">
-                            <div class="settings-title">🎨 Display Preferences</div>
+                            <div class="settings-title"><i class="fas fa-palette"></i> Display Preferences</div>
                         </div>
                         <div class="settings-body">
                             <div class="form-group">
@@ -1066,11 +1078,11 @@
                     <!-- Change Password -->
                     <div class="settings-section password-section">
                         <div class="settings-header">
-                            <div class="settings-title">🔐 Change Password</div>
+                            <div class="settings-title"><i class="fas fa-lock"></i> Change Password</div>
                         </div>
                         <div class="settings-body">
                             <div id="passwordSuccessMessage" class="success-message">
-                                ✓ Password changed successfully!
+                                <i class="fas fa-check"></i> Password changed successfully!
                             </div>
                             <div id="passwordErrorMessage" class="error-message"></div>
                             <div class="password-input-group">
@@ -1092,7 +1104,7 @@
                                 </div>
                             </div>
                             <div style="margin-top: 16px;">
-                                <button class="btn-save" onclick="changePassword()" style="width: 200px;">🔄 Update
+                                <button class="btn-save" onclick="changePassword()" style="width: 200px;"><i class="fas fa-sync-alt"></i> Update
                                     Password</button>
                             </div>
                         </div>
@@ -1100,7 +1112,7 @@
 
                     <!-- Save Buttons -->
                     <div class="form-buttons">
-                        <button class="btn-save" onclick="saveSettings()">💾 Save Settings</button>
+                        <button class="btn-save" onclick="saveSettings()"><i class="fas fa-save"></i> Save Settings</button>
                         <button class="btn-cancel" onclick="resetSettings()">Reset</button>
                     </div>
                 </div>
@@ -1177,7 +1189,7 @@
             errorMsg.style.display = 'none';
 
             if (!name) {
-                errorMsg.textContent = '❌ Name is required';
+                errorMsg.textContent = 'âŒ Name is required';
                 errorMsg.style.display = 'block';
                 return;
             }
@@ -1202,11 +1214,11 @@
                         successMsg.style.display = 'none';
                     }, 5000);
                 } else {
-                    errorMsg.textContent = '❌ ' + (data.message || 'Failed to update profile');
+                    errorMsg.textContent = 'âŒ ' + (data.message || 'Failed to update profile');
                     errorMsg.style.display = 'block';
                 }
             } catch (error) {
-                errorMsg.textContent = '❌ Network error. Please try again.';
+                errorMsg.textContent = 'âŒ Network error. Please try again.';
                 errorMsg.style.display = 'block';
             }
         }
@@ -1318,31 +1330,31 @@
 
             // Validation
             if (!currentPassword) {
-                errorMsg.textContent = '❌ Please enter your current password';
+                errorMsg.textContent = 'âŒ Please enter your current password';
                 errorMsg.style.display = 'block';
                 return;
             }
 
             if (!newPassword) {
-                errorMsg.textContent = '❌ Please enter a new password';
+                errorMsg.textContent = 'âŒ Please enter a new password';
                 errorMsg.style.display = 'block';
                 return;
             }
 
             if (newPassword.length < 8) {
-                errorMsg.textContent = '❌ Password must be at least 8 characters long';
+                errorMsg.textContent = 'âŒ Password must be at least 8 characters long';
                 errorMsg.style.display = 'block';
                 return;
             }
 
             if (newPassword !== confirmPassword) {
-                errorMsg.textContent = '❌ Passwords do not match';
+                errorMsg.textContent = 'âŒ Passwords do not match';
                 errorMsg.style.display = 'block';
                 return;
             }
 
             if (currentPassword === newPassword) {
-                errorMsg.textContent = '❌ New password must be different from current password';
+                errorMsg.textContent = 'âŒ New password must be different from current password';
                 errorMsg.style.display = 'block';
                 return;
             }
@@ -1360,7 +1372,7 @@
                         const errorData = await response.json();
                         errorMessage = errorData.message || errorMessage;
                     } catch (e) { }
-                    errorMsg.textContent = '❌ ' + errorMessage;
+                    errorMsg.textContent = 'âŒ ' + errorMessage;
                     errorMsg.style.display = 'block';
                     return;
                 }
@@ -1377,11 +1389,11 @@
                         successMsg.style.display = 'none';
                     }, 5000);
                 } else {
-                    errorMsg.textContent = '❌ ' + (data.message || 'Failed to change password');
+                    errorMsg.textContent = 'âŒ ' + (data.message || 'Failed to change password');
                     errorMsg.style.display = 'block';
                 }
             } catch (error) {
-                errorMsg.textContent = '❌ Network error. Please try again.';
+                errorMsg.textContent = 'âŒ Network error. Please try again.';
                 errorMsg.style.display = 'block';
             }
         }

@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Active Sessions | Emerald Pearland Events</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = { theme: { extend: { colors: { emerald: { 500: '#00c896', 600: '#00a87e' } } } } }
+    </script>
+</head>
+<body class="bg-gray-50 flex flex-col min-h-screen font-sans">
+    
+    <nav class="bg-white shadow-sm border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between h-16">
+            <div class="flex items-center">
+                <span class="text-xl font-bold text-gray-900 border-l-4 border-emerald-500 pl-3">Client Portal</span>
+            </div>
+            <div class="flex items-center space-x-6">
+                <a href="/client/dashboard" class="text-gray-500 hover:text-gray-900">Dashboard</a>
+                <a href="/client/invoices" class="text-gray-500 hover:text-gray-900">Invoices</a>
+                <a href="/client/sessions" class="text-gray-900 font-medium">Security</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+        <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-6 mb-8 flex justify-between items-center">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900">Security & Sessions</h1>
+                <p class="text-sm text-gray-500 mt-1">Manage where your account is currently logged in</p>
+            </div>
+            <div class="text-right">
+                <button id="revoke-all-btn" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                    Sign out of all devices
+                </button>
+            </div>
+        </div>
+
+        <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-8 rounded-md">
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    <svg class="h-5 w-5 text-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                    </svg>
+                </div>
+                <div class="ml-3">
+                    <p class="text-sm text-yellow-700 font-medium">
+                        Security Notice: If you see an unfamiliar device on this list, revoke the session immediately and <a href="/client/password-reset/request" class="underline font-bold text-blue-600 hover:text-blue-800 cursor-pointer">change your password</a>.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white shadow-sm rounded-lg border border-gray-100 overflow-hidden">
+            <ul id="sessions-list" class="divide-y divide-gray-200">
+                <li class="px-6 py-8 text-center text-sm text-gray-500">Loading sessions...</li>
+            </ul>
+        </div>
+    </main>
+
+    <script>
+        const csrfToken = "<%= csrfToken %>";
+        
+        const removeSession = async (sessionId) => {
+            if(!confirm('Are you sure you want to revoke this session?')) return;
+            try {
+                const res = await fetch(`/client/api/sessions/${sessionId}`, { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ _csrf: csrfToken }) });
+                if(res.ok) window.location.reload();
+            } catch(e) { alert('Error revoking session'); }
+        };
+
+        fetch('/client/api/sessions')
+            .then(r => { if (!r.ok) throw new Error(); return r.json(); })
+            .then(json => {
+                const data = json.data;
+                const list = document.getElementById('sessions-list');
+                list.innerHTML = '';
+                
+                data.sessions.forEach(sess => {
+                    // Check if last active within last 15 min approx
+                    const isActiveNow = (new Date() - new Date(sess.last_active)) < 15 * 60 * 1000;
+                    
+                    list.innerHTML += `
+                        <li class="px-6 py-5 flex items-center justify-between">
+                            <div class="flex items-center">
+                                <div class="bg-gray-100 rounded-full p-3 mr-4">
+                                    <svg class="h-6 w-6 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h4 class="text-sm font-bold text-gray-900 flex items-center gap-2">
+                                        ${sess.device_name || 'Unknown Device'}
+                                        ${isActiveNow ? '<span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-xs font-medium">Current</span>' : ''}
+                                    </h4>
+                                    <p class="text-sm text-gray-500 mt-1">IP: ${sess.ip_address || 'Unknown'}</p>
+                                    <p class="text-xs text-gray-400 mt-1">Last active: ${new Date(sess.last_active).toLocaleString()}</p>
+                                </div>
+                            </div>
+                            <button onclick="removeSession('${sess._id}')" class="text-sm text-red-600 hover:text-red-900 font-medium">Revoke</button>
+                        </li>
+                    `;
+                });
+            })
+            .catch(() => window.location.href = '/client/dashboard');
+
+        document.getElementById('revoke-all-btn').addEventListener('click', async () => {
+            if(!confirm('This will sign you out of all devices including this one. Continue?')) return;
+            const res = await fetch('/client/api/logout-all-devices', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ _csrf: csrfToken }) });
+            if(res.ok) window.location.href = '/client/login';
+        });
+    </script>
+</body>
+</html>

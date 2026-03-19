@@ -1,0 +1,93 @@
+﻿[dotenv@17.3.1] injecting env (20) from staff-system\.env -- tip: ÔÜÖ´©Å  specify custom .env file path with { path: '/custom/path/.env' }
+­ƒî▒ Starting Port 3001 Test Environment Seed...
+Ô£à Connected to MongoDB
+node : (node:13772) 
+[MONGOOSE] Warning: 
+mongoose: Duplicate 
+schema index on 
+{"email":1} for model 
+"Staff". This is often 
+due to declaring an 
+index using both 
+"index: true" and 
+"schema.index()". 
+Please remove the 
+duplicate index 
+definition.
+At line:1 char:1
++ node staff-system/see
+ds/testEnvironmentSeed.
+js 2>&1 | Out-File 
+-FileP ...
++ ~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~
+    + CategoryInfo     
+         : NotSpecifi  
+  ed: ((node:13772)    
+ [M...dex definitio    
+n.:String) [], Rem    
+oteException
+    + FullyQualifiedEr 
+   rorId : NativeComm  
+  andError
+ 
+(Use `node 
+--trace-warnings ...` 
+to show where the 
+warning was created)
+  Found: supervisor=69ba352e7d0993d649549b6d, staff=69ba352d7d0993d649549b6a, admin=69ba352e7d0993d649549b70
+(node:13772) 
+[MONGOOSE] Warning: 
+mongoose: the `new` 
+option for 
+`findOneAndUpdate()` 
+and 
+`findOneAndReplace()` 
+is deprecated. Use 
+`returnDocument: 
+'after'` instead.
+Ô£à Assignment (Event) seeded ÔÇö ID: new ObjectId('69ba72f2ac68086ed2706bb5')
+(node:13772) 
+[MONGOOSE] Warning: 
+mongoose: the `new` 
+option for 
+`findOneAndUpdate()` 
+and 
+`findOneAndReplace()` 
+is deprecated. Use 
+`returnDocument: 
+'after'` instead.
+Ô£à EventTeam & Geo-Anchor seeded
+(node:13772) 
+[MONGOOSE] Warning: 
+mongoose: the `new` 
+option for 
+`findOneAndUpdate()` 
+and 
+`findOneAndReplace()` 
+is deprecated. Use 
+`returnDocument: 
+'after'` instead.
+Ô£à BiometricSession seeded
+(node:13772) 
+[MONGOOSE] Warning: 
+mongoose: the `new` 
+option for 
+`findOneAndUpdate()` 
+and 
+`findOneAndReplace()` 
+is deprecated. Use 
+`returnDocument: 
+'after'` instead.
+ÔØî Seeding failed: 
+Plan executor error 
+during findAndModify 
+:: caused by :: E11000 
+duplicate key error 
+collection: 
+emerald.clientinvoices 
+index: 
+invoice_number_1 dup 
+key: { invoice_number: 
+null }

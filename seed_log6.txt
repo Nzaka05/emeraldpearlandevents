@@ -1,0 +1,131 @@
+﻿[dotenv@17.3.1] injecting env (20) from staff-system\.env -- tip: ÔÜÖ´©Å  load multiple .env files with { path: ['.env.local', '.env'] }
+­ƒî▒ Starting Port 3001 Test Environment Seed...
+Ô£à Connected to MongoDB
+node : (node:21368) 
+[MONGOOSE] Warning: 
+mongoose: the `new` 
+option for 
+`findOneAndUpdate()` 
+and 
+`findOneAndReplace()` 
+is deprecated. Use 
+`returnDocument: 
+'after'` instead.
+At line:1 char:1
++ node staff-system/see
+ds/testEnvironmentSeed.
+js 2>&1 | Out-File 
+-FileP ...
++ ~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~
+    + CategoryInfo     
+         : NotSpecifi  
+  ed: ((node:21368)    
+ [M...fter'` instea    
+d.:String) [], Rem    
+oteException
+    + FullyQualifiedEr 
+   rorId : NativeComm  
+  andError
+ 
+(Use `node 
+--trace-warnings ...` 
+to show where the 
+warning was created)
+(node:21368) 
+[MONGOOSE] Warning: 
+mongoose: the `new` 
+option for 
+`findOneAndUpdate()` 
+and 
+`findOneAndReplace()` 
+is deprecated. Use 
+`returnDocument: 
+'after'` instead.
+(node:21368) 
+[MONGOOSE] Warning: 
+mongoose: Duplicate 
+schema index on 
+{"email":1} for model 
+"Staff". This is often 
+due to declaring an 
+index using both 
+"index: true" and 
+"schema.index()". 
+Please remove the 
+duplicate index 
+definition.
+(node:21368) 
+[MONGOOSE] Warning: 
+mongoose: the `new` 
+option for 
+`findOneAndUpdate()` 
+and 
+`findOneAndReplace()` 
+is deprecated. Use 
+`returnDocument: 
+'after'` instead.
+  Found: supervisor=69ba352e7d0993d649549b6d, staff=69ba352d7d0993d649549b6a, admin=69ba352e7d0993d649549b70
+(node:21368) 
+[MONGOOSE] Warning: 
+mongoose: the `new` 
+option for 
+`findOneAndUpdate()` 
+and 
+`findOneAndReplace()` 
+is deprecated. Use 
+`returnDocument: 
+'after'` instead.
+Ô£à Assignment (Event) seeded ÔÇö ID: new ObjectId('69ba72f2ac68086ed2706bb5')
+(node:21368) 
+[MONGOOSE] Warning: 
+mongoose: the `new` 
+option for 
+`findOneAndUpdate()` 
+and 
+`findOneAndReplace()` 
+is deprecated. Use 
+`returnDocument: 
+'after'` instead.
+Ô£à EventTeam & Geo-Anchor seeded
+(node:21368) 
+[MONGOOSE] Warning: 
+mongoose: the `new` 
+option for 
+`findOneAndUpdate()` 
+and 
+`findOneAndReplace()` 
+is deprecated. Use 
+`returnDocument: 
+'after'` instead.
+Ô£à BiometricSession seeded
+Ô£à ClientInvoice seeded
+(node:21368) 
+[MONGOOSE] Warning: 
+mongoose: the `new` 
+option for 
+`findOneAndUpdate()` 
+and 
+`findOneAndReplace()` 
+is deprecated. Use 
+`returnDocument: 
+'after'` instead.
+Ô£à EventLedger seeded
+(node:21368) 
+[MONGOOSE] Warning: 
+mongoose: the `new` 
+option for 
+`findOneAndUpdate()` 
+and 
+`findOneAndReplace()` 
+is deprecated. Use 
+`returnDocument: 
+'after'` instead.
+Ô£à EventPredictionSnapshot seeded
+
+­ƒÄë Test environment seed complete!
+   Event ID: 69ba72f2ac68086ed2706bb5
+   Supervisor: testsupervisor@emerald.com
+   Staff: teststaff@emerald.com
+   Admin: testadmin@emerald.com

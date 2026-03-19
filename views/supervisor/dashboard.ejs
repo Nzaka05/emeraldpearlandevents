@@ -1,0 +1,200 @@
+<div style="margin-bottom: 24px;">
+    <h2 style="display: flex; align-items: center; gap: 8px;">
+        <i class="fa-solid fa-clipboard-user" style="color: var(--primary-color);"></i>
+        Supervisor Overview
+    </h2>
+    <p style="color: var(--text-secondary);">Manage your assigned event teams.</p>
+</div>
+
+<% if (teams.length===0) { %>
+    <div class="card" style="text-align: center; padding: 32px 16px;">
+        <i class="fa-solid fa-users-slash" style="font-size: 2rem; color: #cbd5e1; margin-bottom: 12px;"></i>
+        <p>You are not currently leading any event teams.</p>
+    </div>
+    <% } else { %>
+        <% teams.forEach(team=> { %>
+            <div class="card" style="border-left: 4px solid var(--accent-color);">
+                <div class="card-title" style="margin-bottom: 4px;">
+                    Team: <%= team.event_id && team.event_id.title ? team.event_id.title : 'Legacy Event' %>
+                        <span class="badge"
+                            style="background: <%= team.status === 'Active' ? '#d1fae5' : '#e2e8f0' %>; color: <%= team.status === 'Active' ? '#065f46' : '#64748b' %>;">
+                            <%= team.status %>
+                        </span>
+                </div>
+                <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 16px;">
+                    Readiness Score: <strong id="readiness-<%= team._id %>">
+                        <%= team.team_readiness %>%
+                    </strong>
+                    <button onclick="refreshReadiness('<%= team._id %>')"
+                        style="background:none; border:none; cursor:pointer; color:var(--accent-color); margin-left: 8px;">
+                        <i class="fa-solid fa-rotate-right"></i> Refresh
+                    </button>
+                </p>
+
+                <div style="background: #f8fafc; border-radius: 8px; padding: 12px;">
+                    <h4 style="font-size: 0.95rem; margin-bottom: 8px; color: var(--primary-color);">Team Roster</h4>
+
+                    <% if (team.member_ids.length===0) { %>
+                        <p style="font-size: 0.85rem; color: var(--text-secondary);">No members yet.</p>
+                        <% } else { %>
+                            <ul style="list-style: none; margin: 0; padding: 0;">
+                                <% team.member_ids.forEach(member=> { %>
+                                    <li id="member-row-<%= member._id %>"
+                                        style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #e2e8f0;">
+                                        <div>
+                                            <div style="font-weight: 500; font-size: 0.9rem;">
+                                                <%= member.name %>
+                                            </div>
+                                            <div style="font-size: 0.75rem; color: var(--text-secondary);">
+                                                Status:
+                                                <span
+                                                    style="color: <%= member.availability_status === 'Available' ? 'var(--success)' : 'var(--danger)' %>;">
+                                                    <%= member.availability_status %>
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <button
+                                            onclick="removeMember('<%= team._id %>', '<%= member._id %>', '<%= member.name %>')"
+                                            class="btn btn-outline"
+                                            style="width: auto; padding: 4px 8px; font-size: 0.8rem; border-color: var(--danger); color: var(--danger);">
+                                            Remove
+                                        </button>
+                                    </li>
+                                    <% }) %>
+                            </ul>
+                            <% } %>
+                </div>
+
+                <div style="margin-top: 16px;">
+                    <button class="btn btn-secondary" style="background: #334155; padding: 10px;"
+                        onclick="broadcastMessage('<%= team._id %>')">
+                        <i class="fa-solid fa-bullhorn"></i> Send Team Announcement
+                    </button>
+                </div>
+            </div>
+            <% }) %>
+                <% } %>
+
+                    <!-- Modal: Remove & Replace Member -->
+                    <div id="replacementModal"
+                        style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:100; align-items:center; justify-content:center;">
+                        <div
+                            style="background:white; width: 90%; max-width: 500px; padding: 24px; border-radius: 12px; position:relative;">
+                            <button onclick="closeReplacementModal()"
+                                style="position:absolute; right:16px; top:16px; background:none; border:none; font-size:1.5rem; cursor:pointer;">&times;</button>
+                            <h3 id="replaceModalTitle" style="margin-bottom: 16px; color: var(--danger);">Request Member
+                                Removal</h3>
+                            <form id="replacementForm" onsubmit="submitReplacement(event)">
+                                <input type="hidden" id="replaceTeamId">
+                                <input type="hidden" id="replaceMemberId">
+                                <div class="form-group">
+                                    <label>Reason for Removal</label>
+                                    <input type="text" id="replaceReason" required
+                                        placeholder="e.g., No Show, Sick, Underperforming">
+                                </div>
+
+                                <div class="form-group" style="margin-top: 16px;">
+                                    <label style="color: var(--primary-color); font-weight: 600;">
+                                        <i class="fa-solid fa-lightbulb"></i> Auto-Replacement Suggestions
+                                    </label>
+                                    <p style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 8px;">
+                                        Select an available staff member to suggest as a replacement (Optional).</p>
+                                    <select id="replaceSuggestion" class="form-control"
+                                        style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #cbd5e1;">
+                                        <option value="">-- No suggestion / Do not replace --</option>
+                                        <!-- Populated via JS -->
+                                    </select>
+                                </div>
+
+                                <button type="submit" class="btn btn-primary" style="margin-top: 24px;">Submit Request
+                                    to Admin</button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <script>
+                        function removeMember(teamId, memberId, name) {
+                            document.getElementById('replaceTeamId').value = teamId;
+                            document.getElementById('replaceMemberId').value = memberId;
+                            document.getElementById('replaceModalTitle').innerText = `Remove ${name} from Team?`;
+                            document.getElementById('replaceReason').value = '';
+
+                            // Fetch suggestions
+                            fetch(`/supervisor/teams/${teamId}/suggest-replacements`)
+                                .then(r => r.json())
+                                .then(res => {
+                                    const select = document.getElementById('replaceSuggestion');
+                                    select.innerHTML = '<option value="">-- No suggestion / Do not replace --</option>';
+                                    if (res.success && res.data.length > 0) {
+                                        res.data.forEach(staff => {
+                                            const opt = document.createElement('option');
+                                            opt.value = staff._id;
+                                            opt.innerText = staff.name;
+                                            select.appendChild(opt);
+                                        });
+                                    } else {
+                                        select.innerHTML = '<option value="">-- No available staff found --</option>';
+                                    }
+                                    document.getElementById('replacementModal').style.display = 'flex';
+                                });
+                        }
+
+                        function closeReplacementModal() {
+                            document.getElementById('replacementModal').style.display = 'none';
+                        }
+
+                        function submitReplacement(e) {
+                            e.preventDefault();
+                            const teamId = document.getElementById('replaceTeamId').value;
+                            const memberId = document.getElementById('replaceMemberId').value;
+                            const reason = document.getElementById('replaceReason').value;
+                            const suggestedReplacementId = document.getElementById('replaceSuggestion').value;
+
+                            fetch(`/supervisor/teams/${teamId}/remove-member`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ memberId, reason, suggestedReplacementId })
+                            })
+                                .then(res => res.json())
+                                .then(data => {
+                                    if (data.success) {
+                                        closeReplacementModal();
+                                        alert('Replacement request submitted for Admin approval.');
+                                        // Row stays visible until admin approves, but we could mark it "Pending Removal" visually
+                                        document.getElementById(`member-row-${memberId}`).style.opacity = '0.5';
+                                    } else {
+                                        alert('Error: ' + data.error);
+                                    }
+                                });
+                        }
+
+                        function refreshReadiness(teamId) {
+                            fetch(`/supervisor/teams/${teamId}/readiness`, { method: 'POST' })
+                                .then(res => res.json())
+                                .then(data => {
+                                    if (data.success) {
+                                        document.getElementById(`readiness-${teamId}`).innerText = `${data.readiness}%`;
+                                    }
+                                });
+                        }
+
+                        function broadcastMessage(teamId) {
+                            const msg = prompt("Enter announcement to broadcast to all team members:");
+                            if (msg) {
+                                // In a full implementation, this would save to EventTeamCommunication DB, then socket emit
+                                if (typeof socket !== 'undefined') {
+                                    socket.emit('teamMessage', { team_id: teamId, type: 'announcement', content: msg });
+                                    alert('Announcement broadcasted effectively!');
+                                }
+                            }
+                        }
+
+                        if (typeof socket !== 'undefined') {
+                            // Note: room joining logic in layout.ejs must be updated to join Team_${team._id} rooms 
+                            // for this to work perfectly securely, but for a prototype this meets core requirements.
+                            socket.on('teamAttendanceUpdate', (data) => {
+                                // Auto-refresh readiness if someone in our team clocks in
+                                location.reload();
+                            });
+                        }
+                    </script>

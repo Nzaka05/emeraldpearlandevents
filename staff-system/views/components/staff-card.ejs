@@ -1,0 +1,45 @@
+<%/* STAFF CARD — 3D staff profile card with role badge and actions */%>
+<% const s = locals.staff || {}; %>
+<% const _initials = (s.name || 'U').split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2); %>
+<% const _statusMap = { Active: 'active', Suspended: 'danger', Inactive: 'muted' }; %>
+<% const _roleColors = { Admin: 'badge-red', Supervisor: 'badge-gold', Staff: 'badge-emerald' }; %>
+
+<div class="card-3d animate-fade-up">
+  <div class="glass-card card-3d-inner p-4 group cursor-pointer">
+    <div class="flex items-center gap-3">
+      <!-- Avatar -->
+      <div class="avatar avatar-md relative">
+        <% if (s.photo_url) { %>
+          <img src="<%= s.photo_url %>" alt="<%= s.name %>">
+        <% } else { %>
+          <%= _initials %>
+        <% } %>
+        <span class="status-dot status-dot-<%= _statusMap[s.status] || 'muted' %> absolute -bottom-0.5 -right-0.5 ring-2 ring-[#111827]"></span>
+      </div>
+
+      <div class="flex-1 min-w-0">
+        <div class="text-sm font-bold text-slate-100 truncate"><%= s.name || 'Unknown' %></div>
+        <div class="text-xs text-slate-500 truncate"><%= s.email || '' %></div>
+      </div>
+
+      <span class="<%= _roleColors[s.role] || 'badge-emerald' %> text-[0.65rem] font-bold px-2 py-0.5 rounded-full">
+        <%= s.role || 'Staff' %>
+      </span>
+    </div>
+
+    <!-- Quick actions (shown on hover) -->
+    <div class="flex items-center gap-2 mt-3 pt-3 border-t border-white/5 opacity-0 group-hover:opacity-100 transition-opacity">
+      <button onclick="event.stopPropagation()" class="btn btn-ghost btn-xs flex-1" title="Edit">
+        <i class="fa-solid fa-pen-to-square"></i> Edit
+      </button>
+      <button onclick="event.stopPropagation()" class="btn btn-ghost btn-xs flex-1" title="View">
+        <i class="fa-solid fa-eye"></i> View
+      </button>
+      <% if (s.phone) { %>
+        <a href="tel:<%= s.phone %>" onclick="event.stopPropagation()" class="btn btn-ghost btn-xs" title="Call">
+          <i class="fa-solid fa-phone"></i>
+        </a>
+      <% } %>
+    </div>
+  </div>
+</div>

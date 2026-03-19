@@ -1,0 +1,112 @@
+<% currentPage='events' ; %>
+
+<!-- ══ Header ══ -->
+<div class="flex items-center justify-between mb-5 animate-fade-up">
+    <div>
+        <h1 class="font-display text-2xl font-extrabold text-tx-1 tracking-tight flex items-center gap-3">
+            <i class="fa-solid fa-calendar-star text-emerald-400"></i>
+            <span class="text-gradient-emerald">My Events</span>
+        </h1>
+        <p class="text-[0.7rem] text-tx-3 mt-1 uppercase tracking-widest font-mono">Active Deployments & Readiness</p>
+    </div>
+</div>
+
+<% if (!(events && events.length)) { %>
+    <div class="glass-card p-12 flex flex-col items-center justify-center text-tx-3 opacity-60 text-center animate-fade-up">
+        <i class="fa-solid fa-calendar-xmark text-4xl mb-4"></i>
+        <h4 class="text-sm font-bold text-tx-1 mb-1">No Events Assigned</h4>
+        <p class="text-xs">No events require your supervision currently.</p>
+    </div>
+<% } else { %>
+    <div class="space-y-4 mb-[80px] animate-fade-up">
+        <% events.forEach(function(ev) { 
+            var isVip = ev.assignment_id && ev.assignment_id.vip_flag;
+            var asn = ev.assignment_id || {};
+            var accepted = (asn.accepted_staff_ids||[]).length;
+            var total = (asn.assigned_staff_ids||[]).length;
+            var pct = total > 0 ? Math.round((accepted/total)*100) : 0;
+            var barClass = pct >= 80 ? 'bg-gradient-to-r from-emerald-700 to-emerald-500 shadow-glow-emerald' : pct >= 50 ? 'bg-gradient-to-r from-yellow-700 to-gold-400' : 'bg-gradient-to-r from-red-800 to-red-500';
+            var pctClass = pct >= 80 ? 'text-emerald-400' : pct >= 50 ? 'text-gold-400' : 'text-red-400';
+            var aSnStatus = asn.status;
+        %>
+        <div class="glass-card relative overflow-hidden animate-fade-up <%= isVip ? 'border-l-2 border-gold-500' : 'border-l-2 border-emerald-600' %>">
+            <% if(isVip) { %>
+                <div class="absolute top-0 right-0 bottom-0 w-24 bg-gradient-to-l from-gold-500/5 to-transparent pointer-events-none"></div>
+            <% } %>
+            
+            <!-- Event Header -->
+            <div class="px-4 sm:px-5 py-4 border-b border-white/5 flex items-start justify-between gap-3">
+                <div class="min-w-0 flex-1">
+                    <h3 class="text-sm font-bold text-tx-1 flex items-center gap-2 flex-wrap mb-1">
+                        <%= asn.title || 'Event' %>
+                        <% if(isVip) { %><span class="badge-gold text-[0.55rem] font-bold px-1.5 py-0.5 rounded uppercase tracking-widest"><i class="fa-solid fa-crown text-[0.5rem] mr-0.5"></i>VIP</span><% } %>
+                    </h3>
+                    <div class="flex items-center gap-3 flex-wrap text-[0.65rem] text-tx-3 font-mono">
+                        <% if(asn.date) { %><span><i class="fa-solid fa-calendar mr-1 opacity-60"></i><%= new Date(asn.date).toLocaleDateString('en-GB',{weekday:'short',day:'2-digit',month:'short',year:'numeric'}) %></span><% } %>
+                        <% if(asn.start_time) { %><span><i class="fa-regular fa-clock mr-1 opacity-60"></i><%= asn.start_time %> – <%= asn.end_time||'?' %></span><% } %>
+                        <% if(asn.location) { %><span class="hidden sm:inline"><i class="fa-solid fa-location-dot mr-1 opacity-60"></i><%= asn.location %></span><% } %>
+                    </div>
+                </div>
+                <% var stBadge = aSnStatus === 'Active' ? 'text-emerald-400 border-emerald-500/30 bg-emerald-500/10 animate-pulse' : aSnStatus === 'Completed' ? 'text-blue-400 border-blue-500/30 bg-blue-500/10' : 'text-red-400 border-red-500/30 bg-red-500/10'; %>
+                <span class="text-[0.55rem] font-bold tracking-widest uppercase border px-1.5 py-0.5 rounded shrink-0 <%= stBadge %>"><%= aSnStatus || '—' %></span>
+            </div>
+
+            <!-- Body -->
+            <div class="p-4 sm:p-5 space-y-4">
+                <!-- Team Readiness Bar -->
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="flex items-center gap-1.5">
+                            <i class="fa-solid fa-gauge text-tx-3 text-xs"></i>
+                            <span class="text-[0.6rem] font-bold uppercase tracking-widest text-tx-3">Team Readiness</span>
+                        </div>
+                        <span class="text-xs font-black font-mono <%= pctClass %>"><%= pct %>% — <span class="font-normal text-tx-3"><%= accepted %>/<%= total %></span></span>
+                    </div>
+                    <div class="h-2 bg-white/5 rounded-full overflow-hidden border border-white/5">
+                        <div class="h-full rounded-full transition-all duration-700 <%= barClass %>" style="width:<%= pct %>%;"></div>
+                    </div>
+                </div>
+
+                <!-- Pay Info -->
+                <% if(asn.pay_rate) { %>
+                    <% 
+                        function pHM(t) { if(!t) return null; var p=t.split(':').map(Number); return p[0]+p[1]/60; }
+                        var sh = pHM(asn.start_time), eh = pHM(asn.end_time);
+                        var hrs = sh && eh && eh > sh ? Math.round((eh-sh)*10)/10 : null;
+                        var tpay = hrs ? Math.round((asn.pay_rate||0)*hrs) : null;
+                    %>
+                    <div class="bg-emerald-500/10 border border-emerald-500/20 rounded-xl px-4 py-3 flex items-center justify-between gap-4 flex-wrap">
+                        <div>
+                            <div class="text-[0.6rem] text-tx-3 uppercase tracking-wider font-bold mb-0.5">Pay Rate</div>
+                            <div class="text-sm font-black text-emerald-400 font-mono">KSh <%= (asn.pay_rate||0).toLocaleString() %></div>
+                        </div>
+                        <% if(tpay) { %>
+                            <div>
+                                <div class="text-[0.6rem] text-tx-3 uppercase tracking-wider font-bold mb-0.5">Total / Staff</div>
+                                <div class="text-sm font-black text-emerald-400 font-mono">KSh <%= tpay.toLocaleString() %> <span class="text-tx-3 font-normal text-xs">(<%= hrs %>h)</span></div>
+                            </div>
+                        <% } %>
+                    </div>
+                <% } %>
+
+                <!-- Team Member Chips -->
+                <% if((ev.member_ids||[]).length > 0) { %>
+                    <div class="flex flex-wrap gap-2">
+                        <% (ev.member_ids||[]).forEach(function(m) { 
+                            var isAcc = (asn.accepted_staff_ids||[]).some(function(a){ return a && a.toString() === m._id.toString(); });
+                        %>
+                            <div class="flex items-center gap-1.5 bg-white/5 border border-white/5 rounded-full px-2.5 py-1">
+                                <div class="w-5 h-5 rounded-full bg-emerald-700 flex items-center justify-center text-[0.5rem] font-bold text-white flex-shrink-0">
+                                    <%= m.name ? m.name.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2) : '?' %>
+                                </div>
+                                <span class="text-[0.7rem] text-tx-2 font-medium"><%= m.name || m %></span>
+                                <i class="fa-solid <%= isAcc ? 'fa-circle-check text-emerald-400' : 'fa-clock text-tx-3' %> text-[0.55rem]"></i>
+                            </div>
+                        <% }); %>
+                    </div>
+                <% } %>
+            </div>
+        </div>
+        <% }); %>
+    </div>
+<% } %>

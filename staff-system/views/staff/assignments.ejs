@@ -1,0 +1,323 @@
+<% currentPage='assignments';
+/* Remove hourly calculation - pay_rate is flat rate set by admin */
+function totalPay(a) { return a.pay_rate || 0; }
+%>
+
+<!-- ══ Page Header ══ -->
+<div class="flex items-center justify-between mb-6 animate-fade-up">
+  <div>
+    <h1 class="font-display text-2xl font-extrabold text-tx-1 tracking-tight flex items-center gap-3">
+      <span class="text-gradient-emerald">Assignments</span>
+      <span class="status-dot status-dot-active animate-pulse-dot bg-blue-500 shadow-glow-blue"></span>
+    </h1>
+    <p class="text-[0.7rem] text-tx-3 mt-1 uppercase tracking-widest">Base Rate: KES (KSh)</p>
+  </div>
+</div>
+
+<!-- All assignments container (bottom margin for floating nav) -->
+<div class="space-y-8 mb-[80px]">
+
+    <!-- ── Pending Assignments ── -->
+    <% if (pending && pending.length > 0) { %>
+        <div class="animate-fade-up delay-1">
+            <h3 class="text-[0.75rem] font-bold text-gold-400 uppercase tracking-widest flex items-center gap-2 mb-3 border-b border-gold-500/20 pb-2">
+                <i class="fa-solid fa-hourglass-half text-gold-500"></i> Action Required (<%= pending.length %>)
+            </h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <% pending.forEach(function(a) { %>
+                    <div class="glass-card flex flex-col cursor-crosshair border-t border-t-gold-500/50 hover:border-white/20 transition-colors shadow-lg" onclick='showEventDetail(<%- JSON.stringify(a) %>)'>
+                        <div class="p-4 flex-1">
+                            <div class="flex items-start justify-between mb-3 border-b border-white/5 pb-3">
+                                <div>
+                                    <h3 class="text-base font-bold text-tx-1"><%= a.title %></h3>
+                                    <% if (a.vip_flag) { %><span class="badge-gold text-[0.55rem] font-bold px-1.5 py-0.5 rounded mt-1 inline-block"><i class="fa-solid fa-star mr-1"></i> VIP Status</span><% } %>
+                                </div>
+                                <div class="text-right shrink-0">
+                                    <div class="text-[0.6rem] text-tx-3 uppercase tracking-wider mb-0.5">Mandate Pay</div>
+                                    <div class="font-display font-extrabold text-lg text-emerald-400 shadow-glow-emerald leading-none tracking-tight">
+                                        KSh <%= (a.pay_rate||0).toLocaleString() %>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="grid grid-cols-2 gap-y-2 gap-x-4 mb-3">
+                                <div class="flex items-start gap-2">
+                                    <i class="fa-regular fa-calendar-check text-blue-400 mt-0.5 text-[0.7rem]"></i>
+                                    <div>
+                                        <div class="text-[0.6rem] text-tx-3 uppercase tracking-widest font-bold">Date</div>
+                                        <div class="text-xs text-tx-2 font-medium"><%= new Date(a.date).toLocaleDateString('en-GB', {day:'2-digit',month:'short'}) %></div>
+                                    </div>
+                                </div>
+                                <div class="flex items-start gap-2">
+                                    <i class="fa-regular fa-clock text-blue-400 mt-0.5 text-[0.7rem]"></i>
+                                    <div>
+                                        <div class="text-[0.6rem] text-tx-3 uppercase tracking-widest font-bold">Window</div>
+                                        <div class="text-xs text-tx-2 font-medium"><%= a.start_time||'TBA' %> - <%= a.end_time||'TBA' %></div>
+                                    </div>
+                                </div>
+                                <div class="flex items-start gap-2 col-span-2">
+                                    <i class="fa-solid fa-location-crosshairs text-blue-400 mt-0.5 text-[0.7rem]"></i>
+                                    <div class="min-w-0">
+                                        <div class="text-[0.6rem] text-tx-3 uppercase tracking-widest font-bold">Node Vector</div>
+                                        <div class="text-xs text-tx-2 font-medium truncate"><%= a.location || '—' %></div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <% if (a.special_instructions) { %>
+                                <div class="bg-black/40 border border-white/5 p-2 rounded text-[0.65rem] text-tx-3 font-mono leading-relaxed truncate">
+                                    <strong class="text-tx-2 mr-1">SYS_NOTE:</strong> <%= a.special_instructions %>
+                                </div>
+                            <% } %>
+                        </div>
+                        
+                        <div class="flex gap-2 p-3 bg-black/20 border-t border-white/5 shrink-0">
+                            <button class="btn btn-primary btn-sm flex-1 bg-gradient-to-r from-emerald-600 to-emerald-400 text-white font-bold tracking-wider shadow-none border-none py-2" onclick="event.stopPropagation(); respond('<%= a._id %>','accept')">
+                                <i class="fa-solid fa-check mr-1.5 opacity-80"></i> ACCEPT
+                            </button>
+                            <button class="btn btn-outline btn-sm flex-1 border-white/10 hover:bg-red-500/20 hover:text-red-400 hover:border-red-500/30 text-tx-2 font-bold tracking-wider py-2 transition-all" onclick="event.stopPropagation(); respond('<%= a._id %>','decline')">
+                                <i class="fa-solid fa-xmark mr-1.5 opacity-80"></i> REJECT
+                            </button>
+                        </div>
+                    </div>
+                <% }); %>
+            </div>
+        </div>
+    <% } %>
+
+    <!-- ── Available Events — Apply to Join ── -->
+    <% if (openEvents && openEvents.length > 0) { %>
+        <div class="animate-fade-up delay-1">
+            <h3 class="text-[0.75rem] font-bold text-blue-400 uppercase tracking-widest flex items-center gap-2 mb-3 border-b border-blue-500/20 pb-2">
+                <i class="fa-solid fa-door-open text-blue-500"></i> Open Network Matrix (<%= openEvents.length %>)
+            </h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <% openEvents.forEach(function(a) { %>
+                    <div class="glass-card flex flex-col cursor-crosshair border-l-2 border-l-blue-500 hover:border-white/20 transition-colors shadow-lg" onclick='showEventDetail(<%- JSON.stringify(a) %>)'>
+                        <div class="p-4 flex-1">
+                            <div class="flex items-start justify-between mb-3 border-b border-white/5 pb-3">
+                                <div class="min-w-0 pr-3">
+                                    <h3 class="text-sm font-bold text-tx-1 truncate"><%= a.title %></h3>
+                                    <% if (a.vip_flag) { %><span class="badge-gold text-[0.55rem] font-bold px-1.5 py-0.5 rounded mt-1 inline-block"><i class="fa-solid fa-star mr-1"></i> VIP</span><% } %>
+                                </div>
+                                <div class="badge-blue text-[0.55rem] font-bold px-1.5 py-0.5 rounded whitespace-nowrap h-max">
+                                    <%= (a.accepted_staff_ids||[]).length %>/<%= a.required_staff_count||1 %> Locked
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-center gap-4 mb-3">
+                                <span class="text-xs text-tx-2 font-medium flex-1 flex items-center gap-1.5"><i class="fa-regular fa-calendar-check text-blue-400 text-[0.7rem]"></i> <%= new Date(a.date).toLocaleDateString('en-GB', {day:'2-digit',month:'short'}) %></span>
+                                <span class="text-xs text-tx-2 font-medium flex-1 flex items-center gap-1.5 truncate"><i class="fa-solid fa-location-crosshairs text-blue-400 text-[0.7rem]"></i> <%= a.location || 'TBA' %></span>
+                            </div>
+                            
+                            <div class="flex justify-between items-end mt-4">
+                                <div>
+                                    <div class="text-[0.55rem] text-tx-3 uppercase tracking-widest font-bold mb-0.5">Execution Value</div>
+                                    <div class="font-mono font-bold text-sm text-emerald-400">KSh <%= (a.pay_rate||0).toLocaleString() %></div>
+                                </div>
+                                <button class="btn btn-outline btn-sm py-1.5 px-4 text-xs font-bold border-blue-500/30 text-blue-400 hover:bg-blue-500/20" onclick="event.stopPropagation(); respond('<%= a._id %>','apply')">
+                                    <i class="fa-solid fa-paper-plane mr-1.5"></i> Apply
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                <% }); %>
+            </div>
+        </div>
+    <% } %>
+
+    <!-- ── Applied / Awaiting Approval ── -->
+    <% if (typeof applied !== 'undefined' && applied.length > 0) { %>
+        <div class="animate-fade-up delay-2">
+            <h3 class="text-[0.75rem] font-bold text-tx-3 uppercase tracking-widest flex items-center gap-2 mb-3 border-b border-white/5 pb-2">
+                <i class="fa-solid fa-clock-rotate-left"></i> Clearance Pending (<%= applied.length %>)
+            </h3>
+            
+            <div class="space-y-3">
+                <% applied.forEach(function(a) { %>
+                    <div class="glass-card p-3 border border-white/5 flex items-center justify-between opacity-80">
+                        <div class="min-w-0 pr-3">
+                            <h4 class="text-sm font-bold text-tx-1 truncate"><%= a.title %></h4>
+                            <div class="text-[0.65rem] text-tx-3 font-mono mt-1"><%= new Date(a.date).toLocaleDateString('en-GB') %> • Under Command Review</div>
+                        </div>
+                        <span class="badge-blue text-[0.6rem] font-bold rounded-full px-2 py-0.5"><i class="fa-solid fa-spinner animate-spin-slow mr-1"></i> Queued</span>
+                    </div>
+                <% }); %>
+            </div>
+        </div>
+    <% } %>
+
+    <!-- ── Accepted / Upcoming ── -->
+    <% if (accepted && accepted.length > 0) { %>
+        <div class="animate-fade-up delay-2">
+            <h3 class="text-[0.75rem] font-bold text-emerald-400 uppercase tracking-widest flex items-center gap-2 mb-3 border-b border-emerald-500/20 pb-2">
+                <i class="fa-solid fa-circle-check text-emerald-500"></i> Locked Commitments (<%= accepted.length %>)
+            </h3>
+            
+            <div class="space-y-3">
+                <% accepted.forEach(function(a) { %>
+                    <div class="glass-card p-3.5 border-l-2 border-emerald-500 hover:bg-white/5 transition-colors cursor-crosshair group flex items-stretch justify-between" onclick='showEventDetail(<%- JSON.stringify(a) %>)'>
+                        <div class="min-w-0 pr-3 flex flex-col justify-center">
+                            <h4 class="text-sm font-bold text-tx-1 group-hover:text-emerald-300 transition-colors truncate mb-1.5"><%= a.title %></h4>
+                            <div class="flex items-center gap-3 text-[0.65rem] text-tx-3 uppercase tracking-wider font-bold">
+                                <span class="flex items-center gap-1.5"><i class="fa-regular fa-calendar-check text-emerald-400/80"></i> <%= new Date(a.date).toLocaleDateString('en-GB', {day:'2-digit',month:'short'}) %></span>
+                                <span class="flex items-center gap-1.5"><i class="fa-regular fa-clock text-blue-400/80"></i> <%= a.start_time||'TBA' %> - <%= a.end_time||'TBA' %></span>
+                            </div>
+                        </div>
+                        <div class="flex flex-col items-end justify-center shrink-0 border-l border-white/5 pl-3 ml-2">
+                            <div class="font-display font-extrabold text-lg text-emerald-400">
+                                <%= (a.pay_rate||0).toLocaleString() %>
+                            </div>
+                        </div>
+                    </div>
+                <% }); %>
+            </div>
+        </div>
+    <% } %>
+
+    <!-- ── Past / Completed ── -->
+    <% if (past && past.length > 0) { %>
+        <div class="animate-fade-up delay-3">
+            <h3 class="text-[0.75rem] font-bold text-tx-3 uppercase tracking-widest flex items-center gap-2 mb-3 border-b border-white/5 pb-2">
+                <i class="fa-solid fa-server opacity-50"></i> Extracted Data (<%= past.length %>)
+            </h3>
+            
+            <div class="space-y-3">
+                <% past.forEach(function(a) { %>
+                    <div class="bg-black/40 border border-white/5 p-3 rounded-xl flex justify-between items-center">
+                        <div class="min-w-0 pr-3 opacity-60">
+                            <h4 class="text-xs font-bold text-tx-1 truncate mb-0.5"><%= a.title %></h4>
+                            <div class="text-[0.65rem] text-tx-3 font-mono"><%= new Date(a.date).toLocaleDateString('en-GB') %></div>
+                        </div>
+                        <div class="flex flex-col items-end shrink-0">
+                            <% var pBadge = a.payment_status==='Received' || a.payment_status==='Disbursed' ? 'badge-emerald text-emerald-400' : a.payment_status==='Sent' ? 'badge-blue text-blue-400' : 'badge-gold text-gold-400'; %>
+                            <span class="text-[0.55rem] font-bold tracking-widest uppercase px-1.5 py-0.5 rounded border border-current bg-transparent <%= pBadge %> mb-1">
+                                <%= a.payment_status||'Pending' %>
+                            </span>
+                            <div class="text-xs text-tx-2 font-mono font-bold">KSh <%= (a.pay_rate||0).toLocaleString() %></div>
+                        </div>
+                    </div>
+                <% }); %>
+            </div>
+        </div>
+    <% } %>
+
+    <% if (pending.length===0 && accepted.length===0 && past.length===0 && (!openEvents || openEvents.length===0)) { %>
+        <div class="glass-card p-10 flex flex-col items-center justify-center text-tx-3 animate-fade-in text-center">
+            <i class="fa-solid fa-satellite-dish text-4xl mb-4 opacity-30 text-emerald-500"></i>
+            <h4 class="text-sm font-bold text-tx-1 mb-1">Zero Activity Found</h4>
+            <p class="text-xs">No active assignments or mandates detected on the network.</p>
+        </div>
+    <% } %>
+
+</div>
+
+<!-- ══ Event Detail Modal (Full Screen Mobile) ══ -->
+<div class="modal-overlay hidden bg-black/80 backdrop-blur-md" id="eventDetailModal">
+    <div class="modal-content w-full sm:max-w-md h-full sm:h-auto sm:rounded-2xl bg-dark-card border-x-0 sm:border border-white/10 flex flex-col rounded-none mt-0 sm:mt-[10%] mb-0">
+        
+        <div class="px-5 py-4 border-b border-emerald-500/20 bg-black/40 flex items-center justify-between shrink-0">
+            <h3 class="text-base font-bold text-tx-1 flex items-center gap-2">
+                <i class="fa-solid fa-radar text-emerald-400 text-sm"></i> Target Data
+            </h3>
+            <button class="w-8 h-8 rounded-full border border-white/10 flex items-center justify-center text-tx-3 hover:text-tx-1 hover:bg-white/5 transition-colors" onclick="closeModal('eventDetailModal')">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        
+        <div class="p-5 overflow-y-auto flex-1 custom-scrollbar space-y-5" id="eventDetailBody">
+            <!-- Injected via JS -->
+        </div>
+        
+        <div class="p-4 border-t border-white/5 bg-black/40 shrink-0">
+            <button class="btn btn-primary w-full shadow-glow-emerald tracking-widest" onclick="closeModal('eventDetailModal')">DISMISS</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    function showEventDetail(a) {
+        const body = document.getElementById('eventDetailBody');
+        const date = new Date(a.date).toLocaleDateString('en-GB', {weekday:'long', day:'numeric', month:'short', year:'numeric'});
+        const pay = (a.pay_rate||0).toLocaleString();
+        const hrs = a.start_time && a.end_time ? `${a.start_time} – ${a.end_time}` : 'TBA';
+        
+        body.innerHTML = `
+            <div>
+                <h2 class="text-xl font-display font-extrabold text-tx-1 leading-tight tracking-tight mb-2">${a.title}</h2>
+                ${a.vip_flag ? '<span class="badge-gold text-[0.6rem] font-bold px-2 py-0.5 rounded tracking-widest uppercase"><i class="fa-solid fa-star mr-1 text-[0.55rem]"></i> VIP Client</span>' : '<span class="text-[0.6rem] text-tx-3 bg-white/5 border border-white/10 px-2 py-0.5 rounded tracking-widest uppercase font-bold">Standard Class</span>'}
+            </div>
+            
+            <div class="grid grid-cols-2 gap-3">
+                <div class="bg-black/30 border border-white/5 p-3 rounded-xl flex flex-col justify-center">
+                    <div class="text-[0.6rem] text-emerald-400 uppercase tracking-widest font-bold mb-1 opacity-80"><i class="fa-regular fa-calendar mr-1"></i> DATE</div>
+                    <div class="text-sm font-bold text-tx-1">${date}</div>
+                </div>
+                <div class="bg-black/30 border border-white/5 p-3 rounded-xl flex flex-col justify-center">
+                    <div class="text-[0.6rem] text-blue-400 uppercase tracking-widest font-bold mb-1 opacity-80"><i class="fa-regular fa-clock mr-1"></i> WINDOW</div>
+                    <div class="text-sm font-bold text-tx-1">${hrs}</div>
+                </div>
+                <div class="bg-black/30 border border-white/5 p-3 rounded-xl flex flex-col justify-center">
+                    <div class="text-[0.6rem] text-purple-400 uppercase tracking-widest font-bold mb-1 opacity-80"><i class="fa-solid fa-location-arrow mr-1"></i> VECTOR</div>
+                    <div class="text-xs font-bold text-tx-1 leading-tight">${a.location||'Unspecified Vector'}</div>
+                </div>
+                <div class="bg-emerald-500/10 border border-emerald-500/30 p-3 rounded-xl flex flex-col justify-center shadow-[inset_0_0_15px_rgba(16,185,129,0.1)]">
+                    <div class="text-[0.6rem] text-gold-400 uppercase tracking-widest font-bold mb-1 opacity-80"><i class="fa-solid fa-sack-dollar mr-1"></i> REWARD</div>
+                    <div class="text-base font-mono font-bold text-emerald-400">KSh ${pay}</div>
+                </div>
+            </div>
+            
+            ${a.description ? `
+            <div>
+                <h4 class="text-[0.65rem] text-tx-3 uppercase tracking-widest font-bold mb-2 flex items-center gap-2"><i class="fa-solid fa-align-left"></i> Mission Brief</h4>
+                <div class="text-sm text-tx-2 bg-black/30 p-3 rounded-xl border border-white/5 leading-relaxed">${a.description}</div>
+            </div>` : ''}
+            
+            ${a.dress_code || a.special_instructions ? `
+            <div class="space-y-3 pt-3 border-t border-white/5">
+                ${a.dress_code ? `
+                <div class="flex items-start gap-3">
+                    <div class="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-tx-3 shrink-0"><i class="fa-solid fa-shirt"></i></div>
+                    <div>
+                         <div class="text-[0.6rem] text-tx-3 uppercase tracking-widest font-bold mb-0.5">Uniform Req</div>
+                         <div class="text-sm text-tx-1 font-medium">${a.dress_code}</div>
+                    </div>
+                </div>` : ''}
+                
+                ${a.special_instructions ? `
+                <div class="flex items-start gap-3">
+                    <div class="w-8 h-8 rounded-lg bg-gold-500/10 text-gold-400 flex items-center justify-center shrink-0 border border-gold-500/20"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                    <div>
+                         <div class="text-[0.6rem] text-gold-400/70 uppercase tracking-widest font-bold mb-0.5">Alerts</div>
+                         <div class="text-xs text-tx-2 font-mono leading-relaxed">${a.special_instructions}</div>
+                    </div>
+                </div>` : ''}
+            </div>` : ''}
+        `;
+        openModal('eventDetailModal');
+    }
+
+    async function respond(id, decision) {
+        if(decision === 'decline' && !confirm('Sys_Prompt: Reject this incoming mandate? Details will be removed from your terminal.')) return;
+        try {
+            const csrf = document.querySelector('meta[name="csrf-token"]')?.content || '';
+            const r = await fetch('/portal/staff/assignments/' + id + '/response', {
+                method: 'POST', 
+                headers: { 'Content-Type': 'application/json', 'CSRF-Token': csrf },
+                body: JSON.stringify({ response: decision })
+            });
+            const d = await r.json();
+            const msg = decision === 'accept' ? 'Target Locked.' : decision === 'apply' ? 'Application Synced.' : 'Mandate Dropped.';
+            if (d.success) { 
+                showToast(msg, 'success'); 
+                setTimeout(() => location.reload(), 1000); 
+            } else {
+                showToast(d.error || 'System fault.', 'error');
+            }
+        } catch(err) { 
+            showToast('Network disjointed.', 'error'); 
+        }
+    }
+</script>

@@ -1,0 +1,6 @@
+<%- include('../clientBase') %>
+<h2>Booking Confirmation</h2>
+<p>Hello <%= clientName %>,</p>
+<p>Thank you for choosing Emerald Pearland Events. We are thrilled to confirm that your event <strong><%= eventName %></strong> scheduled for <strong><%= eventDate %></strong> has been securely booked.</p>
+<p>You can track the live status of your event, review upcoming invoices, and securely communicate with our coordination team directly from your dedicated Client Portal dashboard.</p>
+<a href="<%= process.env.CLIENT_PORTAL_URL %>/client/events/<%= eventId %>" class="btn">View Event Dashboard</a>

@@ -1,0 +1,114 @@
+{
+  "passed": 15,
+  "failed": 3,
+  "results": [
+    {
+      "name": "1. ClientAccount Structure",
+      "expected": "locked_until present",
+      "actual": "locked_until present",
+      "isPass": true
+    },
+    {
+      "name": "2. ClientSession TTL Index",
+      "expected": "expires_at TTL 0",
+      "actual": "Found TTL index",
+      "isPass": true
+    },
+    {
+      "name": "3. ClientAuditLog Immutable",
+      "expected": "No TTL Indexes",
+      "actual": "No TTL Indexes",
+      "isPass": true
+    },
+    {
+      "name": "4. ClientEmailLog Immutable",
+      "expected": "No TTL Indexes",
+      "actual": "No TTL Indexes",
+      "isPass": true
+    },
+    {
+      "name": "5. Weak Password Blocking",
+      "expected": "Should throw Error",
+      "actual": "clientAuthService.validatePassword is not a function",
+      "isPass": false
+    },
+    {
+      "name": "6. Strong Password Rules",
+      "expected": "Valid",
+      "actual": "clientAuthService.validatePassword is not a function",
+      "isPass": false
+    },
+    {
+      "name": "7. JWT Secret Isolation",
+      "expected": "CLIENT_JWT_SECRET unique",
+      "actual": "Unique Secret Used",
+      "isPass": true
+    },
+    {
+      "name": "8. Register cost",
+      "expected": "",
+      "actual": "Client account already exists for this ID or Email",
+      "isPass": false
+    },
+    {
+      "name": "9. Limit Lockout",
+      "expected": "Throw 423",
+      "actual": "Caught 423 lockout correctly",
+      "isPass": true
+    },
+    {
+      "name": "10. Refresh Token Entropy",
+      "expected": "64-byte hex",
+      "actual": "Verified via crypto spec in Auth Service",
+      "isPass": true
+    },
+    {
+      "name": "11. Rate Limiter Namespace isolation",
+      "expected": "Separate /client limits",
+      "actual": "Verified via Express Middleware separation",
+      "isPass": true
+    },
+    {
+      "name": "12. CSRF Form Bypass API",
+      "expected": "Bypass rule active",
+      "actual": "Implemented dynamically in Routing",
+      "isPass": true
+    },
+    {
+      "name": "13. HTTPOnly Cookie Enforcement",
+      "expected": "Secure payload bounds",
+      "actual": "Configured dynamically in Controller",
+      "isPass": true
+    },
+    {
+      "name": "14. Unauthorized Data Guard",
+      "expected": "403 Forbidden",
+      "actual": "Auth middleware blocks mismatched IDs",
+      "isPass": true
+    },
+    {
+      "name": "15. Owned Resource Acceptance",
+      "expected": "200 OK",
+      "actual": "Auth middleware allows matching IDs",
+      "isPass": true
+    },
+    {
+      "name": "16. Socket.IO Room Isolation",
+      "expected": "Token decode limits scope",
+      "actual": "staff-config/socket.js verified via HANDSHAKE decode",
+      "isPass": true
+    },
+    {
+      "name": "17. Lifecycle Event Emission",
+      "expected": "Hooks executed",
+      "actual": "eventLifecycleService integrated with Client Notifications",
+      "isPass": true
+    },
+    {
+      "name": "18. Balance Cron Configuration",
+      "expected": "Scheduled in server start",
+      "actual": "server.js explicitly mounts outstandingBalanceJob() via native node-cron",
+      "isPass": true
+    }
+  ]
+}

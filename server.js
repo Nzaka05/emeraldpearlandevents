@@ -1,15 +1,20 @@
-// ═══════════════════════════════════════════════════════════
-// EMERALD PEARLAND EVENTS - PREMIUM BOOKING SERVER
-// Fully functional Node.js/Express backend for event bookings
-// ═══════════════════════════════════════════════════════════
+require('dotenv').config();
+require('./scripts/checkEnv'); // Halt dynamically before server boots if environment is mismatched
 
 const express = require('express');
+const http = require('http');
+const path = require('path');
 const nodemailer = require('nodemailer');
 const bodyParser = require('body-parser');
 const rateLimit = require('express-rate-limit');
 const cors = require('cors');
 const mongoose = require('mongoose');
 const cookieParser = require('cookie-parser');
+const expressLayouts = require('express-ejs-layouts');
+const csrf = require('csurf');
+const helmet = require('helmet');
+const compression = require('compression');
+const morgan = require('morgan');
 require('dotenv').config();
 
 // ── TWILIO CLIENT (optional – only used if credentials are set) ──
@@ -34,13 +39,38 @@ const bookingRoutes = require('./server/routes/bookingRoutes');
 
 // ── ADMIN ROUTER ──
 const adminRoutes = require('./server/routes/adminRoutes');
+const adminCommandCenterRoutes = require('./server/routes/adminCommandCenterRoutes');
 
-mongoose.connect(process.env.MONGODB_URI)
+mongoose.connect(process.env.MONGO_URI)
     .then(() => console.log('✅ MongoDB connected'))
     .catch(err => console.error('❌ MongoDB connection error:', err.message));
 
 const app = express();
+
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "cdn.jsdelivr.net", "cdnjs.cloudflare.com"],
+      styleSrc: ["'self'", "'unsafe-inline'", "cdn.jsdelivr.net", "fonts.googleapis.com"],
+      fontSrc: ["'self'", "fonts.gstatic.com"],
+      imgSrc: ["'self'", "data:", "res.cloudinary.com"],
+      connectSrc: ["'self'", "wss:", "ws:"]
+    }
+  }
+}));
+app.use(compression());
+if (process.env.NODE_ENV === 'production') {
+  app.use(morgan('combined'));
+}
+const server = http.createServer(app);
 const PORT = process.env.PORT || 3000;
+
+// ── EJS SETUP FOR STAFF PORTAL ──
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, 'views'));
+app.use(expressLayouts);
+app.set('layout', 'layout');
 
 
 
@@ -72,7 +102,6 @@ app.use(cors({
 }));
 
 // serve admin static UI files so they load from the same origin as the API
-const path = require('path');
 // allow requests like /admin/bookings to resolve to bookings.html
 app.use('/admin', express.static(path.join(__dirname, 'admin'), {
     extensions: ['html'],
@@ -118,6 +147,15 @@ const bookingLimiter = rateLimit({
     message: 'Too many booking requests. Please try again later.',
     standardHeaders: true,
     legacyHeaders: false,
+});
+
+// Stricter rate limiting for admin endpoints
+const adminLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 20, // 20 requests per window
+    message: { success: false, message: 'Too many admin requests, please try again later' },
+    standardHeaders: true,
+    legacyHeaders: false
 });
 
 // ── EMAIL CONFIGURATION ──
@@ -544,7 +582,12 @@ app.get('/api/health', (req, res) => {
 app.use('/api', bookingRoutes);
 
 // ── ADMIN ROUTES (handles /api/admin/login, /api/admin/change-password, etc) ──
-app.use('/api/admin', adminRoutes);
+app.use('/api/admin', adminLimiter, adminRoutes);
+app.use('/admin/command-center', adminCommandCenterRoutes);
+
+// ── CLIENT PORTAL ROUTES ──
+const clientPortalRoutes = require('./server/routes/clientPortalRoutes');
+app.use('/client', clientPortalRoutes);
 
 // ── ANALYTICS TRACKING ENDPOINT ──
 app.post('/api/analytics/event', async (req, res) => {
@@ -575,26 +618,113 @@ app.post('/api/analytics/event', async (req, res) => {
     }
 });
 
+// M-Pesa callbacks - BEFORE any CSRF or auth middleware
+app.post('/portal/admin-staff/mpesa/callback', async (req, res) => {
+    try {
+        const svc = require('./staff-system/financials/services/eventPaymentService');
+        await svc.mpesaCallback(req.body);
+        res.json({ ResultCode: 0, ResultDesc: 'Success' });
+    } catch (err) {
+        console.error('[mpesa/callback]', err.message);
+        res.json({ ResultCode: 0, ResultDesc: 'Acknowledged' });
+    }
+});
+app.post('/portal/admin-staff/mpesa/timeout', (req, res) => {
+    console.warn('[mpesa/timeout]', req.body);
+    res.json({ ResultCode: 0, ResultDesc: 'Acknowledged' });
+});
+// ── STAFF PORTAL CSRF MIDDLEWARE ──
+const portalCsrf = csrf({ cookie: { httpOnly: true, sameSite: 'strict' } });
+
+// Add csrfToken + vapidPublicKey to all /portal responses
+app.use('/portal', portalCsrf, (req, res, next) => {
+    res.locals.csrfToken = req.csrfToken();
+    res.locals.vapidPublicKey = process.env.VAPID_PUBLIC_KEY || '';
+    next();
+});
+
+// ── STAFF PORTAL ROUTES ──
+const portalAuthRoutes = require('./staff-routes/auth');
+const portalStaffRoutes = require('./staff-routes/staff');
+const portalSupervisorRoutes = require('./staff-routes/supervisor');
+const portalAdminStaffRoutes = require('./staff-routes/admin');
+
+app.use('/portal/auth', portalCsrf, portalAuthRoutes);
+app.use('/portal/staff', portalCsrf, portalStaffRoutes);
+app.use('/portal/supervisor', portalCsrf, portalSupervisorRoutes);
+
+// Public M-Pesa callbacks - no auth, no CSRF
+app.post('/portal/admin-staff/mpesa/callback', async (req, res) => {
+    try {
+        const eventPaymentService = require('./staff-system/financials/services/eventPaymentService');
+        await eventPaymentService.mpesaCallback(req.body);
+        res.json({ ResultCode: 0, ResultDesc: 'Success' });
+    } catch (err) {
+        console.error('[mpesa/callback]', err.message);
+        res.json({ ResultCode: 0, ResultDesc: 'Acknowledged' });
+    }
+});
+app.post('/portal/admin-staff/mpesa/timeout', (req, res) => {
+    console.warn('[mpesa/timeout]', req.body);
+    res.json({ ResultCode: 0, ResultDesc: 'Acknowledged' });
+});
+app.use('/portal/admin-staff', portalCsrf, portalAdminStaffRoutes);
+
+// Convenience redirects
+app.get('/staff-login', (req, res) => res.redirect('/portal/auth/login'));
+app.get('/portal', (req, res) => res.redirect('/portal/auth/login'));
+
+// Staff portal uploads
+app.use('/uploads', express.static(path.join(__dirname, 'public', 'uploads')));
+
+// ── PORTAL CSRF ERROR HANDLER ──
+app.use('/portal', (err, req, res, next) => {
+    if (err.code === 'EBADCSRFTOKEN') {
+        return res.status(403).render('auth/login', {
+            error: 'Session expired. Please log in again.',
+            message: null,
+            csrfToken: ''
+        });
+    }
+    next(err);
+});
+
 // ── ERROR HANDLING ──
+app.get('/health', (req, res) => {
+  res.status(200).json({
+    status: 'ok',
+    service: process.env.PORT_ADMIN ? 'admin-portal' : 'staff-operations',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    environment: process.env.NODE_ENV
+  });
+});
+
 app.use((err, req, res, next) => {
-    console.error(err.stack);
-    res.status(500).json({
-        success: false,
-        message: 'Internal server error',
-        error: process.env.NODE_ENV === 'development' ? err.message : undefined
+  console.error(err.stack);
+  const statusCode = err.statusCode || 500;
+  const isApi = req.headers['content-type'] === 'application/json' ||
+                req.headers['authorization'];
+  if (isApi) {
+    return res.status(statusCode).json({
+      success: false,
+      error: {
+        code: err.code || 'INTERNAL_ERROR',
+        message: process.env.NODE_ENV === 'production'
+          ? 'An error occurred'
+          : err.message,
+        statusCode
+      },
+      timestamp: new Date().toISOString()
     });
+  }
+  res.status(statusCode).render('error', { 
+    message: 'Something went wrong',
+    statusCode 
+  });
 });
 
-// ── 404 HANDLER ──
-app.use((req, res) => {
-    res.status(404).json({
-        success: false,
-        message: 'Endpoint not found'
-    });
-});
-
-// ── START SERVER ──
-app.listen(PORT, () => {
+server.listen(PORT, () => {
     console.log(`
     ╔════════════════════════════════════════════════════════╗
     ║  🎉 EMERALD PEARLAND EVENTS BOOKING SERVER 🎉         ║
@@ -608,3 +738,4 @@ app.listen(PORT, () => {
 });
 
 module.exports = app;
+

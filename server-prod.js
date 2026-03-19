@@ -9,6 +9,7 @@ const morgan = require('morgan');
 const bodyParser = require('body-parser');
 const rateLimit = require('express-rate-limit');
 const cookieParser = require('cookie-parser');
+const jwt = require('jsonwebtoken');
 
 // Import routes and services
 const bookingRoutes = require('./server/routes/bookingRoutes');
@@ -25,6 +26,7 @@ const app = express();
 app.set('trust proxy', 1);
 const PORT = process.env.PORT || 3000;
 const NODE_ENV = process.env.NODE_ENV || 'development';
+const STAFF_SYSTEM_BASE_URL = process.env.STAFF_SYSTEM_BASE_URL || 'http://localhost:3001';
 
 // ═══════════════════════════════════════════════════════════
 // MIDDLEWARE - SECURITY & PARSING
@@ -106,10 +108,10 @@ app.use(limiter);
 
 const connectDatabase = async () => {
     try {
-        const mongoUri = process.env.MONGODB_URI;
+        const mongoUri = process.env.MONGO_URI;
 
         if (!mongoUri) {
-            throw new Error('MONGODB_URI not defined in .env');
+            throw new Error('MONGO_URI not defined in .env');
         }
 
         await mongoose.connect(mongoUri, {
@@ -121,7 +123,7 @@ const connectDatabase = async () => {
         return true;
     } catch (error) {
         console.error('❌ MongoDB connection error:', error.message);
-        console.error('   Make sure MongoDB is running and MONGODB_URI is correct in .env');
+        console.error('   Make sure MongoDB is running and MONGO_URI is correct in .env');
         process.exit(1);
     }
 };
@@ -164,6 +166,63 @@ app.get('/admin/login', (req, res) => {
 // Admin dashboard (protected)
 app.get('/admin/dashboard', verifyAdminPage, (req, res) => {
     res.sendFile(__dirname + '/admin/dashboard.html');
+});
+
+// SSO Bridge — generates short-lived token for Staff Operations access
+app.get('/admin/staff-operations-sso', verifyAdminPage, async (req, res) => {
+    try {
+        const ssoSecret = process.env.SSO_JWT_SECRET || process.env.JWT_SECRET || 'fallback_secret_key';
+        const adminId = req.admin.adminId;
+        const email = req.admin.email;
+
+        const Admin = require('./server/models/Admin');
+        const adminDoc = await Admin.findById(adminId).select('role').lean();
+        const role = adminDoc?.role || 'admin';
+
+        // Admin model uses: super_admin, admin, manager
+        if (!['super_admin', 'admin'].includes(role)) {
+            return res.status(403).send('Access denied');
+        }
+
+        // Map to Staff-style role for token (Staff only has 'Admin')
+        const tokenRole = role === 'super_admin' ? 'Super Admin' : 'Admin';
+
+        const ssoToken = jwt.sign(
+            { sub: adminId.toString(), email, role: tokenRole, type: 'staff-ops-sso' },
+            ssoSecret,
+            { expiresIn: '2m' }
+        );
+
+        return res.redirect(
+            `${STAFF_SYSTEM_BASE_URL}/staff-admin/sso-login?token=${encodeURIComponent(ssoToken)}`
+        );
+    } catch (err) {
+        console.error('SSO generation error:', err.message);
+        return res.redirect('/admin/login');
+    }
+});
+
+// Staff profile sync receiver from port 3001
+app.post('/internal/sync-staff-update', express.json(), async (req, res) => {
+    try {
+        const syncSecret = process.env.JWT_SECRET || 'fallback_secret_key';
+        if (req.headers['x-sync-secret'] !== syncSecret) {
+            return res.status(401).json({ error: 'Unauthorized' });
+        }
+        const { email, name, phone } = req.body;
+        const Staff = require('./server/models/Staff');
+        const updated = await Staff.findOneAndUpdate(
+            { email },
+            { $set: { name, phone } },
+            { new: true }
+        );
+        if (!updated) return res.status(404).json({ error: 'Staff not found' });
+        console.log('Staff sync from port 3001:', email, '->', name, phone);
+        res.json({ success: true });
+    } catch (err) {
+        console.error('Sync error:', err.message);
+        res.status(500).json({ error: err.message });
+    }
 });
 
 // Admin bookings page
@@ -219,6 +278,10 @@ app.get('/admin/staff', verifyAdminPage, (req, res) => {
 app.get('/admin/settings', verifyAdminPage, (req, res) => {
     res.sendFile(__dirname + '/admin/settings.html');
 });
+// Admin pricing & rates page
+app.get('/admin/pricing', verifyAdminPage, (req, res) => {
+    res.sendFile(__dirname + '/admin/pricing.html');
+});
 
 // Error pages
 app.get('/admin/404', (req, res) => {
@@ -237,11 +300,10 @@ app.get('/admin/403', (req, res) => {
 // API ROUTES
 // ═══════════════════════════════════════════════════════════
 
-// Main booking API
-app.use('/api', bookingRoutes);
-
 // Admin API (protected by JWT middleware)
 app.use('/api/admin', adminRoutes);
+// Main booking API
+app.use('/api', bookingRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
@@ -328,6 +390,31 @@ app.use('/api/admin/forgot-password', authLimiter);
 // ═══════════════════════════════════════════════════════════
 // 404 HANDLER
 // ═══════════════════════════════════════════════════════════
+
+// Internal sync route � receives event completion from port 3001
+app.post('/internal/sync-event-complete', async (req, res) => {
+    try {
+        const syncSecret = process.env.JWT_SECRET || 'fallback_secret_key';
+        if (req.headers['x-sync-secret'] !== syncSecret) {
+            return res.status(401).json({ error: 'Unauthorized' });
+        }
+        const { booking_ref, status } = req.body;
+        if (!booking_ref) return res.json({ success: false, error: 'No booking_ref' });
+
+        const Booking = require('./server/models/Booking');
+        const booking = await Booking.findOne({ bookingReference: booking_ref });
+        if (!booking) return res.json({ success: false, error: 'Booking not found' });
+
+        booking.status = status === 'Completed' ? 'completed' : (status || 'completed');
+        await booking.save();
+
+        console.log('Event completion synced from port 3001:', booking_ref);
+        res.json({ success: true, booking_ref });
+    } catch(err) {
+        console.error('Event sync error:', err.message);
+        res.status(500).json({ error: err.message });
+    }
+});
 
 app.use((req, res) => {
     // If it's an API route that wasn't found, return JSON

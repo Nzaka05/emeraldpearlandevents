@@ -1,0 +1,111 @@
+<% currentPage='team' ; %>
+
+<!-- ══ Header ══ -->
+<div class="flex items-center justify-between mb-5 animate-fade-up">
+    <div>
+        <h1 class="font-display text-2xl font-extrabold text-tx-1 tracking-tight flex items-center gap-3">
+            <i class="fa-solid fa-people-group text-emerald-400"></i>
+            <span class="text-gradient-emerald">Team Management</span>
+        </h1>
+        <p class="text-[0.7rem] text-tx-3 mt-1 uppercase tracking-widest font-mono">Unit Deployment & Roster Control</p>
+    </div>
+</div>
+
+<% if (!(teams && teams.length)) { %>
+    <div class="glass-card p-12 flex flex-col items-center justify-center text-tx-3 opacity-60 text-center animate-fade-up">
+        <i class="fa-solid fa-people-arrows text-4xl mb-4"></i>
+        <h4 class="text-sm font-bold text-tx-1 mb-1">No Units Assigned</h4>
+        <p class="text-xs">No teams have been assigned to you yet.</p>
+    </div>
+<% } else { %>
+    <div class="space-y-4 mb-[80px]">
+        <% teams.forEach(function(team) { %>
+        <% var asn = team.assignment_id || {}; %>
+        <div class="glass-card animate-fade-up <%= asn.vip_flag ? 'border-l-2 border-gold-500' : 'border-l-2 border-emerald-500' %>">
+            <!-- Team Header -->
+            <div class="px-4 sm:px-5 py-4 border-b border-white/5 flex items-start justify-between gap-3">
+                <div class="min-w-0">
+                    <h3 class="text-sm font-bold text-tx-1 flex items-center gap-2 flex-wrap mb-1">
+                        <%= asn.title || 'Event' %>
+                        <% if(asn.vip_flag) { %><span class="badge-gold text-[0.55rem] font-bold px-1.5 py-0.5 rounded uppercase tracking-widest"><i class="fa-solid fa-crown text-[0.5rem] mr-0.5"></i>VIP</span><% } %>
+                    </h3>
+                    <% if(asn.date) { %>
+                        <div class="text-[0.65rem] text-tx-3 font-mono">
+                            <i class="fa-solid fa-calendar mr-1 opacity-60"></i>
+                            <%= new Date(asn.date).toLocaleDateString('en-GB',{weekday:'short',day:'2-digit',month:'short',year:'numeric'}) %>
+                        </div>
+                    <% } %>
+                </div>
+                <% var tsBadge = asn.status === 'Active' ? 'text-emerald-400 border-emerald-500/30 bg-emerald-500/10 animate-pulse' : asn.status === 'Completed' ? 'text-blue-400 border-blue-500/30 bg-blue-500/10' : 'text-tx-3 border-white/10 bg-white/5'; %>
+                <span class="text-[0.55rem] font-bold tracking-widest uppercase border px-1.5 py-0.5 rounded shrink-0 <%= tsBadge %>"><%= asn.status || '—' %></span>
+            </div>
+
+            <!-- Members -->
+            <div class="px-4 sm:px-5 py-3">
+                <div class="flex items-center justify-between mb-3">
+                    <div class="text-[0.6rem] font-bold uppercase tracking-widest text-tx-3 opacity-70">Unit Members</div>
+                    <span class="badge-blue text-[0.55rem] font-bold px-1.5 py-0.5 rounded"><%= (team.member_ids||[]).length %></span>
+                </div>
+
+                <% if((team.member_ids||[]).length === 0) { %>
+                    <div class="text-center py-5 text-tx-3 opacity-50">
+                        <i class="fa-solid fa-user-slash text-xl mb-2 block"></i>
+                        <p class="text-xs">No members yet</p>
+                    </div>
+                <% } else { %>
+                    <div class="divide-y divide-white/5">
+                        <% (team.member_ids||[]).forEach(function(m) { 
+                            var isAccepted = asn.accepted_staff_ids && asn.accepted_staff_ids.some(function(a){ return a && m && a.toString() === m._id.toString(); });
+                            var avail = m.availability_status || 'Unknown';
+                            var availClass = avail === 'Available' ? 'text-emerald-400' : avail === 'On Shift' ? 'text-gold-400' : 'text-tx-3';
+                        %>
+                            <div class="py-3 flex items-center justify-between gap-3">
+                                <div class="flex items-center gap-2.5 min-w-0">
+                                    <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-gray-700 to-gray-600 flex items-center justify-center text-[0.6rem] font-bold text-white flex-shrink-0">
+                                        <%= m.name ? m.name.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2) : '??' %>
+                                    </div>
+                                    <div class="min-w-0">
+                                        <div class="text-xs font-bold text-tx-1 truncate"><%= m.name %></div>
+                                        <div class="text-[0.6rem] font-mono flex items-center gap-1 <%= availClass %>">
+                                            <i class="fa-solid fa-circle text-[0.35rem]"></i>
+                                            <%= avail %>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-2 shrink-0">
+                                    <% if(isAccepted) { %>
+                                        <span class="text-[0.55rem] font-bold tracking-widest uppercase border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 px-1.5 py-0.5 rounded">
+                                            <i class="fa-solid fa-circle-check text-[0.5rem] mr-0.5"></i> Accepted
+                                        </span>
+                                    <% } else { %>
+                                        <span class="text-[0.55rem] font-bold tracking-widest uppercase border border-gold-500/30 bg-gold-500/10 text-gold-400 px-1.5 py-0.5 rounded">
+                                            <i class="fa-solid fa-hourglass text-[0.5rem] mr-0.5"></i> Pending
+                                        </span>
+                                    <% } %>
+                                    <button onclick="removeRequest('<%= m._id %>', '<%= m.name %>')"
+                                        class="w-7 h-7 flex items-center justify-center rounded-lg border border-red-500/30 text-red-400 hover:bg-red-500/10 transition-colors text-xs">
+                                        <i class="fa-solid fa-user-minus"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        <% }); %>
+                    </div>
+                <% } %>
+            </div>
+        </div>
+        <% }); %>
+    </div>
+<% } %>
+
+<script>
+    async function removeRequest(staffId, name) {
+        if (!confirm(`Send removal request for ${name}?`)) return;
+        const r = await fetch('/portal/supervisor/team/remove', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ staffId })
+        });
+        const d = await r.json();
+        if (d.success) showToast('Removal request submitted.', 'success');
+        else showToast(d.error || 'Error', 'error');
+    }
+</script>

@@ -1,0 +1,411 @@
+<% currentPage='team' ; %>
+
+<!-- ══ Header ══ -->
+<div class="flex items-center justify-between mb-5 animate-fade-up">
+    <div>
+        <h1 class="font-display text-2xl font-extrabold text-tx-1 tracking-tight flex items-center gap-3">
+            <i class="fa-solid fa-people-group text-emerald-400"></i>
+            <span class="text-gradient-emerald">My Team</span>
+        </h1>
+        <p class="text-[0.7rem] text-tx-3 mt-1 uppercase tracking-widest font-mono">Unit Comms & Deployment Intel</p>
+    </div>
+</div>
+
+<% if (!team) { %>
+    <div class="glass-card p-12 flex flex-col items-center justify-center text-tx-3 opacity-60 text-center animate-fade-up">
+        <i class="fa-solid fa-people-arrows text-4xl mb-4"></i>
+        <h4 class="text-sm font-bold text-tx-1 mb-1">No Unit Assigned</h4>
+        <p class="text-xs">You haven't been assigned to a team yet.</p>
+    </div>
+<% } else { %>
+
+<!-- ══ Supervisor Panel ══ -->
+<% if (team.supervisor_id) { %>
+<div class="glass-card mb-4 p-4 border-l-2 border-emerald-500 animate-fade-up delay-1 flex items-center gap-4 relative overflow-hidden">
+    <div class="absolute right-0 top-0 bottom-0 w-24 bg-gradient-to-l from-emerald-950/20 to-transparent pointer-events-none"></div>
+    <% var supInitials = team.supervisor_id.name ? team.supervisor_id.name.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2) : 'SV'; %>
+    <div class="w-12 h-12 rounded-xl flex-shrink-0 overflow-hidden shadow-glow-emerald">
+        <% if(team.supervisor_id.photo_url) { %>
+            <img src="<%= team.supervisor_id.photo_url %>" alt="<%= supInitials %>" style="width:100%;height:100%;object-fit:cover;">
+        <% } else { %>
+            <div style="width:100%;height:100%;background:linear-gradient(135deg,#047857,#10b981);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1rem;color:#fff;">
+                <%= supInitials %>
+            </div>
+        <% } %>
+    </div>
+    <div class="flex-1 min-w-0">
+        <div class="text-[0.6rem] font-bold uppercase tracking-widest text-emerald-400/70 mb-0.5">Supervisor</div>
+        <div class="text-sm font-bold text-tx-1 truncate"><%= team.supervisor_id.name %></div>
+        <% if(team.supervisor_id.phone) { %>
+            <div class="text-[0.65rem] text-tx-3 font-mono mt-0.5"><i class="fa-solid fa-phone mr-1 opacity-60"></i><%= team.supervisor_id.phone %></div>
+        <% } %>
+    </div>
+    <div class="flex items-center gap-1.5 shrink-0">
+        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+        <span class="text-[0.6rem] font-bold text-emerald-400 uppercase tracking-wider">Online</span>
+    </div>
+</div>
+<% } %>
+
+<!-- ══ Active Event Card ══ -->
+<% if (team.assignment_id) { %>
+<% var asn = team.assignment_id; %>
+<div class="glass-card mb-4 animate-fade-up delay-1">
+    <div class="px-4 py-3 border-b border-white/5 flex items-center justify-between">
+        <div class="min-w-0 pr-3">
+            <h3 class="text-sm font-bold text-tx-1 truncate"><%= asn.title %> <% if(asn.vip_flag) { %><span class="badge-gold text-[0.55rem] font-bold px-1.5 py-0.5 rounded uppercase tracking-widest ml-1"><i class="fa-solid fa-crown text-[0.5rem]"></i> VIP</span><% } %></h3>
+            <% if(asn.date) { %>
+                <div class="text-[0.6rem] text-tx-3 font-mono mt-0.5 uppercase tracking-wider"><%= new Date(asn.date).toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'long',year:'numeric'}).toUpperCase() %></div>
+            <% } %>
+        </div>
+        <% 
+            var stColor = asn.status === 'Active' ? 'badge-emerald text-emerald-400' : asn.status === 'Completed' ? 'badge-blue text-blue-400' : 'text-tx-3 bg-white/5 border-white/10';
+        %>
+        <span class="text-[0.55rem] font-bold tracking-widest uppercase border px-1.5 py-0.5 rounded <%= stColor %> shrink-0"><%= asn.status %></span>
+    </div>
+    <div class="p-4 grid grid-cols-2 gap-3">
+        <div class="bg-black/30 border border-white/5 p-3 rounded-xl">
+            <div class="text-[0.55rem] text-tx-3 uppercase tracking-widest font-bold mb-1 opacity-70"><i class="fa-solid fa-location-dot mr-1"></i> Location</div>
+            <div class="text-xs font-bold text-tx-1"><%= asn.location||'—' %></div>
+        </div>
+        <div class="bg-black/30 border border-white/5 p-3 rounded-xl">
+            <div class="text-[0.55rem] text-tx-3 uppercase tracking-widest font-bold mb-1 opacity-70"><i class="fa-regular fa-clock mr-1"></i> Window</div>
+            <div class="text-xs font-bold text-tx-1"><%= asn.start_time||'?' %> – <%= asn.end_time||'?' %></div>
+        </div>
+        <div class="bg-black/30 border border-white/5 p-3 rounded-xl">
+            <div class="text-[0.55rem] text-tx-3 uppercase tracking-widest font-bold mb-1 opacity-70"><i class="fa-solid fa-sack-dollar mr-1"></i> Pay Rate</div>
+            <div class="text-xs font-bold text-emerald-400 font-mono">KSh <%= (asn.pay_rate||0).toLocaleString() %></div>
+        </div>
+        <div class="bg-black/30 border border-white/5 p-3 rounded-xl">
+            <div class="text-[0.55rem] text-tx-3 uppercase tracking-widest font-bold mb-1 opacity-70"><i class="fa-solid fa-shirt mr-1"></i> Dress Code</div>
+            <div class="text-xs font-bold text-tx-1"><%= asn.dress_code||'—' %></div>
+        </div>
+    </div>
+    <% if(asn.special_instructions) { %>
+        <div class="mx-4 mb-4 bg-gold-500/10 border border-gold-500/30 rounded-xl p-3">
+            <div class="text-[0.6rem] text-gold-400/70 uppercase tracking-widest font-bold mb-1.5 flex items-center gap-1.5"><i class="fa-solid fa-circle-info"></i> MISSION ALERT</div>
+            <div class="text-xs text-tx-2 leading-relaxed"><%= asn.special_instructions %></div>
+        </div>
+    <% } %>
+</div>
+<% } %>
+
+<!-- ══ Team Members ══ -->
+<div class="glass-card mb-4 animate-fade-up delay-2">
+    <div class="px-4 py-3 border-b border-white/5 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+            <i class="fa-solid fa-users text-tx-3 text-sm"></i>
+            <h3 class="text-sm font-bold text-tx-1 uppercase tracking-widest">Unit Roster</h3>
+        </div>
+        <span class="badge-blue text-[0.6rem] font-bold px-2 py-0.5 rounded"><%= (team.member_ids||[]).length %> agents</span>
+    </div>
+    <div class="divide-y divide-white/5">
+        <% if((team.member_ids||[]).length) { %>
+            <% (team.member_ids||[]).forEach(function(m) { %>
+                <div class="px-4 py-3 flex items-center gap-3 hover:bg-white/[0.02] transition-colors">
+                    <div class="w-9 h-9 rounded-xl flex-shrink-0 overflow-hidden">
+                        <% var mInitials = m.name ? m.name.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2) : '??'; %>
+                        <% if(m.photo_url) { %>
+                            <img src="<%= m.photo_url %>" alt="<%= mInitials %>" style="width:100%;height:100%;object-fit:cover;">
+                        <% } else { %>
+                            <div style="width:100%;height:100%;background:linear-gradient(135deg,#374151,#4b5563);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.72rem;color:#fff;">
+                                <%= mInitials %>
+                            </div>
+                        <% } %>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="text-sm font-bold text-tx-1 truncate"><%= m.name %></div>
+                        <div class="text-[0.65rem] text-tx-3 font-mono truncate"><%= m.email %></div>
+                    </div>
+                    <% var avColor = m.availability_status === 'Available' ? 'text-emerald-400' : m.availability_status === 'On Shift' ? 'text-blue-400' : 'text-tx-3'; %>
+                    <span class="text-[0.6rem] font-bold <%= avColor %> uppercase tracking-wider shrink-0"><%= m.availability_status||'—' %></span>
+                </div>
+            <% }); %>
+        <% } else { %>
+            <div class="p-8 text-center text-tx-3 opacity-60">
+                <i class="fa-solid fa-user-slash text-2xl mb-2 block"></i>
+                <p class="text-xs">No teammates assigned to unit.</p>
+            </div>
+        <% } %>
+    </div>
+</div>
+
+<!-- ══ Announcements ══ -->
+<% if(communications && communications.filter(function(m){return m.message_type !== 'Chat';}).length) { %>
+<div class="glass-card mb-4 animate-fade-up delay-2">
+    <div class="px-4 py-3 border-b border-white/5 flex items-center gap-2">
+        <i class="fa-solid fa-satellite-dish text-gold-400 text-sm"></i>
+        <h3 class="text-sm font-bold text-tx-1 uppercase tracking-widest">Dispatches</h3>
+    </div>
+    <div class="divide-y divide-white/5">
+        <% 
+            var ic = {Announcement:'📢',Alert:'🚨',Reminder:'⏰',Logistics:'📦'};
+            var tc = {Announcement:'badge-blue text-blue-400', Alert:'badge-red text-red-400', Reminder:'badge-gold text-gold-400', Logistics:'text-purple-400 bg-purple-500/10 border-purple-500/30'};
+            communications.filter(function(m){return m.message_type !== 'Chat';}).forEach(function(msg) { 
+        %>
+            <div class="p-4 flex items-start gap-3">
+                <div class="text-xl flex-shrink-0 w-8 text-center"><%= ic[msg.message_type]||'💬' %></div>
+                <div class="flex-1 min-w-0">
+                    <div class="flex items-center gap-2 flex-wrap mb-1.5">
+                        <span class="text-[0.55rem] font-bold tracking-widest uppercase border px-1.5 py-0.5 rounded <%= tc[msg.message_type]||'text-tx-3 bg-white/5 border-white/10' %>"><%= msg.message_type %></span>
+                        <span class="text-[0.6rem] text-tx-3 font-mono">
+                            <%= new Date(msg.createdAt).toLocaleString('en-GB',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}) %>
+                        </span>
+                    </div>
+                    <div class="text-xs text-tx-2 leading-relaxed"><%= msg.message_content %></div>
+                </div>
+            </div>
+        <% }); %>
+    </div>
+</div>
+<% } %>
+
+<!-- ══ Team Chat ══ -->
+<div class="glass-card mb-[80px] animate-fade-up delay-3">
+    <div class="px-4 py-3 border-b border-white/5 flex items-center gap-2">
+        <i class="fa-solid fa-comments text-emerald-400 text-sm"></i>
+        <h3 class="text-sm font-bold text-tx-1 uppercase tracking-widest">Team Comms</h3>
+        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse ml-1 shadow-glow-emerald"></span>
+    </div>
+
+    <!-- Messages container -->
+    <div id="chatMessages" class="p-4 max-h-[380px] min-h-[120px] overflow-y-auto flex flex-col gap-3 custom-scrollbar">
+        <% if(communications && communications.length) { %>
+            <% communications.slice().reverse().forEach(function(msg) { %>
+                <% if(msg.message_type === 'Chat') { %>
+                    <div class="flex gap-3 items-start">
+                        <% var msgInitials = (msg.sender_name||'?').split(' ').map(function(n){return n[0];}).join('').slice(0,2).toUpperCase(); %>
+                        <div style="width:32px;height:32px;border-radius:50%;overflow:hidden;flex-shrink:0;">
+                            <% if(msg.sender_id && msg.sender_id.photo_url) { %>
+                                <img src="<%= msg.sender_id.photo_url %>" alt="<%= msgInitials %>" style="width:100%;height:100%;object-fit:cover;">
+                            <% } else { %>
+                                <div style="width:100%;height:100%;background:var(--emerald);display:flex;align-items:center;justify-content:center;font-size:0.72rem;font-weight:700;color:#fff;"><%= msgInitials %></div>
+                            <% } %>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="text-[0.65rem] text-tx-3 font-mono mb-1">
+                                <strong class="text-tx-1 font-bold"><%= msg.sender_name || (msg.sender_id && msg.sender_id.name) || 'Unknown' %></strong>
+                                <span class="opacity-60 ml-1">· <%= new Date(msg.timestamp).toLocaleTimeString('en-KE',{hour:'2-digit',minute:'2-digit'}) %></span>
+                            </div>
+                            <div class="bg-white/5 border border-white/5 rounded-xl rounded-tl-sm px-3 py-2 text-xs text-tx-1 leading-relaxed break-words">
+                                <% if(msg.message_content && msg.message_content.startsWith('[image]')) { %>
+                                    <img src="<%= msg.message_content.replace('[image]','') %>" class="max-w-[200px] max-h-[180px] rounded-lg cursor-pointer hover:opacity-90 transition-opacity" onclick="window.open(this.src,'_blank')">
+                                <% } else if(msg.message_content && msg.message_content.startsWith('[video]')) { %>
+                                    <video src="<%= msg.message_content.replace('[video]','') %>" controls class="max-w-[200px] rounded-lg"></video>
+                                <% } else { %>
+                                    <%= msg.message_content %>
+                                <% } %>
+                            </div>
+                        </div>
+                    </div>
+                <% } %>
+            <% }); %>
+        <% } else { %>
+            <div class="flex-1 flex items-center justify-center py-6">
+                <p class="text-xs text-tx-3 opacity-60 font-mono">[ NO COMMS LOGGED — START TRANSMISSION ]</p>
+            </div>
+        <% } %>
+    </div>
+
+    <!-- Mention Dropdown -->
+    <div id="mentionDropdown" class="hidden absolute bottom-[64px] left-3 bg-dark-card border border-white/10 rounded-xl min-w-[200px] z-50 overflow-hidden shadow-xl">
+        <% if(team && team.member_ids) { team.member_ids.forEach(function(m) { %>
+            <div class="mention-item flex items-center gap-2.5 px-3 py-2 cursor-pointer hover:bg-white/5 transition-colors text-sm" data-name="<%= m.name %>" onclick="insertMention('<%= m.name %>')">
+                <div class="w-7 h-7 rounded-full bg-emerald-700 flex items-center justify-center text-[0.6rem] font-bold text-white flex-shrink-0">
+                    <%= m.name.split(' ').map(function(n){return n[0];}).join('').slice(0,2).toUpperCase() %>
+                </div>
+                <span class="text-tx-2 font-medium text-xs"><%= m.name %></span>
+            </div>
+        <% }); } %>
+    </div>
+
+    <!-- Emoji Picker -->
+    <div id="emojiPicker" class="hidden border-t border-white/5 p-2 flex-wrap gap-1 max-h-[100px] overflow-y-auto bg-black/20">
+        <% ['😀','😂','😍','🥰','😎','🤔','😢','😡','👍','👎','❤️','🔥','🎉','✅','⚠️','🙏','💪','😊','🤝','💬','📍','⏰','🎵','🍀','⭐'].forEach(function(e){ %>
+            <span onclick="insertEmoji('<%= e %>')" class="cursor-pointer text-xl px-1 py-0.5 rounded hover:bg-white/10 transition-colors"><%= e %></span>
+        <% }); %>
+    </div>
+
+    <!-- Chat Input -->
+    <div class="px-3 py-3 border-t border-white/5 flex items-center gap-2 relative bg-black/20">
+        <!-- Emoji Toggle -->
+        <button onclick="toggleEmoji()" title="Emoji" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/10 transition-colors text-base flex-shrink-0">😊</button>
+        <!-- File Upload -->
+        <label title="Attach file" class="w-8 h-8 flex items-center justify-center rounded-lg cursor-pointer hover:bg-white/10 transition-colors text-tx-3 hover:text-tx-1 flex-shrink-0">
+            <i class="fa-solid fa-paperclip text-xs"></i>
+            <input type="file" id="chatFileInput" accept="image/*,video/*" class="hidden" onchange="previewChatFile(this)">
+        </label>
+        <!-- Input -->
+        <input type="text" id="chatInput" placeholder="Transmit message…"
+            class="flex-1 bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-tx-1 placeholder-tx-3/50 focus:border-emerald-500/40 focus:ring-0 focus:outline-none transition-colors font-mono"
+            onkeydown="handleChatKey(event)" oninput="handleMentionInput(this)">
+        <!-- Send -->
+        <button onclick="sendChatMessage()" title="Send" class="w-8 h-8 bg-emerald-600 hover:bg-emerald-500 text-white border-none rounded-xl flex items-center justify-center flex-shrink-0 shadow-glow-emerald transition-colors">
+            <i class="fa-solid fa-paper-plane text-xs"></i>
+        </button>
+    </div>
+</div>
+
+<% } %>
+
+<!-- ══ Media Preview Modal ══ -->
+<div id="mediaPreviewModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-md z-[9999] flex items-center justify-center p-4">
+    <div class="bg-dark-card border border-white/10 rounded-2xl p-5 max-w-sm w-full relative">
+        <button onclick="closeMediaPreview()" class="absolute top-3 right-3 w-8 h-8 rounded-full border border-white/10 flex items-center justify-center text-tx-3 hover:text-tx-1 hover:bg-white/5 transition-colors">
+            <i class="fa-solid fa-xmark text-xs"></i>
+        </button>
+        <div class="text-[0.65rem] text-tx-3 uppercase tracking-widest font-bold mb-3">Preview Before Send</div>
+        <div id="mediaPreviewContent" class="rounded-xl overflow-hidden mb-3 text-center bg-black/40 min-h-[120px] flex items-center justify-center"></div>
+        <input type="text" id="mediaCaptionInput" placeholder="Add a caption…"
+            class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-tx-1 placeholder-tx-3/50 focus:border-emerald-500/40 focus:ring-0 focus:outline-none mb-3 transition-colors"
+            onkeydown="if(event.key==='Enter')sendMediaWithCaption()">
+        <button onclick="sendMediaWithCaption()" class="btn btn-primary w-full shadow-glow-emerald font-bold tracking-wider">
+            <i class="fa-solid fa-paper-plane mr-2"></i> TRANSMIT MEDIA
+        </button>
+    </div>
+</div>
+
+<script>
+const teamId = '<%= team ? team._id : "" %>';
+if (teamId && typeof socket !== 'undefined') {
+    socket.emit('joinRoom', `Team_${teamId}`);
+    socket.on('newTeamMessage', function(msg) {
+        appendMessage(msg);
+        scrollChat();
+    });
+}
+
+function renderContent(content) {
+    if (!content) return '';
+    if (content.startsWith('[image]')) {
+        const url = content.replace('[image]', '');
+        return `<img src="${url}" class="max-w-[200px] max-h-[180px] rounded-lg cursor-pointer hover:opacity-90 transition-opacity mt-1" onclick="window.open('${url}','_blank')">`;
+    }
+    if (content.startsWith('[video]')) {
+        const url = content.replace('[video]', '');
+        return `<video src="${url}" controls class="max-w-[200px] rounded-lg mt-1"></video>`;
+    }
+    return content
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/@(\w+\s?\w+)/g, '<span class="text-emerald-400 font-bold">@$1</span>');
+}
+
+function appendMessage(msg) {
+    const container = document.getElementById('chatMessages');
+    if (!container) return;
+    const initials = (msg.sender_name || '?').split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
+    const time = new Date(msg.timestamp).toLocaleTimeString('en-KE', { hour: '2-digit', minute: '2-digit' });
+    const div = document.createElement('div');
+    div.className = 'flex gap-3 items-start';
+    div.innerHTML = `
+        <div style="width:32px;height:32px;border-radius:50%;overflow:hidden;flex-shrink:0;">
+            ${msg.photo_url ? `<img src="${msg.photo_url}" style="width:100%;height:100%;object-fit:cover;">` : `<div style="width:100%;height:100%;background:var(--emerald);display:flex;align-items:center;justify-content:center;font-size:0.72rem;font-weight:700;color:#fff;">${initials}</div>`}
+        </div>
+        <div class="flex-1 min-w-0">
+            <div class="text-[0.65rem] text-tx-3 font-mono mb-1">
+                <strong class="text-tx-1 font-bold">${msg.sender_name}</strong>
+                <span class="opacity-60 ml-1">· ${time}</span>
+            </div>
+            <div class="bg-white/5 border border-white/5 rounded-xl rounded-tl-sm px-3 py-2 text-xs text-tx-1 leading-relaxed break-words">
+                ${renderContent(msg.message_content)}
+            </div>
+        </div>`;
+    container.appendChild(div);
+}
+
+function toggleEmoji() {
+    const p = document.getElementById('emojiPicker');
+    p.classList.toggle('hidden');
+    p.classList.toggle('flex');
+}
+function insertEmoji(emoji) { const i = document.getElementById('chatInput'); i.value += emoji; i.focus(); }
+function handleChatKey(e) { if (e.key === 'Enter') { sendChatMessage(); return; } if (e.key === 'Escape') document.getElementById('mentionDropdown').classList.add('hidden'); }
+
+function handleMentionInput(input) {
+    const val = input.value;
+    const atPos = val.lastIndexOf('@');
+    const dropdown = document.getElementById('mentionDropdown');
+    if (atPos !== -1 && atPos === val.length - 1) {
+        dropdown.classList.remove('hidden');
+    } else if (atPos !== -1) {
+        const query = val.slice(atPos + 1).toLowerCase();
+        const items = dropdown.querySelectorAll('.mention-item');
+        let any = false;
+        items.forEach(item => {
+            const match = item.dataset.name.toLowerCase().includes(query);
+            item.style.display = match ? 'flex' : 'none';
+            if (match) any = true;
+        });
+        dropdown.classList.toggle('hidden', !any);
+    } else { dropdown.classList.add('hidden'); }
+}
+
+function insertMention(name) {
+    const input = document.getElementById('chatInput');
+    const val = input.value;
+    const atPos = val.lastIndexOf('@');
+    input.value = val.slice(0, atPos) + '@' + name + ' ';
+    document.getElementById('mentionDropdown').classList.add('hidden');
+    input.focus();
+}
+
+let _pendingFile = null;
+function previewChatFile(input) {
+    if (!input.files || !input.files[0]) return;
+    _pendingFile = input.files[0];
+    const isVideo = _pendingFile.type.startsWith('video/');
+    const url = URL.createObjectURL(_pendingFile);
+    const content = document.getElementById('mediaPreviewContent');
+    content.innerHTML = isVideo
+        ? `<video src="${url}" controls class="max-w-full rounded-lg"></video>`
+        : `<img src="${url}" class="max-w-full rounded-lg">`;
+    document.getElementById('mediaCaptionInput').value = '';
+    document.getElementById('mediaPreviewModal').classList.remove('hidden');
+    document.getElementById('mediaPreviewModal').classList.add('flex');
+    input.value = '';
+}
+function closeMediaPreview() {
+    document.getElementById('mediaPreviewModal').classList.add('hidden');
+    document.getElementById('mediaPreviewModal').classList.remove('flex');
+    _pendingFile = null;
+}
+
+async function sendMediaWithCaption() {
+    if (!_pendingFile) return;
+    const caption = document.getElementById('mediaCaptionInput').value.trim();
+    const formData = new FormData();
+    formData.append('file', _pendingFile);
+    formData.append('caption', caption);
+    closeMediaPreview();
+    try {
+        const csrf = document.querySelector('meta[name="csrf-token"]')?.content || '';
+        const r = await fetch('/portal/staff/team/message/upload', { method: 'POST', headers: { 'CSRF-Token': csrf }, body: formData });
+        const d = await r.json();
+        if (!d.success) showToast(d.error || 'Upload failed', 'error');
+    } catch(err) { showToast('Transmit failed', 'error'); }
+}
+
+function scrollChat() { const c = document.getElementById('chatMessages'); if(c) c.scrollTop = c.scrollHeight; }
+
+async function sendChatMessage() {
+    const input = document.getElementById('chatInput');
+    if (!input) return;
+    const message = input.value.trim();
+    if (!message) return;
+    input.value = '';
+    input.disabled = true;
+    try {
+        const csrf = document.querySelector('meta[name="csrf-token"]')?.content || '';
+        const r = await fetch('/portal/staff/team/message', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'CSRF-Token': csrf },
+            body: JSON.stringify({ message })
+        });
+        const d = await r.json();
+        if (!d.success) { showToast(d.error || 'Failed to send', 'error'); input.value = message; }
+    } catch(err) { showToast('Transmit failed', 'error'); input.value = message; }
+    finally { input.disabled = false; input.focus(); }
+}
+
+scrollChat();
+</script>

@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Event Transaction Report - <%= summary.etrNumber %></title>
+    <style>
+        body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; margin: 0; padding: 0; color: #334155; }
+        .page { padding: 40px; box-sizing: border-box; page-break-after: always; position: relative; min-height: 1120px; }
+        .page:last-child { page-break-after: auto; }
+        .header { border-bottom: 2px solid #0a2f1c; padding-bottom: 20px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: flex-end; }
+        .logo { font-size: 24px; font-weight: bold; color: #0a2f1c; }
+        .report-title { text-align: right; color: #64748b; font-size: 14px; line-height: 1.5; }
+        h1 { color: #0a2f1c; font-size: 28px; margin-bottom: 5px; }
+        h2 { color: #0a2f1c; font-size: 20px; border-bottom: 1px solid #e2e8f0; padding-bottom: 10px; margin-top: 30px; }
+        .grid-2 { display: table; width: 100%; margin-bottom: 20px; }
+        .grid-col { display: table-cell; width: 50%; vertical-align: top; }
+        table.data-table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        table.data-table th, table.data-table td { padding: 12px; text-align: left; border-bottom: 1px solid #e2e8f0; }
+        table.data-table th { background-color: #f8fafc; color: #64748b; font-weight: 600; font-size: 13px; text-transform: uppercase; }
+        table.data-table td { font-size: 14px; }
+        .badge { padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 12px; display: inline-block; }
+        .badge.paid { background-color: #d1fae5; color: #065f46; }
+        .badge.partial { background-color: #fef3c7; color: #92400e; }
+        .badge.outstanding { background-color: #fee2e2; color: #991b1b; }
+        .total-row td { font-weight: bold; background-color: #f8fafc; border-top: 2px solid #cbd5e1; }
+        .footer { position: absolute; bottom: 30px; left: 40px; right: 40px; border-top: 1px solid #e2e8f0; padding-top: 10px; display: flex; justify-content: space-between; font-size: 11px; color: #94a3b8; }
+        .thank-you { text-align: center; margin-top: 100px; }
+        .thank-you h2 { border: none; font-size: 24px; color: #0a2f1c; }
+        .thank-you p { font-size: 16px; color: #64748b; max-width: 400px; margin: 0 auto; line-height: 1.6; }
+        .accent { color: #d4af37; }
+    </style>
+</head>
+<body>
+
+    <!-- PAGE 1: Event Summary -->
+    <div class="page">
+        <div class="header">
+            <div class="logo">EMERALD <span class="accent">PEARLAND</span></div>
+            <div class="report-title">
+                <strong>EVENT TRANSACTION REPORT</strong><br>
+                <%= summary.etrNumber %><br>
+                Rendered: <%= new Date(summary.generatedAt).toLocaleDateString() %>
+            </div>
+        </div>
+
+        <h1><%= summary.eventName %></h1>
+        <p style="color: #64748b; font-size: 16px; margin-top: 5px;">Client: <%= summary.clientName %></p>
+
+        <h2>Event Details</h2>
+        <table class="data-table">
+            <tr><th width="30%">Date</th><td><%= new Date(summary.eventDate).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) %></td></tr>
+            <tr><th>Venue</th><td><%= summary.venue %></td></tr>
+            <tr><th>Type</th><td><%= summary.eventType %></td></tr>
+            <tr><th>Duration</th><td><%= summary.eventDuration %></td></tr>
+            <tr><th>Staff Deployed</th><td><%= summary.staffDeployed %> Personnel</td></tr>
+            <tr><th>Delivery Status</th><td><strong><%= summary.serviceDelivery.deliveryStatus %></strong></td></tr>
+        </table>
+        
+        <h2>Service Timings</h2>
+        <table class="data-table">
+            <tr><th width="30%">Planned Start</th><td><%= summary.serviceDelivery.plannedStartTime || 'Not specified' %></td></tr>
+            <tr><th>Actual Start</th><td><%= summary.serviceDelivery.actualStartTime || 'Not specified' %></td></tr>
+            <tr><th>Planned End</th><td><%= summary.serviceDelivery.plannedEndTime || 'Not specified' %></td></tr>
+            <tr><th>Actual End</th><td><%= summary.serviceDelivery.actualEndTime || 'Not specified' %></td></tr>
+        </table>
+
+        <div class="footer">
+            <span><%= summary.etrNumber %> • Version <%= summary.etrVersion %></span>
+            <span>Page 1</span>
+        </div>
+    </div>
+
+    <!-- PAGE 2: Financial Summary -->
+    <div class="page">
+        <div class="header">
+            <div class="logo">EMERALD <span class="accent">PEARLAND</span></div>
+            <div class="report-title">FINANCIAL SUMMARY<br><%= summary.etrNumber %></div>
+        </div>
+
+        <h2>Billing Overview</h2>
+        <table class="data-table">
+            <tr>
+                <th>Total Quoted</th>
+                <th>Total Paid</th>
+                <th>Outstanding Balance</th>
+                <th>Payment Status</th>
+            </tr>
+            <tr>
+                <td>KSh <%= (summary.financialSummary.totalQuoted || 0).toLocaleString() %></td>
+                <td>KSh <%= (summary.financialSummary.totalPaid || 0).toLocaleString() %></td>
+                <td>KSh <%= (summary.financialSummary.outstandingBalance || 0).toLocaleString() %></td>
+                <td>
+                    <span class="badge <%= summary.financialSummary.paymentStatus.toLowerCase() %>">
+                        <%= summary.financialSummary.paymentStatus %>
+                    </span>
+                </td>
+            </tr>
+        </table>
+
+        <h2>Internal Cost Breakdown</h2>
+        <p style="font-size: 13px; color: #64748b;">This section outlines the operational costs incurred during the planning and execution of this event.</p>
+        <table class="data-table">
+            <tr>
+                <th width="60%">Category</th>
+                <th style="text-align: right;">Amount (KSh)</th>
+            </tr>
+            <tr>
+                <td>Staff & Personnel Operations</td>
+                <td style="text-align: right;"><%= (summary.costBreakdown.staffCost || 0).toLocaleString() %></td>
+            </tr>
+            <tr>
+                <td>Logistics & Transportation</td>
+                <td style="text-align: right;"><%= (summary.costBreakdown.logisticsCost || 0).toLocaleString() %></td>
+            </tr>
+            <tr>
+                <td>Equipment & Deliverables</td>
+                <td style="text-align: right;"><%= (summary.costBreakdown.equipmentCost || 0).toLocaleString() %></td>
+            </tr>
+            <tr>
+                <td>Emergency Operational Funds</td>
+                <td style="text-align: right;"><%= (summary.costBreakdown.emergencyFundsUsed || 0).toLocaleString() %></td>
+            </tr>
+            <tr>
+                <td>Other Miscellaneous Expenses</td>
+                <td style="text-align: right;"><%= (summary.costBreakdown.otherExpenses || 0).toLocaleString() %></td>
+            </tr>
+            <tr class="total-row">
+                <td>Total Cost Setup</td>
+                <td style="text-align: right;"><%= (summary.costBreakdown.totalCost || 0).toLocaleString() %></td>
+            </tr>
+        </table>
+
+        <div class="footer">
+            <span><%= summary.etrNumber %> • Version <%= summary.etrVersion %></span>
+            <span>Page 2</span>
+        </div>
+    </div>
+
+    <!-- PAGE 3: AI Prediction (Optional) -->
+    <% if (summary.aiPredictionComparison) { %>
+    <div class="page">
+        <div class="header">
+            <div class="logo">EMERALD <span class="accent">PEARLAND</span></div>
+            <div class="report-title">AI PERFORMANCE ANALYSIS<br><%= summary.etrNumber %></div>
+        </div>
+
+        <h2>Operational Variance</h2>
+        <p style="font-size: 13px; color: #64748b;">Comparison of predicted event requirements against actual execution metrics.</p>
+        <table class="data-table">
+            <tr>
+                <th width="40%">Metric</th>
+                <th>Predicted</th>
+                <th>Actual</th>
+                <th>Variance / Accuracy</th>
+            </tr>
+            <tr>
+                <td>Total Cost</td>
+                <td>KSh <%= (summary.aiPredictionComparison.predictedCost || 0).toLocaleString() %></td>
+                <td>KSh <%= (summary.aiPredictionComparison.actualCost || 0).toLocaleString() %></td>
+                <td><strong><%= summary.aiPredictionComparison.predictionAccuracy || 'N/A' %></strong></td>
+            </tr>
+            <tr>
+                <td>Staff Requirement</td>
+                <td><%= summary.aiPredictionComparison.predictedStaff %> Personnel</td>
+                <td><%= summary.aiPredictionComparison.actualStaff %> Personnel</td>
+                <td><%= summary.aiPredictionComparison.actualStaff - summary.aiPredictionComparison.predictedStaff %> variance</td>
+            </tr>
+        </table>
+
+        <div class="footer">
+            <span><%= summary.etrNumber %> • Version <%= summary.etrVersion %></span>
+            <span>Page 3</span>
+        </div>
+    </div>
+    <% } %>
+
+    <!-- FINAL PAGE: Thank You -->
+    <div class="page">
+        <div class="header">
+            <div class="logo">EMERALD <span class="accent">PEARLAND</span></div>
+            <div class="report-title"><br><%= summary.etrNumber %></div>
+        </div>
+
+        <div class="thank-you">
+            <h2>Thank You For Partnering With Us</h2>
+            <p>We hope your event was an outstanding success. The Emerald Pearland Events team is dedicated to providing flawless execution and transparent operational reporting.</p>
+            <br><br>
+            <p style="font-size: 13px;">
+                <strong>Emerald Pearland Events</strong><br>
+                emeraldpearlandevents@gmail.com<br>
+                +254 722 446 937
+            </p>
+        </div>
+
+        <div class="footer">
+            <span><%= summary.etrNumber %> • Version <%= summary.etrVersion %></span>
+            <span>Final Page</span>
+        </div>
+    </div>
+
+</body>
+</html>

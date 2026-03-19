@@ -1,0 +1,361 @@
+<% currentPage='reports' %>
+
+<!-- ══ Page Header ══ -->
+<div class="flex items-center justify-between mb-6 animate-fade-up">
+  <div>
+    <h1 class="font-display text-2xl font-extrabold text-tx-1 tracking-tight flex items-center gap-3">
+      <span class="text-gradient-emerald">Reports & Analytics</span>
+      <span class="status-dot status-dot-active animate-pulse-dot bg-blue-500 shadow-glow-blue"></span>
+    </h1>
+    <p class="text-sm text-tx-3 mt-1">Aggregated operational metrics and export modules</p>
+  </div>
+</div>
+
+<!-- ══ Main Layout Grid ══ -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+
+  <!-- LEFT & CENTER (2 cols): Charts Area -->
+  <div class="lg:col-span-2 space-y-6">
+
+    <!-- Event Completion Report -->
+    <div class="glass-card animate-fade-up delay-1">
+      <div class="px-5 py-4 border-b border-white/5 flex items-center justify-between bg-black/20">
+         <h3 class="text-sm font-bold text-tx-1 flex items-center gap-2">
+            <i class="fa-solid fa-chart-line text-blue-400"></i> Execution Trajectories
+         </h3>
+         <div class="flex items-center gap-2 flex-wrap">
+             <button class="btn btn-outline border-white/10 hover:bg-white/5 text-[0.65rem] py-1 h-auto" onclick="exportReport('events')">
+                <i class="fa-solid fa-file-arrow-up mr-1 text-emerald-400"></i> Generate Matrix
+             </button>
+             <button class="btn btn-outline border-white/10 hover:bg-emerald-500/20 hover:text-emerald-400 hover:border-emerald-500/30 text-[0.65rem] py-1 h-auto px-2" title="Refresh">
+                 <i class="fa-solid fa-rotate"></i>
+             </button>
+         </div>
+      </div>
+      
+      <div class="p-5">
+         <!-- Legend -->
+         <div class="flex items-center gap-6 mb-4 flex-wrap">
+             <div class="flex items-center gap-2 text-xs font-bold text-tx-2"><span class="w-2 h-2 rounded-full bg-blue-500 shadow-glow-blue"></span> Success (Primary)</div>
+             <div class="flex items-center gap-2 text-xs font-bold text-tx-2"><span class="w-2 h-2 rounded-full bg-red-500 shadow-glow-red"></span> Failure (Primary)</div>
+             <div class="flex items-center gap-2 text-xs font-bold text-tx-2 ml-4"><span class="w-2 h-2 rounded-full bg-emerald-500 shadow-glow-emerald"></span> Success (Secondary)</div>
+             <div class="flex items-center gap-2 text-xs font-bold text-tx-2"><span class="w-2 h-2 rounded-full bg-gold-500 shadow-glow-gold"></span> Failure (Secondary)</div>
+         </div>
+         
+         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="relative h-[200px] w-full p-2 border border-white/5 rounded-xl bg-dark-bg/30">
+                <canvas id="eventCompletionChart1"></canvas>
+            </div>
+            <div class="relative h-[200px] w-full p-2 border border-white/5 rounded-xl bg-dark-bg/30">
+                <canvas id="eventCompletionChart2"></canvas>
+            </div>
+         </div>
+      </div>
+    </div>
+
+    <!-- Bottom Metrics Row -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 animate-fade-up delay-2">
+
+      <!-- Staff Performance Rankings -->
+      <div class="glass-card flex flex-col h-full">
+         <div class="px-5 py-4 border-b border-white/5 bg-black/20 shrink-0">
+             <h3 class="text-sm font-bold text-tx-1 flex items-center gap-2">
+                <i class="fa-solid fa-ranking-star text-gold-400"></i> Unit Ratings
+             </h3>
+         </div>
+         <div class="p-5 flex-1 flex flex-col justify-center">
+             <% const perfTeams = ['Alpha Squad', 'Logistics Node', 'Main Dispatch', 'Recon', 'Tactical', 'Ops Dev', 'Ternary']; %>
+             <div class="space-y-4 w-full">
+               <% perfTeams.forEach(function(t, i) { %>
+                 <div class="w-full">
+                     <div class="flex items-center justify-between mb-1.5">
+                         <span class="text-[0.65rem] font-bold text-tx-2 uppercase tracking-wider"><%= t %></span>
+                         <span class="text-[0.6rem] text-tx-3 font-mono">100</span>
+                     </div>
+                     <div class="h-1.5 w-full bg-dark-bg rounded-full overflow-hidden flex border border-white/5 shadow-inner">
+                         <div style="width:<%= Math.floor(Math.random()*40+20) %>%" class="h-full bg-gradient-to-r from-emerald-600 to-emerald-400"></div>
+                         <div style="width:<%= Math.floor(Math.random()*25+10) %>%" class="h-full bg-gradient-to-r from-blue-600 to-blue-400"></div>
+                         <div style="width:<%= Math.floor(Math.random()*20+5) %>%" class="h-full bg-gradient-to-r from-purple-600 to-purple-400"></div>
+                         <div style="width:<%= Math.floor(Math.random()*15+5) %>%" class="h-full bg-gradient-to-r from-red-600 to-red-400"></div>
+                     </div>
+                 </div>
+               <% }) %>
+               
+               <!-- x-axis labels -->
+               <div class="flex justify-between w-full mt-3 pt-3 border-t border-white/5">
+                   <span class="text-[0.6rem] text-tx-3 font-mono font-bold">0</span>
+                   <span class="text-[0.6rem] text-tx-3 font-mono font-bold">20</span>
+                   <span class="text-[0.6rem] text-tx-3 font-mono font-bold">40</span>
+                   <span class="text-[0.6rem] text-tx-3 font-mono font-bold">60</span>
+                   <span class="text-[0.6rem] text-tx-3 font-mono font-bold">80</span>
+                   <span class="text-[0.6rem] text-tx-3 font-mono font-bold">100</span>
+               </div>
+             </div>
+         </div>
+      </div>
+
+      <!-- Attendance Donut -->
+      <div class="glass-card flex flex-col h-full">
+         <div class="px-5 py-4 border-b border-white/5 bg-black/20 shrink-0 flex items-center justify-between">
+             <h3 class="text-sm font-bold text-tx-1 flex items-center gap-2">
+                <i class="fa-solid fa-clock-rotate-left text-emerald-400"></i> Chronology Sync
+             </h3>
+             <button class="btn btn-outline border-white/10 hover:bg-white/5 text-[0.65rem] py-1 h-auto" onclick="exportReport('attendance')">
+                <i class="fa-solid fa-file-arrow-up mr-1 text-emerald-400"></i> Export
+             </button>
+         </div>
+         <div class="p-5 flex-1 flex flex-col items-center justify-center relative">
+             <div class="relative w-[180px] h-[180px]">
+                 <canvas id="attendanceDonut"></canvas>
+                 <!-- Donut Center Text -->
+                 <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                     <span class="text-2xl font-display font-extrabold text-tx-1 drop-shadow-md">85%</span>
+                     <span class="text-[0.6rem] text-tx-3 font-bold uppercase tracking-wider">Present</span>
+                 </div>
+             </div>
+             
+             <div class="w-full flex justify-center gap-6 mt-6 border-t border-white/5 pt-4">
+                 <div class="flex flex-col items-center gap-1">
+                     <div class="flex items-center gap-1.5 text-[0.65rem] font-bold text-tx-2 uppercase tracking-wide"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-glow-emerald"></span> Synced</div>
+                     <span class="text-tx-1 font-mono text-sm font-bold">62%</span>
+                 </div>
+                 <div class="flex flex-col items-center gap-1">
+                     <div class="flex items-center gap-1.5 text-[0.65rem] font-bold text-tx-2 uppercase tracking-wide"><span class="w-1.5 h-1.5 rounded-full bg-gold-500 shadow-glow-gold"></span> Drifting</div>
+                     <span class="text-tx-1 font-mono text-sm font-bold">23%</span>
+                 </div>
+                 <div class="flex flex-col items-center gap-1">
+                     <div class="flex items-center gap-1.5 text-[0.65rem] font-bold text-tx-2 uppercase tracking-wide"><span class="w-1.5 h-1.5 rounded-full bg-blue-500 shadow-glow-blue"></span> Offline</div>
+                     <span class="text-tx-1 font-mono text-sm font-bold">15%</span>
+                 </div>
+             </div>
+         </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- RIGHT (1 col): Quarterly Overview & Tools -->
+  <div class="space-y-6 animate-fade-left">
+     
+    <div class="glass-card relative overflow-hidden flex flex-col h-full border-t-2 border-emerald-500">
+      <div class="px-5 py-4 border-b border-white/5 bg-black/20 flex items-center justify-between shrink-0">
+         <h3 class="text-sm font-bold text-tx-1 flex items-center gap-2">
+             <i class="fa-solid fa-chart-pie text-purple-400"></i> Macro Summary
+         </h3>
+         <span class="badge-emerald text-[0.6rem] font-bold tracking-widest uppercase px-2 py-0.5 flex items-center gap-1">
+             <span class="w-1 h-1 rounded-full bg-current animate-pulse"></span> Live
+         </span>
+      </div>
+      
+      <!-- Mini Chart Panels -->
+      <div class="grid grid-cols-2 gap-3 p-4">
+          <div class="bg-dark-bg/60 border border-white/5 rounded-xl p-3 relative flex flex-col justify-between">
+              <span class="badge-emerald text-[0.55rem] font-bold absolute top-3 right-3 px-1.5 py-0.5">Trend</span>
+              <div class="text-[0.65rem] font-bold text-tx-2 uppercase tracking-wider mb-2 leading-tight">Cycle<br>Metrics</div>
+              <div class="h-[40px] w-full mt-auto relative"><canvas id="qChart1"></canvas></div>
+          </div>
+          <div class="bg-dark-bg/60 border border-white/5 rounded-xl p-3 relative flex flex-col justify-between">
+              <span class="badge-purple text-[0.55rem] font-bold absolute top-3 right-3 px-1.5 py-0.5">Trend</span>
+              <div class="text-[0.65rem] font-bold text-tx-2 uppercase tracking-wider mb-2 leading-tight">Quarterly<br>Blocks</div>
+              <div class="h-[40px] w-full mt-auto relative"><canvas id="qChart2"></canvas></div>
+          </div>
+      </div>
+      
+      <!-- Table Summary -->
+      <div class="p-4 border-t border-white/5">
+         <table class="w-full text-left">
+            <thead>
+               <tr>
+                   <th class="pb-2 text-[0.6rem] font-bold text-tx-3 uppercase tracking-wider border-b border-white/10">Cycle</th>
+                   <th class="pb-2 text-[0.6rem] font-bold text-tx-3 uppercase tracking-wider border-b border-white/10">Vol</th>
+                   <th class="pb-2 text-[0.6rem] font-bold text-tx-3 uppercase tracking-wider border-b border-white/10">Delta</th>
+               </tr>
+            </thead>
+            <tbody>
+               <tr class="border-b border-white/5 last:border-0 hover:bg-white/5 transition-colors">
+                   <td class="py-2.5 text-xs text-tx-2 font-medium">Q1 2026</td>
+                   <td class="py-2.5 text-xs font-bold text-tx-1 font-mono">738</td>
+                   <td class="py-2.5 text-xs font-bold text-emerald-400 font-mono">+16.2%</td>
+               </tr>
+               <tr class="border-b border-white/5 last:border-0 hover:bg-white/5 transition-colors">
+                   <td class="py-2.5 text-xs text-tx-2 font-medium">Q2 2025</td>
+                   <td class="py-2.5 text-xs font-bold text-tx-1 font-mono">829</td>
+                   <td class="py-2.5 text-xs font-bold text-gold-400 font-mono">-3.3%</td>
+               </tr>
+               <tr class="hover:bg-white/5 transition-colors">
+                   <td class="py-2.5 text-xs text-tx-2 font-medium">Q1 2025</td>
+                   <td class="py-2.5 text-xs font-bold text-tx-1 font-mono">637</td>
+                   <td class="py-2.5 text-xs font-bold text-red-500 font-mono">-10.6%</td>
+               </tr>
+            </tbody>
+         </table>
+      </div>
+      
+      <!-- Export Tool Module -->
+      <div class="p-5 border-t border-white/10 bg-black/40 mt-auto">
+          <h4 class="text-sm font-bold text-tx-1 mb-1 flex items-center gap-2">
+             <i class="fa-solid fa-file-invoice-dollar text-emerald-400"></i> Financial Compiler
+          </h4>
+          <p class="text-[0.65rem] text-tx-3 mb-4 leading-relaxed">Extract raw temporal ledgers for processing.</p>
+          
+          <div class="space-y-3 mb-5">
+             <div>
+                 <label class="form-label text-[0.65rem]">Extraction Scope</label>
+                 <select class="form-input form-select text-xs py-2 w-full font-bold bg-dark-bg">
+                     <option>Global Timeline</option>
+                     <option>Current Lunar Cycle (Month)</option>
+                     <option>Previous Quarter</option>
+                     <option>Annual Cycle</option>
+                 </select>
+             </div>
+             
+             <div>
+                 <label class="form-label text-[0.65rem]">Byte Format</label>
+                 <div class="flex gap-2">
+                    <button class="fmt-btn flex-1 py-1.5 border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 text-xs font-bold rounded shadow-glow-emerald transition-colors">.CSV</button>
+                    <button class="fmt-btn flex-1 py-1.5 border border-white/10 bg-white/5 text-tx-2 text-xs font-bold rounded hover:bg-white/10 hover:text-tx-1 transition-colors">.PDF</button>
+                    <button class="fmt-btn flex-1 py-1.5 border border-white/10 bg-white/5 text-tx-2 text-xs font-bold rounded hover:bg-white/10 hover:text-tx-1 transition-colors">.JSON</button>
+                 </div>
+             </div>
+          </div>
+          
+          <button class="btn btn-primary w-full shadow-glow-emerald" onclick="exportPayroll()">
+              <i class="fa-solid fa-terminal mr-2"></i> EXECUTE EXPORT <i class="fa-solid fa-circle-notch fa-spin hidden ml-2" id="exportSpinner"></i>
+          </button>
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+
+
+<!-- CDN Charts Loading -->
+<script>
+    function loadChartJs(callback) {
+        if (window.Chart) { callback(); return; }
+        const s = document.createElement('script'); 
+        s.src = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js'; 
+        s.onload = callback; 
+        document.head.appendChild(s);
+    }
+
+    const chartDefaults = {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false }, tooltip: { enabled: true, backgroundColor: 'rgba(15,23,42,0.9)', titleColor: '#fff', bodyColor: '#94a3b8', borderColor: 'rgba(255,255,255,0.1)', borderWidth: 1 } },
+        scales: { 
+            x: { grid: { color: 'rgba(255,255,255,0.02)' }, ticks: { color: '#64748b', font: { size: 10, family: 'monospace' } } }, 
+            y: { grid: { color: 'rgba(255,255,255,0.02)' }, ticks: { color: '#64748b', font: { size: 10, family: 'monospace' } } } 
+        }
+    };
+    
+    const months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+
+    loadChartJs(() => {
+        // Line Chart 1
+        const c1 = document.getElementById('eventCompletionChart1');
+        if (c1) {
+            new Chart(c1, {
+                type: 'line', 
+                data: {
+                    labels: months, 
+                    datasets: [
+                        { label: 'Success', data: months.map(() => Math.floor(Math.random() * 60 + 30)), borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.1)', tension: 0.4, borderWidth: 2, pointBackgroundColor: '#0f172a', pointBorderColor: '#3b82f6', pointBorderWidth: 2, fill: true },
+                        { label: 'Failure', data: months.map(() => Math.floor(Math.random() * 20 + 5)), borderColor: '#ef4444', backgroundColor: 'transparent', tension: 0.4, borderWidth: 2, pointBackgroundColor: '#0f172a', pointBorderColor: '#ef4444', pointBorderWidth: 2, borderDash: [5, 5] }
+                    ]
+                }, 
+                options: { ...chartDefaults, scales: { ...chartDefaults.scales, y: { ...chartDefaults.scales.y, min: 0, max: 100 } } }
+            });
+        }
+        
+        // Line Chart 2
+        const c2 = document.getElementById('eventCompletionChart2');
+        if (c2) {
+             new Chart(c2, {
+                type: 'line', 
+                data: {
+                    labels: months, 
+                    datasets: [
+                        { label: 'Success', data: months.map(() => Math.floor(Math.random() * 60 + 30)), borderColor: '#10b981', backgroundColor: 'transparent', tension: 0.4, borderWidth: 2, pointBackgroundColor: '#0f172a', pointBorderColor: '#10b981', pointBorderWidth: 2 },
+                        { label: 'Failure', data: months.map(() => Math.floor(Math.random() * 20 + 5)), borderColor: '#eab308', backgroundColor: 'transparent', tension: 0.4, borderWidth: 2, pointBackgroundColor: '#0f172a', pointBorderColor: '#eab308', pointBorderWidth: 2 }
+                    ]
+                }, 
+                options: { ...chartDefaults, scales: { ...chartDefaults.scales, y: { ...chartDefaults.scales.y, min: 0, max: 100 } } }
+            });
+        }
+
+        // Attendance donut
+        const ad = document.getElementById('attendanceDonut');
+        if (ad) {
+            new Chart(ad, { 
+                type: 'doughnut', 
+                data: { 
+                    labels: ['Synced', 'Drifting', 'Offline'], 
+                    datasets: [{ 
+                        data: [62, 23, 15], 
+                        backgroundColor: ['#10b981', '#eab308', '#3b82f6'], 
+                        borderColor: '#0f172a',
+                        borderWidth: 2, 
+                        hoverOffset: 4 
+                    }] 
+                }, 
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false, 
+                    plugins: { legend: { display: false }, tooltip: { enabled: true } }, 
+                    cutout: '75%',
+                    animation: { animateScale: true, animateRotate: true }
+                } 
+            });
+        }
+
+        // Mini bar charts
+        const qc1 = document.getElementById('qChart1');
+        if (qc1) {
+            new Chart(qc1, {
+                type: 'bar', 
+                data: {
+                    labels: ['C1', 'C2', 'C3', 'C4'], 
+                    datasets: [{ data: [30, 55, 40, 70], backgroundColor: '#10b981', borderRadius: 2, barThickness: 6 }]
+                }, 
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: {enabled: false} }, scales: { x: { display: false }, y: { display: false } } }
+            });
+        }
+        
+        const qc2 = document.getElementById('qChart2');
+        if (qc2) {
+             new Chart(qc2, {
+                type: 'bar', 
+                data: {
+                    labels: ['Q1', 'Q2', 'Q3', 'Q4'], 
+                    datasets: [{ data: [20, 35, 25, 50], backgroundColor: '#a855f7', borderRadius: 2, barThickness: 6 }]
+                }, 
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: {enabled: false} }, scales: { x: { display: false }, y: { display: false } } }
+            });
+        }
+    });
+
+    // Formatting button interactions
+    document.querySelectorAll('.fmt-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            document.querySelectorAll('.fmt-btn').forEach(b => {
+                b.className = 'fmt-btn flex-1 py-1.5 border border-white/10 bg-white/5 text-tx-2 text-xs font-bold rounded hover:bg-white/10 hover:text-tx-1 transition-colors';
+            });
+            this.className = 'fmt-btn flex-1 py-1.5 border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 text-xs font-bold rounded shadow-glow-emerald transition-colors';
+        });
+    });
+
+    function exportReport(type) { showToast('Matrix Compilation [' + type.toUpperCase() + '] Dispatched to Queue.', 'info'); }
+    
+    function exportPayroll() {
+        const spinner = document.getElementById('exportSpinner');
+        spinner.classList.remove('hidden');
+        setTimeout(() => { 
+            spinner.classList.add('hidden'); 
+            showToast('Payroll File Transferred to Client Interface.', 'success'); 
+        }, 1800);
+    }
+</script>

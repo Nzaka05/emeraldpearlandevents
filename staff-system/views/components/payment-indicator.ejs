@@ -1,0 +1,25 @@
+<%/* PAYMENT INDICATOR — Payment status badge with amount and icon */%>
+<% const _ps = locals.status || 'Pending'; %>
+<% const _map = {
+  Pending:  { badge: 'badge-gold',   icon: 'fa-clock',        dot: 'status-dot-warning' },
+  Sent:     { badge: 'badge-blue',   icon: 'fa-paper-plane',  dot: 'status-dot-info' },
+  Received: { badge: 'badge-emerald',icon: 'fa-circle-check', dot: 'status-dot-active' },
+  Disputed: { badge: 'badge-red',    icon: 'fa-triangle-exclamation', dot: 'status-dot-danger' },
+  Partial:  { badge: 'badge-purple', icon: 'fa-chart-pie',    dot: 'status-dot-warning' }
+}; %>
+<% const _pm = _map[_ps] || _map.Pending; %>
+
+<div class="flex items-center gap-3">
+  <span class="status-dot <%= _pm.dot %>"></span>
+  <div class="flex-1 min-w-0">
+    <% if (locals.title) { %>
+      <div class="text-xs text-slate-400 truncate"><%= locals.title %></div>
+    <% } %>
+    <div class="text-sm font-bold text-slate-200">
+      KSh <%= (locals.amount || 0).toLocaleString() %>
+    </div>
+  </div>
+  <span class="<%= _pm.badge %> text-[0.65rem] font-bold px-2.5 py-1 rounded-full inline-flex items-center gap-1">
+    <i class="fa-solid <%= _pm.icon %>"></i> <%= _ps %>
+  </span>
+</div>

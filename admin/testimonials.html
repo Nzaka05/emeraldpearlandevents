@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -325,9 +325,9 @@
             50% { transform: translateY(-8px); }
         }
     
-        /* ═══════════════════════════════════════════════════════════
+        /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
            MOBILE RESPONSIVENESS (Injected via Phase 10 Overhaul)
-           ═══════════════════════════════════════════════════════════ */
+           â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
         
         /* Hamburger Menu Icon (Hidden on Desktop) */
         .mobile-menu-btn {
@@ -407,9 +407,9 @@
         }
 
     
-        /* ═══════════════════════════════════════════════════════════
+        /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
            MOBILE QUICK ACTION FAB
-           ═══════════════════════════════════════════════════════════ */
+           â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
         .mobile-fab-container {
             display: none;
             position: fixed;
@@ -755,7 +755,19 @@
                     <span>Staff</span>
                 </a>
             </li>
+                        <li class="sidebar-nav-item">
+                <a href="http://localhost:3001" target="_blank" class="sidebar-nav-link" style="color: var(--accent); background: rgba(201, 168, 76, 0.05);">
+                    <span class="sidebar-nav-icon"><i class="fas fa-external-link-alt"></i></span>
+                    <span>Staff System</span>
+                </a>
+            </li>
             <li class="sidebar-nav-item">
+                <a href="/admin/pricing" class="sidebar-nav-link"><!-- add 'active' on pricing.html -->
+                    <span class="sidebar-nav-icon"><i class="fas fa-tags"></i></span>
+                    <span>Pricing & Rates</span>
+                </a>
+            </li>
+<li class="sidebar-nav-item">
                 <a href="/admin/settings" class="sidebar-nav-link"><!-- add 'active' on settings.html -->
                     <span class="sidebar-nav-icon"><i class="fas fa-cog"></i></span>
                     <span>Settings</span>
@@ -834,7 +846,7 @@
             const list = document.getElementById('testimonialsList');
             list.innerHTML = filtered.map(testimonial => {
                 const initials = testimonial.name.split(' ').map(n => n[0]).join('');
-                const stars = Array(testimonial.rating).fill('★').join('');
+                const stars = Array(testimonial.rating).fill('<i class="fas fa-star"></i>').join('');
                 return `
                     <div class="testimonial-card">
                         <div class="testimonial-header">
@@ -853,7 +865,7 @@
                         <div class="testimonial-text">"${testimonial.text}"</div>
                         <div class="testimonial-meta">Event Type: ${testimonial.eventType}</div>
                         <div class="testimonial-actions">
-                            ${testimonial.status !== 'approved' ? `<button class="action-btn btn-approve" onclick="approveTestimonial(${testimonial.id})">✓ Approve</button>` : ''}
+                            ${testimonial.status !== 'approved' ? `<button class="action-btn btn-approve" onclick="approveTestimonial(${testimonial.id})"><i class="fas fa-check"></i> Approve</button>` : ''}
                             ${testimonial.status !== 'hidden' ? `<button class="action-btn btn-hide" onclick="hideTestimonial(${testimonial.id})">Hide</button>` : ''}
                             <button class="action-btn btn-delete" onclick="deleteTestimonial(${testimonial.id})">Delete</button>
                         </div>
