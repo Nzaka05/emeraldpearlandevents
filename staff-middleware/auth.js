@@ -1,11 +1,11 @@
-﻿const jwt = require('jsonwebtoken');
+const jwt = require('jsonwebtoken');
 const Staff = require('../staff-models/Staff');
 
 // Protect routes
 exports.protect = async (req, res, next) => {
     let token;
 
-    // Check cookies — use portal_token to isolate from admin panel
+    // Check cookies � use portal_token to isolate from admin panel
     if (req.cookies && req.cookies.portal_token) {
         token = req.cookies.portal_token;
     }
@@ -17,7 +17,7 @@ exports.protect = async (req, res, next) => {
 
     try {
         // Verify token
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback_secret_key');
+        const decoded = jwt.verify(token, process.env.STAFF_JWT_SECRET || process.env.JWT_SECRET || 'fallback_secret_key');
 
         req.user = await Staff.findById(decoded.id);
 
@@ -48,3 +48,4 @@ exports.authorize = (...roles) => {
         next();
     };
 };
+

@@ -1,4 +1,4 @@
-﻿const Staff = require('../staff-models/Staff');
+const Staff = require('../staff-models/Staff');
 const AuditLog = require('../staff-models/AuditLog');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
@@ -7,8 +7,8 @@ const emailService = require('../staff-services/emailService');
 
 // Send token in cookie
 const sendTokenResponse = (user, statusCode, res) => {
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET || 'fallback_secret_key', {
-        expiresIn: process.env.JWT_EXPIRE || '30d'
+    const token = jwt.sign({ id: user._id }, process.env.STAFF_JWT_SECRET || process.env.JWT_SECRET || 'fallback_secret_key', {
+        expiresIn: process.env.STAFF_JWT_EXPIRE || process.env.JWT_EXPIRE || '30d'
     });
 
     const options = {
@@ -264,3 +264,4 @@ exports.staffForgotPassword = async (req, res) => {
         res.render('auth/forgot-password', { error: 'Could not process request. Please try again.', message: null });
     }
 };
+
