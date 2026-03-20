@@ -1,0 +1,148 @@
+<link rel="manifest" href="/admin/manifest.json">
+<!-- WebAuthn Browser Client -->
+<script src="https://unpkg.com/@simplewebauthn/browser/dist/bundle/index.umd.min.js"></script>
+<style>
+    /* Modern Glassmorphism & Dark Mode Aesthetic */
+    :root {
+        --cc-bg: #f8fafc;
+        --cc-card: rgba(255, 255, 255, 0.85);
+        --cc-text: #1e293b;
+        --cc-text-muted: #64748b;
+        --cc-border: rgba(226, 232, 240, 0.8);
+        --cc-accent: #d4af37; /* Emerald Pearl Gold */
+        --cc-primary: #0a2f1c; /* Emerald Pearl Green */
+        --cc-success: #10b981;
+        --cc-danger: #ef4444;
+        --cc-warning: #f59e0b;
+    }
+    .dark-mode {
+        --cc-bg: #0f172a;
+        --cc-card: rgba(30, 41, 59, 0.75);
+        --cc-text: #f8fafc;
+        --cc-text-muted: #94a3b8;
+        --cc-border: rgba(51, 65, 85, 0.8);
+    }
+    body.dark-mode { background-color: var(--cc-bg); color: var(--cc-text); }
+    
+    .sec-container { padding: 24px; max-width: 800px; margin: 0 auto; min-height: 100vh; font-family: sans-serif; }
+    .glass-card {
+        background: var(--cc-card);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid var(--cc-border);
+        border-radius: 12px;
+        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.05);
+        padding: 24px;
+        margin-bottom: 24px;
+        color: var(--cc-text);
+    }
+    .device-item {
+        display: flex; justify-content: space-between; align-items: center;
+        padding: 16px; border: 1px solid var(--cc-border); border-radius: 8px; margin-bottom: 12px;
+    }
+    .device-item:last-child { margin-bottom: 0; }
+    .btn { padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; transition: opacity 0.2s; }
+    .btn:hover { opacity: 0.9; }
+    .btn-primary { background: var(--cc-primary); color: var(--cc-accent); }
+    .btn-danger { background: rgba(239, 68, 68, 0.1); color: var(--cc-danger); border: 1px solid var(--cc-danger); }
+</style>
+
+<div class="sec-container">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
+        <h2 style="margin:0;"><i class="fa-solid fa-shield-halved"></i> Biometric Security Devices</h2>
+        <a href="/portal/admin-staff/dashboard" style="color:var(--cc-text-muted); text-decoration:none;"><i class="fa-solid fa-arrow-left"></i> Back to Dashboard</a>
+    </div>
+
+    <div class="glass-card">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+            <p style="color:var(--cc-text-muted); margin:0;">Manage your authorized devices for verifying high-risk actions like Emergency Funds and Dual Approvals.</p>
+            <button id="registerBtn" class="btn btn-primary" onclick="registerNewDevice()"><i class="fa-solid fa-plus"></i> Register New Device</button>
+        </div>
+
+        <% if (credentials && credentials.length > 0) { %>
+            <div>
+                <% credentials.forEach(cred => { %>
+                    <div class="device-item">
+                        <div>
+                            <div style="font-weight:bold; font-size:1.1rem; margin-bottom:4px;"><i class="fa-solid fa-laptop"></i> <%= cred.device_name || 'Generic Device' %></div>
+                            <div style="font-size:0.85rem; color:var(--cc-text-muted);">Registered: <%= new Date(cred.registered_at).toLocaleString() %></div>
+                            <div style="font-size:0.85rem; color:var(--cc-text-muted);">Authentications Count: <%= cred.counter %></div>
+                        </div>
+                        <button class="btn btn-danger" onclick="removeDevice('<%= cred.credential_id %>')"><i class="fa-solid fa-trash"></i> Revoke</button>
+                    </div>
+                <% }) %>
+            </div>
+        <% } else { %>
+            <div style="text-align:center; padding: 40px 20px; border: 1px dashed var(--cc-warning); border-radius: 8px; background: rgba(245, 158, 11, 0.05);">
+                <i class="fa-solid fa-triangle-exclamation" style="font-size:2rem; color:var(--cc-warning); margin-bottom:12px;"></i>
+                <h3 style="margin:0 0 8px 0; color:var(--cc-warning);">No Biometric Devices Registered</h3>
+                <p style="font-size:0.9rem; margin:0;">You must register at least one hardware authenticator (FaceID, TouchID, Windows Hello, YubiKey) to authorize payouts directly.</p>
+            </div>
+        <% } %>
+    </div>
+</div>
+
+<script>
+    if (localStorage.getItem('commandCenterTheme') === 'dark') {
+        document.body.classList.add('dark-mode');
+    }
+
+    async function registerNewDevice() {
+        const btn = document.getElementById('registerBtn');
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Registering...';
+        btn.disabled = true;
+
+        try {
+            // 1. Get Registration Options
+            const optRes = await fetch('/portal/admin-staff/webauthn/register/options', { method: 'POST' });
+            const optData = await optRes.json();
+            
+            if (!optData.success) throw new Error(optData.error || 'Failed to fetch registration chunk');
+
+            // 2. Browser Authenticator Challenge
+            const { startRegistration } = SimpleWebAuthnBrowser;
+            const attestation = await startRegistration(optData.options);
+
+            // 3. Verify Challenge and Store PK
+            const verRes = await fetch('/portal/admin-staff/webauthn/register/verify', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ registrationResponse: attestation })
+            });
+
+            const verData = await verRes.json();
+            if (verData.success) {
+                alert('Success! Biometric device registered and bound to your account.');
+                window.location.reload();
+            } else {
+                throw new Error(verData.error || 'Server rejected cryptographic verification.');
+            }
+
+        } catch (err) {
+            console.error(err);
+            alert('Registration failed: ' + err.message);
+            btn.innerHTML = '<i class="fa-solid fa-plus"></i> Register New Device';
+            btn.disabled = false;
+        }
+    }
+
+    async function removeDevice(credentialId) {
+        if (!confirm('Are you absolutely sure you want to revoke this biometric key? You will no longer be able to use this device to authorize emergency payouts.')) return;
+
+        try {
+            const res = await fetch('/portal/admin-staff/webauthn/credentials/' + encodeURIComponent(credentialId), {
+                method: 'DELETE'
+            });
+            const data = await res.json();
+            
+            if (data.success) {
+                alert('Device safely revoked.');
+                window.location.reload();
+            } else {
+                alert('Failed to revoke: ' + data.error);
+            }
+        } catch (e) {
+            alert('Error revoking device: ' + e.message);
+        }
+    }
+</script>

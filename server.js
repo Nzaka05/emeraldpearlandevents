@@ -69,7 +69,7 @@ const PORT = process.env.PORT || 3000;
 
 // ── EJS SETUP FOR STAFF PORTAL ──
 app.set('view engine', 'ejs');
-app.set('views', path.join(__dirname, 'staff-system/views'));
+app.set('views', path.join(__dirname, 'views'));
 app.use(expressLayouts);
 app.set('layout', 'layout');
 
@@ -140,7 +140,6 @@ app.get('/booking.html', (req, res) => res.sendFile(path.join(__dirname, 'bookin
 app.use(bodyParser.json({ limit: '50mb' }));
 app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
 app.use(express.static('public'));
-app.use(express.static(path.join(__dirname, 'staff-system/public')));
 
 // ── RATE LIMITING (Prevent spam) ──
 const bookingLimiter = rateLimit({
@@ -646,26 +645,14 @@ app.use('/portal', portalCsrf, (req, res, next) => {
 });
 
 // ── STAFF PORTAL ROUTES ──
-const portalAuthRoutes = require('./staff-system/routes/auth');
-const portalStaffRoutes = require('./staff-system/routes/staff');
-const portalSupervisorRoutes = require('./staff-system/routes/supervisor');
-const portalAdminStaffRoutes = require('./staff-system/routes/admin');
-const adminDashboardRoutes = require('./staff-system/routes/adminDashboardRoutes');
-const adminStaffRoutes = require('./staff-system/routes/adminStaffRoutes');
-const adminEventsRoutes = require('./staff-system/routes/adminEventsRoutes');
-const adminFinanceRoutes = require('./staff-system/routes/adminFinanceRoutes');
-const adminReportsRoutes = require('./staff-system/routes/adminReportsRoutes');
-const adminLegacyRoutes = require('./staff-system/routes/admin');
+const portalAuthRoutes = require('./staff-routes/auth');
+const portalStaffRoutes = require('./staff-routes/staff');
+const portalSupervisorRoutes = require('./staff-routes/supervisor');
+const portalAdminStaffRoutes = require('./staff-routes/admin');
 
 app.use('/portal/auth', portalAuthRoutes);
 app.use('/portal/staff', portalStaffRoutes);
 app.use('/portal/supervisor', portalSupervisorRoutes);
-app.use('/portal/admin-staff', adminDashboardRoutes);
-app.use('/portal/admin-staff', adminStaffRoutes);
-app.use('/portal/admin-staff', adminEventsRoutes);
-app.use('/portal/admin-staff', adminFinanceRoutes);
-app.use('/portal/admin-staff', adminReportsRoutes);
-app.use('/portal/admin-staff', adminLegacyRoutes);
 
 // Public M-Pesa callbacks - no auth, no CSRF
 app.post('/portal/admin-staff/mpesa/callback', async (req, res) => {
@@ -752,12 +739,6 @@ server.listen(PORT, () => {
 });
 
 module.exports = app;
-
-
-
-
-
-
 
 
 
