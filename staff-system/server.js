@@ -169,7 +169,7 @@ app.use('/portal/auth/reset-password', authLimiter);
 app.post('/internal/sync-booking', async (req, res) => {
   try {
     const syncSecret = process.env.JWT_SECRET || 'fallback_secret_key';
-    if (req.headers['x-sync-secret'] !== syncSecret) {
+    if (req.headers['x-internal-secret'] !== syncSecret) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
     const Assignment = require('./models/Assignment');
@@ -236,7 +236,7 @@ app.post('/internal/sync-booking', async (req, res) => {
   app.post('/internal/sync-event-complete', async (req, res) => {
     try {
       const syncSecret = process.env.JWT_SECRET || 'fallback_secret_key';
-      if (req.headers['x-sync-secret'] !== syncSecret) {
+      if (req.headers['x-internal-secret'] !== syncSecret) {
         return res.status(401).json({ error: 'Unauthorized' });
       }
       const { booking_ref, status } = req.body;
@@ -260,7 +260,7 @@ app.post('/internal/sync-booking', async (req, res) => {
 // Staff sync endpoint from port 3000
 app.post('/internal/sync-staff', async (req, res) => {
   const syncSecret = process.env.JWT_SECRET || 'fallback_secret_key';
-  const authHeader = req.headers['x-sync-secret'];
+  const authHeader = req.headers['x-internal-secret'];
   
   if (authHeader !== syncSecret) {
     return res.status(401).json({ error: 'Unauthorized' });
@@ -316,7 +316,7 @@ app.post('/internal/sync-staff', async (req, res) => {
 app.post('/internal/sync-payment', async (req, res) => {
     try {
         const syncSecret = process.env.JWT_SECRET || 'fallback_secret_key';
-        if (req.headers['x-sync-secret'] !== syncSecret) return res.status(401).json({ error: 'Unauthorized' });
+        if (req.headers['x-internal-secret'] !== syncSecret) return res.status(401).json({ error: 'Unauthorized' });
         const { booking_ref, clientPaymentAmount, paymentMethod, transactionId } = req.body;
         const Assignment = require('./models/Assignment');
         const assignment = await Assignment.findOne({ booking_ref });
@@ -338,7 +338,7 @@ app.post('/internal/sync-payment', async (req, res) => {
 app.post('/internal/sync-pricing', async (req, res) => {
     try {
         const syncSecret = process.env.JWT_SECRET || 'fallback_secret_key';
-        if (req.headers['x-sync-secret'] !== syncSecret) return res.status(401).json({ error: 'Unauthorized' });
+        if (req.headers['x-internal-secret'] !== syncSecret) return res.status(401).json({ error: 'Unauthorized' });
         const PricingSettings = require('./models/PricingSettings');
         const { categories, vatRate, globalSupervisorRate, paymentMethods } = req.body;
         let pricing = await PricingSettings.findOne();

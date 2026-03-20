@@ -11,6 +11,35 @@ const { sendPushNotificationToAdmins } = require('../services/notificationServic
 // ── INITIALIZE EMAIL TRANSPORTER ──
 initializeEmailService();
 
+// ── STAFF SYSTEM WEBHOOK SYNC HELPER ──
+const http = require('http');
+const https = require('https');
+function sendSyncWebhook(endpoint, payload) {
+    const urlStr = `${process.env.STAFF_PORTAL_URL}/internal/${endpoint}`;
+    if (!process.env.STAFF_PORTAL_URL) return;
+    try {
+        const url = new URL(urlStr);
+        const data = JSON.stringify(payload);
+        const options = {
+            hostname: url.hostname,
+            port: url.port,
+            path: url.pathname + url.search,
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Internal-Secret': process.env.JWT_SECRET || 'fallback_secret_key',
+                'Content-Length': Buffer.byteLength(data)
+            }
+        };
+        const req = (url.protocol === 'https:' ? https : http).request(options);
+        req.on('error', (e) => console.error(`[Webhook] Failed to sync ${endpoint}:`, e.message));
+        req.write(data);
+        req.end();
+    } catch (e) {
+        console.error(`[Webhook] Config error for ${endpoint}:`, e.message);
+    }
+}
+
 const router = express.Router();
 
 const EVENT_TYPE_ENUM = Booking.schema.path('eventType').enumValues;
@@ -299,7 +328,26 @@ router.post('/book-event', bookingLimiter, bookingValidationRules, handleBooking
         await booking.save();
 
         // ───────────────────────────────────────────────────────────
-        // STEP 3.5: CREATE ADMIN NOTIFICATION
+        // STEP 3.5: SYNC WITH STAFF SYSTEM
+        // ───────────────────────────────────────────────────────────
+        sendSyncWebhook('sync-booking', {
+            title: data.eventType,
+            description: data.specialRequests,
+            location: data.location,
+            date: data.eventDate,
+            start_time: '08:00', // Default, assumes staff check UI
+            end_time: '17:00',
+            pay_rate: 1000,
+            required_staff_count: 1, // AI engine will auto-adjust this
+            booking_ref: booking.bookingReference,
+            client_name: customer.name,
+            client_email: customer.email,
+            clientPaymentAmount: 0,
+            usherCount: data.usherCount
+        });
+
+        // ───────────────────────────────────────────────────────────
+        // STEP 3.6: CREATE ADMIN NOTIFICATION
         // ───────────────────────────────────────────────────────────
         const notificationMessage = `New booking request from ${data.fullName} for a ${data.eventType}.`;
         const notification = new AdminNotification({

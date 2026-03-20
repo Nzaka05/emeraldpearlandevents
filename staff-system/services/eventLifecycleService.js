@@ -32,9 +32,19 @@ const StaffPerformanceProfile = require('../models/StaffPerformanceProfile');
 const SupervisorRatingProfile = require('../models/SupervisorRatingProfile');
 const EventPerformanceBaseline = require('../models/EventPerformanceBaseline');
 
-// ── CLIENT PORTAL INTEGRATION ──
-let clientNotificationService = null; try { clientNotificationService = require('../../server/services/clientNotificationService'); } catch(e) { console.log('[EventLifecycle] clientNotificationService not available - running standalone'); }
-
+// ── CLIENT PORTAL INTEGRATION (WEBHOOKS) ──
+const axios = require('axios');
+const sendWebhook = async (endpoint, payload) => {
+    try {
+        const url = process.env.MAIN_PORTAL_URL || 'http://localhost:3000';
+        const secret = process.env.JWT_SECRET || 'fallback_secret_key';
+        await axios.post(`${url}/internal/webhook/${endpoint}`, payload, {
+            headers: { 'X-Internal-Secret': secret }
+        });
+    } catch (err) {
+        console.error(`[Webhook] Failed to notify ${endpoint}:`, err.message);
+    }
+};
 // ─────────────────────────────────────────────────────────────────────────────
 // LIFECYCLE STATES
 // ─────────────────────────────────────────────────────────────────────────────
@@ -175,7 +185,7 @@ exports.transition = async (assignmentId, targetState, performedById, opts = {})
     // ── Client Portal: READY Hook ──────────────────────────────────────────────
     if (targetState === 'READY' && assignment.client_id) {
         try {
-            await clientNotificationService.sendTeamReadyNotification(assignment._id);
+            await sendWebhook('team-ready', { eventId: assignment._id });
         } catch (err) {
             console.error('[Client Portal] READY hook failed:', err);
         }
@@ -184,7 +194,7 @@ exports.transition = async (assignmentId, targetState, performedById, opts = {})
     // ── Client Portal: LIVE Hook ───────────────────────────────────────────────
     if (targetState === 'LIVE' && assignment.client_id) {
         try {
-            await clientNotificationService.sendEventStartedNotification(assignment._id);
+            await sendWebhook('event-started', { eventId: assignment._id });
             if (global.io) {
                 global.io.to(`Client:${assignment.client_id}`).emit('client:event_live', {
                     event_id: assignment._id,
@@ -254,7 +264,7 @@ exports.transition = async (assignmentId, targetState, performedById, opts = {})
                 // Step 1: Send thank you message to client
                 try {
                     if (assignment.client_id) {
-                        await clientNotificationService.sendThankYouMessage(assignment._id);
+                        await sendWebhook('event-complete', { eventId: assignment._id });
                     }
                 } catch (err) {
                     console.error('[ETR Auto] Step 1 Failed (Client Thank You Email Hook):', err);
