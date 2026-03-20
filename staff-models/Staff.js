@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const staffSchema = new mongoose.Schema({
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true },
-    password: { type: String, required: true },
+    password: { type: String, required: false, select: false },
     role: { type: String, enum: ['Admin', 'Supervisor', 'Staff'], default: 'Staff' },
     shift_start: { type: String }, // e.g., '09:00'
     shift_end: { type: String },   // e.g., '17:00'
@@ -23,10 +23,18 @@ const staffSchema = new mongoose.Schema({
     pushSubscription: { type: Object },
     secureLoginToken: { type: String },
     secureLoginExpire: { type: Date },
-    createdAt: { type: Date, default: Date.now }
+    createdAt: { type: Date, default: Date.now },
+    category: { type: String, default: null },
+    isAvailable: { type: Boolean, default: true },
+    hourlyRate: { type: Number, default: 0 },
+    notes: { type: String, default: '' },
+    whatsapp: { type: String, default: null },
+    photo: { type: String, default: null }
 });
 
 if (mongoose.models.Staff) { delete mongoose.connection.models['Staff']; }
 module.exports = mongoose.model('Staff', staffSchema);
+
+
 
 
