@@ -5,6 +5,7 @@
  */
 
 const express = require('express');
+const { validateParam } = require('../utils/validateObjectId');
 const router = express.Router();
 
 const ctrl = require('../controllers/adminStaffController');
@@ -51,4 +52,5 @@ router.get('/staff/:id/card', validateParam('id'),               ctrl.getStaffCa
 router.put('/category-settings',   sanitizeRequestBody, ctrl.updateCategorySettings);
 
 module.exports = router;
+
 
