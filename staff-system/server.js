@@ -37,6 +37,7 @@ const emailService = require('./services/emailService');
 emailService.initializeEmailService();
 
 const app = express();
+app.set('trust proxy', 1);
 const server = http.createServer(app);
 
 // Connect to MongoDB
@@ -551,4 +552,5 @@ server.listen(PORT, () => {
     // Start Missing Staff recovery check & interval loop
     require('./jobs/missingStaffJob').startJob();
 });
+
 
