@@ -1301,17 +1301,17 @@ router.get('/gallery', verifyAdminJWT, async (req, res) => {
 router.post('/gallery/upload', verifyAdminJWT, async (req, res) => {
     try {
         const { filename, url, eventType, caption } = req.body;
-
-        if (!url) {
-            return res.status(400).json({ success: false, message: 'Image data (url) is required.' });
-        }
-
+        if (!url) return res.status(400).json({ success: false, message: "Image data (url) is required." });
+        const cloudinary = require("cloudinary").v2;
+        cloudinary.config({ cloudinary_url: process.env.CLOUDINARY_URL });
+        const uploadResult = await cloudinary.uploader.upload(url, { folder: "emerald/gallery", resource_type: "image" });
+        const cloudinaryUrl = uploadResult.secure_url;
         const lastItem = await Gallery.findOne().sort({ order: -1 });
         const nextOrder = lastItem ? (lastItem.order + 1) : 0;
 
         const item = new Gallery({
             filename: filename || `upload_${Date.now()}`,
-            url,
+            url: cloudinaryUrl,
             eventType: eventType || null,
             caption: caption || '',
             order: nextOrder,
@@ -1624,3 +1624,6 @@ router.get('/clients/:clientId/sessions', verifyAdminJWT, async (req, res) => {
 });
 
 module.exports = router;
+
+
+
