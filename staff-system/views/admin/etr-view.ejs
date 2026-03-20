@@ -5,8 +5,8 @@
     <i class="fa-solid fa-arrow-left"></i> Return to Ledger
   </a>
   <div class="flex gap-2">
-    <button onclick="resendETR('<%= etr.event_id %>')" class="btn btn-outline border-blue-500/30 text-blue-400 hover:bg-blue-500/20"><i class="fa-solid fa-paper-plane mr-2"></i> Resend to Client</button>
-    <a href="/portal/admin-staff/etr/<%= etr.event_id %>/download" target="_blank" class="btn btn-primary shadow-glow-emerald"><i class="fa-solid fa-download mr-2"></i> Download PDF</a>
+    <button onclick="resendETR('<%= etr.event_id && etr.event_id._id ? etr.event_id._id : etr.event_id %>')" class="btn btn-outline border-blue-500/30 text-blue-400 hover:bg-blue-500/20"><i class="fa-solid fa-paper-plane mr-2"></i> Resend to Client</button>
+    <a href="/portal/admin-staff/etr/<%= etr.event_id && etr.event_id._id ? etr.event_id._id : etr.event_id %>/download" target="_blank" class="btn btn-primary shadow-glow-emerald"><i class="fa-solid fa-download mr-2"></i> Download PDF</a>
   </div>
 </div>
 

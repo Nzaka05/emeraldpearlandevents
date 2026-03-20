@@ -493,13 +493,13 @@ exports.generateETR = async (req, res) => {
 
     try {
       const StaffPayroll = require('../models/StaffPayroll');
-      const payrolls = await StaffPayroll.find({ event_id: eventId }).lean();
-      staffCost = payrolls.reduce((sum, pr) => sum + (pr.net_pay || 0), 0);
+      const payrolls = await StaffPayroll.find({ eventId }).lean();
+      staffCost = payrolls.reduce((sum, pr) => sum + (pr.net_pay || pr.totalPay || 0), 0);
     } catch (e) { /* StaffPayroll not available */ }
 
     try {
       const ExpenseReceipt = require('../models/ExpenseReceipt');
-      const expenses = await ExpenseReceipt.find({ event_id: eventId }).lean();
+      const expenses = await ExpenseReceipt.find({ eventId }).lean();
       expenses.forEach(e => {
         const cat = (e.category || '').toLowerCase();
         if (e.paid_from_emergency_fund) emergencyFundsUsed += e.amount || 0;
@@ -529,6 +529,29 @@ exports.generateETR = async (req, res) => {
       deliveryStatus = 'Partially Delivered';
     }
 
+    // Include AI Prediction if available
+    let aiPredictionComparison = null;
+    try {
+      const EventPredictionSnapshot = require('../models/EventPredictionSnapshot');
+      const prediction = await EventPredictionSnapshot.findOne({ assignmentId: eventId }).sort({ createdAt: -1 }).lean();
+      if (prediction && prediction.prediction) {
+        let predictionAccuracy = '';
+        const predictedCost = prediction.prediction.estimatedCost || 0;
+        if (totalCost > 0 && predictedCost > 0) {
+          const diff = Math.abs(totalCost - predictedCost);
+          const rawAcc = 100 - ((diff / predictedCost) * 100);
+          predictionAccuracy = Math.max(0, rawAcc).toFixed(1) + '%';
+        }
+        aiPredictionComparison = {
+          predictedCost,
+          actualCost: totalCost,
+          predictedStaff: prediction.prediction.predictedStaff || assignment.required_staff_count,
+          actualStaff: attendanceCount,
+          predictionAccuracy
+        };
+      }
+    } catch(e) { /* EventPredictionSnapshot not available */ }
+
     // Generate ETR number
     const totalEtrs = await ClientETR.countDocuments();
     const etrSeq = String(totalEtrs + 1).padStart(5, '0');
@@ -549,6 +572,7 @@ exports.generateETR = async (req, res) => {
         plannedEndTime: assignment.end_time,
         deliveryStatus
       },
+      aiPredictionComparison,
       generatedAt: new Date().toISOString(),
       etrVersion: newVersion
     };
