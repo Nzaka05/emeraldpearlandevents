@@ -1,0 +1,438 @@
+<!-- AI Command Center -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<style>
+    :root {
+        --ai-bg: #f8fafb;
+        --ai-card: #ffffff;
+        --ai-text: #1e293b;
+        --ai-muted: #64748b;
+        --ai-border: #e2e8f0;
+        --ai-emerald: #0a2f1c;
+        --ai-emerald-light: #10b981;
+        --ai-gold: #d4af37;
+        --ai-green: #22c55e;
+        --ai-amber: #f59e0b;
+        --ai-red: #ef4444;
+    }
+
+    .ai-cc { padding: 24px; background: var(--ai-bg); min-height: 100vh; font-family: 'Inter', sans-serif; }
+    .ai-cc h1 { font-size: 1.8rem; color: var(--ai-emerald); margin: 0 0 4px 0; }
+    .ai-cc .subtitle { color: var(--ai-muted); margin: 0 0 24px 0; font-size: 0.9rem; }
+
+    .ai-card {
+        background: var(--ai-card); border: 1px solid var(--ai-border); border-radius: 16px;
+        padding: 24px; margin-bottom: 24px; box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+        transition: box-shadow 0.2s;
+    }
+    .ai-card:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+    .ai-card h3 { margin: 0 0 16px 0; font-size: 1.1rem; color: var(--ai-emerald); display: flex; align-items: center; gap: 8px; }
+    .ai-card h3 i { color: var(--ai-gold); }
+
+    .ai-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+    @media (max-width: 1024px) { .ai-grid { grid-template-columns: 1fr; } }
+
+    /* AI Assistant */
+    .ai-input-group { display: flex; gap: 8px; margin-bottom: 16px; }
+    .ai-input {
+        flex: 1; padding: 12px 16px; border: 2px solid var(--ai-border); border-radius: 12px;
+        font-size: 0.95rem; outline: none; transition: border-color 0.2s;
+    }
+    .ai-input:focus { border-color: var(--ai-emerald-light); }
+    .ai-btn {
+        padding: 12px 20px; border: none; border-radius: 12px; font-weight: 600;
+        cursor: pointer; transition: all 0.2s; font-size: 0.9rem;
+    }
+    .ai-btn-primary { background: var(--ai-emerald); color: white; }
+    .ai-btn-primary:hover { background: #0d3f25; transform: translateY(-1px); }
+    .ai-btn-danger { background: var(--ai-red); color: white; }
+    .ai-btn-success { background: var(--ai-green); color: white; }
+    .ai-btn-amber { background: var(--ai-amber); color: white; }
+    .ai-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .ai-response-box {
+        background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px;
+        padding: 16px; font-size: 0.9rem; line-height: 1.6; min-height: 80px;
+        white-space: pre-wrap;
+    }
+
+    /* Risk Gauge */
+    .risk-bar-container { margin-top: 12px; }
+    .risk-bar-bg { width: 100%; height: 12px; background: #e5e7eb; border-radius: 6px; overflow: hidden; }
+    .risk-bar-fill { height: 100%; border-radius: 6px; transition: width 0.6s ease, background 0.6s; }
+    .risk-label { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; margin-top: 8px; }
+
+    /* Prediction Details */
+    .pred-stat { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--ai-border); font-size: 0.9rem; }
+    .pred-stat:last-child { border-bottom: none; }
+    .pred-stat .label { color: var(--ai-muted); }
+    .pred-stat .value { font-weight: 700; color: var(--ai-emerald); }
+
+    /* Action cards */
+    .action-item {
+        border: 1px solid var(--ai-border); border-radius: 12px; padding: 16px; margin-bottom: 12px;
+        display: flex; justify-content: space-between; align-items: center; gap: 12px;
+    }
+    .action-item .action-info h4 { margin: 0 0 4px 0; font-size: 0.95rem; }
+    .action-item .action-info p { margin: 0; font-size: 0.8rem; color: var(--ai-muted); }
+
+    /* Dropdown */
+    .ai-select {
+        width: 100%; padding: 10px 12px; border: 2px solid var(--ai-border); border-radius: 12px;
+        font-size: 0.9rem; outline: none; margin-bottom: 16px;
+    }
+    .ai-select:focus { border-color: var(--ai-emerald-light); }
+
+    /* Modal */
+    .ai-modal-overlay {
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0,0,0,0.5); display: none; justify-content: center;
+        align-items: center; z-index: 999;
+    }
+    .ai-modal-overlay.active { display: flex; }
+    .ai-modal {
+        background: white; border-radius: 16px; padding: 32px; max-width: 440px; width: 90%;
+        box-shadow: 0 24px 60px rgba(0,0,0,0.15);
+    }
+    .ai-modal h3 { margin: 0 0 12px 0; font-size: 1.1rem; }
+    .ai-modal p { margin: 0 0 20px 0; font-size: 0.9rem; color: var(--ai-muted); }
+    .ai-modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
+
+    .loading-spinner {
+        display: inline-block; width: 18px; height: 18px;
+        border: 3px solid #e5e7eb; border-top-color: var(--ai-emerald);
+        border-radius: 50%; animation: spin 0.6s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+
+<div class="ai-cc">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+        <div>
+            <h1><i class="fa-solid fa-brain" style="color: var(--ai-gold);"></i> AI Command Center</h1>
+            <p class="subtitle">Central intelligence dashboard for decision-making</p>
+        </div>
+        <a href="/portal/admin-staff/ai/analytics-dashboard" class="ai-btn ai-btn-primary" style="text-decoration:none;">
+            <i class="fa-solid fa-chart-line"></i> AI Analytics
+        </a>
+    </div>
+
+    <div class="ai-grid">
+        <!-- LEFT COLUMN -->
+        <div>
+            <!-- AI Assistant Panel -->
+            <div class="ai-card">
+                <h3><i class="fa-solid fa-robot"></i> AI Assistant</h3>
+                <div class="ai-input-group">
+                    <input type="text" id="aiQuery" class="ai-input" placeholder="Ask anything about events, staff, finance..." onkeydown="if(event.key==='Enter')askAI()">
+                    <button class="ai-btn ai-btn-primary" onclick="askAI()" id="aiAskBtn">
+                        <i class="fa-solid fa-paper-plane"></i> Ask
+                    </button>
+                </div>
+                <div id="aiResponse" class="ai-response-box" style="display:none;"></div>
+                <div id="aiActions" style="margin-top: 12px;"></div>
+            </div>
+
+            <!-- AI Recommendations Panel -->
+            <div class="ai-card">
+                <h3><i class="fa-solid fa-lightbulb"></i> AI Recommendations</h3>
+                <div id="recsPanel">
+                    <p style="color: var(--ai-muted); text-align: center; padding: 20px;">Select an event to see AI-powered recommendations</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT COLUMN -->
+        <div>
+            <!-- Event Intelligence Panel -->
+            <div class="ai-card">
+                <h3><i class="fa-solid fa-satellite-dish"></i> Event Intelligence</h3>
+                <select class="ai-select" id="eventSelect" onchange="loadPrediction()">
+                    <option value="">— Select an Event —</option>
+                    <% events.forEach(function(ev) { %>
+                        <option value="<%= ev.id %>"><%= ev.title %> (<%= ev.state %>)</option>
+                    <% }) %>
+                </select>
+                <div id="predictionPanel">
+                    <p style="color: var(--ai-muted); text-align: center; padding: 20px;">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i> Select an event to generate AI prediction
+                    </p>
+                </div>
+            </div>
+
+            <!-- Risk Visualization -->
+            <div class="ai-card">
+                <h3><i class="fa-solid fa-shield-halved"></i> Risk Assessment</h3>
+                <div id="riskPanel">
+                    <p style="color: var(--ai-muted); text-align: center; padding: 20px;">Risk data will appear after selecting an event</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- FULL-WIDTH ROW: Alerts + Suggestions -->
+    <div class="ai-grid" style="margin-top: 0;">
+        <!-- AI Alerts Panel -->
+        <div class="ai-card">
+            <h3><i class="fa-solid fa-bell"></i> Live AI Alerts <span id="alertCount" style="background:var(--ai-red); color:white; padding:2px 8px; border-radius:10px; font-size:0.7rem; margin-left:6px;">0</span></h3>
+            <div id="alertsPanel" style="max-height: 320px; overflow-y: auto;">
+                <p style="color: var(--ai-muted); text-align: center; padding: 20px;"><span class="loading-spinner"></span> Loading alerts...</p>
+            </div>
+        </div>
+
+        <!-- Auto-Suggestions Panel -->
+        <div class="ai-card">
+            <h3><i class="fa-solid fa-wand-magic-sparkles"></i> Suggested Setup</h3>
+            <div id="suggestionsPanel">
+                <p style="color: var(--ai-muted); text-align: center; padding: 20px;">Select an event to view AI-generated setup suggestions</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Confirmation Modal -->
+<div class="ai-modal-overlay" id="confirmModal">
+    <div class="ai-modal">
+        <h3 id="confirmTitle">Confirm Action</h3>
+        <p id="confirmDesc">Are you sure you want to execute this action?</p>
+        <div class="ai-modal-actions">
+            <button class="ai-btn" style="background:#e5e7eb; color:#333;" onclick="closeConfirmModal()">Cancel</button>
+            <button class="ai-btn ai-btn-primary" id="confirmBtn" onclick="confirmAction()">Confirm & Execute</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let pendingAction = null;
+
+    async function askAI() {
+        const query = document.getElementById('aiQuery').value.trim();
+        if (!query) return;
+        const btn = document.getElementById('aiAskBtn');
+        const box = document.getElementById('aiResponse');
+
+        btn.disabled = true;
+        btn.innerHTML = '<span class="loading-spinner"></span>';
+        box.style.display = 'block';
+        box.textContent = 'Thinking...';
+
+        try {
+            const res = await fetch('/portal/ai/assistant', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ query })
+            });
+            const json = await res.json();
+            if (json.success) {
+                box.textContent = json.data.reply || 'No response generated.';
+
+                const actionsDiv = document.getElementById('aiActions');
+                actionsDiv.innerHTML = '';
+                if (json.data.recommendedActions && json.data.recommendedActions.length > 0) {
+                    json.data.recommendedActions.forEach(a => {
+                        actionsDiv.innerHTML += `
+                            <div class="action-item">
+                                <div class="action-info"><h4>${a.title}</h4><p>${a.description}</p></div>
+                                <button class="ai-btn ai-btn-amber" onclick="requestAction('${a.type}', '${a.title}', '${escHTML(a.description)}')"><i class="fa-solid fa-bolt"></i></button>
+                            </div>`;
+                    });
+                }
+            } else {
+                box.textContent = 'Error: ' + (json.message || 'Unknown error');
+            }
+        } catch (e) {
+            box.textContent = 'Failed to reach AI service: ' + e.message;
+        }
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Ask';
+    }
+
+    async function loadPrediction() {
+        const eventId = document.getElementById('eventSelect').value;
+        if (!eventId) return;
+
+        const predPanel = document.getElementById('predictionPanel');
+        const riskPanel = document.getElementById('riskPanel');
+        const recsPanel = document.getElementById('recsPanel');
+
+        predPanel.innerHTML = '<p style="text-align:center;"><span class="loading-spinner"></span> Loading prediction...</p>';
+
+        // Also load suggestions
+        loadSuggestions(eventId);
+
+        try {
+            const res = await fetch(`/portal/admin-staff/assignments/${eventId}/report`);
+            const json = await res.json();
+
+            if (json.success && json.data) {
+                const d = json.data;
+                const pred = d.prediction || {};
+                const staff = pred.predictedStaff || '—';
+                const costMin = pred.estimatedCostRange ? `KES ${pred.estimatedCostRange.min?.toLocaleString()}` : '—';
+                const costMax = pred.estimatedCostRange ? `KES ${pred.estimatedCostRange.max?.toLocaleString()}` : '—';
+                const profitMin = pred.estimatedProfitRange ? `KES ${pred.estimatedProfitRange.min?.toLocaleString()}` : '—';
+                const profitMax = pred.estimatedProfitRange ? `KES ${pred.estimatedProfitRange.max?.toLocaleString()}` : '—';
+                const confidence = pred.confidenceScore || 0;
+                const riskScore = pred.riskScore || 0;
+                const riskLabel = pred.riskLabel || 'N/A';
+
+                predPanel.innerHTML = `
+                    <div class="pred-stat"><span class="label">Predicted Staff</span><span class="value">${staff}</span></div>
+                    <div class="pred-stat"><span class="label">Cost Range</span><span class="value">${costMin} — ${costMax}</span></div>
+                    <div class="pred-stat"><span class="label">Profit Range</span><span class="value">${profitMin} — ${profitMax}</span></div>
+                    <div class="pred-stat"><span class="label">Confidence</span><span class="value">${confidence}%</span></div>
+                    ${pred.explanations ? `<div style="margin-top:12px; font-size:0.8rem; color:var(--ai-muted);"><strong>Insights:</strong><br>${pred.explanations.join('<br>')}</div>` : ''}
+                `;
+
+                let riskColor = riskScore <= 30 ? 'var(--ai-green)' : (riskScore <= 70 ? 'var(--ai-amber)' : 'var(--ai-red)');
+                riskPanel.innerHTML = `
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <span style="font-size:2.5rem; font-weight:800; color:${riskColor};">${riskScore}</span>
+                        <span class="risk-label" style="background:${riskColor}; color:white;">${riskLabel}</span>
+                    </div>
+                    <div class="risk-bar-container"><div class="risk-bar-bg"><div class="risk-bar-fill" style="width:${riskScore}%; background:${riskColor};"></div></div></div>
+                    ${(pred.recommendations || []).length > 0 ? `<ul style="margin-top:12px; padding-left:16px; font-size:0.85rem; color:var(--ai-muted);">${pred.recommendations.map(r => `<li style="margin-bottom:4px;">${r}</li>`).join('')}</ul>` : ''}
+                `;
+
+                recsPanel.innerHTML = '';
+                (pred.recommendations || []).forEach(r => {
+                    recsPanel.innerHTML += `<div class="action-item"><div class="action-info"><p style="margin:0;">${r}</p></div></div>`;
+                });
+                if (!pred.recommendations?.length) recsPanel.innerHTML = '<p style="color:var(--ai-muted); text-align:center;">No recommendations.</p>';
+            } else {
+                predPanel.innerHTML = '<p style="color:var(--ai-muted);">No prediction data available.</p>';
+            }
+        } catch (e) {
+            predPanel.innerHTML = `<p style="color:var(--ai-red);">Error: ${e.message}</p>`;
+        }
+    }
+
+    // ── ALERTS ──
+    async function loadAlerts() {
+        try {
+            const res = await fetch('/portal/admin-staff/ai/alerts?status=unread&limit=30');
+            const json = await res.json();
+            const panel = document.getElementById('alertsPanel');
+            const count = document.getElementById('alertCount');
+            if (!json.success || json.data.length === 0) {
+                panel.innerHTML = '<p style="color:var(--ai-muted); text-align:center; padding:20px;">No active alerts. System is nominal.</p>';
+                count.textContent = '0';
+                return;
+            }
+            count.textContent = json.data.length;
+            let html = '';
+            json.data.forEach(a => {
+                const sev = a.severity === 'high' ? 'var(--ai-red)' : (a.severity === 'medium' ? 'var(--ai-amber)' : 'var(--ai-muted)');
+                const icon = a.severity === 'high' ? 'fa-circle-exclamation' : (a.severity === 'medium' ? 'fa-triangle-exclamation' : 'fa-info-circle');
+                html += `
+                    <div style="padding:12px; border:1px solid ${sev}; border-radius:10px; margin-bottom:8px; background:rgba(0,0,0,0.01); display:flex; justify-content:space-between; align-items:flex-start; gap:8px;">
+                        <div>
+                            <div style="color:${sev}; font-weight:700; font-size:0.85rem; margin-bottom:4px;"><i class="fa-solid ${icon}"></i> ${a.alert_type.replace(/_/g, ' ')}</div>
+                            <div style="font-size:0.8rem; color:var(--ai-text);">${a.message}</div>
+                            <div style="font-size:0.7rem; color:var(--ai-muted); margin-top:4px;">${new Date(a.created_at).toLocaleString()}</div>
+                        </div>
+                        <button class="ai-btn" style="background:#e5e7eb; color:#333; padding:6px 10px; font-size:0.7rem; white-space:nowrap;" onclick="markAlertResolved('${a._id}')">
+                            <i class="fa-solid fa-check"></i> Resolve
+                        </button>
+                    </div>`;
+            });
+            panel.innerHTML = html;
+        } catch (e) {
+            console.error('Failed to load alerts:', e);
+        }
+    }
+
+    async function markAlertResolved(alertId) {
+        try {
+            await fetch(`/portal/admin-staff/ai/alerts/${alertId}/status`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: 'resolved' })
+            });
+            loadAlerts();
+        } catch (e) { alert('Failed: ' + e.message); }
+    }
+
+    // ── AUTO-SUGGESTIONS ──
+    async function loadSuggestions(eventId) {
+        const panel = document.getElementById('suggestionsPanel');
+        panel.innerHTML = '<p style="text-align:center;"><span class="loading-spinner"></span> Loading suggestions...</p>';
+        try {
+            const res = await fetch(`/portal/admin-staff/ai/suggestions/${eventId}`);
+            const json = await res.json();
+            if (!json.success || !json.data.length) {
+                panel.innerHTML = '<p style="color:var(--ai-muted); text-align:center;">No suggestions for this event.</p>';
+                return;
+            }
+            let html = '';
+            json.data.forEach(s => {
+                html += `
+                    <div class="action-item">
+                        <div class="action-info">
+                            <h4>${s.label}</h4>
+                            <p><strong>${s.value}</strong> ${s.current !== undefined ? `(currently: ${s.current})` : ''}</p>
+                            <p style="font-size:0.75rem; color:var(--ai-muted); margin-top:2px;">${s.reasoning}</p>
+                        </div>
+                        ${s.autoFill ? `<button class="ai-btn ai-btn-success" style="font-size:0.75rem; padding:8px 12px;" onclick="alert('Auto-fill: ${s.autoFill.field} = ${s.autoFill.value}. Navigate to the assignment form to apply.')"><i class="fa-solid fa-check"></i> Apply</button>` : ''}
+                    </div>`;
+            });
+            panel.innerHTML = html;
+        } catch (e) {
+            panel.innerHTML = `<p style="color:var(--ai-red);">Error: ${e.message}</p>`;
+        }
+    }
+
+    function requestAction(type, title, desc) {
+        pendingAction = { type, title };
+        document.getElementById('confirmTitle').textContent = 'Confirm: ' + title;
+        document.getElementById('confirmDesc').textContent = desc || 'Are you sure you want to execute this AI action?';
+        document.getElementById('confirmModal').classList.add('active');
+    }
+
+    function closeConfirmModal() {
+        document.getElementById('confirmModal').classList.remove('active');
+        pendingAction = null;
+    }
+
+    async function confirmAction() {
+        if (!pendingAction) return;
+        const btn = document.getElementById('confirmBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="loading-spinner"></span> Executing...';
+
+        try {
+            const eventId = document.getElementById('eventSelect').value || null;
+            const res = await fetch('/portal/ai/action/execute', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ actionType: pendingAction.type.toLowerCase().replace(/ /g, '_'), payload: { event_id: eventId } })
+            });
+            const json = await res.json();
+            alert(json.message || 'Action executed.');
+        } catch (e) {
+            alert('Action failed: ' + e.message);
+        }
+        closeConfirmModal();
+        btn.disabled = false;
+        btn.innerHTML = 'Confirm & Execute';
+    }
+
+    function escHTML(str) { return (str || '').replace(/'/g, "\\'").replace(/"/g, "&quot;"); }
+
+    // ── Socket.IO real-time ──
+    if (typeof socket !== 'undefined') {
+        socket.on('cmd:ai_action', (data) => {
+            const box = document.getElementById('aiResponse');
+            box.style.display = 'block';
+            box.textContent = `[AI Action Alert] ${data.type}: ${data.message}`;
+        });
+        socket.on('cmd:ai_alert_new', (data) => {
+            loadAlerts(); // Refresh alerts panel in real time
+        });
+        socket.on('cmd:risk_escalation', () => loadPrediction());
+    }
+
+    // Init alerts on load + polling
+    loadAlerts();
+    setInterval(loadAlerts, 30000);
+</script>
+

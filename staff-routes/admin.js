@@ -82,4 +82,82 @@ router.post('/replacements/:id/reject', rejectReplacement);
 // Audit logs
 router.get('/audit-logs', getAuditLogs);
 
+// ── AI Command Center & Analytics ──
+const aiAnalyticsController = require('../staff-controllers/aiAnalyticsController');
+const { aiReadLimiter } = require('../staff-middleware/aiRateLimiter');
+const { validateParam, isValidObjectId } = require('../staff-system/utils/validateObjectId');
+const AuditLog = require('../staff-system/models/AuditLog');
+
+const ALLOWED_ALERT_STATUSES = ['unread', 'read', 'resolved'];
+
+router.get('/ai/command-center', aiReadLimiter, aiAnalyticsController.renderCommandCenter);
+router.get('/ai/analytics', aiReadLimiter, aiAnalyticsController.getAnalyticsData);
+router.get('/ai/analytics-dashboard', aiReadLimiter, aiAnalyticsController.renderAnalytics);
+
+// ── Staff Intelligence ──
+const staffIntelligenceController = require('../staff-controllers/staffIntelligenceController');
+router.get('/ai/staff-intelligence', aiReadLimiter, staffIntelligenceController.renderStaffIntelligence);
+router.get('/ai/staff-ranking', aiReadLimiter, staffIntelligenceController.getStaffRankingAPI);
+
+// ── AI Alerts API ──
+const aiAlertService = require('../staff-system/services/aiAlertService');
+router.get('/ai/alerts', aiReadLimiter, async (req, res) => {
+    try {
+        const limit = Math.min(parseInt(req.query.limit) || 20, 100);
+        const status = req.query.status || undefined;
+        const severity = req.query.severity || undefined;
+
+        // Validate status if provided
+        if (status && !ALLOWED_ALERT_STATUSES.includes(status)) {
+            return res.status(400).json({ success: false, error: 'Invalid status filter' });
+        }
+
+        const alerts = await aiAlertService.getAlerts({ status, severity, limit });
+        res.json({ success: true, data: alerts });
+    } catch (e) {
+        console.error('[Admin AI] getAlerts error:', e);
+        res.status(500).json({ success: false, error: 'Internal server error' });
+    }
+});
+
+router.put('/ai/alerts/:id/status', aiReadLimiter, validateParam('id'), async (req, res) => {
+    try {
+        const newStatus = req.body.status;
+        if (!newStatus || !ALLOWED_ALERT_STATUSES.includes(newStatus)) {
+            return res.status(400).json({ success: false, error: `Invalid status. Allowed: ${ALLOWED_ALERT_STATUSES.join(', ')}` });
+        }
+
+        const alert = await aiAlertService.updateAlertStatus(req.params.id, newStatus);
+        if (!alert) return res.status(404).json({ success: false, error: 'Alert not found' });
+
+        // Audit log
+        AuditLog.create({
+            actionType: 'AI_ALERT_STATUS_CHANGED',
+            targetModel: 'AIAlert',
+            targetId: req.params.id,
+            performedBy: req.user._id,
+            details: { new_status: newStatus },
+            ipAddress: req.ip
+        }).catch(err => console.error('[AuditLog] Alert status log failed:', err.message));
+
+        res.json({ success: true, data: alert });
+    } catch (e) {
+        console.error('[Admin AI] updateAlertStatus error:', e);
+        res.status(500).json({ success: false, error: 'Internal server error' });
+    }
+});
+
+// ── AI Auto-Suggestions ──
+const aiActionService = require('../staff-system/services/aiActionService');
+router.get('/ai/suggestions/:eventId', aiReadLimiter, validateParam('eventId'), async (req, res) => {
+    try {
+        const suggestions = await aiActionService.generateAutoSuggestions(req.params.eventId);
+        res.json({ success: true, data: suggestions });
+    } catch (e) {
+        console.error('[Admin AI] getSuggestions error:', e);
+        res.status(500).json({ success: false, error: 'Internal server error' });
+    }
+});
+
 module.exports = router;
+

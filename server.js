@@ -649,10 +649,12 @@ const portalAuthRoutes = require('./staff-routes/auth');
 const portalStaffRoutes = require('./staff-routes/staff');
 const portalSupervisorRoutes = require('./staff-routes/supervisor');
 const portalAdminStaffRoutes = require('./staff-routes/admin');
+const portalAiRoutes = require('./staff-routes/aiRoutes');
 
 app.use('/portal/auth', portalAuthRoutes);
 app.use('/portal/staff', portalStaffRoutes);
 app.use('/portal/supervisor', portalSupervisorRoutes);
+app.use('/portal/ai', portalAiRoutes);
 
 // Public M-Pesa callbacks - no auth, no CSRF
 app.post('/portal/admin-staff/mpesa/callback', async (req, res) => {

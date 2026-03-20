@@ -8,6 +8,7 @@
  */
 
 const express = require('express');
+const { validateParam } = require('../utils/validateObjectId');
 const router = express.Router();
 
 const ctrl = require('../controllers/adminFinanceController');
@@ -29,9 +30,9 @@ router.get('/payments',        ctrl.getAllPayments);
 // router.get('/export/payments', ctrl.exportPayments); // TODO: implement
 
 // ── Per-assignment payment operations ────────────────────────
-router.put('/assignments/:id/payment',                         sanitizeRequestBody, ctrl.updatePaymentStatus);
-router.post('/assignments/:id/pay-staff',                      protect, authorize('Admin'), ctrl.initiateStaffPayment);
-router.post('/assignments/:id/payments/:spid/mark-received',   ctrl.markPaymentReceived);
+router.put('/assignments/:id/payment', validateParam('id'),                         sanitizeRequestBody, ctrl.updatePaymentStatus);
+router.post('/assignments/:id/pay-staff', validateParam('id'),                      protect, authorize('Admin'), ctrl.initiateStaffPayment);
+router.post('/assignments/:id/payments/:spid/mark-received', validateParam('id'),   ctrl.markPaymentReceived);
 
 // ── Payment receipt PDF ───────────────────────────────────────
 router.get('/payments/:assignmentId/receipt/:staffId', protect, authorize('Admin'), ctrl.generatePaymentReceipt);

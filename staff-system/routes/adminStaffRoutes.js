@@ -39,15 +39,16 @@ router.post('/location',           sanitizeRequestBody, ctrl.updateAdminLocation
 // ── Staff CRUD & management ───────────────────────────────────
 router.get('/staff',               ctrl.getAllStaff);
 router.post('/staff',              sanitizeRequestBody, validateStaffCreation, uploadStaffPhoto, ctrl.addStaff);
-router.put('/staff/:id',           sanitizeRequestBody, validateStaffUpdate, uploadStaffPhoto, ctrl.editStaff);
-router.delete('/staff/:id',        ctrl.deleteStaff);
-router.put('/staff/:id/suspend',   ctrl.toggleSuspend);
-router.post('/staff/:id/reset-password',    ctrl.adminResetPassword);
-router.get('/staff/:id/performance',        ctrl.getStaffPerformance);
-router.post('/staff/:id/assign-supervisor', protect, authorize('Admin', 'Super Admin'), ctrl.assignSupervisor);
-router.get('/staff/:id/card',               ctrl.getStaffCard);
+router.put('/staff/:id', validateParam('id'),           sanitizeRequestBody, validateStaffUpdate, uploadStaffPhoto, ctrl.editStaff);
+router.delete('/staff/:id', validateParam('id'),        ctrl.deleteStaff);
+router.put('/staff/:id/suspend', validateParam('id'),   ctrl.toggleSuspend);
+router.post('/staff/:id/reset-password', validateParam('id'),    ctrl.adminResetPassword);
+router.get('/staff/:id/performance', validateParam('id'),        ctrl.getStaffPerformance);
+router.post('/staff/:id/assign-supervisor', validateParam('id'), protect, authorize('Admin', 'Super Admin'), ctrl.assignSupervisor);
+router.get('/staff/:id/card', validateParam('id'),               ctrl.getStaffCard);
 
 // ── Category settings ─────────────────────────────────────────
 router.put('/category-settings',   sanitizeRequestBody, ctrl.updateCategorySettings);
 
 module.exports = router;
+

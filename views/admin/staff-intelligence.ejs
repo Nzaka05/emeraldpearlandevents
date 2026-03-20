@@ -1,0 +1,149 @@
+<!-- Staff Intelligence Dashboard -->
+<style>
+    :root {
+        --si-bg: #f8fafb;
+        --si-card: #ffffff;
+        --si-text: #1e293b;
+        --si-muted: #64748b;
+        --si-border: #e2e8f0;
+        --si-emerald: #0a2f1c;
+        --si-gold: #d4af37;
+        --si-green: #22c55e;
+        --si-amber: #f59e0b;
+        --si-red: #ef4444;
+    }
+
+    .si-page { padding: 24px; background: var(--si-bg); min-height: 100vh; font-family: 'Inter', sans-serif; }
+    .si-page h1 { font-size: 1.8rem; color: var(--si-emerald); margin: 0 0 4px 0; }
+    .si-page .subtitle { color: var(--si-muted); margin: 0 0 24px 0; font-size: 0.9rem; }
+
+    .si-card {
+        background: var(--si-card); border: 1px solid var(--si-border); border-radius: 16px;
+        padding: 24px; margin-bottom: 24px; box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+    }
+    .si-card h3 { margin: 0 0 16px 0; font-size: 1.1rem; color: var(--si-emerald); display: flex; align-items: center; gap: 8px; }
+    .si-card h3 i { color: var(--si-gold); }
+
+    /* Leaderboard Table */
+    .si-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+    .si-table th { text-align: left; padding: 12px; border-bottom: 2px solid var(--si-border); color: var(--si-muted); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; }
+    .si-table td { padding: 12px; border-bottom: 1px solid var(--si-border); vertical-align: middle; }
+    .si-table tr:hover { background: #f0fdf4; }
+
+    .rank-badge {
+        display: inline-flex; align-items: center; justify-content: center;
+        width: 28px; height: 28px; border-radius: 50%; font-weight: 800; font-size: 0.8rem;
+    }
+    .rank-1 { background: #fef3c7; color: #92400e; }
+    .rank-2 { background: #e5e7eb; color: #374151; }
+    .rank-3 { background: #fed7aa; color: #9a3412; }
+    .rank-other { background: #f1f5f9; color: #64748b; }
+
+    .reliability-bar { width: 100px; height: 8px; background: #e5e7eb; border-radius: 4px; overflow: hidden; display: inline-block; vertical-align: middle; margin-right: 6px; }
+    .reliability-fill { height: 100%; border-radius: 4px; }
+
+    .badge-sm { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 0.7rem; font-weight: 700; }
+    .bg-green { background: #d1fae5; color: #065f46; }
+    .bg-amber { background: #fef3c7; color: #92400e; }
+    .bg-red { background: #fee2e2; color: #991b1b; }
+
+    /* Performance Cards Grid */
+    .si-stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px; margin-bottom: 24px; }
+    .si-stat {
+        background: var(--si-card); border: 1px solid var(--si-border); border-radius: 12px;
+        padding: 16px; text-align: center;
+    }
+    .si-stat .num { font-size: 1.8rem; font-weight: 800; color: var(--si-emerald); }
+    .si-stat .lbl { font-size: 0.75rem; color: var(--si-muted); text-transform: uppercase; margin-top: 4px; }
+</style>
+
+<div class="si-page">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+        <div>
+            <h1><i class="fa-solid fa-chart-column" style="color: var(--si-gold);"></i> Staff Intelligence</h1>
+            <p class="subtitle">Performance analytics and reliability rankings</p>
+        </div>
+        <a href="/portal/admin-staff/ai/command-center" style="text-decoration:none; padding: 10px 20px; background: var(--si-emerald); color: white; border-radius: 12px; font-weight: 600; font-size: 0.9rem;">
+            <i class="fa-solid fa-brain"></i> AI Command Center
+        </a>
+    </div>
+
+    <!-- Summary Stats -->
+    <div class="si-stats-grid">
+        <div class="si-stat">
+            <div class="num"><%= leaderboard.length %></div>
+            <div class="lbl">Tracked Staff</div>
+        </div>
+        <div class="si-stat">
+            <div class="num"><%= leaderboard.length > 0 ? Math.round(leaderboard.reduce((s, l) => s + l.reliability_score, 0) / leaderboard.length) : 0 %></div>
+            <div class="lbl">Avg Reliability</div>
+        </div>
+        <div class="si-stat">
+            <div class="num"><%= leaderboard.length > 0 ? (leaderboard.reduce((s, l) => s + l.avg_rating, 0) / leaderboard.length).toFixed(1) : '0' %></div>
+            <div class="lbl">Avg Rating</div>
+        </div>
+        <div class="si-stat">
+            <div class="num"><%= leaderboard.reduce((s, l) => s + l.total_events, 0) %></div>
+            <div class="lbl">Total Events Done</div>
+        </div>
+    </div>
+
+    <!-- Leaderboard -->
+    <div class="si-card">
+        <h3><i class="fa-solid fa-trophy"></i> Staff Leaderboard</h3>
+        <% if (leaderboard.length === 0) { %>
+            <p style="color: var(--si-muted); text-align: center; padding: 30px;">No staff performance data yet. Data populates after events are completed.</p>
+        <% } else { %>
+        <table class="si-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Staff Member</th>
+                    <th>Events</th>
+                    <th>Rating</th>
+                    <th>Reliability</th>
+                    <th>Attendance</th>
+                    <th>Issues</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% leaderboard.forEach(function(s, i) { %>
+                <tr>
+                    <td>
+                        <span class="rank-badge <%= i === 0 ? 'rank-1' : (i === 1 ? 'rank-2' : (i === 2 ? 'rank-3' : 'rank-other')) %>">
+                            <%= i + 1 %>
+                        </span>
+                    </td>
+                    <td>
+                        <strong><%= s.staff_id ? (s.staff_id.firstname + ' ' + s.staff_id.lastname) : 'Unknown' %></strong>
+                        <div style="font-size: 0.75rem; color: var(--si-muted);"><%= s.staff_id ? s.staff_id.role : '' %></div>
+                    </td>
+                    <td><%= s.total_events %></td>
+                    <td>
+                        <span style="color: <%= s.avg_rating >= 4.0 ? 'var(--si-green)' : (s.avg_rating >= 3.0 ? 'var(--si-amber)' : 'var(--si-red)') %>; font-weight: 700;">
+                            <%= s.avg_rating.toFixed(1) %> <i class="fa-solid fa-star" style="font-size: 0.7rem;"></i>
+                        </span>
+                    </td>
+                    <td>
+                        <div class="reliability-bar">
+                            <div class="reliability-fill" style="width: <%= s.reliability_score %>%; background: <%= s.reliability_score >= 70 ? 'var(--si-green)' : (s.reliability_score >= 40 ? 'var(--si-amber)' : 'var(--si-red)') %>;"></div>
+                        </div>
+                        <span style="font-weight: 700; font-size: 0.8rem;"><%= s.reliability_score %>%</span>
+                    </td>
+                    <td>
+                        <span class="badge-sm <%= s.attendance_rate >= 90 ? 'bg-green' : (s.attendance_rate >= 70 ? 'bg-amber' : 'bg-red') %>">
+                            <%= s.attendance_rate %>%
+                        </span>
+                    </td>
+                    <td style="font-size: 0.8rem;">
+                        <% if (s.missed_events > 0) { %><span style="color: var(--si-red);"><%= s.missed_events %> missed</span><% } %>
+                        <% if (s.late_count > 0) { %><span style="color: var(--si-amber); margin-left: 4px;"><%= s.late_count %> late</span><% } %>
+                        <% if (s.missed_events === 0 && s.late_count === 0) { %><span style="color: var(--si-green);">Clean</span><% } %>
+                    </td>
+                </tr>
+                <% }) %>
+            </tbody>
+        </table>
+        <% } %>
+    </div>
+</div>

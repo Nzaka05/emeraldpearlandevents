@@ -1,6 +1,6 @@
 /**
  * eventPredictionService.js
- * AI Event Operations Brain — heuristic-based event prediction engine.
+ * AI Event Operations Brain & Learning Integration
  */
 
 const Assignment     = require('../models/Assignment');
@@ -10,6 +10,7 @@ const PricingSettings   = require('../models/PricingSettings');
 const StaffPerformanceProfile = require('../models/StaffPerformanceProfile');
 const SupervisorRatingProfile = require('../models/SupervisorRatingProfile');
 const performanceService = require('./performanceService');
+const aiLearningService = require('../ai-learning/aiLearningService');
 
 const KEYWORD_MAP = {
     'wedding':     'Wedding',
@@ -60,7 +61,8 @@ async function generatePrediction(assignmentId) {
         historicalEventsUsed: 0
     };
     const recommendations = [];
-    let confidenceScore = 1.0;
+    const explanations = [];
+    let baseConfidence = 1.0;
 
     let eventType = null;
     let booking = null;
@@ -79,12 +81,25 @@ async function generatePrediction(assignmentId) {
     if (!eventType) {
         eventType = guessEventType(assignment.title);
         if (!dataQuality.hasBooking) {
-            confidenceScore -= 0.15;
+            baseConfidence -= 0.15;
         }
     }
 
+    // ── Pre-fetch A.I. Learning Insights ────────────────────────
+    const staffIds = [
+        ...(assignment.accepted_staff_ids || []).map(s => s._id || s),
+        ...(assignment.assigned_staff_ids || []).map(s => s._id || s)
+    ];
+
+    const { merged: aiInsights, raw: rawInsights } = await aiLearningService.getInsights({
+        eventType: eventType,
+        clientId: assignment.client_id ? assignment.client_id.toString() : null,
+        staffIds: staffIds.map(id => id.toString())
+    });
+
+    // ── Staffing Prediction ─────────────────────────────────────
+    let predictedStaff;
     const historyQuery = { status: 'Completed', _id: { $ne: assignment._id } };
-    var predictedStaff;
 
     if (eventType) {
         const allCompletedAssignments = await Assignment.find(historyQuery).select('booking_ref title accepted_staff_ids pay_rate start_time end_time usherCount clientPaymentAmount').lean();
@@ -108,16 +123,15 @@ async function generatePrediction(assignmentId) {
         dataQuality.historicalEventsUsed = matchedHistory.length;
 
         if (matchedHistory.length === 0) {
-            confidenceScore -= 0.4;
+            baseConfidence -= 0.4;
             recommendations.push('Limited historical data available — prediction based on defaults');
         } else if (matchedHistory.length < 3) {
-            confidenceScore -= 0.15;
+            baseConfidence -= 0.15;
             recommendations.push('Only ' + matchedHistory.length + ' similar past event(s) found — prediction may be less accurate');
         }
 
         if (matchedHistory.length > 0) {
-            const avgStaff = matchedHistory.reduce((sum, h) =>
-                sum + (h.accepted_staff_ids?.length || h.usherCount || 2), 0) / matchedHistory.length;
+            const avgStaff = matchedHistory.reduce((sum, h) => sum + (h.accepted_staff_ids?.length || h.usherCount || 2), 0) / matchedHistory.length;
             predictedStaff = Math.max(Math.ceil(avgStaff), 1);
         } else {
             const base = guestCount || assignment.usherCount || 5;
@@ -126,21 +140,42 @@ async function generatePrediction(assignmentId) {
     } else {
         const base = assignment.usherCount || 5;
         predictedStaff = Math.max(Math.ceil(base / 15), 2);
-        confidenceScore -= 0.3;
+        baseConfidence -= 0.3;
         recommendations.push('Could not determine event type — using default staffing formula');
         dataQuality.historicalEventsUsed = 0;
     }
 
+    // Apply AI Insight Adjustment for Staff
+    if (aiInsights && aiInsights.staffCount) {
+        if (Math.abs(aiInsights.staffCount - predictedStaff) >= 1) {
+            predictedStaff = Math.ceil((predictedStaff + aiInsights.staffCount) / 2); // Blended
+            explanations.push(`Adjusted predicted staff based on learned historical patterns (${aiInsights.staffCount.toFixed(1)} avg).`);
+        }
+    }
+
+    // ── Cost & Profit Ranges ────────────────────────────────────
     const pricing = await PricingSettings.findOne().lean();
     const supervisorCost = pricing?.globalSupervisorRate || 5000;
 
     const hours = parseHours(assignment.start_time, assignment.end_time);
     const payRate = assignment.pay_rate || 1000;
     const staffCost = predictedStaff * payRate * hours;
-    const estimatedCost = Math.round(staffCost + supervisorCost);
+    let estimatedCost = Math.round(staffCost + supervisorCost);
+
+    if (aiInsights && aiInsights.cost) {
+        estimatedCost = Math.round((estimatedCost + aiInsights.cost) / 2);
+        explanations.push(`Cost prediction weighted by learned baseline (historical avg: KSh ${aiInsights.cost.toLocaleString()}).`);
+    }
+
+    // Generating variance for min/max range (+/- 15%)
+    const estimatedCostRange = {
+        min: Math.round(estimatedCost * 0.85),
+        max: Math.round(estimatedCost * 1.15)
+    };
 
     let estimatedProfit = null;
     let revenueSource = null;
+    let estimatedProfitRange = null;
 
     const invoice = await ClientInvoice.findOne({ eventId: assignment._id }).lean();
     if (invoice && invoice.totalAmount > 0) {
@@ -150,23 +185,29 @@ async function generatePrediction(assignmentId) {
     } else if (assignment.clientPaymentAmount > 0) {
         estimatedProfit = Math.round(assignment.clientPaymentAmount - estimatedCost);
         revenueSource = assignment.clientPaymentAmount;
-        confidenceScore -= 0.1;
+        baseConfidence -= 0.1;
     } else {
-        estimatedProfit = null;
-        confidenceScore -= 0.2;
+        baseConfidence -= 0.2;
         recommendations.push('No revenue data available — profit cannot be estimated');
     }
 
     if (!dataQuality.hasInvoice) {
-        confidenceScore -= 0.05;
+        baseConfidence -= 0.05;
     }
 
-    // ── Staff Reliability & Performance Intelligence ─────────────────
-    const staffIds = [
-        ...(assignment.accepted_staff_ids || []).map(s => s._id || s),
-        ...(assignment.assigned_staff_ids || []).map(s => s._id || s)
-    ];
+    if (aiInsights && aiInsights.profit && revenueSource) {
+        estimatedProfit = Math.round((estimatedProfit + aiInsights.profit) / 2);
+        explanations.push('Profit adjusted to align with historical margin patterns.');
+    }
 
+    if (estimatedProfit !== null) {
+        estimatedProfitRange = {
+            min: Math.round(estimatedProfit * 0.8), // Wider margin for profit variance
+            max: Math.round(estimatedProfit * 1.2)
+        };
+    }
+
+    // ── Staff Reliability & Performance Intelligence ────────────
     let avgRating = 3.0;
     let avgAttendance = 100;
     let teamRebookPct = 100;
@@ -187,7 +228,6 @@ async function generatePrediction(assignmentId) {
         }
     }
 
-    // Check Supervisor explicitly
     let activeSupervisorRating = 3.0;
     let supervisorFraudHistory = 0;
     if (assignment.event_supervisor_id) {
@@ -198,58 +238,57 @@ async function generatePrediction(assignmentId) {
         }
     }
 
-    // ── Risk level calculation ────────────────────────────────
-    const currentStaff = (assignment.accepted_staff_ids?.length || 0)
-                       + (assignment.assigned_staff_ids?.length || 0);
-    const staffingGap = predictedStaff - currentStaff;
+    // ── Dynamic Confidence Score ────────────────────────────────
+    // Combine base heuristic confidence with AI Model insight confidence
+    let confidenceScore = Math.max(0, Math.min(100, Math.round(baseConfidence * 100)));
+    if (rawInsights && rawInsights.global && rawInsights.global.confidence) {
+        confidenceScore = Math.round((confidenceScore + rawInsights.global.confidence) / 2);
+        explanations.push(`Confidence score factored strongly by learned model sample size (${rawInsights.global.sample_size} events).`);
+    } else {
+        explanations.push('Insights model lacks data for this event parameters; relying on heuristic defaults.');
+        confidenceScore = Math.min(confidenceScore, 40); // Cap heavily if AI is untrained
+    }
 
+    // ── Upgraded Risk Model (0-100) ─────────────────────────────
     let riskScore = 0;
 
-    // 1. Staffing gap
-    if (staffingGap > 3) riskScore += 4;
-    else if (staffingGap > 1) riskScore += 2.5;
-    else if (staffingGap > 0) riskScore += 1;
+    const currentStaff = (assignment.accepted_staff_ids?.length || 0) + (assignment.assigned_staff_ids?.length || 0);
+    const staffingGap = predictedStaff - currentStaff;
 
-    // 2. Cost-to-revenue
+    // Base risk mapping
+    if (staffingGap > 3) riskScore += 40;
+    else if (staffingGap > 1) riskScore += 25;
+    else if (staffingGap > 0) riskScore += 10;
+
     if (revenueSource && revenueSource > 0) {
         const ratio = estimatedCost / revenueSource;
-        if (ratio > 0.9) riskScore += 3;
-        else if (ratio > 0.7) riskScore += 2;
-        else if (ratio > 0.5) riskScore += 1;
+        if (ratio > 0.9) riskScore += 30;
+        else if (ratio > 0.7) riskScore += 20;
+        else if (ratio > 0.5) riskScore += 10;
     } else {
-        riskScore += 1.5;
+        riskScore += 15;
     }
 
-    // 3. Performance Intelligence Adjustments
-    if (avgRating < 3.0) riskScore += 2;
-    if (avgRating > 4.5) riskScore -= 1; // Decrease risk
+    if (avgRating < 3.0) riskScore += 20;
+    if (avgRating > 4.5) riskScore -= 10;
+    if (avgAttendance < 70) riskScore += 15;
+    if (activeSupervisorRating < 3.5) riskScore += 10;
+    if (activeSupervisorRating > 4.5) riskScore -= 10;
+    if (teamRebookPct < 60) riskScore += 10;
+    if (totalActiveFlags >= 3) riskScore += 15;
+    else if (totalActiveFlags > 0) riskScore += 5;
+    if (supervisorFraudHistory > 2) riskScore += 15;
 
-    if (avgAttendance < 70) riskScore += 1.5;
+    // Bounds check
+    riskScore = Math.max(0, Math.min(100, riskScore));
 
-    if (activeSupervisorRating < 3.5) riskScore += 1;
-    if (activeSupervisorRating > 4.5) riskScore -= 1; // Decrease risk
+    let riskLabel = 'LOW';
+    if (riskScore >= 75) riskLabel = 'CRITICAL';
+    else if (riskScore >= 50) riskLabel = 'HIGH';
+    else if (riskScore >= 25) riskLabel = 'MEDIUM';
 
-    if (teamRebookPct < 60) riskScore += 1;
 
-    // Disciplinary Flags Impact
-    if (totalActiveFlags >= 3) {
-        riskScore += 0.5;
-    } else if (totalActiveFlags === 2) {
-        riskScore += 0.25;
-    } else if (totalActiveFlags === 1) {
-        riskScore += 0.1;
-    }
-
-    if (supervisorFraudHistory > 2) {
-        riskScore += 0.3;
-    }
-
-    // Resolve Level
-    let riskLevel = 'LOW';
-    if (riskScore >= 6) riskLevel = 'HIGH';
-    else if (riskScore >= 3 || totalActiveFlags >= 3) riskLevel = 'MEDIUM'; // Minimum MEDIUM cap
-
-    // ── Generate recommendations ──────────────────────────────
+    // ── Generate recommendations ────────────────────────────────
     if (staffingGap > 0) recommendations.push(`Consider adding ${staffingGap} more staff member(s) — predicted need is ${predictedStaff}`);
     if (staffingGap > 3) recommendations.push('CRITICAL: Significant understaffing risk detected');
     if (revenueSource && estimatedCost / revenueSource > 0.8) recommendations.push('Cost margin is tight — review pricing or reduce operational costs');
@@ -265,22 +304,18 @@ async function generatePrediction(assignmentId) {
         recommendations.push('Assigned supervisor has a history of fraud flag incidents. Review assignment carefully.');
     }
 
-    if (riskLevel === 'HIGH') {
-        recommendations.push('HIGH risk event — recommend senior supervisor oversight');
+    if (riskLabel === 'CRITICAL' || riskLabel === 'HIGH') {
+        recommendations.push(`${riskLabel} risk event — recommend senior supervisor oversight`);
         if (global.io) {
             global.io.to('Admin').emit('cmd:risk_escalation', {
                 event_id: assignmentId,
                 event_name: assignment.title,
-                risk_level: 'HIGH',
+                risk_level: riskLabel,
+                risk_score: riskScore,
                 recommendations,
                 timestamp: new Date()
             });
         }
-    }
-
-    confidenceScore = Math.max(0, Math.min(1, parseFloat(confidenceScore.toFixed(2))));
-    if (dataQuality.historicalEventsUsed === 0) {
-        confidenceScore = Math.min(confidenceScore, 0.3);
     }
 
     // ── Generate Intelligence Recommendations (Supervisor & Team) ──
@@ -301,7 +336,7 @@ async function generatePrediction(assignmentId) {
     const recommendedTeam = [];
     if (topStaff.length > 0) {
         const candidateIds = topStaff.map(s => s.staff_id._id);
-        const compScore = await performanceService.getTeamCompatibility(candidateIds);
+        const compScore = null; // Removed heavy call
         
         for (const s of topStaff) {
             recommendedTeam.push({
@@ -317,10 +352,14 @@ async function generatePrediction(assignmentId) {
     return {
         predictedStaff,
         estimatedCost,
+        estimatedCostRange,
         estimatedProfit,
-        riskLevel,
+        estimatedProfitRange,
+        riskScore,
+        riskLabel,
         confidenceScore,
         recommendations,
+        explanations,
         dataQuality,
         recommendedSupervisor,
         recommendedTeam
@@ -328,4 +367,3 @@ async function generatePrediction(assignmentId) {
 }
 
 module.exports = { generatePrediction };
-

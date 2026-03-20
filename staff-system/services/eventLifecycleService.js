@@ -258,6 +258,17 @@ exports.transition = async (assignmentId, targetState, performedById, opts = {})
             console.error('[EventLifecycleService] Failed to capture performance baseline:', err);
         }
 
+        // ── AI Learning System: Trigger Training on COMPLETED ────────────────────
+        setImmediate(async () => {
+            try {
+                const aiTrainingJob = require('../ai-learning/aiTrainingJob');
+                const result = await aiTrainingJob.runTrainingBatch();
+                console.log(`[AILearning] Training batch after event ${assignment._id}: ${result.processed} processed, ${result.failed} failed`);
+            } catch (err) {
+                console.error('[AILearning] Training trigger failed:', err.message);
+            }
+        });
+
         // ── Automated ETR Trigger & Client Thank You ─────────────────────────────────
         setImmediate(async () => {
             try {

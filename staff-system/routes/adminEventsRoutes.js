@@ -5,6 +5,7 @@
  */
 
 const express = require('express');
+const { validateParam } = require('../utils/validateObjectId');
 const router = express.Router();
 
 const ctrl = require('../controllers/adminEventsController');
@@ -27,28 +28,28 @@ router.get('/event-teams/:teamId/disband-check',  ctrl.checkDisbandEligibility);
 
 // ── Assignment management ─────────────────────────────────────
 router.post('/assignments',                       sanitizeRequestBody, validateAssignmentCreation, ctrl.createAssignment);
-router.get('/assignments/:id',                    protect, authorize('Admin'), ctrl.getSingleAssignment);
-router.put('/assignments/:id',                    sanitizeRequestBody, ctrl.updateAssignment);
-router.delete('/assignments/:id',                 ctrl.deleteAssignment);
+router.get('/assignments/:id', validateParam('id'),                    protect, authorize('Admin'), ctrl.getSingleAssignment);
+router.put('/assignments/:id', validateParam('id'),                    sanitizeRequestBody, ctrl.updateAssignment);
+router.delete('/assignments/:id', validateParam('id'),                 ctrl.deleteAssignment);
 
 // Test delete helper (smoke-test route)
 router.all('/assignments/test-delete',            (req, res) => res.json({ method: req.method, working: true }));
 
 // ── Assignment sub-routes ─────────────────────────────────────
-router.put('/assignments/:id/supervisor',         protect, authorize('Admin'), ctrl.assignEventSupervisor);
-router.put('/assignments/:id/assign-staff',       protect, authorize('Admin'), ctrl.assignStaffToEvent);
-router.put('/assignments/:id/toggle-applications',protect, authorize('Admin'), ctrl.toggleApplications);
-router.get('/assignments/:id/report',             ctrl.getEventReport);
+router.put('/assignments/:id/supervisor', validateParam('id'),         protect, authorize('Admin'), ctrl.assignEventSupervisor);
+router.put('/assignments/:id/assign-staff', validateParam('id'),       protect, authorize('Admin'), ctrl.assignStaffToEvent);
+router.put('/assignments/:id/toggle-applications', validateParam('id'),protect, authorize('Admin'), ctrl.toggleApplications);
+router.get('/assignments/:id/report', validateParam('id'),             ctrl.getEventReport);
 
 // ── Applicants ────────────────────────────────────────────────
-router.post('/assignments/:id/applicants/:staffId', protect, authorize('Admin'), ctrl.handleApplicant);
+router.post('/assignments/:id/applicants/:staffId', validateParam('id'), validateParam('staffId'), validateParam('id'), protect, authorize('Admin'), ctrl.handleApplicant);
 
 // ── Replacement requests ──────────────────────────────────────
-router.post('/replacements/:id/approve',          ctrl.approveReplacement);
-router.post('/replacements/:id/reject',           ctrl.rejectReplacement);
+router.post('/replacements/:id/approve', validateParam('id'),          ctrl.approveReplacement);
+router.post('/replacements/:id/reject', validateParam('id'),           ctrl.rejectReplacement);
 
 // ── AI Event Prediction ───────────────────────────────────────
-router.get('/events/:id/prediction',              ctrl.getEventPrediction);
+router.get('/events/:id/prediction', validateParam('id'),              ctrl.getEventPrediction);
 
 // ── Emergency Funds Security Layer ────────────────────────────
 router.post('/auth/biometric-verify',             ctrl.verifyBiometric);
@@ -74,10 +75,11 @@ router.get('/security/devices',                    ctrl.getDeviceManagementPage)
 
 // ── ETR Methods ───────────────────────────────────────────────
 router.get('/etr',                                ctrl.getETRs);
-router.get('/etr/:eventId',                       ctrl.getSingleETR);
-router.post('/etr/:eventId/generate',             ctrl.generateETR);
-router.post('/etr/:eventId/resend',               ctrl.resendETR);
-router.get('/etr/:eventId/download',              ctrl.downloadETR);
+router.get('/etr/:eventId', validateParam('eventId'),                       ctrl.getSingleETR);
+router.post('/etr/:eventId/generate', validateParam('eventId'),             ctrl.generateETR);
+router.post('/etr/:eventId/resend', validateParam('eventId'),               ctrl.resendETR);
+router.get('/etr/:eventId/download', validateParam('eventId'),              ctrl.downloadETR);
 
 module.exports = router;
+
 
