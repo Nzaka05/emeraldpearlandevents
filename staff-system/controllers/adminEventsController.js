@@ -587,10 +587,11 @@ exports.resendETR = async (req, res) => {
 exports.downloadETR = async (req, res) => {
   try {
     const ClientETR = require('../models/ClientETR');
-    const etr = await ClientETR.findOne({ event_id: req.params.eventId }).sort({ version: -1 }).lean();
-    if (!etr) return res.status(404).json({ success: false, error: 'No ETR found' });
+    const etr = await ClientETR.findOne({ event_id: req.params.eventId }).sort({ version: -1 }).populate('event_id').lean();
+    if (!etr) return res.status(404).json({ success: false, error: 'No ETR found. Generate one first.' });
     if (etr.pdf_url) return res.redirect(etr.pdf_url);
-    res.json({ success: true, message: 'No PDF available — ETR data only', data: etr.summary });
+    // No PDF available — render the ETR view page so the user can print it (Ctrl+P → Save as PDF)
+    res.render('admin/etr-view', { user: req.user, etr, _page: 'etr' });
   } catch (err) {
     console.error('[ETR] downloadETR:', err.message);
     res.status(500).json({ success: false, error: err.message });
