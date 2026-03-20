@@ -71,7 +71,7 @@ const PORT = process.env.PORT || 3000;
 app.set('view engine', 'ejs');
 app.set('views', [path.join(__dirname, 'staff-system/views'), path.join(__dirname, 'views')]);
 app.use(expressLayouts);
-app.set('layout', 'layout');
+app.set('layout', path.join(__dirname, 'staff-system/views/layout'));
 
 
 
@@ -740,6 +740,7 @@ server.listen(PORT, () => {
 });
 
 module.exports = app;
+
 
 
 
