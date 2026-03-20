@@ -33,10 +33,24 @@
         </header>
         <% } %>
 
-            <main>
+            <div class='app-container'>
+    <% if (typeof user !== 'undefined') { %>
+    <nav class='sidebar'>
+        <div class='sidebar-logo'><i class='fa-solid fa-gem'></i> Emerald</div>
+        <ul class='sidebar-nav'>
+            <li><a href='/portal/admin-staff/dashboard'><i class='fa-solid fa-gauge'></i> Dashboard</a></li>
+            <li><a href='/portal/admin-staff/staff'><i class='fa-solid fa-users'></i> Staff</a></li>
+            <li><a href='/portal/admin-staff/assignments'><i class='fa-solid fa-calendar-check'></i> Assignments</a></li>
+            <li><a href='/portal/admin-staff/payments'><i class='fa-solid fa-money-bill'></i> Payments</a></li>
+            <li><a href='/portal/admin-staff/etr'><i class='fa-solid fa-file-alt'></i> ETR</a></li>
+            <li><a href='/portal/admin-staff/audit-logs'><i class='fa-solid fa-list'></i> Audit Logs</a></li>
+        </ul>
+    </nav>
+    <% } %>
+    <main>
                 <%- body %>
                     <!-- Using EJS layouts or we can just include header/footer. Wait, standard EJS doesn't support layout without express-ejs-layouts. I will use standard includes. -->
-            </main>
+            </main></div>
 
             <!-- Socket.io -->
             <script src="/socket.io/socket.io.js"></script>

@@ -290,4 +290,11 @@ select:focus {
     color: var(--text-secondary);
     text-transform: uppercase;
     letter-spacing: 0.5px;
-}
+}.app-container { display: flex; min-height: 100vh; }
+.sidebar { width: 220px; background: #1e293b; color: #fff; display: flex; flex-direction: column; padding: 0; flex-shrink: 0; }
+.sidebar-logo { padding: 24px 20px; font-size: 1.2rem; font-weight: 700; color: #f1c40f; border-bottom: 1px solid #334155; }
+.sidebar-nav { list-style: none; padding: 12px 0; margin: 0; }
+.sidebar-nav li a { display: flex; align-items: center; gap: 10px; padding: 12px 20px; color: #cbd5e1; text-decoration: none; font-size: 0.9rem; transition: background 0.2s; }
+.sidebar-nav li a:hover { background: #334155; color: #fff; }
+.sidebar-nav li a i { width: 16px; }
+main { flex: 1; padding: 24px; overflow-y: auto; }
