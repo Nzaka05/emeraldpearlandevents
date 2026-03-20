@@ -175,7 +175,7 @@
             body: JSON.stringify({ current_password, new_password, confirm_new_password })
         });
         const d = await r.json();
-        if (d.success) { showToast('Security key updated.', 'success'); setTimeout(() => window.location.href = `${portalBase}/profile`, 1500); }
+        if (d.success) { showToast('Security key updated.', 'success'); setTimeout(() => window.location.reload(), 1500); }
         else showToast(d.details ? d.details.join(', ') : d.error, 'error');
     }
 

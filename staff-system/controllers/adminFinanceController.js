@@ -166,3 +166,88 @@ exports.seedStaffPayments = async (req, res) => {
         res.status(500).json({ success: false, error: e.message });
     }
 };
+
+// ─────────────────────────────────────────────────────────────
+// @desc   Download staff payment receipt PDF (Admin)
+// @route  GET /portal/admin-staff/payments/:assignmentId/receipt/:staffId
+// ─────────────────────────────────────────────────────────────
+exports.generatePaymentReceipt = async (req, res) => {
+    try {
+        const Assignment = require('../models/Assignment');
+        const assignment = await Assignment.findById(req.params.assignmentId).populate('accepted_staff_ids', 'name phone specific_role role');
+        if (!assignment) return res.status(404).json({ success: false, error: 'Assignment not found' });
+
+        const payment = assignment.staff_payments.find(
+            p => p.staff_id.toString() === req.params.staffId
+        );
+        if (!payment) return res.status(404).json({ success: false, error: 'Payment record not found' });
+
+        const staffMember = assignment.accepted_staff_ids.find(s => s._id.toString() === req.params.staffId);
+        const staffName = staffMember ? staffMember.name : payment.staff_name;
+        const staffPhone = staffMember ? staffMember.phone : payment.phone;
+        const staffRole = staffMember ? (staffMember.specific_role || staffMember.role) : 'Staff';
+
+        const PDFDocument = require('pdfkit');
+        const path = require('path');
+        const doc = new PDFDocument({ margin: 50, size: 'A4' });
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="receipt-${assignment.title.replace(/\s+/g, '-')}-${staffName.replace(/\s+/g, '-')}.pdf"`);
+        doc.pipe(res);
+
+        const emeraldGreen = '#1a6b3c';
+        const darkGray = '#2c2c2c';
+        const lightGray = '#f5f5f5';
+
+        // Header Background
+        doc.rect(0, 0, 612, 120).fill(emeraldGreen);
+        doc.fontSize(18).fillColor('#ffffff').font('Helvetica-Bold').text('EMERALD PEARLAND EVENTS', 140, 35);
+        doc.fontSize(10).fillColor('rgba(255,255,255,0.8)').font('Helvetica').text('Official Payment Receipt', 140, 58);
+        doc.fontSize(10).fillColor('rgba(255,255,255,0.8)').text('emeraldpearlandevents@gmail.com', 140, 73);
+
+        const receiptNo = `EP-${Date.now().toString().slice(-6)}`;
+        doc.fontSize(9).fillColor('#bbbbbb').text(`Receipt No: ${receiptNo}`, 400, 55, { align: 'right', width: 162 });
+
+        doc.moveDown(4);
+
+        const col1 = 50;
+        const col2 = 320;
+        const rowStart = 145;
+
+        // Details
+        doc.rect(col1, rowStart, 240, 110).fill(lightGray).stroke('#e0e0e0');
+        doc.fontSize(8).fillColor('#888').font('Helvetica-Bold').text('EVENT DETAILS', col1 + 12, rowStart + 10);
+        doc.fontSize(10).fillColor(darkGray).font('Helvetica-Bold').text(assignment.title, col1 + 12, rowStart + 24, { width: 216 });
+        doc.fontSize(9).fillColor('#555').font('Helvetica').text(`Date: ${new Date(assignment.date).toLocaleDateString()}`, col1 + 12, rowStart + 45);
+
+        doc.rect(col2, rowStart, 242, 110).fill(lightGray).stroke('#e0e0e0');
+        doc.fontSize(8).fillColor('#888').font('Helvetica-Bold').text('STAFF DETAILS', col2 + 12, rowStart + 10);
+        doc.fontSize(10).fillColor(darkGray).font('Helvetica-Bold').text(staffName || 'N/A', col2 + 12, rowStart + 24);
+        doc.fontSize(9).fillColor('#555').font('Helvetica').text(`Role: ${staffRole || 'Staff'}`, col2 + 12, rowStart + 62);
+
+        // Amount
+        doc.rect(col1, rowStart + 125, 512, 70).fill(emeraldGreen);
+        doc.fontSize(11).fillColor('#d9d9d9').font('Helvetica').text('AMOUNT PAID', col1 + 20, rowStart + 138);
+        doc.fontSize(26).fillColor('#ffffff').font('Helvetica-Bold').text(`KSh ${(payment.amount || 0).toLocaleString()}`, col1 + 20, rowStart + 153);
+
+        const txStart = rowStart + 215;
+        doc.fontSize(8).fillColor('#888').font('Helvetica-Bold').text('TRANSACTION DETAILS', col1, txStart);
+        doc.moveTo(col1, txStart + 12).lineTo(562, txStart + 12).stroke('#e0e0e0');
+
+        const txDetails = [
+            ['Payment Method', 'M-Pesa B2C'],
+            ['M-Pesa Reference', payment.mpesa_ref || payment.transaction_id || 'Pending'],
+            ['Sent At', payment.sent_at ? new Date(payment.sent_at).toLocaleString() : '-']
+        ];
+        txDetails.forEach((row, i) => {
+            const y = txStart + 20 + (i * 20);
+            if (i % 2 === 0) doc.rect(col1, y - 3, 512, 20).fill('#fafafa');
+            doc.fontSize(9).fillColor('#666').font('Helvetica').text(row[0], col1 + 8, y);
+            doc.fontSize(9).fillColor(darkGray).font('Helvetica-Bold').text(row[1], 320, y);
+        });
+
+        doc.end();
+    } catch (error) {
+        console.error('[adminFinanceController] generatePaymentReceipt error:', error);
+        res.status(500).json({ success: false, error: 'Failed to generate receipt' });
+    }
+};

@@ -34,7 +34,7 @@ router.post('/assignments/:id/pay-staff',                      protect, authoriz
 router.post('/assignments/:id/payments/:spid/mark-received',   ctrl.markPaymentReceived);
 
 // ── Payment receipt PDF ───────────────────────────────────────
-// router.get('/payments/:assignmentId/receipt/:staffId', protect, authorize('Admin'), ctrl.generatePaymentReceipt);
+router.get('/payments/:assignmentId/receipt/:staffId', protect, authorize('Admin'), ctrl.generatePaymentReceipt);
 
 // ── Utility: seed staff_payments from accepted_staff_ids ─────
 router.post('/payments/seed-staff-payments',                   protect, authorize('Admin'), ctrl.seedStaffPayments);

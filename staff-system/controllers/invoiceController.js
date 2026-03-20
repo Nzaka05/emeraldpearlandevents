@@ -383,3 +383,33 @@ const generateInvoicePDF = async function(invoice) {
     } catch(err) { doc.end(); throw err; }
 };
 exports.generateInvoicePDF = generateInvoicePDF;
+exports.downloadInvoice = async (req, res) => {
+    try {
+        const ClientInvoice = require('../models/ClientInvoice');
+        const invoice = await ClientInvoice.findById(req.params.id).populate('eventId');
+        if (!invoice) return res.status(404).send('Invoice not found');
+        
+        let pdfPath = invoice.pdfUrl;
+        if (!pdfPath) {
+            pdfPath = await generateInvoicePDF(invoice);
+            invoice.pdfUrl = pdfPath;
+            await invoice.save();
+        }
+        
+        const fs = require('fs');
+        const path = require('path');
+        const fullPath = path.join(process.cwd(), 'uploads', pdfPath);
+        
+        if (fs.existsSync(fullPath)) {
+            res.download(fullPath);
+        } else {
+            const newPdfPath = await generateInvoicePDF(invoice);
+            invoice.pdfUrl = newPdfPath;
+            await invoice.save();
+            res.download(path.join(process.cwd(), 'uploads', newPdfPath));
+        }
+    } catch (e) {
+        console.error('[invoiceController] downloadInvoice error:', e);
+        res.status(500).send('Failed to generate or download invoice PDF.');
+    }
+};
