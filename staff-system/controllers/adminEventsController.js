@@ -446,7 +446,6 @@ exports.unlockPayout = async (req, res) => {
 // ═══════════════════════════════════════════════════════════════
 exports.getETRs = async (req, res) => {
   try {
-    const ETR = require('../models/ClientETR') || require('../models/SharedClientETR');
     const etrs = await require('../models/SharedClientETR').find().sort({ createdAt: -1 }).lean();
     res.render('admin/etr-list', { user: req.user, etrs, _page: 'etr' });
   } catch (err) {
