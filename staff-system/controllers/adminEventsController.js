@@ -442,23 +442,160 @@ exports.unlockPayout = async (req, res) => {
 };
 
 // ═══════════════════════════════════════════════════════════════
-// ETR (Electronic Tax Receipt) STUBS
+// ETR (Event Transaction Report) — REAL IMPLEMENTATIONS
 // ═══════════════════════════════════════════════════════════════
+
 exports.getETRs = async (req, res) => {
   try {
-    const etrs = await require('../models/SharedClientETR').find().sort({ createdAt: -1 }).lean();
+    const ClientETR = require('../models/ClientETR');
     const Assignment = require('../models/Assignment');
+    const etrs = await ClientETR.find().populate('event_id', 'title client_name').sort({ createdAt: -1 }).lean();
     const completedAssignments = await Assignment.find({ status: 'Completed' }).sort({ updatedAt: -1 }).lean();
     res.render('admin/etr-list', { user: req.user, etrs, completedAssignments, _page: 'etr' });
   } catch (err) {
-    console.error('[ETR]', err.message);
-    res.render('admin/etr-list', { user: req.user, etrs: [], _page: 'etr' });
+    console.error('[ETR] getETRs:', err.message);
+    res.render('admin/etr-list', { user: req.user, etrs: [], completedAssignments: [], _page: 'etr' });
   }
 };
-exports.getSingleETR = async (req, res) => { res.json({ success: true, data: { id: req.params.eventId } }); };
-exports.generateETR = async (req, res) => { res.json({ success: true, message: "ETR Generated", data: { etrNumber: "ETR-123" } }); };
-exports.resendETR = async (req, res) => { res.json({ success: true, message: "ETR Resent" }); };
-exports.downloadETR = async (req, res) => { res.json({ success: true, message: "Download link", url: "/downloads/etr.pdf" }); };
+
+exports.getSingleETR = async (req, res) => {
+  try {
+    const ClientETR = require('../models/ClientETR');
+    const etr = await ClientETR.findOne({ event_id: req.params.eventId }).sort({ version: -1 }).populate('event_id').lean();
+    if (!etr) return res.status(404).json({ success: false, error: 'ETR not found for this event' });
+    res.render('admin/etr-view', { user: req.user, etr, _page: 'etr' });
+  } catch (err) {
+    console.error('[ETR] getSingleETR:', err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
+};
+
+exports.generateETR = async (req, res) => {
+  try {
+    const ClientETR = require('../models/ClientETR');
+    const Assignment = require('../models/Assignment');
+    const Attendance = require('../models/Attendance');
+
+    const eventId = req.params.eventId;
+    const assignment = await Assignment.findById(eventId).lean();
+    if (!assignment) return res.status(404).json({ success: false, error: 'Assignment not found' });
+
+    // Check for existing ETR
+    const prevEtr = await ClientETR.findOne({ event_id: eventId }).sort({ version: -1 });
+    const newVersion = prevEtr ? prevEtr.version + 1 : 1;
+
+    // Gather attendance data
+    const attendanceCount = await Attendance.countDocuments({ assignment_id: eventId });
+
+    // Try to gather financial data (graceful if models don't exist)
+    let staffCost = 0, logisticsCost = 0, equipmentCost = 0, otherExpenses = 0, emergencyFundsUsed = 0;
+    let totalQuoted = 0, totalPaid = 0;
+
+    try {
+      const StaffPayroll = require('../models/StaffPayroll');
+      const payrolls = await StaffPayroll.find({ event_id: eventId }).lean();
+      staffCost = payrolls.reduce((sum, pr) => sum + (pr.net_pay || 0), 0);
+    } catch (e) { /* StaffPayroll not available */ }
+
+    try {
+      const ExpenseReceipt = require('../models/ExpenseReceipt');
+      const expenses = await ExpenseReceipt.find({ event_id: eventId }).lean();
+      expenses.forEach(e => {
+        const cat = (e.category || '').toLowerCase();
+        if (e.paid_from_emergency_fund) emergencyFundsUsed += e.amount || 0;
+        else if (cat.includes('logistic') || cat.includes('transport')) logisticsCost += e.amount || 0;
+        else if (cat.includes('equipment') || cat.includes('gear')) equipmentCost += e.amount || 0;
+        else otherExpenses += e.amount || 0;
+      });
+    } catch (e) { /* ExpenseReceipt not available */ }
+
+    try {
+      const ClientInvoice = require('../models/ClientInvoice');
+      const invoices = await ClientInvoice.find({ eventId }).lean();
+      totalQuoted = invoices.reduce((sum, inv) => sum + (inv.totalAmount || 0), 0);
+      totalPaid = invoices.reduce((sum, inv) => sum + (inv.amountPaid || 0), 0);
+    } catch (e) { /* ClientInvoice not available */ }
+
+    const totalCost = staffCost + logisticsCost + equipmentCost + otherExpenses + emergencyFundsUsed;
+    const outstandingBalance = totalQuoted - totalPaid;
+    let paymentStatus = 'OUTSTANDING';
+    if (totalQuoted > 0) {
+      if (totalPaid >= totalQuoted) paymentStatus = 'PAID';
+      else if (totalPaid > 0) paymentStatus = 'PARTIAL';
+    }
+
+    let deliveryStatus = 'Fully Delivered';
+    if (attendanceCount < (assignment.required_staff_count || 1)) {
+      deliveryStatus = 'Partially Delivered';
+    }
+
+    // Generate ETR number
+    const totalEtrs = await ClientETR.countDocuments();
+    const etrSeq = String(totalEtrs + 1).padStart(5, '0');
+    const etrNumber = `ETR-${new Date().getFullYear()}-${etrSeq}`;
+
+    const summary = {
+      etrNumber,
+      eventName: assignment.title,
+      eventDate: assignment.date,
+      venue: assignment.location,
+      clientName: assignment.client_name || 'N/A',
+      eventDuration: `${assignment.start_time || ''} - ${assignment.end_time || ''}`,
+      staffDeployed: attendanceCount,
+      financialSummary: { totalQuoted, totalPaid, outstandingBalance, paymentStatus },
+      costBreakdown: { staffCost, logisticsCost, equipmentCost, emergencyFundsUsed, otherExpenses, totalCost },
+      serviceDelivery: {
+        plannedStartTime: assignment.start_time,
+        plannedEndTime: assignment.end_time,
+        deliveryStatus
+      },
+      generatedAt: new Date().toISOString(),
+      etrVersion: newVersion
+    };
+
+    const newEtr = await ClientETR.create({
+      event_id: eventId,
+      client_id: assignment.client_id || null,
+      version: newVersion,
+      generated_by: req.user._id,
+      summary,
+      delivery_status: 'pending'
+    });
+
+    res.json({ success: true, message: 'ETR Generated', data: { etrNumber, id: newEtr._id } });
+  } catch (err) {
+    console.error('[ETR] generateETR:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+};
+
+exports.resendETR = async (req, res) => {
+  try {
+    const ClientETR = require('../models/ClientETR');
+    const etr = await ClientETR.findOne({ event_id: req.params.eventId }).sort({ version: -1 });
+    if (!etr) return res.status(404).json({ success: false, error: 'No ETR found. Generate one first.' });
+    etr.delivery_status = 'sent';
+    etr.sent_at = new Date();
+    await etr.save();
+    res.json({ success: true, message: 'ETR marked as sent' });
+  } catch (err) {
+    console.error('[ETR] resendETR:', err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
+};
+
+exports.downloadETR = async (req, res) => {
+  try {
+    const ClientETR = require('../models/ClientETR');
+    const etr = await ClientETR.findOne({ event_id: req.params.eventId }).sort({ version: -1 }).lean();
+    if (!etr) return res.status(404).json({ success: false, error: 'No ETR found' });
+    if (etr.pdf_url) return res.redirect(etr.pdf_url);
+    res.json({ success: true, message: 'No PDF available — ETR data only', data: etr.summary });
+  } catch (err) {
+    console.error('[ETR] downloadETR:', err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
+};
 
 // ═══════════════════════════════════════════════════════════════
 // WEBAUTHN BIOMETRIC ENDPOINTS
