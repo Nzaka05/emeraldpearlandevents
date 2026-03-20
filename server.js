@@ -650,9 +650,9 @@ const portalStaffRoutes = require('./staff-routes/staff');
 const portalSupervisorRoutes = require('./staff-routes/supervisor');
 const portalAdminStaffRoutes = require('./staff-routes/admin');
 
-app.use('/portal/auth', portalCsrf, portalAuthRoutes);
-app.use('/portal/staff', portalCsrf, portalStaffRoutes);
-app.use('/portal/supervisor', portalCsrf, portalSupervisorRoutes);
+app.use('/portal/auth', portalAuthRoutes);
+app.use('/portal/staff', portalStaffRoutes);
+app.use('/portal/supervisor', portalSupervisorRoutes);
 
 // Public M-Pesa callbacks - no auth, no CSRF
 app.post('/portal/admin-staff/mpesa/callback', async (req, res) => {
@@ -669,7 +669,7 @@ app.post('/portal/admin-staff/mpesa/timeout', (req, res) => {
     console.warn('[mpesa/timeout]', req.body);
     res.json({ ResultCode: 0, ResultDesc: 'Acknowledged' });
 });
-app.use('/portal/admin-staff', portalCsrf, portalAdminStaffRoutes);
+app.use('/portal/admin-staff', portalAdminStaffRoutes);
 
 // Convenience redirects
 app.get('/staff-login', (req, res) => res.redirect('/portal/auth/login'));
@@ -739,6 +739,8 @@ server.listen(PORT, () => {
 });
 
 module.exports = app;
+
+
 
 
 
