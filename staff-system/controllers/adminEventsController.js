@@ -447,7 +447,9 @@ exports.unlockPayout = async (req, res) => {
 exports.getETRs = async (req, res) => {
   try {
     const etrs = await require('../models/SharedClientETR').find().sort({ createdAt: -1 }).lean();
-    res.render('admin/etr-list', { user: req.user, etrs, _page: 'etr' });
+    const Assignment = require('../models/Assignment');
+    const completedAssignments = await Assignment.find({ status: 'Completed' }).sort({ updatedAt: -1 }).lean();
+    res.render('admin/etr-list', { user: req.user, etrs, completedAssignments, _page: 'etr' });
   } catch (err) {
     console.error('[ETR]', err.message);
     res.render('admin/etr-list', { user: req.user, etrs: [], _page: 'etr' });
