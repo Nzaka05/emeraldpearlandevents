@@ -1,5 +1,5 @@
 require('dotenv').config({ path: require('path').join(__dirname, '../.env') });
-require('../scripts/checkEnv'); // Halt dynamically before server boots if environment is mismatched
+// require('../scripts/checkEnv'); // disabled for standalone deployment // Halt dynamically before server boots if environment is mismatched
 
 const express = require('express');
 const http = require('http');
@@ -541,6 +541,7 @@ app.use((err, req, res, next) => {
   });
 });
 
+module.exports = { app, server };
 const PORT = process.env.PORT || 3001;
 server.listen(PORT, () => {
     console.log(`Staff System running on port ${PORT}`);
@@ -550,3 +551,4 @@ server.listen(PORT, () => {
     // Start Missing Staff recovery check & interval loop
     require('./jobs/missingStaffJob').startJob();
 });
+
