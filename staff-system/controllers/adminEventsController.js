@@ -502,18 +502,27 @@ exports.generateETR = async (req, res) => {
       const expenses = await ExpenseReceipt.find({ eventId }).lean();
       expenses.forEach(e => {
         const cat = (e.category || '').toLowerCase();
-        if (e.paid_from_emergency_fund) emergencyFundsUsed += e.amount || 0;
-        else if (cat.includes('logistic') || cat.includes('transport')) logisticsCost += e.amount || 0;
+        if (cat.includes('logistic') || cat.includes('transport')) logisticsCost += e.amount || 0;
         else if (cat.includes('equipment') || cat.includes('gear')) equipmentCost += e.amount || 0;
         else otherExpenses += e.amount || 0;
       });
     } catch (e) { /* ExpenseReceipt not available */ }
 
+    // Look up true emergency funds
+    try {
+      const EmergencyFundAudit = require('../models/EmergencyFundAudit');
+      const funds = await EmergencyFundAudit.find({ event_id: eventId, payout_status: 'success' }).lean();
+      emergencyFundsUsed = funds.reduce((sum, f) => sum + (f.amount || 0), 0);
+    } catch (e) { /* EmergencyFunds not available */ }
+
     try {
       const ClientInvoice = require('../models/ClientInvoice');
       const invoices = await ClientInvoice.find({ eventId }).lean();
       totalQuoted = invoices.reduce((sum, inv) => sum + (inv.totalAmount || 0), 0);
-      totalPaid = invoices.reduce((sum, inv) => sum + (inv.amountPaid || 0), 0);
+      totalPaid = invoices.reduce((sum, inv) => sum + (
+        inv.amountPaid !== undefined ? inv.amountPaid : 
+        (['paid', 'Paid'].includes(inv.paymentStatus) ? inv.totalAmount : 0)
+      ), 0);
     } catch (e) { /* ClientInvoice not available */ }
 
     const totalCost = staffCost + logisticsCost + equipmentCost + otherExpenses + emergencyFundsUsed;

@@ -36,8 +36,8 @@
         <% etrs.forEach(function(etr) { %>
           <tr class="hover:bg-white/5 transition-colors group">
             <td class="font-mono text-emerald-400 text-sm"><%= etr.summary.etrNumber %> <span class="text-tx-3 text-xs">v<%= etr.version %></span></td>
-            <td class="font-bold text-tx-1"><%= etr.event_id ? etr.event_id.title : 'Deleted Event' %></td>
-            <td class="text-sm text-tx-2"><%= etr.summary.clientName %></td>
+            <td class="font-bold text-tx-1"><%- etr.event_id ? etr.event_id.title : 'Deleted Event' %></td>
+            <td class="text-sm text-tx-2"><%- etr.summary.clientName %></td>
             <td class="text-sm text-tx-2"><%= new Date(etr.generated_at).toLocaleDateString() %></td>
             <td>
               <% if (etr.delivery_status === 'sent') { %>
@@ -65,8 +65,8 @@
         %>
           <tr class="hover:bg-white/5 transition-colors opacity-75">
             <td class="font-mono text-tx-3 text-sm">NOT_GENERATED</td>
-            <td class="font-bold text-tx-1"><%= a.title %></td>
-            <td class="text-sm text-tx-2"><%= a.client_name %></td>
+            <td class="font-bold text-tx-1"><%- a.title %></td>
+            <td class="text-sm text-tx-2"><%- a.client_name %></td>
             <td class="text-sm text-tx-3">—</td>
             <td><span class="badge-gray px-2 py-0.5 rounded-full inline-block">Pending</span></td>
             <td class="text-right">
