@@ -537,7 +537,7 @@ app.use((err, req, res, next) => {
       timestamp: new Date().toISOString()
     });
   }
-  res.status(statusCode).render('error', { 
+  res.status(statusCode).json( { 
     message: 'Something went wrong',
     statusCode 
   });
@@ -553,6 +553,7 @@ server.listen(PORT, () => {
     // Start Missing Staff recovery check & interval loop
     require('./jobs/missingStaffJob').startJob();
 });
+
 
 
 
