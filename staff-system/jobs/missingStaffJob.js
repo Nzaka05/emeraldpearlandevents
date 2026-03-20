@@ -74,7 +74,7 @@ async function scanEvent(assignment) {
                 await StaffMissingAlert.create({
                     event_id: assignment._id,
                     staff_id: staffId,
-                    minutes_late: diffMins,
+                    minutes_late: isNaN(diffMins) ? 0 : diffMins,
                     alerted_at: new Date()
                 });
 
@@ -88,7 +88,7 @@ async function scanEvent(assignment) {
                         event_id: assignment._id,
                         staff_id: staffId,
                         staff_name: staffDoc?.name || 'Unknown Staff',
-                        minutes_late: diffMins,
+                        minutes_late: isNaN(diffMins) ? 0 : diffMins,
                         timestamp: new Date()
                     };
                     
@@ -147,4 +147,5 @@ module.exports = {
     startJob,
     _runCheckNow: runMissingStaffCheck // Exposed for tests
 };
+
 
