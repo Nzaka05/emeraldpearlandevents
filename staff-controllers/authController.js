@@ -46,6 +46,7 @@ exports.login = async (req, res) => {
             return res.render('auth/login', { error: 'Account suspended. Contact Administrator.' });
         }
 
+        console.log('[DEBUG] password field:', !!user.password, typeof user.password);
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) {
             await AuditLog.create({
@@ -267,5 +268,6 @@ exports.staffForgotPassword = async (req, res) => {
         res.render('auth/forgot-password', { error: 'Could not process request. Please try again.', message: null });
     }
 };
+
 
 
