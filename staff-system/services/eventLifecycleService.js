@@ -33,7 +33,7 @@ const SupervisorRatingProfile = require('../models/SupervisorRatingProfile');
 const EventPerformanceBaseline = require('../models/EventPerformanceBaseline');
 
 // ── CLIENT PORTAL INTEGRATION ──
-const clientNotificationService = require('../../server/services/clientNotificationService');
+let clientNotificationService = null; try { clientNotificationService = require('../../server/services/clientNotificationService'); } catch(e) { console.log('[EventLifecycle] clientNotificationService not available - running standalone'); }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // LIFECYCLE STATES
@@ -262,7 +262,7 @@ exports.transition = async (assignmentId, targetState, performedById, opts = {})
 
                 // Use the performedById or fallback admin for generatedBy
                 const systemAdminId = performedById || null;
-                const etrService = require('../../server/services/etrService');
+                let etrService = null; try { etrService = require('../../server/services/etrService'); } catch(e) { console.log('[EventLifecycle] etrService not available - running standalone'); }
                 let generatedEtr = null;
 
                 // Step 2: Generate ETR
@@ -415,3 +415,4 @@ exports.getValidTransitions = (currentState) => {
 // Export constants for use in controllers / tests
 exports.LIFECYCLE_STATES      = LIFECYCLE_STATES;
 exports.VALID_TRANSITIONS     = VALID_TRANSITIONS;
+

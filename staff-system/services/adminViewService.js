@@ -137,7 +137,7 @@ exports.getEventsPageData = async (queryFilters) => {
 
     const allAsn = await Assignment.find();
 
-    const ClientETR = require('../../server/models/ClientETR');
+    const ClientETR = require('../models/SharedClientETR');
     const assignmentIds = assignmentsDocs.map(a => a._id);
     const etrs = await ClientETR.find({ event_id: { $in: assignmentIds } }).sort({ version: 1 }).lean();
     const etrMap = {};

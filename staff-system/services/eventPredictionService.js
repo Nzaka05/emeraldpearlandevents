@@ -4,7 +4,7 @@
  */
 
 const Assignment     = require('../models/Assignment');
-const Booking        = require('../../server/models/Booking');
+const Booking        = require('../models/SharedBooking');
 const ClientInvoice  = require('../models/ClientInvoice');
 const PricingSettings   = require('../models/PricingSettings');
 const StaffPerformanceProfile = require('../models/StaffPerformanceProfile');
@@ -328,3 +328,4 @@ async function generatePrediction(assignmentId) {
 }
 
 module.exports = { generatePrediction };
+

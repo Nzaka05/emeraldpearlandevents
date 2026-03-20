@@ -5,7 +5,7 @@
  */
 
 const Assignment = require('../models/Assignment');
-const Attendance = require('../../staff-models/Attendance');
+const Attendance = require('../models/Attendance');
 const StaffMissingAlert = require('../models/StaffMissingAlert');
 
 // Helper to check if event started > 15 mins ago
@@ -147,3 +147,4 @@ module.exports = {
     startJob,
     _runCheckNow: runMissingStaffCheck // Exposed for tests
 };
+

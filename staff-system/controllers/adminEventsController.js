@@ -454,8 +454,8 @@ exports.downloadETR = async (req, res) => { res.json({ success: true, message: "
 // WEBAUTHN BIOMETRIC ENDPOINTS
 // ═══════════════════════════════════════════════════════════════
 
-const webAuthnService = require('../../server/services/webAuthnService');
-const AdminWebAuthnCredential = require('../../server/models/AdminWebAuthnCredential');
+const webAuthnService = require('../services/webAuthnService');
+const AdminWebAuthnCredential = require('../models/AdminWebAuthnCredential');
 const AuditLog = require('../models/AuditLog');
 const EmergencyFundAudit = require('../models/EmergencyFundAudit');
 
@@ -785,4 +785,5 @@ exports.getDeviceManagementPage = async (req, res) => {
         res.status(500).send('Error loading device management');
     }
 };
+
 
