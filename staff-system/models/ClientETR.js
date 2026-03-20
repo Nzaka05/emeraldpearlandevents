@@ -18,4 +18,4 @@ const clientEtrSchema = new mongoose.Schema({
     opened_at: { type: Date }
 }, { timestamps: true });
 
-module.exports = mongoose.model('ClientETR', clientEtrSchema);
+module.exports = mongoose.models.ClientETR || mongoose.model('ClientETR', clientEtrSchema);
