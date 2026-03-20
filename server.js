@@ -140,6 +140,7 @@ app.get('/booking.html', (req, res) => res.sendFile(path.join(__dirname, 'bookin
 app.use(bodyParser.json({ limit: '50mb' }));
 app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
 app.use(express.static('public'));
+app.use(express.static(path.join(__dirname, 'staff-system/public')));
 
 // ── RATE LIMITING (Prevent spam) ──
 const bookingLimiter = rateLimit({
@@ -739,6 +740,7 @@ server.listen(PORT, () => {
 });
 
 module.exports = app;
+
 
 
 
