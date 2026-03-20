@@ -52,8 +52,8 @@ app.use(helmet({
     directives: {
       defaultSrc: ["'self'"],
       scriptSrc: ["'self'", "'unsafe-inline'", "cdn.jsdelivr.net", "cdnjs.cloudflare.com"],
-      styleSrc: ["'self'", "'unsafe-inline'", "cdn.jsdelivr.net", "fonts.googleapis.com"],
-      fontSrc: ["'self'", "fonts.gstatic.com"],
+      styleSrc: ["'self'", "'unsafe-inline'", "cdn.jsdelivr.net", "fonts.googleapis.com", "cdnjs.cloudflare.com"],
+      fontSrc: ["'self'", "fonts.gstatic.com", "cdnjs.cloudflare.com"],
       imgSrc: ["'self'", "data:", "res.cloudinary.com"],
       connectSrc: ["'self'", "wss:", "ws:"]
     }
@@ -64,6 +64,7 @@ if (process.env.NODE_ENV === 'production') {
   app.use(morgan('combined'));
 }
 const server = http.createServer(app);
+require('./staff-config/socket')(server);
 const PORT = process.env.PORT || 3000;
 
 // ── EJS SETUP FOR STAFF PORTAL ──
@@ -738,4 +739,6 @@ server.listen(PORT, () => {
 });
 
 module.exports = app;
+
+
 
