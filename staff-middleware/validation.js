@@ -27,7 +27,7 @@ const sanitizeObject = (obj) => {
     const sanitizedObj = {};
     for (const [key, value] of Object.entries(obj)) {
         if (typeof value === 'string') {
-            sanitizedObj[key] = sanitizeString(value);
+            sanitizedObj[key] = key === 'password' ? value : sanitizeString(value);
         } else if (typeof value === 'object' && value !== null) {
             sanitizedObj[key] = sanitizeObject(value);
         } else {
