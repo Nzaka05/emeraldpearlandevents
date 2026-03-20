@@ -444,7 +444,16 @@ exports.unlockPayout = async (req, res) => {
 // ═══════════════════════════════════════════════════════════════
 // ETR (Electronic Tax Receipt) STUBS
 // ═══════════════════════════════════════════════════════════════
-exports.getETRs = async (req, res) => { res.json({ success: true, data: [] }); };
+exports.getETRs = async (req, res) => {
+  try {
+    const ETR = require('../models/ClientETR') || require('../models/SharedClientETR');
+    const etrs = await require('../models/SharedClientETR').find().sort({ createdAt: -1 }).lean();
+    res.render('admin/etr-list', { user: req.user, etrs, _page: 'etr' });
+  } catch (err) {
+    console.error('[ETR]', err.message);
+    res.render('admin/etr-list', { user: req.user, etrs: [], _page: 'etr' });
+  }
+};
 exports.getSingleETR = async (req, res) => { res.json({ success: true, data: { id: req.params.eventId } }); };
 exports.generateETR = async (req, res) => { res.json({ success: true, message: "ETR Generated", data: { etrNumber: "ETR-123" } }); };
 exports.resendETR = async (req, res) => { res.json({ success: true, message: "ETR Resent" }); };
@@ -785,5 +794,6 @@ exports.getDeviceManagementPage = async (req, res) => {
         res.status(500).send('Error loading device management');
     }
 };
+
 
 
