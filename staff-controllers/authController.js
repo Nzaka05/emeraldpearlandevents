@@ -17,7 +17,10 @@ const sendTokenResponse = (user, statusCode, res) => {
     };
 
     // Use portal_token name to isolate from admin panel cookies
-    res.status(statusCode).cookie('portal_token', token, options);
+    if (process.env.NODE_ENV === 'production') options.secure = true;
+    const redirectMap = { Admin: '/portal/admin', Supervisor: '/portal/supervisor', Staff: '/portal/staff' };
+    const redirectTo = redirectMap[user.role] || '/portal/staff';
+    res.status(statusCode).cookie('portal_token', token, options).redirect(redirectTo);
 };
 
 // @desc    Login user
@@ -264,4 +267,5 @@ exports.staffForgotPassword = async (req, res) => {
         res.render('auth/forgot-password', { error: 'Could not process request. Please try again.', message: null });
     }
 };
+
 
