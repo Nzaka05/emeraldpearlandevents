@@ -1131,7 +1131,7 @@ try {
 
 // ── Staff Drawer ──
   // Welcome toast
-  window.addEventListener('DOMContentLoaded', () => {
+  if (window.location.pathname.includes('/auth/')) return;
     const toast = document.getElementById('welcomeToast');
     if (toast) {
       setTimeout(() => { toast.style.opacity = '1'; toast.style.transform = 'translateX(-50%) translateY(0)'; }, 300);

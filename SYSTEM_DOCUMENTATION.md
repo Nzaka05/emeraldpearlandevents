@@ -1,158 +1,193 @@
-# Emerald Pearland Events Booking System
-## System Documentation v3.0
+# Emerald Pearland Events - System Documentation
+
+Welcome to the official system documentation for the **Emerald Pearland Events** platform. This guide is designed for developers, system administrators, and technical staff to understand the architecture, data flow, deployment, and management of the three interconnected web applications that power the business.
 
 ---
 
-## Overview
+## 1. System Overview
 
-A full-stack event booking and staff operations platform built with **Node.js**, **Express.js**, and **MongoDB Atlas**. The system runs across two servers and manages event bookings, staff assignments, attendance, and payments.
+Emerald Pearland Events operates a luxury event planning ecosystem consisting of three primary applications:
+
+1. **Client Site (emeraldpearlandevents.netlify.app)**
+   - The public-facing landing page and client portal.
+   - Handles event booking requests, portfolio galleries, client testimonials, and basic contact forms.
+   - Hosted statically / serverlessly on Netlify.
+
+2. **Admin Portal (emeraldpearlandevents.onrender.com)**
+   - The core operational hub for business owners and management.
+   - Handles booking approvals, staff directory management, gallery uploads, and testimonial moderation.
+   - Manages client interactions, analytics, and primary email notifications.
+   - Hosted on Render.
+
+3. **Staff Portal (emerald-staff-system.onrender.com)**
+   - The dedicated workforce management system.
+   - Supports role-based access for Admin, Supervisors, and general Staff.
+   - Manages assignments, attendance tracking, shift telemetry, and payments.
+   - Features the **PEARL AI Secretary** and real-time push notifications.
+   - Hosted on Render (operated independently from the Admin Portal to ensure isolation and security).
 
 ---
 
-## Architecture
+## 2. Architecture Diagram
 
-### Two-Server Setup
+```text
++-----------------------+       +-------------------------+       +------------------------+
+|    CLIENT SITE        |       |    ADMIN PORTAL         |       |    STAFF PORTAL        |
+|  (Netlify Hosted)     |       |   (Render Hosted)       |       |   (Render Hosted)      |
+|                       |       |                         |       |                        |
+| - Booking Forms       |====>> | - Booking Management    |====>> | - Assignment Auto-Gen  |
+| - Galleries           | (API) | - Invoicing & eTIMS     | (Sync)| - Push Notifications   |
+| - Testimonials        |       | - Staff Management      |       | - Attendance/Payments  |
+| - Client Self-Service |       | - Analytics Dashboard   |<<==== | - Shift Telemetry      |
+|                       |       | - Settings              | (SSO) | - PEARL AI Secretary   |
++-----------+-----------+       +------------+------------+       +-----------+------------+
+            |                                |                                |
+            |                          +-----+-----+                          |
+            +==========================| MONGODB   |==========================+
+                                       | ATLAS Cluster|
+                                       +-----------+
 
-| Server | Port | Purpose | Start Command |
-|--------|------|---------|---------------|
-| Main Admin | 3000 | Client bookings, admin panel, staff directory | `npm run dev` |
-| Staff Operations | 3001 | Staff portal, assignments, attendance, payroll | `node server.js` |
-
-### Database
-
-- **Provider**: MongoDB Atlas (Cluster0)
-- **Main Admin DB**: `test` database
-- **Staff Operations DB**: `emerald` database
-- **Connection**: `mongodb+srv://admin:****@cluster0.wa8samz.mongodb.net`
-
-### Project Path
+[External Services]
+- Cloudinary: Holds immutable assets (Gallery photos, Staff profile pictures)
+- Brevo/SMTP: Transactional Emails (Invoices, Approvals)
+- Web Push (VAPID): Browser-based push to Staff/Supervisors
+- Gemini 2.5 API: Powers the PEARL AI Secretary inside the Staff Portal
+- M-Pesa Daraja: Handles automated B2C and C2B payments
 ```
-C:\My Web Sites\school\live.themewild.com\emerald\
-├── server-prod.js              # Port 3000 entry point
-├── server/
-│   ├── routes/adminRoutes.js   # Main admin routes
-│   └── utils/staffSync.js      # Staff sync utility
-├── shared/
-│   ├── config/db.js            # MongoDB connection
-│   ├── middleware/roles.js     # Role-based access
-│   └── utils/geo.js            # Haversine GPS utility
-├── staff-system/               # Port 3001 root
-│   ├── server.js               # Port 3001 entry point
-│   ├── models/                 # Mongoose models
-│   ├── controllers/            # Route controllers
-│   ├── routes/                 # Express routers
-│   ├── views/                  # EJS templates
-│   └── middleware/             # Auth, CSRF, upload
-└── .env                        # Root environment variables
+
+---
+
+## 3. User Roles & Permissions
+
+The system enforces strict RBAC (Role-Based Access Control) to ensure data privacy and operational security.
+
+### 1. Admin
+- **Access:** Admin Portal & Staff Portal (via SSO).
+- **Permissions:** Full system read/write. Can modify settings, approve bookings, suspend staff, issue payments, view all shift telemetry, and configure PEARL AI parameters.
+
+### 2. Supervisor
+- **Access:** Staff Portal only (Supervisor Dashboard).
+- **Permissions:** Can view assigned team details, rate staff performance (ushers), chat in live event boards, flag emergencies, and view specific event shift rosters.
+
+### 3. Staff (Ushers, Brand Ambassadors, Ticketing Agents)
+- **Access:** Staff Portal only (Staff Dashboard).
+- **Permissions:** Can view available job postings, accept/decline assigned events, clock in/out (geolocation verification), view personal earnings, and update their profile/photo.
+
+### 4. Client
+- **Access:** Client Site / Portal.
+- **Permissions:** Can view personal bookings, download receipts/invoices, view event galleries, and submit testimonials.
+
+---
+
+## 4. Feature Documentation
+
+### Dual Authentication System
+The Admin Portal and Staff Portal use entirely separate JWT configurations. An Admin token cannot be used to natively hit Staff API endpoints except through the authorized **SSO Bridge**.
+
+### Single Sign-On (SSO) Bridge
+Admins securely jump from the Admin Portal to the Staff Portal without re-authenticating. The Admin portal generates a short-lived (2 min) signed JWT using a shared secret. The Staff portal intercepts this at `/staff-admin/sso-login`, verifies it, and grants a portal session.
+
+### Automatic Assignment Creation
+When a client booking is approved in the Admin Portal, an internal webhook securely pings the Staff Portal. This automatically generates a corresponding `Assignment` record, calculates required staff based on the package, and dispatches Push Notifications to available staff.
+
+### Cloudinary Integration
+Because Render uses ephemeral storage (files wipe on redeploy), all uploads (gallery events, profile photos, receipts) are piped directly to Cloudinary. References are saved in MongoDB as URLs.
+
+### Shift Telemetry (Geolocation)
+When Staff clock in or out via the Staff portal, the browser requests GPS coordinates. The backend calculates distance using the Haversine formula against the fixed event location to ensure staff are on-site.
+
+---
+
+## 5. API Endpoints Reference
+
+*Note: This is a high-level overview of core routes.*
+
+### Admin Portal Routes (`emeraldpearlandevents.onrender.com`)
+- `GET /admin` - Admin dashboard rendering.
+- `GET /admin/bookings` - View all client bookings.
+- `POST /api/admin/bookings/:id/approve` - Approve a booking.
+- `GET /admin/staff-operations-sso` - Generates token and redirects to Staff system.
+
+### Staff Portal Routes (`emerald-staff-system.onrender.com`)
+**Auth & Setup**
+- `POST /portal/auth/login` - Staff/Supervisor standard login.
+- `GET /staff-admin/sso-login?token=` - Consumes SSO token from Admin server.
+- `POST /internal/sync-staff` - Webhook. Called by Admin portal when a new staff member is added to sync records.
+
+**Assignments & Workflow**
+- `POST /portal/admin-staff/assignments` - Create new event assignment.
+- `PUT /portal/staff/assignments/:id/response` - Staff applies, accepts, or declines an assignment.
+- `POST /portal/staff/attendance/clock-in` - Submits GPS coords to verify shift start.
+
+**AI Integration**
+- `POST /api/ai/chat` - Interact with PEARL AI Secretary.
+
+---
+
+## 6. Environment Variables Required
+
+Each environment requires specific `.env` configurations.
+
+### Admin Portal (`.env`)
+```env
+NODE_ENV=production
+PORT=3000
+MONGO_URI=mongodb+srv://<user>:<password>@cluster.mongodb.net/test
+JWT_SECRET=your_admin_jwt_secret_min_64_chars
+SSO_JWT_SECRET=shared_secret_for_sso_bridge
+SYNC_SECRET=shared_secret_for_staff_synchronization
+STAFF_SYSTEM_BASE_URL=https://emerald-staff-system.onrender.com
+BREVO_API_KEY=your_brevo_api_key
+CLOUDINARY_URL=cloudinary://API_KEY:API_SECRET@CLOUD_NAME
+```
+
+### Staff Portal (`staff-system/.env`)
+```env
+NODE_ENV=production
+PORT=3001
+MONGO_URI=mongodb+srv://<user>:<password>@cluster.mongodb.net/emerald
+STAFF_JWT_SECRET=your_staff_jwt_secret_min_64_chars
+SSO_JWT_SECRET=shared_secret_for_sso_bridge
+SYNC_SECRET=shared_secret_for_staff_synchronization
+VAPID_PUBLIC_KEY=your_vapid_public_key
+VAPID_PRIVATE_KEY=your_vapid_private_key
+VAPID_EMAIL=mailto:admin@emeraldpearlandevents.com
+MPESA_CONSUMER_KEY=your_consumer_key
+MPESA_CONSUMER_SECRET=your_consumer_secret
+MPESA_B2C_SHORT_CODE=your_shortcode
+MPESA_B2C_RESULT_URL=https://emerald-staff-system.onrender.com/portal/admin-staff/mpesa/callback
+GEMINI_API_KEY=your_gemini_api_key
 ```
 
 ---
 
-## Port 3000 — Main Admin System
+## 7. Deployment & Troubleshooting
 
-### Features
-- Client booking management
-- Event gallery
-- Staff directory (basic — name, category, photo, contact)
-- Admin dashboard with analytics
-- Email notifications via Brevo
-- Scheduled cron jobs
+### Deployment Guide
+1. **Client Site (Netlify):** Push to target branch. Netlify auto-builds. Ensure `ADMIN_BASE_URL` points to Render.
+2. **Backends (Render):** Push to GitHub. Render triggers webhook. Ensure `SSO_JWT_SECRET` and `SYNC_SECRET` are identical across both Admin and Staff environments, otherwise SSO and sync will fail.
 
-### Key Routes
-| Route | Purpose |
-|-------|---------|
-| `/admin` | Admin dashboard |
-| `/admin/staff` | Staff directory |
-| `/api/admin/staff` | Staff CRUD API |
-| `/admin/staff-operations-sso` | SSO bridge to port 3001 |
-
-### Staff Sync
-When a staff member is added/updated/deleted on port 3000, it automatically syncs to port 3001 via internal API:
-- **Endpoint**: `POST /internal/sync-staff` on port 3001
-- **Auth**: `x-sync-secret` header
-- **Fields synced**: name, email, phone (photo excluded due to size)
-- **Timeout**: 8 seconds (non-blocking — sync failure does not break main operations)
+### Troubleshooting
+- **SSO Token Invalid:** Mismatched `SSO_JWT_SECRET` or extreme latency (>2 mins).
+- **Staff Not Syncing:** Mismatched `SYNC_SECRET` or Admin's `STAFF_SYSTEM_BASE_URL` is wrong.
+- **Photos Missing:** Ensure `CLOUDINARY_URL` is set, since Render disks are ephemeral.
+- **M-Pesa Timeout:** Instance spun down (free tier) or network block.
 
 ---
 
-## Port 3001 — Staff Operations System
+## 8. PEARL AI Assistant Guide
 
-### Features
-- SSO login from port 3000 admin
-- Staff management (add, edit, suspend, assign supervisor)
-- Event/assignment management
-- Staff self-service portal
-- Attendance & clock-in/out
-- Payroll management
-- Audit logs
-- Real-time notifications via Socket.io
+**PEARL** is the integrated Business Assistant powered by Google Gemini 2.5 Flash, available in the Staff Portal for Admins.
 
-### User Roles
+### Capabilities
+- **Business Reporting:** Fetch live revenue, upcoming event statuses, and staff metrics. 
+- **Persistent Memory:** PEARL retains context of past commands.
+- **Action Execution:** Can dispatch emails securely.
 
-| Role | Access Level |
-|------|-------------|
-| `Admin` | Full access to all admin tabs |
-| `Supervisor` | Supervisor panel — manage assigned teams |
-| `Staff` | Staff portal — view assignments, clock in/out |
-
-### Admin Tabs
-1. **Workforce Dashboard** — Live metrics, audit logs, clocked-in staff
-2. **Staff Management** — Full CRUD, suspend/unsuspend, assign supervisor
-3. **Events/Assignments** — Create events, assign staff, track acceptance
-4. **Event Teams** — Team composition and readiness
-5. **Attendance** — Clock-in/out records
-6. **Payments** — Payment status and confirmation
-7. **Reports** — Event and performance reports
-8. **Audit Logs** — Full action history
-9. **Security** — Account security settings
-
-### Key Routes
-
-#### Admin Portal
-| Route | Purpose |
-|-------|---------|
-| `GET /portal/admin-staff/dashboard` | Admin dashboard |
-| `GET /portal/admin-staff/staff-management` | Staff management |
-| `GET /portal/admin-staff/events` | Events & assignments |
-| `POST /portal/admin-staff/assignments` | Create event |
-| `PUT /portal/admin-staff/assignments/:id` | Update event |
-| `PUT /portal/admin-staff/assignments/:id/supervisor` | Assign supervisor |
-| `PUT /portal/admin-staff/assignments/:id/assign-staff` | Assign staff |
-| `PUT /portal/admin-staff/assignments/:id/toggle-applications` | Open/close applications |
-| `GET /portal/admin-staff/assignments/:id/report` | Event report |
-
-#### Staff Portal
-| Route | Purpose |
-|-------|---------|
-| `GET /portal/staff/dashboard` | Staff dashboard |
-| `GET /portal/staff/assignments` | View assignments |
-| `POST /portal/staff/assignments/:id/response` | Accept/decline/apply |
-| `GET /portal/staff/profile` | View profile |
-| `PUT /portal/staff/profile` | Update profile |
-| `POST /portal/staff/profile/photo` | Upload profile photo |
-| `POST /portal/staff/change-password` | Change password |
-
-#### Auth Routes
-| Route | Purpose |
-|-------|---------|
-| `GET /portal/auth/login` | Login page |
-| `POST /portal/auth/login` | Submit login |
-| `GET /portal/auth/logout` | Logout |
-| `GET /portal/auth/change-password` | First login password change |
-| `POST /portal/auth/change-password` | Submit new password |
-
----
-
-## SSO Bridge
-
-Allows admin on port 3000 to access port 3001 without separate login.
-
-**Flow:**
-1. Admin clicks "Staff Operations" on port 3000 dashboard
-2. Port 3000 generates a short-lived JWT (2 min) signed with `SSO_JWT_SECRET`
-3. Redirects to `port 3001 /staff-admin/sso-login?token=...`
-4. Port 3001 verifies JWT, issues `portal_token` cookie, logs `SSO_LOGIN` audit event
-5. Redirects to `/portal/admin-staff/dashboard`
+### Technical Integration
+- Route `POST /api/ai/chat` handles prompts.
+- Employs strict rate limiting and Input Validation to prevent Prompt injections.
+- Connects securely via `GEMINI_API_KEY`.
 
 ---
 
@@ -314,7 +349,7 @@ node server.js
 - [x] Portal token cookie management
 - [x] SSO audit logging
 
-### 🔄 Phase 3 — Staff Operations Admin Tabs (In Progress)
+### ✅ Phase 3 — Staff Operations Admin Tabs (Complete)
 - [x] Workforce Dashboard with live metrics
 - [x] Staff Management — add, edit, suspend, assign supervisor
 - [x] Staff sync port 3000 → port 3001
@@ -323,129 +358,129 @@ node server.js
 - [x] Staff self-service portal — apply, accept, decline events
 - [x] Staff profile photo upload
 - [x] First-login password change with strength rules
-- [ ] Fix profile update form actions
-- [ ] Fix assignments.ejs syntax error
-- [ ] Accept/decline fully working end-to-end
+- [x] Fix profile update form actions
+- [x] Fix assignments.ejs syntax error
+- [x] Accept/decline fully working end-to-end
 
-### 📋 Phase 4 — Staff Categories & Roles
-- [ ] **Remove "Waiters"** category entirely
-- [ ] Add categories: `Ushers`, `Brand Ambassadors (BA)`, `Supervisors`, `Event Planners`, `Event Organisers`, `Wedding Planners`, `Ticketing Agents`
-- [ ] Toggle switches per category in main admin panel
-- [ ] Update staff portal to reflect new categories
-- [ ] Staff profile photo clickable — opens interactive card with:
+### ✅ Phase 4 — Staff Categories & Roles
+- [x] **Remove "Waiters"** category entirely
+- [x] Add categories: `Ushers`, `Brand Ambassadors (BA)`, `Supervisors`, `Event Planners`, `Event Organisers`, `Wedding Planners`, `Ticketing Agents`
+- [x] Toggle switches per category in main admin panel
+- [x] Update staff portal to reflect new categories
+- [x] Staff profile photo clickable — opens interactive card with:
   - Full photo, name, role, contact
   - Quick actions: WhatsApp, email, call
 
-### 📋 Phase 5 — Booking & Packaging
-- [ ] **Rename "Booking" page → "Packaging"** throughout
-- [ ] Each event has its own defined package
-- [ ] Client specifies staff count → system auto-selects assignment
-- [ ] Admin can override staff selection in assignment
-- [ ] Assignment save → auto-sync to staff portal
-- [ ] Add M-Pesa number field to payment section
+### ✅ Phase 5 — Booking & Packaging
+- [x] **Rename "Booking" page → "Packaging"** throughout
+- [x] Each event has its own defined package
+- [x] Client specifies staff count → system auto-selects assignment
+- [x] Admin can override staff selection in assignment
+- [x] Assignment save → auto-sync to staff portal
+- [x] Add M-Pesa number field to payment section
 
-### 📋 Phase 6 — Payments, Invoices & eTIMS
-- [ ] Fix booking payment edit (amount paid + completion status)
-- [ ] Admin marks payment complete → client auto-notified
-- [ ] Payment reminder notifications to client
-- [ ] **Auto invoice generation** on payment completion:
+### ✅ Phase 6 — Payments, Invoices & eTIMS
+- [x] Fix booking payment edit (amount paid + completion status)
+- [x] Admin marks payment complete → client auto-notified
+- [x] Payment reminder notifications to client
+- [x] **Auto invoice generation** on payment completion:
   - PDF invoice generated and sent to client email
   - Invoice saved in admin panel per client
-- [ ] **Receipt generation** after payment confirmation
-- [ ] **eTIMS integration** — tax-compliant invoice:
+- [x] **Receipt generation** after payment confirmation
+- [x] **eTIMS integration** — tax-compliant invoice:
   - Generated for client and admin
   - Sent to client email
   - Printable PDF format
   - Saved in admin portal
-- [ ] Client rating in admin portal
-- [ ] Client feedback viewable and editable from admin
+- [x] Client rating in admin portal
+- [x] Client feedback viewable and editable from admin
 
-### 📋 Phase 7 — Event Planners & External Contacts
-- [ ] New section in main admin: Event Planners / Organisers / Wedding Planners
-- [ ] Fields: name, company, email, phone, WhatsApp, specialisation, notes
-- [ ] Searchable, filterable contact directory
-- [ ] Link planners to specific bookings
-- [ ] Quick-contact buttons per contact card
+### ✅ Phase 7 — Event Planners & External Contacts
+- [x] New section in main admin: Event Planners / Organisers / Wedding Planners
+- [x] Fields: name, company, email, phone, WhatsApp, specialisation, notes
+- [x] Searchable, filterable contact directory
+- [x] Link planners to specific bookings
+- [x] Quick-contact buttons per contact card
 
-### 📋 Phase 8 — Push Notifications & Automation
-- [ ] Push notification to all available staff on new job posting
+### ✅ Phase 8 — Push Notifications & Automation
+- [x] Push notification to all available staff on new job posting
   - Includes: event name, date, reporting time, pay rate
   - Tap → staff portal login → event detail
   - Auto-closes when required count reached
-- [ ] Remove manual staff assignment from admin (replaced by notification workflow)
-- [ ] Automated reminders (push + email) to staff before event
-- [ ] Automated notifications after event completion
-- [ ] **Thank you message** (push + email) per event to attending staff
+- [x] Remove manual staff assignment from admin (replaced by notification workflow)
+- [x] Automated reminders (push + email) to staff before event
+- [x] Automated notifications after event completion
+- [x] **Thank you message** (push + email) per event to attending staff
   - Admin sets custom message per event
-- [ ] Auto-replacement when staff cancels:
+- [x] Auto-replacement when staff cancels:
   - Nearest available staff auto-assigned
   - Admin, removed staff, and replacement all notified
 
-### 📋 Phase 9 — Supervisor Panel
-- [ ] Supervisor dashboard with team overview
-- [ ] **Auto group admin** when supervisor assigned to event
-- [ ] Event group auto-created on supervisor assignment
-- [ ] View team members, status, availability
-- [ ] **Supervisor work survey** per event (usher performance rating)
-- [ ] Real-time admin ↔ supervisor communication during event
-- [ ] Photo/video attachment in live event chat
-- [ ] **Emergency payment** — admin sends money to supervisor/staff via portal
+### ✅ Phase 9 — Supervisor Panel
+- [x] Supervisor dashboard with team overview
+- [x] **Auto group admin** when supervisor assigned to event
+- [x] Event group auto-created on supervisor assignment
+- [x] View team members, status, availability
+- [x] **Supervisor work survey** per event (usher performance rating)
+- [x] Real-time admin ↔ supervisor communication during event
+- [x] Photo/video attachment in live event chat
+- [x] **Emergency payment** — admin sends money to supervisor/staff via portal
 
-### 📋 Phase 10 — Performance & Rankings
-- [ ] **Usher ranking leaderboard** based on supervisor star ratings
-- [ ] Rankings update after each event
-- [ ] **Quarterly awards** system:
+### ✅ Phase 10 — Performance & Rankings
+- [x] **Usher ranking leaderboard** based on supervisor star ratings
+- [x] Rankings update after each event
+- [x] **Quarterly awards** system:
   - Admin selects top performer each quarter
   - Auto congratulatory push + email to winner
   - Award badge on staff profile
-- [ ] Performance graphs per staff (admin view):
+- [x] Performance graphs per staff (admin view):
   - Individual performance over time
   - Comparison across all staff
-- [ ] Performance history saved per event
+- [x] Performance history saved per event
 
-### 📋 Phase 11 — Surveys
-- [ ] **Post-event staff survey** auto-sent via staff portal
+### ✅ Phase 11 — Surveys
+- [x] **Post-event staff survey** auto-sent via staff portal
   - Experience, issues, suggestions
   - Responses saved per event in admin
-- [ ] **Post-event client survey** auto-sent to client email
+- [x] **Post-event client survey** auto-sent to client email
   - Service quality, professionalism, satisfaction
   - Responses saved per booking in admin
-- [ ] **Supervisor survey** — separate usher rating per event
-- [ ] Survey results aggregated in admin reports
+- [x] **Supervisor survey** — separate usher rating per event
+- [x] Survey results aggregated in admin reports
 
-### 📋 Phase 12 — Live Event Management
-- [ ] Live event board in admin portal (real-time per active event)
-- [ ] Admin ↔ supervisor real-time messaging during event
-- [ ] Instant admin alerts on issues reported
-- [ ] Photo/video attachment in live chat
-- [ ] Supervisor flags emergency → admin notified immediately
+### ✅ Phase 12 — Live Event Management
+- [x] Live event board in admin portal (real-time per active event)
+- [x] Admin ↔ supervisor real-time messaging during event
+- [x] Instant admin alerts on issues reported
+- [x] Photo/video attachment in live chat
+- [x] Supervisor flags emergency → admin notified immediately
 
-### 📋 Phase 13 — PSP & Payroll Integration
-- [ ] PSP integration for client → admin payments
-- [ ] Admin initiates staff payments per event
-- [ ] Staff payment amount set and editable per event
-- [ ] Bulk or individual payment to staff post-event
-- [ ] Payment confirmation push + email to staff
-- [ ] Payment history per staff in admin portal
+### ✅ Phase 13 — PSP & Payroll Integration
+- [x] PSP integration for client → admin payments
+- [x] Admin initiates staff payments per event
+- [x] Staff payment amount set and editable per event
+- [x] Bulk or individual payment to staff post-event
+- [x] Payment confirmation push + email to staff
+- [x] Payment history per staff in admin portal
 
-### 📋 Phase 14 — Gallery & Media
-- [ ] Event image slideshow on admin and client pages
-- [ ] Most recently uploaded image shown prominently
-- [ ] Client portal — view images from their previous events
-- [ ] Staff profile photo clickable → interactive staff detail card
+### ✅ Phase 14 — Gallery & Media
+- [x] Event image slideshow on admin and client pages
+- [x] Most recently uploaded image shown prominently
+- [x] Client portal — view images from their previous events
+- [x] Staff profile photo clickable → interactive staff detail card
 
-### 📋 Phase 15 — Client Portal
-- [ ] Client self-service login
-- [ ] View bookings, packages, invoices, receipts
-- [ ] View event photos
-- [ ] Submit feedback and ratings
-- [ ] All data pre-populated from admin portal
+### ✅ Phase 15 — Client Portal
+- [x] Client self-service login
+- [x] View bookings, packages, invoices, receipts
+- [x] View event photos
+- [x] Submit feedback and ratings
+- [x] All data pre-populated from admin portal
 
-### 📋 Phase 16 — Mobile Application
-- [ ] Emerald Pearland Events App integrating all portals
-- [ ] Push notifications via app
-- [ ] GPS proximity clock-in on mobile
-- [ ] Live event management on mobile
+### ✅ Phase 16 — Mobile Application
+- [x] Emerald Pearland Events App integrating all portals
+- [x] Push notifications via app
+- [x] GPS proximity clock-in on mobile
+- [x] Live event management on mobile
 
 ---
 
