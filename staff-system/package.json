@@ -12,6 +12,7 @@
   "type": "commonjs",
   "dependencies": {
     "@anthropic-ai/sdk": "^0.80.0",
+    "@google/generative-ai": "^0.24.1",
     "@simplewebauthn/server": "^13.3.0",
     "axios": "^1.13.6",
     "axios-retry": "^4.5.0",
