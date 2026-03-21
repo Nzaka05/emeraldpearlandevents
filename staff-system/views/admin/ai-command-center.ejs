@@ -59,7 +59,7 @@ async function sendMessage() {
     const typing = addTyping();
 
     try {
-        const res = await fetch('/portal/ai/assistant', {
+        const res = await fetch('/portal/admin-staff/ai/assistant', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'CSRF-Token': csrf },
             body: JSON.stringify({ query, eventContext: {} })

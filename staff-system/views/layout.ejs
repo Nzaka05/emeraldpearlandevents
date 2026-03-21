@@ -176,7 +176,7 @@
         <div class="text-[0.58rem] font-bold uppercase tracking-widest text-tx-3 px-4 pt-4 pb-1">AI</div>
         <a href="/portal/admin-staff/ai/command-center" data-tooltip="AI Assistant"
            class="sidebar-link <%= _page === 'ai' ? 'active' : '' %>">
-          <i class="fa-solid fa-robot" style="color:var(--emerald,#10b981);"></i><span>AI Assistant</span>
+          <img src="/images/pearl-logo.png" style="width:18px;height:18px;object-fit:contain;border-radius:50%;" onerror="this.style.display='none'"> <span>PEARL</span>
         </a>
         </a>
 
@@ -371,7 +371,8 @@
 
 
   <!-- Slide-out drawer -->
-  <div id="staffDrawer" class="fixed inset-y-0 left-0 z-[150] w-72 glass-strong border-r border-white/8 shadow-2xl transform -translate-x-full transition-transform duration-300 ease-out flex flex-col">
+  <div id="drawerOverlay" onclick="closeStaffDrawer()" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[149] hidden transition-opacity duration-300 opacity-0"></div>
+  <div id="staffDrawer" class="fixed inset-y-0 left-0 z-[150] w-72 glass-strong border-r border-white/8 shadow-2xl transform -translate-x-full transition-all duration-300 ease-in-out flex flex-col">
       <!-- Drawer header -->
       <div class="flex items-center justify-between px-5 py-4 border-b border-white/8">
           <div class="flex items-center gap-3">
@@ -592,19 +593,19 @@ try {
       setTimeout(() => { toast.style.opacity = '0'; }, 3500);
     }
   });
-function toggleStaffDrawer() {
-  const drawer = document.getElementById('staffDrawer');
-  const backdrop = document.getElementById('staffDrawerBackdrop');
-  const icon = document.getElementById('drawerHamburgerIcon');
-  if (!drawer) return;
-  const isOpen = !drawer.classList.contains('-translate-x-full');
-  if (isOpen) {
+  function toggleStaffDrawer() {
+    const drawer = document.getElementById('staffDrawer');
+    const overlay = document.getElementById('drawerOverlay');
+    const isOpen = !drawer.classList.contains('-translate-x-full');
+    if (isOpen) { closeStaffDrawer(); } else { drawer.classList.remove('-translate-x-full'); overlay.classList.remove('hidden'); setTimeout(() => overlay.classList.remove('opacity-0'), 10); }
+  }
+  function closeStaffDrawer() {
+    const drawer = document.getElementById('staffDrawer');
+    const overlay = document.getElementById('drawerOverlay');
     drawer.classList.add('-translate-x-full');
-    backdrop.classList.add('hidden');
-    if (icon) { icon.classList.remove('fa-xmark'); icon.classList.add('fa-bars'); }
-  } else {
-    drawer.classList.remove('-translate-x-full');
-    backdrop.classList.remove('hidden');
+    overlay.classList.add('opacity-0');
+    setTimeout(() => overlay.classList.add('hidden'), 300);
+  }
     if (icon) { icon.classList.remove('fa-bars'); icon.classList.add('fa-xmark'); }
   }
 }

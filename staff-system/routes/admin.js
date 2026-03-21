@@ -75,6 +75,7 @@ router.get('/surveys', surveyCtrl.getSurveyAnalyticsPage);
 
 // -- AI Assistant --
 router.get('/ai/command-center', (req, res) => res.render('admin/ai-command-center', { currentPage: 'ai', user: req.user }));
+router.post('/ai/assistant', async (req, res) => { try { const aiAssistantService = require('../services/aiAssistantService'); const { query, eventContext, history } = req.body; if (!query) return res.status(400).json({ success: false, message: 'Query required' }); const userId = req.user?._id || '000000000000000000000000'; const role = req.user?.role || 'Admin'; const result = await aiAssistantService.processAssistantQuery(userId, role, query, eventContext || {}, history || []); res.json({ success: true, data: result }); } catch (error) { res.status(500).json({ success: false, message: error.message }); } });
 
 // ── Phase 10: Leaderboard ──────────────────────────────────────────────────
 router.get('/leaderboard', require('../controllers/adminController').getLeaderboardPage);
