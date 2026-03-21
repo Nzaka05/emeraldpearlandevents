@@ -340,7 +340,7 @@
 
   <!-- Hamburger button for staff drawer -->
   <header class="fixed bottom-0 left-0 right-0 h-14 glass-strong flex items-center justify-around px-4 z-[100] border-t border-cyan-500/10 shadow-lg">
-    <button onclick="toggleDrawer()" class="flex flex-col items-center gap-0.5 text-tx-2 hover:text-emerald-400 transition-colors">
+    <button onclick="toggleStaffDrawer()" class="flex flex-col items-center gap-0.5 text-tx-2 hover:text-emerald-400 transition-colors">
       <i id="drawerHamburgerIcon" class="fa-solid fa-bars text-lg"></i>
       <span class="text-[0.6rem]">Menu</span>
     </button>
@@ -579,6 +579,14 @@ try {
 } catch(e) {}
 
 // ── Staff Drawer ──
+  // Welcome toast
+  window.addEventListener('DOMContentLoaded', () => {
+    const toast = document.getElementById('welcomeToast');
+    if (toast) {
+      setTimeout(() => { toast.style.opacity = '1'; toast.style.transform = 'translateX(-50%) translateY(0)'; }, 300);
+      setTimeout(() => { toast.style.opacity = '0'; }, 3500);
+    }
+  });
 function toggleStaffDrawer() {
   const drawer = document.getElementById('staffDrawer');
   const backdrop = document.getElementById('staffDrawerBackdrop');
@@ -715,3 +723,4 @@ if (typeof window.registerPush !== 'function') {
 
 </body>
 </html>
+
