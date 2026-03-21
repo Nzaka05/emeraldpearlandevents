@@ -48,3 +48,10 @@ self.addEventListener('notificationclick', function (event) {
         })
     );
 });
+
+self.addEventListener('fetch', function(event) {
+    const url = event.request.url;
+    if (!url.startsWith(self.location.origin)) {
+        return;
+    }
+});
