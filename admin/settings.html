@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -345,9 +345,9 @@
 
 
 
-        /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+        /* ═══════════════════════════════════════════════════════════
            MOBILE RESPONSIVENESS (Injected via Phase 10 Overhaul)
-           â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+           ═══════════════════════════════════════════════════════════ */
 
         /* Hamburger Menu Icon (Hidden on Desktop) */
         .mobile-menu-btn {
@@ -430,9 +430,9 @@
         }
 
 
-        /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+        /* ═══════════════════════════════════════════════════════════
            MOBILE QUICK ACTION FAB
-           â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+           ═══════════════════════════════════════════════════════════ */
         .mobile-fab-container {
             display: none;
             position: fixed;
@@ -1189,7 +1189,7 @@
             errorMsg.style.display = 'none';
 
             if (!name) {
-                errorMsg.textContent = 'âŒ Name is required';
+                errorMsg.textContent = '❌ Name is required';
                 errorMsg.style.display = 'block';
                 return;
             }
@@ -1214,11 +1214,11 @@
                         successMsg.style.display = 'none';
                     }, 5000);
                 } else {
-                    errorMsg.textContent = 'âŒ ' + (data.message || 'Failed to update profile');
+                    errorMsg.textContent = '❌ ' + (data.message || 'Failed to update profile');
                     errorMsg.style.display = 'block';
                 }
             } catch (error) {
-                errorMsg.textContent = 'âŒ Network error. Please try again.';
+                errorMsg.textContent = '❌ Network error. Please try again.';
                 errorMsg.style.display = 'block';
             }
         }
@@ -1330,31 +1330,31 @@
 
             // Validation
             if (!currentPassword) {
-                errorMsg.textContent = 'âŒ Please enter your current password';
+                errorMsg.textContent = '❌ Please enter your current password';
                 errorMsg.style.display = 'block';
                 return;
             }
 
             if (!newPassword) {
-                errorMsg.textContent = 'âŒ Please enter a new password';
+                errorMsg.textContent = '❌ Please enter a new password';
                 errorMsg.style.display = 'block';
                 return;
             }
 
             if (newPassword.length < 8) {
-                errorMsg.textContent = 'âŒ Password must be at least 8 characters long';
+                errorMsg.textContent = '❌ Password must be at least 8 characters long';
                 errorMsg.style.display = 'block';
                 return;
             }
 
             if (newPassword !== confirmPassword) {
-                errorMsg.textContent = 'âŒ Passwords do not match';
+                errorMsg.textContent = '❌ Passwords do not match';
                 errorMsg.style.display = 'block';
                 return;
             }
 
             if (currentPassword === newPassword) {
-                errorMsg.textContent = 'âŒ New password must be different from current password';
+                errorMsg.textContent = '❌ New password must be different from current password';
                 errorMsg.style.display = 'block';
                 return;
             }
@@ -1372,7 +1372,7 @@
                         const errorData = await response.json();
                         errorMessage = errorData.message || errorMessage;
                     } catch (e) { }
-                    errorMsg.textContent = 'âŒ ' + errorMessage;
+                    errorMsg.textContent = '❌ ' + errorMessage;
                     errorMsg.style.display = 'block';
                     return;
                 }
@@ -1389,17 +1389,17 @@
                         successMsg.style.display = 'none';
                     }, 5000);
                 } else {
-                    errorMsg.textContent = 'âŒ ' + (data.message || 'Failed to change password');
+                    errorMsg.textContent = '❌ ' + (data.message || 'Failed to change password');
                     errorMsg.style.display = 'block';
                 }
             } catch (error) {
-                errorMsg.textContent = 'âŒ Network error. Please try again.';
+                errorMsg.textContent = '❌ Network error. Please try again.';
                 errorMsg.style.display = 'block';
             }
         }
     </script>
         <script src="/admin/push-client.js"></script>
-    <script src="/js/mobile-sidebar.js?v=3"></script>
+    <script src="/admin/assets/mobile-sidebar.js?v=3"></script>
     <script src="/admin/admin-profile.js"></script>
 </body>
 
