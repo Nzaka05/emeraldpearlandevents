@@ -930,7 +930,7 @@ router.delete('/notifications/:id', verifyAdminJWT, async (req, res) => {
 router.get('/staff', verifyAdminJWT, async (req, res) => {
     try {
         const { category } = req.query;
-        const query = category ? { category } : {};
+        const query = category ? { category } : { category: { $exists: true, $ne: null } };
 
         const staff = await Staff.find(query)
             .populate('assignedBookings', 'bookingReference eventDate')
