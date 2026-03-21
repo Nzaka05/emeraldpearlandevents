@@ -226,6 +226,39 @@ app.post('/internal/sync-booking', async (req, res) => {
     }
 
     console.log('Assignment auto-created from booking:', assignment.title);
+
+    // Send push notification to all available staff
+    try {
+      const webpush = require('web-push');
+      if (process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
+        webpush.setVapidDetails(
+          'mailto:emeraldpearlandevents@gmail.com',
+          process.env.VAPID_PUBLIC_KEY,
+          process.env.VAPID_PRIVATE_KEY
+        );
+        const staffWithSubs = await Staff.find({
+          pushSubscription: { $exists: true, $ne: null },
+          status: 'Active'
+        });
+        const payload = JSON.stringify({
+          title: 'New Event Available!',
+          body: `${title || 'New Event'} on ${new Date(date).toDateString()} at ${location || 'TBD'}`,
+          url: '/portal/staff/assignments'
+        });
+        for (const s of staffWithSubs) {
+          try {
+            await webpush.sendNotification(s.pushSubscription, payload);
+          } catch (e) {
+            if (e.statusCode === 404 || e.statusCode === 410) {
+              await Staff.findByIdAndUpdate(s._id, { $unset: { pushSubscription: 1 } });
+            }
+          }
+        }
+        console.log(`Push sent to ${staffWithSubs.length} staff for new assignment`);
+      }
+    } catch (pushErr) {
+      console.error('Staff push notification error:', pushErr.message);
+    }
     res.json({ success: true, assignment_id: assignment._id });
   } catch (err) {
     console.error('Booking sync error:', err.message);
