@@ -3,7 +3,7 @@
     <!-- Header -->
     <div class="mb-6">
         <h1 class="font-display text-2xl font-bold text-tx-1">AI Assistant</h1>
-        <p class="text-sm text-tx-3 mt-1">Powered by Emerald AI — ask about staff, events, analytics</p>
+        <p class="text-sm text-tx-3 mt-1">Powered by Emerald AI ï¿½ ask about staff, events, analytics</p>
     </div>
 
     <!-- Chat Container -->
@@ -69,11 +69,11 @@ async function sendMessage() {
         if (data.success && data.data) {
             addMessage(data.data.response || data.data.summary || JSON.stringify(data.data), 'ai');
         } else {
-            addMessage('Sorry, I could not process that request.', 'ai');
+            addMessage('Error: ' + (data.error || data.message || 'Could not process request'), 'ai');
         }
     } catch (err) {
         typing.remove();
-        addMessage('Connection error. Please try again.', 'ai');
+        addMessage('Connection error: ' + err.message, 'ai');
     }
 }
 
