@@ -152,7 +152,7 @@ Always be helpful, never refuse reasonable requests. If asked something outside 
     messages.push({ role: "user", content: sanitized });
 
     const response = await client.messages.create({
-        model: "claude-haiku-4-5-20251001",
+        model: "claude-sonnet-4-5",
         max_tokens: 1024,
         system: systemPrompt,
         messages
