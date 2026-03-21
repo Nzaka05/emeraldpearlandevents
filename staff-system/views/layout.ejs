@@ -529,6 +529,526 @@ window.avatarHtml = function(name, photoUrl, size, bg) {
 function toggleSidebar() {
   const sb = document.getElementById('sidebar');
   const ov = document.getElementById('sidebarOverlay');
+  if (!sb) return;
+  if (window.innerWidth <= 900) {
+    const isHidden = sb.getAttribute('data-mobile-open') !== 'true';
+    if (isHidden) {
+      sb.setAttribute('data-mobile-open', 'true');
+      sb.style.cssText = 'display:flex!important;position:fixed!important;top:0!important;left:0!important;bottom:0!important;width:280px!important;z-index:300!important;transform:translateX(0)!important;';
+      if(ov){ ov.classList.remove('hidden'); ov.style.display='block'; }
+    } else {
+      closeSidebar();
+    }
+  } else {
+    const main = document.getElementById('mainContent');
+    const hdr = document.getElementById('topHeader');
+    const isCollapsed = sb.classList.toggle('sidebar-collapsed');
+    if (main) main.style.marginLeft = isCollapsed ? '64px' : '220px';
+    if (hdr) hdr.style.left = isCollapsed ? '64px' : '220px';
+    localStorage.setItem('sidebarCollapsed', isCollapsed);
+  }
+}
+function closeSidebar() {
+  const sb = document.getElementById('sidebar');
+  const ov = document.getElementById('sidebarOverlay');
+  if (!sb) return;
+  sb.setAttribute('data-mobile-open', 'false');
+  sb.style.cssText = 'display:none!important;';
+  if(ov){ ov.style.display='none'; ov.classList.add('hidden'); }
+}
+    </script>
+
+    <!-- Design System CSS -->
+    <link rel="stylesheet" href="/css/emerald-ui.css">
+
+    <!-- Override base body styles -->
+    <style>
+      body {
+        font-family: 'Inter', -apple-system, sans-serif;
+        background-color: #0a0e1a;
+        background-image: url('/images/bg-main.jpg');
+        background-size: cover;
+        background-position: center;
+        background-attachment: fixed;
+        color: #f0f4ff;
+        -webkit-font-smoothing: antialiased;
+      }
+      body::before {
+        content: '';
+        position: fixed;
+        inset: 0;
+        background:
+          radial-gradient(ellipse 900px 600px at 80% 10%, rgba(0,200,255,0.06) 0%, transparent 70%),
+          radial-gradient(ellipse 600px 400px at 10% 80%, rgba(16,185,129,0.05) 0%, transparent 70%),
+          linear-gradient(135deg, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.2) 100%);
+        pointer-events: none;
+        z-index: 0;
+      }
+      body > * { position: relative; z-index: 1; }
+    </style>
+</head>
+
+<body class="min-h-screen overflow-x-hidden">
+<style>@media(max-width:900px){#sidebar{display:none!important}#topHeader{left:0!important}#mainContent{margin-left:0!important}}</style>
+
+<% const _role = (locals.user && locals.user.role) ? locals.user.role : 'Staff';
+   const _userName = (locals.user && locals.user.name) ? locals.user.name : 'User';
+   const _initials = _userName.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2);
+   const _page = locals.currentPage || '';
+   const _photo = (locals.user && locals.user.photo_url) ? locals.user.photo_url : null;
+%>
+
+<!-- ══════════════════════════════════════════════════════════════
+     ADMIN / SUPERVISOR — Sidebar + Top Header Layout
+     ══════════════════════════════════════════════════════════ -->
+<% if ((_role === 'Admin' || _role === 'Supervisor') && !locals.forceStaffLayout) { %>
+
+  <!-- ── Sidebar ── -->
+  <aside id="sidebar" class="fixed top-0 left-0 bottom-0 w-[220px] min-w-[220px] glass-strong flex flex-col z-[200] transition-all duration-300 ease-out overflow-y-auto overflow-x-hidden shadow-2xl sidebar-desktop">
+
+    <!-- Brand -->
+    <div class="flex items-center gap-3 px-4 py-3.5 border-b border-white/5 flex-shrink-0">
+      <img src="/logo2.png" class="h-9 w-auto object-contain sidebar-logo" alt="Emerald">
+      <div class="flex flex-col sidebar-text">
+        <span class="font-display text-sm font-extrabold text-tx-1 leading-tight">Emerald</span>
+        <span class="text-[0.58rem] font-semibold text-tx-3 uppercase tracking-wider">Staff Admin Panel</span>
+      </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="flex-1 overflow-y-auto overflow-x-hidden py-2 flex flex-col">
+
+      <% if (_role === 'Admin') { %>
+
+        <div class="text-[0.58rem] font-bold uppercase tracking-widest text-tx-3 px-4 pt-3 pb-1">Main Menu</div>
+
+        <a href="/portal/admin-staff/dashboard" data-tooltip="Workforce Dashboard"
+           class="sidebar-link <%= _page === 'dashboard' ? 'active' : '' %>">
+          <i class="fa-solid fa-gauge-high"></i><span>Dashboard</span>
+        </a>
+        <a href="/portal/admin-staff/staff-management" data-tooltip="Staff Management"
+           class="sidebar-link <%= _page === 'staff' ? 'active' : '' %>">
+          <i class="fa-solid fa-users"></i><span>Staff Management</span>
+        </a>
+        <a href="/portal/admin-staff/events" data-tooltip="Events / Assignments"
+           class="sidebar-link <%= _page === 'events' ? 'active' : '' %>">
+          <i class="fa-solid fa-calendar-days"></i><span>Events</span>
+        </a>
+        <a href="/portal/admin-staff/event-teams" data-tooltip="Event Teams"
+           class="sidebar-link <%= _page === 'teams' ? 'active' : '' %>">
+          <i class="fa-solid fa-people-group"></i><span>Event Teams</span>
+        </a>
+
+        <div class="text-[0.58rem] font-bold uppercase tracking-widest text-tx-3 px-4 pt-4 pb-1">Operations</div>
+
+        <a href="/portal/admin-staff/attendance" data-tooltip="Attendance Monitoring"
+           class="sidebar-link <%= _page === 'attendance' ? 'active' : '' %>">
+          <i class="fa-solid fa-clock-rotate-left"></i><span>Attendance</span>
+        </a>
+        <a href="/portal/admin-staff/payments-page" data-tooltip="Payments"
+           class="sidebar-link <%= _page === 'payments' ? 'active' : '' %>">
+          <i class="fa-solid fa-money-bills"></i><span>Payments</span>
+        </a>
+        <a href="/portal/admin-staff/reports" data-tooltip="Reports"
+           class="sidebar-link <%= _page === 'reports' ? 'active' : '' %>">
+          <i class="fa-solid fa-chart-bar"></i><span>Reports</span>
+        </a>
+        <a href="/portal/admin-staff/etr" data-tooltip="Event Transaction Reports"
+           class="sidebar-link <%= _page === 'etr' ? 'active' : '' %>">
+          <i class="fa-solid fa-file-invoice"></i><span>ETR Ledger</span>
+        </a>
+
+        <div class="text-[0.58rem] font-bold uppercase tracking-widest text-tx-3 px-4 pt-4 pb-1">System</div>
+
+        <a href="/portal/admin-staff/audit-logs-page" data-tooltip="Audit Logs"
+           class="sidebar-link <%= _page === 'audit' ? 'active' : '' %>">
+          <i class="fa-solid fa-scroll"></i><span>Audit Logs</span>
+        </a>
+        <a href="/portal/admin-staff/security" data-tooltip="System Security"
+           class="sidebar-link <%= _page === 'security' ? 'active' : '' %>">
+          <i class="fa-solid fa-shield-halved"></i><span>Security</span>
+        </a>
+
+        <div class="text-[0.58rem] font-bold uppercase tracking-widest text-tx-3 px-4 pt-4 pb-1">Command</div>
+
+        <a href="/portal/admin-staff/live" data-tooltip="Live Command Center"
+           class="sidebar-link <%= _page === 'live' ? 'active' : '' %>">
+          <i class="fa-solid fa-tower-broadcast" style="color:var(--danger,#e74c3c);"></i><span>Live Center</span>
+        </a>
+        <a href="/portal/admin-staff/invoices" data-tooltip="Client Invoices"
+           class="sidebar-link <%= _page === 'invoices' ? 'active' : '' %>">
+          <i class="fa-solid fa-file-invoice-dollar" style="color:var(--gold,#d4af37);"></i><span>Invoices</span>
+        </a>
+        <a href="/portal/admin-staff/planners" data-tooltip="Event Planners"
+           class="sidebar-link <%= _page === 'planners' ? 'active' : '' %>">
+          <i class="fa-solid fa-clipboard-list"></i><span>Planners</span>
+        </a>
+        <a href="/portal/admin-staff/leaderboard" data-tooltip="Leaderboard"
+           class="sidebar-link <%= _page === 'leaderboard' ? 'active' : '' %>">
+          <i class="fa-solid fa-ranking-star" style="color:var(--gold,#d4af37);"></i><span>Leaderboard</span>
+        </a>
+        <a href="/portal/admin-staff/surveys" data-tooltip="Survey Analytics"
+           class="sidebar-link <%= _page === 'surveys' ? 'active' : '' %>">
+          <i class="fa-solid fa-chart-pie"></i><span>Surveys</span>
+        </a>
+        <a href="/portal/admin-staff/category-settings" data-tooltip="Category Settings"
+           class="sidebar-link <%= _page === 'categories' ? 'active' : '' %>">
+          <i class="fa-solid fa-sliders"></i><span>Categories</span>
+        <div class="text-[0.58rem] font-bold uppercase tracking-widest text-tx-3 px-4 pt-4 pb-1">AI</div>
+        <a href="/portal/admin-staff/ai/command-center" data-tooltip="AI Assistant"
+           class="sidebar-link <%= _page === 'ai' ? 'active' : '' %>">
+          <img src="/images/pearl-logo.png" style="width:18px;height:18px;object-fit:contain;border-radius:50%;" onerror="this.style.display='none'"> <span>PEARL</span>
+        </a>
+        </a>
+
+      <% } else { %>
+
+        <div class="text-[0.58rem] font-bold uppercase tracking-widest text-tx-3 px-4 pt-3 pb-1">Supervisor</div>
+
+        <a href="/portal/supervisor/dashboard" data-tooltip="Dashboard"
+           class="sidebar-link <%= _page === 'dashboard' ? 'active' : '' %>">
+          <i class="fa-solid fa-gauge-high"></i><span>Dashboard</span>
+        </a>
+        <a href="/portal/supervisor/events" data-tooltip="My Events"
+           class="sidebar-link <%= _page === 'events' ? 'active' : '' %>">
+          <i class="fa-solid fa-calendar-days"></i><span>My Events</span>
+        </a>
+        <a href="/portal/supervisor/command-center" data-tooltip="Live Event Command Center"
+           class="sidebar-link <%= _page === 'command-center' ? 'active' : '' %>">
+          <i class="fa-solid fa-tower-broadcast" style="color:var(--danger,#e74c3c);"></i><span>Live Center</span>
+        </a>
+        <a href="/portal/supervisor/team-management" data-tooltip="Team Management"
+           class="sidebar-link <%= _page === 'team' ? 'active' : '' %>">
+          <i class="fa-solid fa-people-group"></i><span>Teams</span>
+        </a>
+        <a href="/portal/supervisor/communications" data-tooltip="Communications"
+           class="sidebar-link <%= _page === 'comms' ? 'active' : '' %>">
+          <i class="fa-solid fa-comments"></i><span>Comms</span>
+        </a>
+        <a href="/portal/supervisor/ratings" data-tooltip="Ratings"
+           class="sidebar-link <%= _page === 'ratings' ? 'active' : '' %>">
+          <i class="fa-solid fa-star"></i><span>Ratings</span>
+        </a>
+        <a href="/portal/supervisor/profile" data-tooltip="My Profile"
+           class="sidebar-link <%= _page === 'profile' ? 'active' : '' %>">
+          <i class="fa-solid fa-circle-user"></i><span>Profile</span>
+        </a>
+
+      <% } %>
+
+      <!-- Logout always at bottom -->
+      <div class="flex-1 min-h-[20px]"></div>
+      <a href="/portal/auth/logout" data-tooltip="Logout"
+         class="sidebar-link text-red-400 hover:text-red-300 hover:bg-red-500/8 mt-auto">
+        <i class="fa-solid fa-arrow-right-from-bracket"></i><span>Logout</span>
+      </a>
+    </nav>
+
+    <!-- Portal badge -->
+    <div class="mx-3 mb-3 px-3 py-2 rounded-lg bg-emerald-500/8 border border-emerald-500/15 text-emerald-400 text-[0.68rem] font-semibold flex items-center gap-2 flex-shrink-0 sidebar-text">
+      <i class="fa-solid fa-mobile-screen-button"></i><span>Staff Portal</span>
+    </div>
+  </aside>
+
+  <!-- Mobile sidebar overlay -->
+  <script>
+  function toggleSidebarMobile() {
+    const sb = document.getElementById('sidebar');
+    const ov = document.getElementById('sidebarOverlay');
+    if (!sb) return;
+    const isOpen = sb.style.display === 'flex';
+    if (isOpen) { sb.style.display = 'none'; if(ov) ov.classList.add('hidden'); }
+    else { sb.style.display = 'flex'; if(ov) ov.classList.remove('hidden'); }
+  }
+  </script>
+  <div id="sidebarOverlay" onclick="closeSidebar()" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[199] hidden"></div>
+
+  <!-- ── Top Header ── -->
+  <header class="fixed top-0 left-[220px] right-0 h-14 glass-strong flex items-center px-5 gap-3 z-[190] transition-all duration-300 ease-out border-b border-cyan-500/10 shadow-lg"
+          id="topHeader">
+    <!-- Hamburger -->
+    <button onclick="toggleSidebar()" class="w-8 h-8 rounded-lg flex items-center justify-center text-tx-2 hover:text-tx-1 hover:bg-white/5 transition-colors" title="Toggle sidebar">
+      <i class="fa-solid fa-bars text-sm"></i>
+    </button>
+
+    <!-- Center — page title or search -->
+    <div class="flex-1">
+      <span class="text-sm font-semibold text-tx-1">
+        <% if(_page==='dashboard') { %>Workforce Dashboard
+        <% } else if(_page==='staff') { %>Staff Management
+        <% } else if(_page==='events') { %>Events / Assignments
+        <% } else if(_page==='teams') { %>Event Teams
+        <% } else if(_page==='attendance') { %>Attendance
+        <% } else if(_page==='payments') { %>Payments
+        <% } else if(_page==='reports') { %>Reports
+        <% } else if(_page==='audit') { %>Audit Logs
+        <% } else if(_page==='security') { %>System Security
+        <% } else { %>Portal<% } %>
+      </span>
+    </div>
+
+    <!-- Right icons -->
+    <div class="flex items-center gap-2">
+      <button class="w-8 h-8 rounded-lg bg-cosmos-600 border border-white/5 text-tx-2 flex items-center justify-center hover:text-tx-1 hover:bg-white/5 transition-colors text-sm" title="Calendar">
+        <i class="fa-regular fa-calendar"></i>
+      </button>
+      <button onclick="toggleNotificationsPanel()" class="w-8 h-8 rounded-lg bg-cosmos-600 border border-white/5 text-tx-2 flex items-center justify-center hover:text-tx-1 hover:bg-white/5 transition-colors text-sm relative" title="Notifications">
+        <i class="fa-regular fa-bell"></i>
+        <span id="hdr-notif-badge" class="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-red-500 text-white text-[0.5rem] font-bold flex items-center justify-center hidden">0</span>
+      </button>
+
+      <!-- Avatar dropdown -->
+      <div class="relative">
+        <div onclick="this.nextElementSibling.classList.toggle('hidden')" class="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-600 to-emerald-500 flex items-center justify-center text-xs font-bold text-white cursor-pointer shadow-md hover:shadow-emerald-500/30 transition-shadow overflow-hidden">
+          <% if (_photo) { %>
+            <img src="<%= _photo %>" class="w-full h-full object-cover rounded-full" alt="">
+          <% } else { %>
+            <%= _initials %>
+          <% } %>
+        </div>
+        <div class="hidden absolute right-0 top-11 glass-card w-48 p-2 depth-3 z-[999]" id="userDropdown">
+          <div class="px-3 py-2 border-b border-white/5 mb-1">
+            <div class="text-xs font-bold text-tx-1"><%= _userName %></div>
+            <div class="text-[0.68rem] text-tx-3"><%= _role %></div>
+          </div>
+          <a href="/portal/admin-staff/settings" class="flex items-center gap-2 px-3 py-2 rounded-lg text-tx-2 text-xs hover:bg-white/5 transition-colors">
+            <i class="fa-solid fa-circle-user w-4"></i> My Profile
+          </a>
+          <a href="/portal/auth/logout" class="flex items-center gap-2 px-3 py-2 rounded-lg text-red-400 text-xs hover:bg-red-500/8 transition-colors">
+            <i class="fa-solid fa-arrow-right-from-bracket w-4"></i> Logout
+          </a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ── Main Content ── -->
+  <main class="ml-[220px] pt-[80px] px-6 pb-10 min-h-screen transition-all duration-300 ease-out" id="mainContent">
+    <%- body %>
+  </main>
+
+<!-- ════════════════════════════════════════════════════════════════
+     STAFF — Mobile App Layout
+     ═══════════════════════════════════════════════════════════ -->
+<% } else { %>
+
+  <!-- Staff mobile header -->
+  <header class="fixed top-0 left-0 right-0 h-14 glass-strong flex items-center justify-between px-4 z-[100] border-b border-cyan-500/10 shadow-lg">
+    <div class="flex items-center gap-3">
+      <img src="/logo2.png" class="h-7 w-auto object-contain mr-1" alt="Emerald">
+      <div class="avatar avatar-sm overflow-hidden">
+        <% if (_photo) { %>
+          <img src="<%= _photo %>" alt="">
+        <% } else { %>
+          <%= _initials %>
+        <% } %>
+      </div>
+      <div>
+        <div class="text-sm font-bold text-tx-1">
+        <% if (_role === 'Admin' && ['Gideon Nzaka','David Charles Abuor','Joshua Nzaka'].includes(_userName)) { %>
+            Welcome back, <%= _userName.split(' ')[0] === 'Gideon' ? 'Co-CEO' : _userName.split(' ')[0] === 'David' ? 'Director' : 'CEO' %>
+        <% } else if (_role === 'Admin' || _role === 'Supervisor') { %>
+            Welcome back, <%= _userName.split(' ')[0] %>
+        <% } else { %>
+            Welcome to Emerald, <%= _userName.split(' ')[0] %>
+        <% } %>
+        <% if(locals.onShift) { %>
+          <div class="flex items-center gap-1.5 text-[0.65rem] font-semibold text-emerald-400">
+            <span class="status-dot status-dot-active animate-pulse-dot" style="width:6px;height:6px"></span> Active Shift
+          </div>
+        <% } else { %>
+          <div class="flex items-center gap-1.5 text-[0.65rem] font-semibold text-tx-3">
+            <span class="status-dot status-dot-muted" style="width:6px;height:6px"></span> Off Duty
+          </div>
+        <% } %>
+    <div class="flex items-center gap-2">
+      <button class="w-8 h-8 rounded-lg bg-cosmos-600 border border-white/5 text-tx-2 flex items-center justify-center hover:text-tx-1 transition-colors text-sm relative">
+        <i class="fa-regular fa-bell"></i>
+        <span id="hdr-notif-badge" class="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-red-500 text-white text-[0.5rem] font-bold flex items-center justify-center hidden">0</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Staff content -->
+  <main class="pt-[72px] px-4 pb-24 min-h-screen">
+    <%- body %>
+  </main>
+
+  <!-- Hamburger button for staff drawer -->
+  <header class="fixed bottom-0 left-0 right-0 h-14 glass-strong flex items-center justify-around px-4 z-[100] border-t border-cyan-500/10 shadow-lg">
+    <button onclick="toggleStaffDrawer()" class="flex flex-col items-center gap-0.5 text-tx-2 hover:text-emerald-400 transition-colors">
+      <i id="drawerHamburgerIcon" class="fa-solid fa-bars text-lg"></i>
+      <span class="text-[0.6rem]">Menu</span>
+    </button>
+    <a href="/portal/staff/dashboard" class="flex flex-col items-center gap-0.5 text-tx-2 hover:text-emerald-400 transition-colors">
+      <i class="fa-solid fa-house text-lg"></i>
+      <span class="text-[0.6rem]">Home</span>
+    </a>
+    <a href="/portal/staff/assignments" class="flex flex-col items-center gap-0.5 text-tx-2 hover:text-emerald-400 transition-colors">
+      <i class="fa-solid fa-calendar-days text-lg"></i>
+      <span class="text-[0.6rem]">Events</span>
+    </a>
+    <a href="/portal/staff/profile" class="flex flex-col items-center gap-0.5 text-tx-2 hover:text-emerald-400 transition-colors">
+      <i class="fa-solid fa-circle-user text-lg"></i>
+      <span class="text-[0.6rem]">Profile</span>
+    </a>
+    <a href="/portal/auth/logout" class="flex flex-col items-center gap-0.5 text-red-400 hover:text-red-300 transition-colors">
+      <i class="fa-solid fa-arrow-right-from-bracket text-lg"></i>
+      <span class="text-[0.6rem]">Logout</span>
+    </a>
+  </header>
+
+
+
+
+  <!-- Slide-out drawer -->
+  <div id="drawerOverlay" onclick="closeStaffDrawer()" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[149] hidden transition-opacity duration-300 opacity-0"></div>
+  <div id="staffDrawer" style="transform:translateX(-100%);transition:transform 0.3s ease-in-out;" class="fixed inset-y-0 left-0 z-[150] w-72 glass-strong border-r border-white/8 shadow-2xl transition-all duration-300 ease-in-out flex flex-col">
+      <!-- Drawer header -->
+      <div class="flex items-center justify-between px-5 py-4 border-b border-white/8">
+          <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-xl overflow-hidden flex-shrink-0">
+                  <% if (_photo) { %>
+                    <img src="<%= _photo %>" alt="<%= _initials %>" style="width:100%;height:100%;object-fit:cover;border-radius:10px;">
+                  <% } else { %>
+                    <div style="width:100%;height:100%;background:#059669;border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.82rem;color:#fff;">
+                      <%= _initials %>
+                    </div>
+                  <% } %>
+                </div>
+              <div>
+                  <div class="text-sm font-bold text-tx-1"><%= _userName.split(' ')[0] %></div>
+                  <div class="text-[0.65rem] text-emerald-400"><%= locals.user && locals.user.specific_role ? locals.user.specific_role : _role %></div>
+              </div>
+          </div>
+          <button onclick="toggleStaffDrawer()" class="text-tx-3 hover:text-tx-1 text-lg">
+              <i class="fa-solid fa-xmark"></i>
+          </button>
+      </div>
+
+      <!-- Nav links -->
+      <nav class="flex-1 overflow-y-auto py-4 px-3 flex flex-col gap-1">
+          <a href="/portal/staff/dashboard" class="drawer-link <%= _page==='dashboard'?'active':'' %>">
+              <i class="fa-solid fa-table-cells-large"></i><span>Dashboard</span>
+          </a>
+          <a href="/portal/staff/assignments" class="drawer-link <%= _page==='assignments'?'active':'' %>">
+              <i class="fa-regular fa-calendar-check"></i><span>My Events</span>
+          </a>
+          <a href="/portal/staff/team" class="drawer-link <%= _page==='team'?'active':'' %>">
+              <i class="fa-solid fa-people-group"></i><span>My Team</span>
+          </a>
+          <a href="/portal/staff/notifications" class="drawer-link <%= _page==='notifications'?'active':'' %>" style="position:relative;">
+              <i class="fa-regular fa-bell"></i><span>Notifications</span>
+              <span id="drawerNotifBadge" class="ml-auto text-[0.6rem] bg-red-500 text-white rounded-full px-1.5 py-0.5 font-bold hidden">0</span>
+          </a>
+          <a href="/portal/staff/payments" class="drawer-link <%= _page==='payments'?'active':'' %>">
+              <i class="fa-solid fa-money-bills"></i><span>Payments</span>
+          </a>
+          <a href="/portal/staff/profile" class="drawer-link <%= _page==='profile'?'active':'' %>">
+              <i class="fa-regular fa-circle-user"></i><span>Profile / Account</span>
+          </a>
+          <% if (locals.user && locals.user.role === 'Admin') { %>
+          <div class="my-2 border-t border-white/8"></div>
+          <a href="/portal/admin-staff/dashboard" class="drawer-link" style="color:var(--gold,#d4af37);">
+              <i class="fa-solid fa-crown"></i><span>Switch to Admin</span>
+          </a>
+          <% } %>
+      </nav>
+
+      <!-- Logout at bottom -->
+      <div class="px-3 py-4 border-t border-white/8">
+          <a href="/portal/auth/logout" class="drawer-link text-red-400 hover:text-red-300">
+              <i class="fa-solid fa-arrow-right-from-bracket"></i><span>Logout</span>
+          </a>
+      </div>
+  </div>
+
+  <!-- Drawer backdrop -->
+
+
+<% } %>
+
+<!-- Toast Container -->
+<div id="toast-container"></div>
+
+<!-- ══════════════════════════════════════════════════════════════
+     SCRIPTS
+     ══════════════════════════════════════════════════════════ -->
+<script src="/socket.io/socket.io.js"></script>
+<script>
+// Global avatar helper
+window.avatarHtml = function(name, photoUrl, size, bg) {
+  size = size || '36px';
+  bg = bg || 'var(--emerald,#1a6b3c)';
+  const initials = (name||'?').split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase();
+  const s = `width:${size};height:${size};border-radius:50%;object-fit:cover;flex-shrink:0;`;
+  if (photoUrl) {
+    return `<img src="${photoUrl}" alt="${initials}" style="${s}" onerror="this.outerHTML='<div style=\\'${s}background:${bg};display:flex;align-items:center;justify-content:center;font-size:0.72rem;font-weight:700;color:#fff;\\'>${initials}</div>'">`;
+  }
+  return `<div style="${s}background:${bg};display:flex;align-items:center;justify-content:center;font-size:0.72rem;font-weight:700;color:#fff;">${initials}</div>`;
+};
+
+// ─ Sidebar CSS (inline to avoid extra file) ─
+(function(){
+  const style = document.createElement('style');
+  style.textContent = `
+    .sidebar-link {
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 16px; color: #8b99b8; text-decoration: none;
+      font-size: 0.8rem; font-weight: 500;
+      border-left: 2px solid transparent;
+      transition: all 0.18s cubic-bezier(0.4,0,0.2,1);
+      white-space: nowrap;
+    }
+    .sidebar-link i { font-size: 0.85rem; width: 18px; text-align: center; flex-shrink: 0; color: #4e5d7a; transition: color 0.18s; }
+    .sidebar-link:hover { color: #f0f4ff; background: rgba(255,255,255,0.05); }
+    .sidebar-link:hover i { color: #10b981; }
+    .sidebar-link.active { color: #f0f4ff; background: rgba(16,185,129,0.08); border-left-color: #10b981; font-weight: 600; }
+    .sidebar-link.active i { color: #10b981; }
+
+    /* Collapsed sidebar */
+    .sidebar-collapsed { width: 64px !important; min-width: 64px !important; }
+    .sidebar-collapsed .sidebar-text,
+    .sidebar-collapsed .sidebar-link span { display: none; }
+    .sidebar-collapsed .sidebar-link { justify-content: center; padding: 14px 0; border-left: none; }
+    .sidebar-collapsed .sidebar-link i { font-size: 1rem; width: auto; }
+    .sidebar-collapsed .sidebar-logo { height: 28px; }
+    .sidebar-collapsed .sidebar-link:hover::after {
+      content: attr(data-tooltip);
+      position: absolute; left: 70px; top: 50%; transform: translateY(-50%);
+      background: #111827; color: #f0f4ff; padding: 6px 12px; border-radius: 8px;
+      font-size: 0.78rem; white-space: nowrap; z-index: 999;
+      border: 1px solid rgba(255,255,255,0.08); pointer-events: none;
+    }
+    .sidebar-link { position: relative; }
+
+    @media (max-width: 900px) {
+      #sidebar { display: none !important; }
+      #sidebar.mobile-open { display: flex !important; }
+      #topHeader { left: 0 !important; }
+      #mainContent { margin-left: 0 !important; padding-left: 1rem !important; }
+    }
+    @media (min-width: 901px) {
+      #sidebar { transform: translateX(0) !important; }
+    }
+    .drawer-link {
+      display: flex; align-items: center; gap: 12px;
+      padding: 11px 14px; color: #8b99b8; text-decoration: none;
+      font-size: 0.85rem; font-weight: 500; border-radius: 10px;
+      transition: all 0.18s ease;
+    }
+    .drawer-link i { width: 18px; text-align: center; font-size: 0.9rem; flex-shrink: 0; }
+    .drawer-link:hover { background: rgba(255,255,255,0.06); color: #e2e8f0; }
+    .drawer-link.active { background: rgba(16,185,129,0.12); color: #34d399; border-left: 2px solid #10b981; }
+    .drawer-link.active i { color: #10b981; }
+  `;
+  document.head.appendChild(style);
+})();
+
+// ─ Sidebar toggle ─
+function toggleSidebar() {
+  const sb = document.getElementById('sidebar');
+  const ov = document.getElementById('sidebarOverlay');
   const main = document.getElementById('mainContent');
   const hdr = document.getElementById('topHeader');
   if (window.innerWidth <= 900) {
@@ -605,19 +1125,30 @@ try {
     }
   });
   function toggleStaffDrawer() {
-    const drawer = document.getElementById('staffDrawer');
-    const overlay = document.getElementById('drawerOverlay');
-    const isOpen = drawer.style.transform === 'translateX(0px)' || drawer.style.transform === 'translateX(0)';
-    if (isOpen) { closeStaffDrawer(); } else { drawer.style.transform = 'translateX(0)'; overlay.classList.remove('hidden'); setTimeout(() => overlay.style.opacity = '1', 10); const icon = document.getElementById('drawerHamburgerIcon'); if (icon) { icon.classList.remove('fa-bars'); icon.classList.add('fa-xmark'); } }
+  const drawer = document.getElementById('staffDrawer');
+  const overlay = document.getElementById('drawerOverlay');
+  if (!drawer) return;
+  const isOpen = drawer.getAttribute('data-open') === 'true';
+  if (isOpen) {
+    closeStaffDrawer();
+  } else {
+    drawer.setAttribute('data-open', 'true');
+    drawer.style.transform = 'translateX(0)';
+    if(overlay){ overlay.style.display='block'; overlay.style.opacity='1'; overlay.classList.remove('hidden'); }
+    const icon = document.getElementById('drawerHamburgerIcon');
+    if(icon){ icon.classList.remove('fa-bars'); icon.classList.add('fa-xmark'); }
   }
-  function closeStaffDrawer() {
-    const drawer = document.getElementById('staffDrawer');
-    const overlay = document.getElementById('drawerOverlay');
-    drawer.style.transform = 'translateX(-100%)';
-    overlay.style.opacity = '0';
-    setTimeout(() => overlay.classList.add('hidden'), 300);
-    const icon = document.getElementById('drawerHamburgerIcon'); if (icon) { icon.classList.remove('fa-xmark'); icon.classList.add('fa-bars'); }
-  }
+}
+function closeStaffDrawer() {
+  const drawer = document.getElementById('staffDrawer');
+  const overlay = document.getElementById('drawerOverlay');
+  if (!drawer) return;
+  drawer.setAttribute('data-open', 'false');
+  drawer.style.transform = 'translateX(-100%)';
+  if(overlay){ overlay.style.opacity='0'; setTimeout(()=>{ overlay.style.display='none'; overlay.classList.add('hidden'); }, 300); }
+  const icon = document.getElementById('drawerHamburgerIcon');
+  if(icon){ icon.classList.remove('fa-xmark'); icon.classList.add('fa-bars'); }
+}
   }
 
 
@@ -740,6 +1271,17 @@ if (typeof window.registerPush !== 'function') {
 </script>
 <% } %>
 
+<script>
+// Initialize on load
+document.addEventListener('DOMContentLoaded', function() {
+  if (window.innerWidth <= 900) {
+    const sb = document.getElementById('sidebar');
+    if (sb) { sb.style.cssText = 'display:none!important;'; sb.setAttribute('data-mobile-open','false'); }
+  }
+  const drawer = document.getElementById('staffDrawer');
+  if (drawer) { drawer.style.transform = 'translateX(-100%)'; drawer.setAttribute('data-open','false'); }
+});
+</script>
 </body>
 </html>
 
