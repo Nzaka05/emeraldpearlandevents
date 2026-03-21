@@ -372,7 +372,7 @@
 
   <!-- Slide-out drawer -->
   <div id="drawerOverlay" onclick="closeStaffDrawer()" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[149] hidden transition-opacity duration-300 opacity-0"></div>
-  <div id="staffDrawer" class="fixed inset-y-0 left-0 z-[150] w-72 glass-strong border-r border-white/8 shadow-2xl transform -translate-x-full transition-all duration-300 ease-in-out flex flex-col">
+  <div id="staffDrawer" style="transform:translateX(-100%);transition:transform 0.3s ease-in-out;" class="fixed inset-y-0 left-0 z-[150] w-72 glass-strong border-r border-white/8 shadow-2xl transition-all duration-300 ease-in-out flex flex-col">
       <!-- Drawer header -->
       <div class="flex items-center justify-between px-5 py-4 border-b border-white/8">
           <div class="flex items-center gap-3">
@@ -596,17 +596,17 @@ try {
   function toggleStaffDrawer() {
     const drawer = document.getElementById('staffDrawer');
     const overlay = document.getElementById('drawerOverlay');
-    const isOpen = !drawer.classList.contains('-translate-x-full');
-    if (isOpen) { closeStaffDrawer(); } else { drawer.classList.remove('-translate-x-full'); overlay.classList.remove('hidden'); setTimeout(() => overlay.classList.remove('opacity-0'), 10); const icon = document.getElementById('drawerHamburgerIcon'); if (icon) { icon.classList.remove('fa-bars'); icon.classList.add('fa-xmark'); } }
+    const isOpen = drawer.style.transform === 'translateX(0px)' || drawer.style.transform === 'translateX(0)';
+    if (isOpen) { closeStaffDrawer(); } else { drawer.style.transform = 'translateX(0)'; overlay.classList.remove('hidden'); setTimeout(() => overlay.style.opacity = '1', 10); const icon = document.getElementById('drawerHamburgerIcon'); if (icon) { icon.classList.remove('fa-bars'); icon.classList.add('fa-xmark'); } }
   }
   function closeStaffDrawer() {
     const drawer = document.getElementById('staffDrawer');
     const overlay = document.getElementById('drawerOverlay');
-    drawer.classList.add('-translate-x-full');
-    overlay.classList.add('opacity-0');
+    drawer.style.transform = 'translateX(-100%)';
+    overlay.style.opacity = '0';
     setTimeout(() => overlay.classList.add('hidden'), 300);
     const icon = document.getElementById('drawerHamburgerIcon'); if (icon) { icon.classList.remove('fa-xmark'); icon.classList.add('fa-bars'); }
-
+  }
   }
 
 
@@ -630,7 +630,7 @@ async function loadNotifCount() {
 }
 
 // Load on staff pages
-// Ensure drawer starts closed on mobile
+const _drawer = document.getElementById('staffDrawer'); if (_drawer) { _drawer.style.transform = 'translateX(-100%)'; }
 const _drawer = document.getElementById('staffDrawer'); if (_drawer) { _drawer.classList.add('-translate-x-full'); }
 if (document.getElementById('staffDrawer')) {
   loadNotifCount();
