@@ -407,6 +407,7 @@ app.use('/portal/admin-staff', adminLegacyRoutes);
 app.use('/portal/staff', staffRoutes);
 app.use('/portal/supervisor', supervisorRoutes);
 app.use('/portal/supervisor/command-center', require('./routes/commandCenterRoutes'));
+app.use('/portal/ai', require('./staff-routes/aiRoutes'));
 app.use('/portal/finance', require('./financials/routes/financeRoutes'));
 app.use('/', require('./routes/performanceRoutes'));
 

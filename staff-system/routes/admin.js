@@ -73,6 +73,9 @@ router.delete('/invoices/:id', invoiceCtrl.deleteInvoice);
 // ── Phase 11: Survey Analytics ──────────────────────────
 router.get('/surveys', surveyCtrl.getSurveyAnalyticsPage);
 
+// -- AI Assistant --
+router.get('/ai/command-center', (req, res) => res.render('admin/ai-command-center', { currentPage: 'ai', user: req.user }));
+
 // ── Phase 10: Leaderboard ──────────────────────────────────────────────────
 router.get('/leaderboard', require('../controllers/adminController').getLeaderboardPage);
 
