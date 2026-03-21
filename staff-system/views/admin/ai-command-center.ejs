@@ -43,6 +43,8 @@
 
 <script>
 const csrf = document.querySelector('meta[name="csrf-token"]')?.content || '';
+const conversationHistory = [];
+const conversationHistory = [];
 
 function quickAsk(q) {
     document.getElementById('aiInput').value = q;
@@ -62,12 +64,23 @@ async function sendMessage() {
         const res = await fetch('/portal/admin-staff/ai/assistant', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'CSRF-Token': csrf },
-            body: JSON.stringify({ query, eventContext: {} })
+            body: JSON.stringify({ 
+                query, 
+                eventContext: {
+                    userName: '<%= user && user.name ? user.name : "Team Member" %>',
+                    title: '<%= user && user.title ? user.title : "" %>',
+                    role: '<%= user && user.role ? user.role : "Admin" %>',
+                    email: '<%= user && user.email ? user.email : "" %>'
+                },
+                history: conversationHistory
+            })
         });
         const data = await res.json();
         typing.remove();
         if (data.success && data.data) {
-            addMessage(data.data.response || data.data.summary || JSON.stringify(data.data), 'ai');
+            const reply = data.data.response || data.data.summary || JSON.stringify(data.data);
+            addMessage(reply, 'ai');
+            conversationHistory.push({ query: query, response: reply });
         } else {
             addMessage('Error: ' + (data.error || data.message || 'Could not process request'), 'ai');
         }
