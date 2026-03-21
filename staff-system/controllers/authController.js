@@ -376,7 +376,6 @@ exports.staffForgotPassword = async (req, res) => {
 // @desc    Portal choice page for Admin users
 // @route   GET /portal/auth/portal-choice
 exports.getPortalChoice = async (req, res) => {
-exports.getPortalChoice = async (req, res) => {
     try {
         const Staff = require('../models/Staff');
         const user = await Staff.findById(req.user._id).select('-password').lean();
