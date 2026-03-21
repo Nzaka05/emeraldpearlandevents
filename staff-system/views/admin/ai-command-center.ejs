@@ -42,7 +42,7 @@
 </div>
 
 <script>
-const csrf = document.querySelector('meta[name="csrf-token"]')?.content || '';
+const csrf = document.querySelector('meta[name="csrf-token"]')?.content || document.querySelector('[name="_csrf"]')?.value || '';
 const conversationHistory = [];
 const conversationHistory = [];
 
@@ -63,7 +63,7 @@ async function sendMessage() {
     try {
         const res = await fetch('/portal/admin-staff/ai/assistant', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'CSRF-Token': csrf },
+            headers: { 'Content-Type': 'application/json', 'CSRF-Token': csrf, 'X-CSRF-Token': csrf },
             body: JSON.stringify({ 
                 query, 
                 eventContext: {

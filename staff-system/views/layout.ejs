@@ -231,6 +231,16 @@
   </aside>
 
   <!-- Mobile sidebar overlay -->
+  <script>
+  function toggleSidebarMobile() {
+    const sb = document.getElementById('sidebar');
+    const ov = document.getElementById('sidebarOverlay');
+    if (!sb) return;
+    const isOpen = sb.style.display === 'flex';
+    if (isOpen) { sb.style.display = 'none'; if(ov) ov.classList.add('hidden'); }
+    else { sb.style.display = 'flex'; if(ov) ov.classList.remove('hidden'); }
+  }
+  </script>
   <div id="sidebarOverlay" onclick="closeSidebar()" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[199] hidden"></div>
 
   <!-- ── Top Header ── -->
@@ -518,20 +528,20 @@ window.avatarHtml = function(name, photoUrl, size, bg) {
 // ─ Sidebar toggle ─
 function toggleSidebar() {
   const sb = document.getElementById('sidebar');
+  const ov = document.getElementById('sidebarOverlay');
   const main = document.getElementById('mainContent');
   const hdr = document.getElementById('topHeader');
   if (window.innerWidth <= 900) {
-    sb.classList.toggle('mobile-open');
-    document.getElementById('sidebarOverlay').classList.toggle('hidden');
+    const isOpen = sb.style.display === 'flex' || sb.style.display === '';
+    if (isOpen && sb.style.display !== 'none') { sb.style.display = 'none'; if(ov) ov.classList.add('hidden'); }
+    else { sb.style.display = 'flex'; sb.style.position = 'fixed'; sb.style.zIndex = '200'; if(ov) ov.classList.remove('hidden'); }
   } else {
     const isCollapsed = sb.classList.toggle('sidebar-collapsed');
     if (main) main.style.marginLeft = isCollapsed ? '64px' : '220px';
     if (hdr) hdr.style.left = isCollapsed ? '64px' : '220px';
     localStorage.setItem('sidebarCollapsed', isCollapsed);
   }
-
-
-function closeSidebar() {
+}
   document.getElementById('sidebar')?.classList.remove('mobile-open');
   document.getElementById('sidebarOverlay')?.classList.add('hidden');
 }
