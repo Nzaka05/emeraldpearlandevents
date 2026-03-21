@@ -433,7 +433,7 @@
   </div>
 
   <!-- Drawer backdrop -->
-  <div id="staffDrawerBackdrop" class="fixed inset-0 z-[140] bg-black/60 hidden" onclick="toggleStaffDrawer()"></div>
+
 
 <% } %>
 
@@ -492,8 +492,8 @@ window.avatarHtml = function(name, photoUrl, size, bg) {
     .sidebar-link { position: relative; }
 
     @media (max-width: 900px) {
-      #sidebar { transform: translateX(-100%); }
-      #sidebar.mobile-open { transform: translateX(0); }
+      #sidebar { transform: translateX(-100%) !important; display: none !important; }
+      #sidebar.mobile-open { transform: translateX(0) !important; display: flex !important; }
       #topHeader { left: 0 !important; }
       #mainContent { margin-left: 0 !important; }
     }
@@ -630,6 +630,8 @@ async function loadNotifCount() {
 }
 
 // Load on staff pages
+// Ensure drawer starts closed on mobile
+const _drawer = document.getElementById('staffDrawer'); if (_drawer) { _drawer.classList.add('-translate-x-full'); }
 if (document.getElementById('staffDrawer')) {
   loadNotifCount();
 }
