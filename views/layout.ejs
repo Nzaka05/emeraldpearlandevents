@@ -22,6 +22,7 @@
     <% if (typeof user !=='undefined' ) { %>
         <header>
             <div class="logo">
+                <button id="mobile-menu-btn" aria-label="Open Menu"><i class="fa-solid fa-bars"></i></button>
                 <i class="fa-solid fa-users"></i>
                 Staff System
             </div>
@@ -35,7 +36,8 @@
 
             <div class='app-container'>
     <% if (typeof user !== 'undefined') { %>
-    <nav class='sidebar'>
+    <div id="sidebarOverlay"></div>
+    <nav class='sidebar' id="staffSidebar">
         <div class='sidebar-logo'><i class='fa-solid fa-gem'></i> Emerald</div>
         <ul class='sidebar-nav'>
             <li><a href='/portal/admin-staff/dashboard'><i class='fa-solid fa-gauge'></i> Dashboard</a></li>
@@ -130,7 +132,43 @@
                             console.error('Service Worker Error', error);
                         });
                 }
+            
+                // Mobile Sidebar Logic
+                document.addEventListener('DOMContentLoaded', () => {
+                    const toggleBtn = document.getElementById('mobile-menu-btn');
+                    const sidebar = document.getElementById('staffSidebar');
+                    const overlay = document.getElementById('sidebarOverlay');
+
+                    if (toggleBtn && sidebar) {
+                        function closeSidebar() {
+                            sidebar.classList.remove('active');
+                            if(overlay) overlay.classList.remove('active');
+                            document.body.style.overflow = '';
+                        }
+                        
+                        function openSidebar() {
+                            sidebar.classList.add('active');
+                            if(overlay) overlay.classList.add('active');
+                            document.body.style.overflow = 'hidden';
+                        }
+
+                        toggleBtn.addEventListener('click', () => {
+                            if (sidebar.classList.contains('active')) {
+                                closeSidebar();
+                            } else {
+                                openSidebar();
+                            }
+                        });
+
+                        if(overlay) overlay.addEventListener('click', closeSidebar);
+                        
+                        const links = sidebar.querySelectorAll('a');
+                        links.forEach(link => {
+                            link.addEventListener('click', closeSidebar);
+                        });
+                    }
+                });
             </script>
 </body>
-
 </html>
+

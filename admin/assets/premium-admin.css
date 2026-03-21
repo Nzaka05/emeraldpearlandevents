@@ -589,7 +589,7 @@ textarea:focus,
 }
 
 /* ─── Desktop: overlay must NEVER appear or block clicks ─── */
-@media (min-width: 769px) {
+@media (min-width: 1025px) {
     #sidebarOverlay {
         display: none !important;
         pointer-events: none !important;
@@ -602,7 +602,7 @@ textarea:focus,
     }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
     .mobile-menu-btn {
         display: flex !important;
         align-items: center;

@@ -298,3 +298,28 @@ select:focus {
 .sidebar-nav li a:hover { background: #334155; color: #fff; }
 .sidebar-nav li a i { width: 16px; }
 main { flex: 1; padding: 24px; overflow-y: auto; }
+
+
+/* Mobile Sidebar specific for Staff System */
+#mobile-menu-btn {
+    display: none;
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.25rem;
+    cursor: pointer;
+    margin-right: 12px;
+}
+#sidebarOverlay {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 999; opacity: 0; transition: opacity 0.3s;
+}
+#sidebarOverlay.active { display: block; opacity: 1; }
+
+@media (max-width: 1024px) {
+    #mobile-menu-btn { display: inline-block; }
+    .sidebar {
+        position: fixed; left: 0; top: 0; bottom: 0; transform: translateX(-100%); transition: transform 0.3s ease; z-index: 1000;
+        height: 100vh;
+    }
+    .sidebar.active { transform: translateX(0); }
+}

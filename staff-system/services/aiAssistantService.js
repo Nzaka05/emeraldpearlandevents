@@ -150,9 +150,9 @@ Always be helpful, never refuse reasonable requests. If asked something outside 
         });
     }
     messages.push({ role: "user", content: sanitized });
-
-        model: "gemini-2.5-flash",
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash", systemInstruction: systemPrompt });
     const geminiHistory = [];
+
     if (messages.length > 1) { messages.slice(0,-1).forEach(m => { geminiHistory.push({ role: m.role === "assistant" ? "model" : "user", parts: [{ text: m.content }] }); }); }
     const chat = model.startChat({ history: geminiHistory });
     const result = await chat.sendMessage(sanitized);
