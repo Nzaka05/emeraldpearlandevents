@@ -54,7 +54,7 @@ app.use(helmet({
             fontSrc: ["'self'", "https://fonts.gstatic.com", "https://cdnjs.cloudflare.com", "data:"],
             imgSrc: ["'self'", "data:", "blob:", "https://res.cloudinary.com"],
             mediaSrc: ["'self'", "blob:"],
-            connectSrc: ["'self'", "blob:", "https://api.cloudinary.com"],
+            connectSrc: ["'self'", "blob:", "https://api.cloudinary.com", "https://cdn.jsdelivr.net"],
         }
     }
 }));
@@ -151,6 +151,8 @@ app.get('/booking.html', (req, res) => res.sendFile(require('path').join(__dirna
 app.use('/admin/assets', express.static(require('path').join(__dirname, 'admin', 'assets'), staticOptions));
 app.get('/admin/push-client.js', (req, res) => res.sendFile(require('path').join(__dirname, 'admin', 'push-client.js')));
 app.get('/admin/sw.js', (req, res) => res.sendFile(require('path').join(__dirname, 'admin', 'sw.js')));
+app.get('/admin/admin-profile.js', (req, res) => res.sendFile(require('path').join(__dirname, 'admin', 'admin-profile.js')));
+app.get('/favicon.ico', (req, res) => res.sendFile(require('path').join(__dirname, 'public', 'favicon.ico')));
 
 // Root redirect for admin
 app.get('/admin', (req, res) => {

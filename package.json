@@ -59,7 +59,8 @@
   },
   "devDependencies": {
     "nodemon": "^3.0.1",
-    "replace-in-file": "^8.4.0"
+    "replace-in-file": "^8.4.0",
+    "sharp": "^0.34.5"
   },
   "engines": {
     "node": ">=14.0.0",
