@@ -85,7 +85,7 @@ router.get('/api/event-health/:eventId', clientHealthLimiter, enforceDataOwnersh
             return res.status(400).json({ success: false, error: 'Invalid ID' });
         }
 
-        const Assignment = require('../staff-system/models/Assignment');
+        const Assignment = require('../../staff-system/models/Assignment');
         const assignment = await Assignment.findOne({
             _id: req.params.eventId,
             client_id: req.clientUser._id
@@ -104,7 +104,7 @@ router.get('/api/event-health/:eventId', clientHealthLimiter, enforceDataOwnersh
         // Get safe risk level (never expose raw score or internals)
         let riskLevel = 'LOW';
         try {
-            const predictionService = require('../staff-system/services/eventPredictionService');
+            const predictionService = require('../../staff-system/services/eventPredictionService');
             const prediction = await predictionService.generatePrediction(req.params.eventId);
             if (prediction.riskScore > 70) riskLevel = 'HIGH';
             else if (prediction.riskScore > 30) riskLevel = 'MEDIUM';
