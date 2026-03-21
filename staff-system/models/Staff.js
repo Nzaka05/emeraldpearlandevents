@@ -19,8 +19,8 @@ const staffSchema = new mongoose.Schema({
     photo_url: { type: String },
     status: { type: String, enum: ['Active', 'Suspended'], default: 'Active' },
     mustChangePassword: { type: Boolean, default: true },
-    resetPasswordToken: { type: String },
-    resetPasswordExpire: { type: Date },
+    title: { type: String, default: null },
+    dualRole: { type: Boolean, default: false },
     availability_status: {
         type: String,
         enum: ['Available', 'Busy', 'Not Available', 'On Leave'],
