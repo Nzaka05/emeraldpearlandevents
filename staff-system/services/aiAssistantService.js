@@ -1,105 +1,92 @@
 /**
  * aiAssistantService.js
- * 
- * Provides an interaction layer with strict prompt scaffolding,
- * anti-hallucination framing, and role-based data injection.
+ * Powered by Claude (Anthropic) - Emerald Pearland Events AI Assistant
  */
 
-const aiLearningService = require('../ai-learning/aiLearningService');
-const aiActionService = require('./aiActionService');
+const Anthropic = require('@anthropic-ai/sdk');
 const AIConversationLog = require('../ai-learning/models/AIConversationLog');
 
-/**
- * Mocks an LLM response locally for demonstration/testing without an API key,
- * but enforces the strict system prompt logic conceptually.
- * In a real scenario, this would POST to OpenAI/Gemini.
- */
-async function processAssistantQuery(userId, role, query, eventContext = {}) {
-    // 0. Sanitize input
+const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+
+async function processAssistantQuery(userId, role, query, eventContext = {}, history = []) {
     if (!query || typeof query !== 'string') throw new Error('Invalid query');
+    
     const sanitized = query.trim().substring(0, 2000)
         .replace(/<script[^>]*>.*?<\/script>/gi, '')
         .replace(/<[^>]+>/g, '')
         .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, '');
     if (sanitized.length === 0) throw new Error('Empty query after sanitization');
 
-    // 1. Fetch Role-Filtered Data
-    const { merged: insights } = await aiLearningService.getInsights({
-        eventType: eventContext.eventType || null,
-        clientId: eventContext.clientId || null,
-        staffIds: eventContext.staffIds || []
-    });
+    // Fetch live business data
+    let businessData = {};
+    try {
+        const Staff = require('../models/Staff');
+        const staffList = await Staff.find({ status: 'Active' }).select('name role category availability_status').lean();
+        businessData.staff = staffList;
+        businessData.staffCount = staffList.length;
+        businessData.availableStaff = staffList.filter(s => s.availability_status === 'Available').length;
+    } catch (e) { businessData.staffError = e.message; }
 
-    if (role === 'Staff') {
-        // Staff cannot see financial or global metrics
-        delete insights.cost;
-        delete insights.profit;
-        delete insights.paymentDelays;
-    }
+    // System prompt
+    const systemPrompt = `You are the official AI Assistant for Emerald Pearland Events, a luxury event planning company based in Nairobi, Kenya.
 
-    // 2. Strict Prompt Construction
-    const systemPrompt = `
-[SYSTEM CONTEXT]
-You are the Emerald AI Event Assistant.
-User Role: ${role}
+You are embedded in the internal staff and admin portal. Your role is to assist the team with:
+- Staff management and scheduling
+- Event planning and coordination  
+- Business analytics and insights
+- Operational questions
 
-[DATA]
-Event Insights: ${JSON.stringify(insights)}
+Current User Role: ${role}
+${eventContext.userName ? 'User Name: ' + eventContext.userName : ''}
 
-[RULES]
-1. Never generate data outside the provided insights.
-2. If data to answer the query is missing, return exactly: "No data available".
-3. Provide reasoning using the provided data points.
+Live Business Data:
+- Total Active Staff: ${businessData.staffCount || 'Unknown'}
+- Available Staff Right Now: ${businessData.availableStaff || 'Unknown'}
+- Staff List: ${JSON.stringify(businessData.staff?.map(s => s.name + ' (' + (s.category || s.role) + ')') || [])}
 
-[TASK]
-Answer the following query securely and concisely:
-${sanitized}
-`;
+Rules:
+1. Only answer questions related to Emerald Pearland Events business operations
+2. ${role === 'Staff' ? 'Do NOT share financial data, profit figures, or other staff salaries - this user is Staff level' : 'You can share full business data as this is an Admin/Supervisor'}
+3. Be concise, professional, and helpful
+4. If you don't have specific data, say so honestly
+5. Always respond in the context of Emerald Pearland Events
+6. You are Claude, made by Anthropic, integrated into Emerald's system`;
 
-    // 3. Simulated LLM Response Generation (Replace with actual fetch to Gemini/OpenAI API)
-    let aiResponse = "";
-    if (!insights || Object.keys(insights).length === 0) {
-        aiResponse = "No data available";
-    } else {
-        // Mocking logic
-        if (sanitized.toLowerCase().includes('profit') && role !== 'Staff') {
-            aiResponse = `Based on historical models, the expected profit margin adjustment is ${insights.profit || 'unknown'} KSh.`;
-        } else if (sanitized.toLowerCase().includes('staff') || sanitized.toLowerCase().includes('reliable')) {
-            aiResponse = `Historical data suggests staffing requirements average at ${insights.staffCount || 'unknown'} for this type.`;
-        } else {
-            aiResponse = `I have received your query. Based on our AI metrics (Confidence: ${insights.confidence || 0}%), operations are behaving normally. (Mocked LLM Response)`;
-        }
-    }
-
-    if (role === 'Staff' && sanitized.toLowerCase().includes('profit')) {
-        aiResponse = "No data available"; // Role-restricted
-    }
-
-    // 4. Action Recommendation Injection (Only for Admins/Supervisors)
-    let recommendedActions = [];
-    if (role === 'Admin' || role === 'Supervisor') {
-        // For demonstration, mock a prediction context to get actions
-        recommendedActions = aiActionService.generateActions({
-            predictedStaff: insights.staffCount,
-            riskLabel: insights.confidence < 40 ? 'HIGH' : 'LOW'
+    // Build message history
+    const messages = [];
+    if (history && history.length > 0) {
+        history.slice(-6).forEach(h => {
+            messages.push({ role: 'user', content: h.query });
+            messages.push({ role: 'assistant', content: h.response });
         });
     }
+    messages.push({ role: 'user', content: sanitized });
 
-    // 5. Log the Conversation
+    // Call Claude API
+    const response = await client.messages.create({
+        model: 'claude-sonnet-4-5',
+        max_tokens: 1024,
+        system: systemPrompt,
+        messages: messages
+    });
+
+    const aiResponse = response.content[0].text;
+
+    // Log conversation
     await AIConversationLog.create({
         user_id: userId,
         role: role,
         query: sanitized,
         response: aiResponse,
-        context_used: insights
+        context_used: businessData
     }).catch(err => console.error('[AIConversationLog] Save failed:', err.message));
 
     return {
         reply: aiResponse,
-        recommendedActions
+        response: aiResponse,
+        summary: aiResponse,
+        recommendedActions: []
     };
 }
 
-module.exports = {
-    processAssistantQuery
-};
+module.exports = { processAssistantQuery };

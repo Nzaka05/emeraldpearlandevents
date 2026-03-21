@@ -15,7 +15,7 @@ exports.queryAssistant = async (req, res) => {
 
         if (!query) return res.status(400).json({ success: false, message: 'Query is required' });
 
-        const result = await aiAssistantService.processAssistantQuery(userId, role, query, eventContext || {});
+        const result = await aiAssistantService.processAssistantQuery(userId, role, query, eventContext || {}, req.body.history || []);
         
         return res.status(200).json({
             success: true,
