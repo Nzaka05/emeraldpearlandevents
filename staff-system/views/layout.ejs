@@ -528,7 +528,7 @@ function toggleSidebar() {
     if (hdr) hdr.style.left = isCollapsed ? '64px' : '220px';
     localStorage.setItem('sidebarCollapsed', isCollapsed);
   }
-}
+
 
 function closeSidebar() {
   document.getElementById('sidebar')?.classList.remove('mobile-open');
@@ -597,7 +597,7 @@ try {
     const drawer = document.getElementById('staffDrawer');
     const overlay = document.getElementById('drawerOverlay');
     const isOpen = !drawer.classList.contains('-translate-x-full');
-    if (isOpen) { closeStaffDrawer(); } else { drawer.classList.remove('-translate-x-full'); overlay.classList.remove('hidden'); setTimeout(() => overlay.classList.remove('opacity-0'), 10); }
+    if (isOpen) { closeStaffDrawer(); } else { drawer.classList.remove('-translate-x-full'); overlay.classList.remove('hidden'); setTimeout(() => overlay.classList.remove('opacity-0'), 10); const icon = document.getElementById('drawerHamburgerIcon'); if (icon) { icon.classList.remove('fa-bars'); icon.classList.add('fa-xmark'); } }
   }
   function closeStaffDrawer() {
     const drawer = document.getElementById('staffDrawer');
@@ -605,10 +605,10 @@ try {
     drawer.classList.add('-translate-x-full');
     overlay.classList.add('opacity-0');
     setTimeout(() => overlay.classList.add('hidden'), 300);
+    const icon = document.getElementById('drawerHamburgerIcon'); if (icon) { icon.classList.remove('fa-xmark'); icon.classList.add('fa-bars'); }
+
   }
-    if (icon) { icon.classList.remove('fa-bars'); icon.classList.add('fa-xmark'); }
-  }
-}
+
 
 // ── Real notification count ──
 async function loadNotifCount() {
