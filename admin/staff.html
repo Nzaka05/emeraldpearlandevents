@@ -1116,16 +1116,15 @@
                     const grid = document.getElementById('staffGrid');
                     grid.innerHTML = staff.map(member => {
                         const initials = member.name.split(' ').map(n => n[0]).join('');
-                        const avatarContent = member.photo || member.photo_url
-                            ? <img src="${member.photo || member.photo_url}" alt="${member.name}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">"
+                        const avatarContent = (member.photo || member.photo_url)
+                            ? `<img src="${member.photo || member.photo_url}" alt="${member.name}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">`
                             : initials;
-
                         return `
                     <div class="staff-card">
                         <div class="staff-header">
-                            <div class="staff-role">${member.category || member.department || member.role || 'Staff'}</div>
+                            <div class="staff-avatar">${avatarContent}</div>
                             <div class="staff-name">${member.name}</div>
-                            <div class="staff-role">${member.category}</div>
+                            <div class="staff-role">${member.category || member.department || member.role || 'Staff'}</div>
                         </div>
                         <div class="staff-body">
                             <div class="staff-info">
@@ -1147,28 +1146,26 @@
                                 <span class="staff-label">Hourly Rate:</span><br>
                                 <span class="staff-value">${member.hourlyRate}</span>
                             </div>
-                            <button class="availability-toggle ${member.available ? 'available' : 'unavailable'}" 
-                                    onclick="toggleAvailability(${member.id})">
-                                ${member.available ? '<i class="fas fa-check"></i> Available' : '<i class="fas fa-times"></i> Unavailable'}
+                            <button class="availability-toggle ${member.isAvailable ? 'available' : 'unavailable'}"
+                                    onclick="toggleAvailability('${member._id}')">
+                                ${member.isAvailable ? '<i class="fas fa-check"></i> Available' : '<i class="fas fa-times"></i> Unavailable'}
                             </button>
-                                <button class="action-btn" onclick="deleteStaff('${member.id}')" style="background: var(--accent-danger); margin-top: 8px;">Delete Access</button>
+                            <div class="staff-actions">
+                                <button class="action-btn" onclick="deleteStaff('${member._id}')" style="background: var(--accent-danger); margin-top: 8px;">Delete Access</button>
                             </div>
                         </div>
                     </div>
                 `;
                     }).join('');
                 }
-
                 function filterStaff() {
                     const category = document.getElementById('categoryFilter').value;
                     const availability = document.getElementById('availabilityFilter').value;
-
                     const filtered = staffData.filter(staff => {
                         const catMatch = !category || staff.category === category;
-                        const availMatch = !availability || (availability === 'available' ? staff.available : !staff.available);
+                        const availMatch = !availability || (availability === "available" ? staff.isAvailable : !staff.isAvailable);
                         return catMatch && availMatch;
                     });
-
                     renderStaff(filtered);
                 }
 
