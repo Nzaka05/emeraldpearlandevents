@@ -34,7 +34,7 @@ exports.getTeamCreateData = async () => {
     }).select('_id title date location');
 
     const supervisors = await Staff.find({ status: 'Active' }).select('_id name specific_role role');
-    const availableStaff = await Staff.find({ role: 'Staff', status: 'Active' }).select('_id name');
+    const availableStaff = await Staff.find({ status: 'Active' }).select('_id name');
 
     return { assignments, supervisors, staff: availableStaff };
 };

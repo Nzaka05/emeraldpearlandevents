@@ -956,7 +956,6 @@ router.post('/staff', verifyAdminJWT, async (req, res) => {
         if (!name || !category || !phone) {
             return res.status(400).json({ success: false, message: 'Name, category and phone are required.' });
         }
-
         const staff = new Staff({
             name,
             category,
@@ -964,12 +963,13 @@ router.post('/staff', verifyAdminJWT, async (req, res) => {
             phone,
             whatsapp: whatsapp || null,
             photo: photo || null,
-            notes: bio || ''
+            notes: bio || '',
+            password: email || null,
+            role: 'Staff',
+            status: 'Active',
+            mustChangePassword: true
         });
-
         await staff.save();
-
-        // Sync to port 3001
         syncStaffToOperations('create', staff.toObject()).catch(() => {});
 
         res.status(201).json({
