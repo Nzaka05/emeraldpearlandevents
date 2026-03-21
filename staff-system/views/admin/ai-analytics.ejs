@@ -1,0 +1,121 @@
+<% currentPage = 'ai-analytics' %>
+<div class="max-w-5xl mx-auto">
+    <div class="mb-6 flex items-center gap-4">
+        <img src="/images/pearl-logo.png" class="w-12 h-12 rounded-xl object-contain">
+        <div>
+            <h1 class="font-display text-2xl font-bold text-tx-1">PEARL Analytics</h1>
+            <p class="text-sm text-tx-3 mt-1">AI Assistant Usage & Insights</p>
+        </div>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+        <div class="glass-card p-4 text-center rounded-xl">
+            <div class="text-2xl font-bold text-emerald-400" id="totalConv">-</div>
+            <div class="text-xs text-tx-3 mt-1">Total Conversations</div>
+        </div>
+        <div class="glass-card p-4 text-center rounded-xl">
+            <div class="text-2xl font-bold text-gold-400" id="todayConv">-</div>
+            <div class="text-xs text-tx-3 mt-1">Today</div>
+        </div>
+        <div class="glass-card p-4 text-center rounded-xl">
+            <div class="text-2xl font-bold text-blue-400" id="accuracy">-</div>
+            <div class="text-xs text-tx-3 mt-1">Feedback Accuracy</div>
+        </div>
+        <div class="glass-card p-4 text-center rounded-xl">
+            <div class="text-2xl font-bold text-red-400" id="alerts">-</div>
+            <div class="text-xs text-tx-3 mt-1">Active Alerts</div>
+        </div>
+    </div>
+
+    <!-- Recent Conversations -->
+    <div class="glass-card rounded-xl p-5 mb-6">
+        <h2 class="font-bold text-tx-1 mb-4 flex items-center gap-2">
+            <i class="fa-solid fa-comments text-emerald-400"></i> Recent Conversations
+        </h2>
+        <div id="recentConvList" class="space-y-3">
+            <p class="text-tx-3 text-sm">Loading...</p>
+        </div>
+    </div>
+
+    <!-- Active Alerts -->
+    <div class="glass-card rounded-xl p-5 mb-6">
+        <h2 class="font-bold text-tx-1 mb-4 flex items-center gap-2">
+            <i class="fa-solid fa-triangle-exclamation text-red-400"></i> Active Alerts
+        </h2>
+        <div id="alertsList" class="space-y-3">
+            <p class="text-tx-3 text-sm">Loading...</p>
+        </div>
+    </div>
+
+    <!-- AI Insights -->
+    <div class="glass-card rounded-xl p-5">
+        <h2 class="font-bold text-tx-1 mb-4 flex items-center gap-2">
+            <i class="fa-solid fa-lightbulb text-gold-400"></i> AI Insights
+        </h2>
+        <div id="insightsList" class="space-y-3">
+            <p class="text-tx-3 text-sm">Loading...</p>
+        </div>
+    </div>
+</div>
+
+<script>
+async function loadAnalytics() {
+    try {
+        const res = await fetch('/portal/admin-staff/ai/analytics-data', {
+            headers: { 'CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content || '' }
+        });
+        const data = await res.json();
+        if (!data.success) return;
+        const a = data.analytics;
+
+        document.getElementById('totalConv').textContent = a.totalConversations || 0;
+        document.getElementById('todayConv').textContent = a.todayConversations || 0;
+        document.getElementById('accuracy').textContent = (a.feedbackAccuracy || 0) + '%';
+        document.getElementById('alerts').textContent = a.activeAlerts?.length || 0;
+
+        // Recent conversations
+        const convList = document.getElementById('recentConvList');
+        if (a.recentConversations?.length > 0) {
+            convList.innerHTML = a.recentConversations.map(c => `
+                <div class="flex items-center gap-3 p-3 rounded-lg bg-cosmos-600/50">
+                    <span class="text-xs px-2 py-1 rounded-full bg-emerald-900/50 text-emerald-400">${c.role}</span>
+                    <span class="text-sm text-tx-2 flex-1">${c.query}...</span>
+                    <span class="text-xs text-tx-3">${new Date(c.time).toLocaleTimeString()}</span>
+                </div>
+            `).join('');
+        } else {
+            convList.innerHTML = '<p class="text-tx-3 text-sm">No conversations yet.</p>';
+        }
+
+        // Alerts
+        const alertsList = document.getElementById('alertsList');
+        if (a.activeAlerts?.length > 0) {
+            alertsList.innerHTML = a.activeAlerts.map(alert => `
+                <div class="flex items-center gap-3 p-3 rounded-lg bg-red-900/20 border border-red-500/20">
+                    <i class="fa-solid fa-circle-exclamation text-red-400"></i>
+                    <span class="text-sm text-tx-2">${alert.message || alert.type}</span>
+                </div>
+            `).join('');
+        } else {
+            alertsList.innerHTML = '<p class="text-tx-3 text-sm text-emerald-400">No active alerts.</p>';
+        }
+
+        // Insights
+        const insightsList = document.getElementById('insightsList');
+        if (a.insights?.length > 0) {
+            insightsList.innerHTML = a.insights.map(insight => `
+                <div class="flex items-center gap-3 p-3 rounded-lg bg-cosmos-600/50">
+                    <i class="fa-solid fa-lightbulb text-gold-400"></i>
+                    <span class="text-sm text-tx-2">${insight.summary || insight.type}</span>
+                </div>
+            `).join('');
+        } else {
+            insightsList.innerHTML = '<p class="text-tx-3 text-sm">No insights yet. Keep using PEARL!</p>';
+        }
+    } catch (e) { console.error(e); }
+}
+
+loadAnalytics();
+setInterval(loadAnalytics, 30000); // Refresh every 30 seconds
+</script>
