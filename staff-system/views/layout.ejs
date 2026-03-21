@@ -609,15 +609,8 @@ function closeSidebar() {
     </style>
 </head>
 
-<body class="min-h-screen overflow-x-hidden">
-<style>@media(max-width:900px){#sidebar{display:none!important}#topHeader{left:0!important}#mainContent{margin-left:0!important}}</style>
 
-<% const _role = (locals.user && locals.user.role) ? locals.user.role : 'Staff';
-   const _userName = (locals.user && locals.user.name) ? locals.user.name : 'User';
-   const _initials = _userName.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2);
-   const _page = locals.currentPage || '';
-   const _photo = (locals.user && locals.user.photo_url) ? locals.user.photo_url : null;
-%>
+
 
 <!-- ══════════════════════════════════════════════════════════════
      ADMIN / SUPERVISOR — Sidebar + Top Header Layout
