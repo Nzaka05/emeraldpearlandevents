@@ -11,8 +11,8 @@
         <!-- Messages -->
         <div id="chatMessages" class="flex-1 overflow-y-auto p-4 space-y-4">
             <div class="flex gap-3">
-                <div class="w-8 h-8 rounded-xl bg-emerald-600 flex items-center justify-center flex-shrink-0">
-                    <i class="fa-solid fa-robot text-white text-sm"></i>
+                <div class="w-8 h-8 rounded-xl flex-shrink-0 overflow-hidden">
+                    <img src="/images/pearl-logo.png" class="w-8 h-8 rounded-xl object-cover" alt="PEARL" onerror="this.style.display='none';this.nextSibling.style.display='block'"><span style="display:none;color:white;font-size:10px;font-weight:bold;">P</span>
                 </div>
                 <div class="glass-card rounded-xl rounded-tl-none p-3 max-w-lg">
                     <p class="text-sm text-tx-1">Hello! I am PEARL, your Personal Emerald Assistant. I am here to help you manage staff, track events, and keep Emerald Pearland Events running smoothly. How may I assist you today?</p>
@@ -82,7 +82,7 @@ function addMessage(text, from) {
     div.className = 'flex gap-3' + (from === 'user' ? ' flex-row-reverse' : '');
     div.innerHTML = from === 'user'
         ? '<div class="glass-card rounded-xl rounded-tr-none p-3 max-w-lg bg-emerald-900/30 border-emerald-500/20"><p class="text-sm text-tx-1">' + text + '</p></div>'
-        : '<div class="w-8 h-8 rounded-xl bg-emerald-600 flex items-center justify-center flex-shrink-0"><i class="fa-solid fa-robot text-white text-sm"></i></div><div class="glass-card rounded-xl rounded-tl-none p-3 max-w-lg"><p class="text-sm text-tx-1">' + text + '</p></div>';
+        : '<div class="w-8 h-8 rounded-xl flex-shrink-0 overflow-hidden"><img src="/images/pearl-logo.png" class="w-8 h-8 rounded-xl object-cover" alt="PEARL" onerror="this.style.display='none';this.nextSibling.style.display='block'"><span style="display:none;color:white;font-size:10px;font-weight:bold;">P</span></div><div class="glass-card rounded-xl rounded-tl-none p-3 max-w-lg"><p class="text-sm text-tx-1">' + text + '</p></div>';
     document.getElementById('chatMessages').appendChild(div);
     document.getElementById('chatMessages').scrollTop = 999999;
     return div;
