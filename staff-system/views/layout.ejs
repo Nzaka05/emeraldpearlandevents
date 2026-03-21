@@ -310,13 +310,12 @@
       <div>
         <div class="text-sm font-bold text-tx-1">
         <% if (_role === 'Admin' && ['Gideon Nzaka','David Charles Abuor','Joshua Nzaka'].includes(_userName)) { %>
-            Welcome back, <%= _userName.split(' ')[0] === 'Gideon' ? 'Co-CEO' : _userName.split(' ')[0] === 'David' ? 'Director' : 'CEO' %>!
+            Welcome back, <%= _userName.split(' ')[0] === 'Gideon' ? 'Co-CEO' : _userName.split(' ')[0] === 'David' ? 'Director' : 'CEO' %>
         <% } else if (_role === 'Admin' || _role === 'Supervisor') { %>
-            Welcome back, <%= _userName.split(' ')[0] %>!
+            Welcome back, <%= _userName.split(' ')[0] %>
         <% } else { %>
-            Welcome to Emerald, <%= _userName.split(' ')[0] %>!
+            Welcome to Emerald, <%= _userName.split(' ')[0] %>
         <% } %>
-    </div>
         <% if(locals.onShift) { %>
           <div class="flex items-center gap-1.5 text-[0.65rem] font-semibold text-emerald-400">
             <span class="status-dot status-dot-active animate-pulse-dot" style="width:6px;height:6px"></span> Active Shift
@@ -326,8 +325,6 @@
             <span class="status-dot status-dot-muted" style="width:6px;height:6px"></span> Off Duty
           </div>
         <% } %>
-      </div>
-    </div>
     <div class="flex items-center gap-2">
       <button class="w-8 h-8 rounded-lg bg-cosmos-600 border border-white/5 text-tx-2 flex items-center justify-center hover:text-tx-1 transition-colors text-sm relative">
         <i class="fa-regular fa-bell"></i>
