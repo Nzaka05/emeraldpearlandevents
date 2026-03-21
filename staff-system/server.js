@@ -99,7 +99,7 @@ app.use(methodOverride(function(req, res) {
 app.use(methodOverride('_method'));
 
 // CSRF only for staff portal routes — never applied to /admin
-const portalCsrf = csrf({ cookie: { httpOnly: true, sameSite: 'strict' } });
+const portalCsrf = csrf({ cookie: { httpOnly: true, sameSite: 'lax' } });
 
 // Add csrfToken + vapidPublicKey to res.locals for all /portal views
 app.use((req, res, next) => {
