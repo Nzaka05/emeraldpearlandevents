@@ -960,7 +960,7 @@
 
                 <div class="main-content">
                     <div class="topbar">
-                        <h1 class="page-title">Staff</h1>
+                        <h1 class="page-title" style="display:none;">Staff</h1>
                         <div style="flex: 1; text-align: right;">
                             <span style="font-style: italic; color: var(--accent-gold); font-weight: 600;"
                                 id="todayDate"></span>
@@ -1088,6 +1088,7 @@
                         const result = await response.json();
                         if (result.success) {
                             staffData = result.staff.map(s => ({
+                                _id: s._id,
                                 id: s._id,
                                 name: s.name,
                                 category: s.category,
@@ -1097,7 +1098,10 @@
                                 hourlyRate: s.hourlyRate || 0,
                                 available: s.isAvailable,
                                 photo: s.photo || null,
-                                notes: s.notes || ''
+                                notes: s.notes || '',
+                                _id: s._id,
+                                photo_url: s.photo_url || null,
+                                isAvailable: s.isAvailable
                             }));
                             renderStaff(staffData);
                         }
@@ -1120,7 +1124,7 @@
                             ? `<img src="${member.photo || member.photo_url}" alt="${member.name}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">`
                             : initials;
                         return `
-                    <div class="staff-card">
+                    <div class="staff-card" onclick="editStaff('${member._id}')" style="cursor:pointer;">
                         <div class="staff-header">
                             <div class="staff-avatar">${avatarContent}</div>
                             <div class="staff-name">${member.name}</div>
@@ -1194,7 +1198,7 @@
                 });
 
                 function editStaff(id) {
-                    const member = staffData.find(s => s.id === id);
+                    const member = staffData.find(s => s._id === id);
                     if (!member) return;
 
                     document.getElementById('staffName').value = member.name;
@@ -1216,7 +1220,7 @@
                     document.getElementById('staffBio').value = member.notes || '';
                     document.getElementById('staffPhoto').value = ''; // Don't preload file path
 
-                    document.getElementById('staffModal').dataset.editId = member.id;
+                    document.getElementById('staffModal').dataset.editId = member._id;
                     document.querySelector('#staffModal .modal-title').textContent = 'Edit Staff Member';
                     document.getElementById('staffModal').classList.add('show');
                 }
@@ -1318,7 +1322,7 @@
                         .catch(error => console.error('Logout error:', error));
                 }
             </script>
-                <script src="/js/mobile-sidebar.js?v=3"></script>
+                <script src="/admin/assets/mobile-sidebar.js?v=3"></script>
     <script src="/admin/admin-profile.js"></script>
 </body>
 

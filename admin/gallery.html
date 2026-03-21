@@ -1243,7 +1243,7 @@
             if (!item) return '';
             return `
             <div class="gallery-item" id="img-${item._id}" draggable="true" ondragstart="handleDragStart(event, '${item._id}')">
-                <img class="gallery-img" src="${item.url}" alt="${item.caption || item.filename}" loading="lazy">
+                <img class="gallery-img" src="${item.url}" alt="${item.caption || item.filename}" >
                 <div class="gallery-overlay">
                     <button class="btn-view" onclick="openLightbox('${item.url}')"><i class="fas fa-eye"></i> Preview</button>
                     <button class="btn-view" style="background:rgba(201,168,76,0.85);" onclick="openEditModal('${item._id}', this)"><i class="fas fa-edit"></i> Edit</button>
