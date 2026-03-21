@@ -76,7 +76,7 @@ router.get('/api/sessions', clientPortalController.apiGetSessions);
 router.delete('/api/sessions/:sessionId', clientPortalController.apiDeleteSession);
 
 // ── Client Event Health (AI-powered, safe exposure only) ──
-const { clientHealthLimiter } = require('../staff-middleware/aiRateLimiter');
+const { clientHealthLimiter } = require('../../staff-middleware/aiRateLimiter');
 const { isValidObjectId: isValidOid } = require('../staff-system/utils/validateObjectId');
 
 router.get('/api/event-health/:eventId', clientHealthLimiter, enforceDataOwnership, async (req, res) => {
