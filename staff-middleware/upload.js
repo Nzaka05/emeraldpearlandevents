@@ -5,14 +5,14 @@ const CloudinaryStorage = require('multer-storage-cloudinary');
 cloudinary.config({ cloudinary_url: process.env.CLOUDINARY_URL });
 
 const storage = new CloudinaryStorage({
-    cloudinary,
+    cloudinary: cloudinary,
     folder: 'emerald-staff',
     allowedFormats: ['jpg', 'jpeg', 'png', 'webp'],
     transformation: [{ width: 400, height: 400, crop: 'fill', gravity: 'face' }]
 });
 
 const upload = multer({
-    storage,
+    storage: storage,
     limits: { fileSize: 5 * 1024 * 1024 }
 });
 
