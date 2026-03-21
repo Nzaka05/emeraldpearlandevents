@@ -332,6 +332,16 @@ app.get('/api/gallery', async (req, res) => {
         res.status(500).json({ success: false, message: 'Error fetching gallery' });
     }
 });
+// Public testimonials endpoint (no auth required - client page reads this)
+app.get('/api/testimonials', async (req, res) => {
+    try {
+        const Testimonial = require('./server/models/Testimonial');
+        const items = await Testimonial.find({ displayOnWebsite: true, status: 'approved' }).sort({ createdAt: -1 });
+        res.json({ success: true, testimonials: items });
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'Error fetching testimonials' });
+    }
+});
 
 // ═══════════════════════════════════════════════════════════
 // ANALYTICS TRACKING ENDPOINT

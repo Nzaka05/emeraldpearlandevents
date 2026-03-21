@@ -3486,35 +3486,9 @@
             <h2 class="section-title">Client Experiences</h2>
         </div>
 
-        <div class="testimonials-track">
+        <div class="testimonials-track" id="testimonials-track">
             <div class="testimonial-card">
-                <p class="testimonial-text">Emerald Pearland transformed our wedding into something beyond our
-                    imagination. Every detail was infused with meaning and beauty. Truly the definition of luxury.</p>
-                <div class="testimonial-author">Nattalie Wendy</div>
-            </div>
-
-            <div class="testimonial-card">
-                <p class="testimonial-text">Their attention to detail is unmatched. Our corporate gala received
-                    accolades from every attendee. Professional, creative, and utterly seamless.</p>
-                <div class="testimonial-author">Richie Omollo, CEO</div>
-            </div>
-
-            <div class="testimonial-card">
-                <p class="testimonial-text">An experience of pure elegance. They understood my vision immediately and
-                    elevated it beyond what I thought possible. Absolute masters of their craft.</p>
-                <div class="testimonial-author">Victoria Kimani</div>
-            </div>
-
-            <div class="testimonial-card">
-                <p class="testimonial-text">Emerald Pearland transformed our wedding into something beyond our
-                    imagination. Every detail was infused with meaning and beauty. Truly the definition of luxury.</p>
-                <div class="testimonial-author">Alexandra & James Morrison</div>
-            </div>
-
-            <div class="testimonial-card">
-                <p class="testimonial-text">Their attention to detail is unmatched. Our corporate gala received
-                    accolades from every attendee. Professional, creative, and utterly seamless.</p>
-                <div class="testimonial-author">Joshua Nzaka, CEO</div>
+                <p class="testimonial-text">Loading testimonials...</p>
             </div>
         </div>
     </section>
@@ -3785,6 +3759,24 @@
                 }
             })
             .catch(err => console.error('Gallery fetch error:', err));
+
+        // Fetch dynamic testimonials from MongoDB
+        fetch('https://emeraldpearlandevents.onrender.com/api/testimonials')
+            .then(res => res.json())
+            .then(data => {
+                if (data.success && data.testimonials && data.testimonials.length > 0) {
+                    const track = document.getElementById('testimonials-track');
+                    if (!track) return;
+                    track.innerHTML = data.testimonials.map(t => `
+                        <div class="testimonial-card">
+                            <div class="testimonial-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+                            <p class="testimonial-text">${t.text}</p>
+                            <div class="testimonial-author">${t.name}${t.role ? ', ' + t.role : ''}</div>
+                        </div>
+                    `).join('');
+                }
+            })
+            .catch(err => console.error('Testimonials fetch error:', err));
 
         function openLightbox(index) {
             galleryIndex = index;

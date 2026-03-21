@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -325,9 +325,9 @@
             50% { transform: translateY(-8px); }
         }
     
-        /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+        /* ═══════════════════════════════════════════════════════════
            MOBILE RESPONSIVENESS (Injected via Phase 10 Overhaul)
-           â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+           ═══════════════════════════════════════════════════════════ */
         
         /* Hamburger Menu Icon (Hidden on Desktop) */
         .mobile-menu-btn {
@@ -407,9 +407,9 @@
         }
 
     
-        /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+        /* ═══════════════════════════════════════════════════════════
            MOBILE QUICK ACTION FAB
-           â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+           ═══════════════════════════════════════════════════════════ */
         .mobile-fab-container {
             display: none;
             position: fixed;
@@ -815,104 +815,65 @@
     </div>
 
     <script>
-        const testimonials = [
-            { id: 1, name: 'Sarah Johnson', role: 'Bride - Wedding 2023', rating: 5, text: 'Emerald Pearland Events made our wedding absolutely perfect. Every detail was flawlessly executed. Highly recommended!', status: 'approved', eventType: 'wedding' },
-            { id: 2, name: 'Michael Chen', role: 'Corporate Director', rating: 5, text: 'Professional team, impeccable coordination. Our gala was a tremendous success thanks to their expertise.', status: 'approved', eventType: 'corporate' },
-            { id: 3, name: 'Emma Davis', role: 'Birthday Host', rating: 4, text: 'Great service and wonderful attention to detail. Really made the celebration special!', status: 'pending', eventType: 'birthday' },
-            { id: 4, name: 'James Wilson', role: 'Groom - Wedding 2024', rating: 5, text: 'Outstanding coordination and beautiful execution. Everything exceeded our expectations.', status: 'approved', eventType: 'wedding' },
-            { id: 5, name: 'Lisa Anderson', role: 'Event Planner', rating: 3, text: 'Good service overall. Some minor timing issues but handled professionally.', status: 'hidden', eventType: 'corporate' },
-        ];
-
-        let currentFilter = 'all';
-
-        window.addEventListener('load', () => {
-            updateDate();
-            renderTestimonials();
-        });
-
-        function updateDate() {
-            const options = { year: 'numeric', month: 'short', day: 'numeric' };
-            const today = new Date().toLocaleDateString('en-US', options);
-            document.getElementById('todayDate').textContent = today;
+    let testimonials = [];
+    let currentFilter = 'all';
+    window.addEventListener('load', () => { updateDate(); loadTestimonials(); });
+    function updateDate() {
+        const options = { year: 'numeric', month: 'short', day: 'numeric' };
+        document.getElementById('todayDate').textContent = new Date().toLocaleDateString('en-US', options);
+    }
+    async function loadTestimonials() {
+        try {
+            const res = await fetch('/api/admin/testimonials');
+            const data = await res.json();
+            if (data.success) { testimonials = data.testimonials; renderTestimonials(); }
+        } catch (err) { console.error(err); }
+    }
+    function renderTestimonials() {
+        const grid = document.getElementById('testimonialsList');
+        if (!grid) return;
+        const filtered = currentFilter === 'all' ? testimonials : testimonials.filter(t => t.status === currentFilter);
+        if (filtered.length === 0) {
+            grid.innerHTML = '<p style="text-align:center;padding:40px;color:#888">No testimonials found.</p>';
+            return;
         }
-
-        function renderTestimonials() {
-            let filtered = testimonials;
-            
-            if (currentFilter !== 'all') {
-                filtered = testimonials.filter(t => t.status === currentFilter);
-            }
-
-            const list = document.getElementById('testimonialsList');
-            list.innerHTML = filtered.map(testimonial => {
-                const initials = testimonial.name.split(' ').map(n => n[0]).join('');
-                const stars = Array(testimonial.rating).fill('<i class="fas fa-star"></i>').join('');
-                return `
-                    <div class="testimonial-card">
-                        <div class="testimonial-header">
-                            <div class="testimonial-author">
-                                <div class="testimonial-avatar">${initials}</div>
-                                <div class="author-info">
-                                    <div class="author-name">${testimonial.name}</div>
-                                    <div class="author-role">${testimonial.role}</div>
-                                </div>
-                            </div>
-                            <div style="display: flex; gap: 12px; align-items: center;">
-                                <div class="rating">${stars}</div>
-                                <span class="status-badge status-${testimonial.status}">${testimonial.status}</span>
-                            </div>
-                        </div>
-                        <div class="testimonial-text">"${testimonial.text}"</div>
-                        <div class="testimonial-meta">Event Type: ${testimonial.eventType}</div>
-                        <div class="testimonial-actions">
-                            ${testimonial.status !== 'approved' ? `<button class="action-btn btn-approve" onclick="approveTestimonial(${testimonial.id})"><i class="fas fa-check"></i> Approve</button>` : ''}
-                            ${testimonial.status !== 'hidden' ? `<button class="action-btn btn-hide" onclick="hideTestimonial(${testimonial.id})">Hide</button>` : ''}
-                            <button class="action-btn btn-delete" onclick="deleteTestimonial(${testimonial.id})">Delete</button>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        }
-
-        function filterTestimonials(filter) {
-            currentFilter = filter;
-            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
-            event.target.classList.add('active');
-            renderTestimonials();
-        }
-
-        function approveTestimonial(id) {
-            const testimonial = testimonials.find(t => t.id === id);
-            if (testimonial) {
-                testimonial.status = 'approved';
-                renderTestimonials();
-            }
-        }
-
-        function hideTestimonial(id) {
-            const testimonial = testimonials.find(t => t.id === id);
-            if (testimonial) {
-                testimonial.status = 'hidden';
-                renderTestimonials();
-            }
-        }
-
-        function deleteTestimonial(id) {
-            if (confirm('Delete this testimonial?')) {
-                const index = testimonials.findIndex(t => t.id === id);
-                if (index > -1) {
-                    testimonials.splice(index, 1);
-                    renderTestimonials();
-                }
-            }
-        }
-
-        function handleLogout() {
-            fetch('/api/admin/logout', { method: 'POST' })
-                .then(() => window.location.href = '/admin/login')
-                .catch(error => console.error('Logout error:', error));
-        }
-    </script>
+        grid.innerHTML = filtered.map(t => {
+            const stars = Array(t.rating || 5).fill('&#9733;').join('');
+            return '<div style="background:#1a2235;border:1px solid #2d3a55;border-radius:12px;padding:20px;margin-bottom:16px;">' +
+                '<div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:12px;">' +
+                '<div><div style="font-weight:600;color:#f0f4ff;">' + t.name + '</div>' +
+                '<div style="font-size:12px;color:#8b99b8;">' + (t.role || 'Client') + (t.eventType ? ' - ' + t.eventType : '') + '</div>' +
+                '<div style="color:#c9a84c;">' + stars + '</div></div>' +
+                '<span class="status-badge status-' + t.status + '">' + t.status + '</span></div>' +
+                '<p style="color:#8b99b8;font-size:14px;line-height:1.6;margin-bottom:16px;">"' + t.text + '"</p>' +
+                '<div style="display:flex;gap:8px;flex-wrap:wrap;">' +
+                '<button onclick="approveTestimonial('' + t._id + '')" style="padding:6px 12px;background:' + (t.status==='approved'?'#2d6a4f':'#1a3a2a') + ';color:#34d399;border:1px solid #34d399;border-radius:6px;cursor:pointer;font-size:12px;">' + (t.status==='approved'?'Approved':'Approve') + '</button>' +
+                '<button onclick="toggleDisplay('' + t._id + '',' + t.displayOnWebsite + ')" style="padding:6px 12px;background:' + (t.displayOnWebsite?'#2d4a6a':'#1a2a3a') + ';color:' + (t.displayOnWebsite?'#60a5fa':'#8b99b8') + ';border:1px solid ' + (t.displayOnWebsite?'#60a5fa':'#2d3a55') + ';border-radius:6px;cursor:pointer;font-size:12px;">' + (t.displayOnWebsite?'Showing on Site':'Show on Site') + '</button>' +
+                '<button onclick="deleteTestimonial('' + t._id + '')" style="padding:6px 12px;background:#3a1a1a;color:#e74c3c;border:1px solid #e74c3c;border-radius:6px;cursor:pointer;font-size:12px;">Delete</button>' +
+                '</div></div>';
+        }).join('');
+    }
+    function filterTestimonials(status) { currentFilter = status; renderTestimonials(); }
+    async function approveTestimonial(id) {
+        await fetch('/api/admin/testimonials/' + id, { method: 'PATCH', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ status: 'approved' }) });
+        loadTestimonials();
+    }
+    async function toggleDisplay(id, current) {
+        await fetch('/api/admin/testimonials/' + id, { method: 'PATCH', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ displayOnWebsite: !current, status: 'approved' }) });
+        loadTestimonials();
+    }
+    async function deleteTestimonial(id) {
+        if (!confirm('Delete this testimonial?')) return;
+        await fetch('/api/admin/testimonials/' + id, { method: 'DELETE' });
+        loadTestimonials();
+    }
+    async function saveTestimonial() {
+        const data = { name: document.getElementById('clientName').value, role: document.getElementById('clientRole').value, text: document.getElementById('testimonialText').value, rating: parseInt(document.getElementById('testimonialRating').value) || 5, eventType: document.getElementById('eventType').value, status: 'approved', displayOnWebsite: true };
+        await fetch('/api/admin/testimonials', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(data) });
+        loadTestimonials();
+        document.getElementById('testimonialModal').classList.remove('show');
+    }
+</script>
             <script src="/js/mobile-sidebar.js?v=3"></script>
     <script src="/admin/admin-profile.js"></script>
 </body>

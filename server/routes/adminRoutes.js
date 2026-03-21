@@ -1050,6 +1050,43 @@ router.get('/testimonials', verifyAdminJWT, async (req, res) => {
             message: 'Error fetching testimonials'
         });
     }
+
+// POST /api/admin/testimonials
+router.post('/testimonials', verifyAdminJWT, async (req, res) => {
+    try {
+        const { name, role, text, rating, eventType, status, displayOnWebsite } = req.body;
+        const testimonial = await Testimonial.create({
+            name, role, text, rating: rating || 5,
+            eventType, status: status || 'pending',
+            displayOnWebsite: displayOnWebsite || false
+        });
+        res.status(201).json({ success: true, testimonial });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+// PATCH /api/admin/testimonials/:id
+router.patch('/testimonials/:id', verifyAdminJWT, async (req, res) => {
+    try {
+        const testimonial = await Testimonial.findByIdAndUpdate(
+            req.params.id, req.body, { new: true }
+        );
+        res.json({ success: true, testimonial });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+// DELETE /api/admin/testimonials/:id
+router.delete('/testimonials/:id', verifyAdminJWT, async (req, res) => {
+    try {
+        await Testimonial.findByIdAndDelete(req.params.id);
+        res.json({ success: true, message: 'Testimonial deleted' });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
 });
 
 // GET /api/admin/settings
