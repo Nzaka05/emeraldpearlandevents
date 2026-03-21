@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -430,9 +430,9 @@
             }
         }
 
-        /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+        /* ═══════════════════════════════════════════════════════════
            MOBILE RESPONSIVENESS (Injected via Phase 10 Overhaul)
-           â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+           ═══════════════════════════════════════════════════════════ */
 
         /* Hamburger Menu Icon (Hidden on Desktop) */
         .mobile-menu-btn {
@@ -516,9 +516,9 @@
         }
 
 
-        /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+        /* ═══════════════════════════════════════════════════════════
            MOBILE QUICK ACTION FAB
-           â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+           ═══════════════════════════════════════════════════════════ */
         .mobile-fab-container {
             display: none;
             position: fixed;
@@ -1116,14 +1116,14 @@
                     const grid = document.getElementById('staffGrid');
                     grid.innerHTML = staff.map(member => {
                         const initials = member.name.split(' ').map(n => n[0]).join('');
-                        const avatarContent = member.photo
-                            ? `<img src="${member.photo}" alt="${member.name}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">`
+                        const avatarContent = member.photo || member.photo_url
+                            ? <img src="${member.photo || member.photo_url}" alt="${member.name}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">"
                             : initials;
 
                         return `
                     <div class="staff-card">
                         <div class="staff-header">
-                            <div class="staff-avatar">${avatarContent}</div>
+                            <div class="staff-role">${member.category || member.department || member.role || 'Staff'}</div>
                             <div class="staff-name">${member.name}</div>
                             <div class="staff-role">${member.category}</div>
                         </div>
