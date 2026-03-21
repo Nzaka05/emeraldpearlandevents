@@ -1,4 +1,4 @@
-﻿const Staff = require('../staff-models/Staff');
+const Staff = require('../staff-models/Staff');
 const Assignment = require('../staff-models/Assignment');
 const Attendance = require('../staff-models/Attendance');
 const EventTeam = require('../staff-models/EventTeam');
@@ -553,7 +553,7 @@ exports.uploadProfilePhoto = async (req, res) => {
         if (!req.file) {
             return res.status(400).json({ success: false, error: 'No photo uploaded' });
         }
-        const photoUrl = `/uploads/staff/${req.file.filename}`;
+        const photoUrl = req.file.path;
         await Staff.findByIdAndUpdate(req.user._id, { photo_url: photoUrl });
         res.json({ success: true, photo_url: photoUrl });
     } catch(err) {
