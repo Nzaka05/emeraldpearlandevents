@@ -58,6 +58,7 @@ mongoose.connect(mongoUri, {
 
 // Set view engine
 const expressLayouts = require('express-ejs-layouts');
+app.use((req, res, next) => { if (req.path.startsWith('/portal/auth')) { res.locals.layout = false; } next(); });
 app.use(expressLayouts);
 app.set('layout', 'layout'); // default layout file
 app.set('view engine', 'ejs');
