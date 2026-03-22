@@ -377,6 +377,9 @@
               <i class="fa-solid fa-money-bills"></i><span>Payments</span>
           </a>
           <a href="/portal/staff/profile" class="drawer-link <%= _page==='profile'?'active':'' %>">
+          <a href="/portal/staff/ai" class="drawer-link <%= _page==='pearl'?'active':'' %>">
+              <img src="/images/pearl-logo.png" style="width:18px;height:18px;object-fit:contain;border-radius:50%;"> <span>PEARL Assistant</span>
+          </a>
               <i class="fa-regular fa-circle-user"></i><span>Profile / Account</span>
           </a>
           <% if (locals.user && locals.user.role === 'Admin') { %>
