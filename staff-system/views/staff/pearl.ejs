@@ -63,7 +63,7 @@
   </div>
 </div>
 
-<script>document.addEventListener("DOMContentLoaded", function() {
+<script>
 const csrf = document.querySelector('meta[name="csrf-token"]')?.content || '';
 const conversationHistory = [];
 const userName = '<%= user && user.name ? user.name.split(" ")[0] : "there" %>';
@@ -77,7 +77,7 @@ const greetings = {
   Supervisor: greet + ', ' + userName + '. How can I help?',
   Staff: greet + ', ' + userName + '. What can I do for you?'
 };
-document.getElementById('greetMsg').textContent = greetings[userRole] || greetings.Staff;
+document.addEventListener("DOMContentLoaded", function() { document.getElementById("greetMsg").textContent = greetings[userRole] || greetings.Staff; });
 
 function quickAsk(q) {
   document.getElementById('aiInput').value = q;
@@ -155,4 +155,4 @@ function addMessage(text, from) {
 function addTyping() {
   return addMessage('<span style="opacity:0.5;font-style:italic;font-size:0.8rem;">typing...</span>', 'ai');
 }
-});</script>
+</script>
