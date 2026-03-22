@@ -87,6 +87,8 @@ async function sendMessage() {
     } catch (err) {
         typing.remove();
         addMessage('Connection error: ' + err.message, 'ai');
+    }
+}
 function addMessage(text, from) {
     const div = document.createElement('div');
     div.className = 'flex gap-3' + (from === 'user' ? ' flex-row-reverse' : '');

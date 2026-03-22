@@ -173,8 +173,7 @@ exports.disbandTeam = async (teamId) => {
     const event = await Assignment.findById(team.event_id);
     if (!event) throw new Error('Event not found');
 
-    const allPaid = event.staff_payments.every(p => p.status === 'Received' || p.status === 'Disbursed');
-    if (!allPaid) throw new Error('Cannot disband team. Some staff have unpaid balances.');
+    // Payment check done in checkDisbandEligibility before reaching here
 
     team.status = 'Disbanded';
     team.disbandedAt = new Date();
@@ -200,11 +199,11 @@ exports.disbandTeam = async (teamId) => {
 
         if (staff.email) {
             await emailService.sendEmail({
-                to: staff.email,
+                to: [{ email: staff.email, name: staff.name || 'Team Member' }],
                 subject: 'Team Disbanded - Event Completed',
-                html: `<p>Hello ${staff.name || 'Team Member'},</p>
+                htmlContent: `<p>Hello ${staff.name || 'Team Member'},</p>
                      <p>Your team for event <strong>${event.client_name || event.title || 'Event'}</strong> has now been officially disbanded.</p>`
-            });
+            }).catch(e => console.warn('[Disband Email]', e.message));
         }
     }
 
