@@ -57,11 +57,225 @@ async function getBusinessData(role) {
     return data;
 }
 
+
+async function getMainPortalData() {
+    const data = {
+        bookings: { total: 0, confirmed: 0, pending: 0, cancelled: 0, recent: [], upcoming: [] },
+        financials: { totalRevenue: 0, pendingPayments: 0, paidCount: 0, unpaidCount: 0 },
+        customers: { total: 0, recent: [] },
+        analytics: {}
+    };
+    try {
+        const db = require("mongoose").connection.db;
+
+        // Booking counts
+        const [total, confirmed, pending, cancelled] = await Promise.all([
+            db.collection("bookings").countDocuments(),
+            db.collection("bookings").countDocuments({ status: "confirmed" }),
+            db.collection("bookings").countDocuments({ status: { $in: ["pending", "new"] } }),
+            db.collection("bookings").countDocuments({ status: "cancelled" })
+        ]);
+        data.bookings.total = total;
+        data.bookings.confirmed = confirmed;
+        data.bookings.pending = pending;
+        data.bookings.cancelled = cancelled;
+
+        // Recent bookings (last 8)
+        const recent = await db.collection("bookings").find({})
+            .sort({ createdAt: -1 }).limit(8).toArray();
+        data.bookings.recent = recent.map(b => ({
+            id: b._id.toString(),
+            client: b.clientName || b.client_name || "Unknown",
+            email: b.clientEmail || b.client_email || "",
+            phone: b.clientPhone || b.client_phone || "",
+            type: b.eventType || b.event_type || "Event",
+            date: b.eventDate,
+            location: b.location || b.venue || "",
+            guests: b.guests || 0,
+            status: b.status,
+            isPaid: b.isPaid || false,
+            amount: b.totalAmount || b.budgetMin || 0,
+            budgetRange: b.budgetRange || "",
+            createdAt: b.createdAt
+        }));
+
+        // Upcoming bookings
+        const upcoming = await db.collection("bookings").find({
+            eventDate: { $gte: new Date() },
+            status: { $ne: "cancelled" }
+        }).sort({ eventDate: 1 }).limit(10).toArray();
+        data.bookings.upcoming = upcoming.map(b => ({
+            id: b._id.toString(),
+            client: b.clientName || b.client_name || "Unknown",
+            type: b.eventType || b.event_type || "Event",
+            date: b.eventDate,
+            location: b.location || b.venue || "",
+            status: b.status,
+            isPaid: b.isPaid || false
+        }));
+
+        // Financials
+        const [paid, unpaid] = await Promise.all([
+            db.collection("bookings").aggregate([
+                { $match: { isPaid: true } },
+                { $group: { _id: null, total: { $sum: "$totalAmount" }, count: { $sum: 1 } } }
+            ]).toArray(),
+            db.collection("bookings").aggregate([
+                { $match: { isPaid: false, status: { $ne: "cancelled" } } },
+                { $group: { _id: null, total: { $sum: "$totalAmount" }, count: { $sum: 1 } } }
+            ]).toArray()
+        ]);
+        data.financials.totalRevenue = paid[0]?.total || 0;
+        data.financials.paidCount = paid[0]?.count || 0;
+        data.financials.pendingPayments = unpaid[0]?.total || 0;
+        data.financials.unpaidCount = unpaid[0]?.count || 0;
+
+        // Customers
+        const customerCount = await db.collection("customers").countDocuments();
+        const recentCustomers = await db.collection("customers").find({})
+            .sort({ createdAt: -1 }).limit(5).toArray();
+        data.customers.total = customerCount;
+        data.customers.recent = recentCustomers.map(c => ({
+            id: c._id.toString(),
+            name: c.name || c.clientName || "Unknown",
+            email: c.email || "",
+            phone: c.phone || "",
+            createdAt: c.createdAt
+        }));
+
+    } catch (e) {
+        data.error = e.message;
+        console.error("[PEARL Portal Data]", e.message);
+    }
+    return data;
+}
+
 async function getPersistentMemory(userId) {
     try {
         const logs = await AIConversationLog.find({ user_id: userId }).sort({ createdAt: -1 }).limit(20).lean();
         return logs.reverse().map(l => ({ query: l.query, response: l.response, date: l.createdAt }));
     } catch (e) { return []; }
+}
+
+
+async function pearlUpdateBooking(bookingId, updates) {
+    try {
+        const mongoose = require("mongoose");
+        const { ObjectId } = require("mongodb");
+        const db = mongoose.connection.db;
+
+        if (!bookingId || !/^[a-fA-F0-9]{24}$/.test(bookingId)) {
+            return { success: false, error: "Invalid booking ID" };
+        }
+
+        const booking = await db.collection("bookings").findOne({ _id: new ObjectId(bookingId) });
+        if (!booking) return { success: false, error: "Booking not found" };
+
+        const allowed = ['status', 'isPaid', 'notes', 'adminNotes'];
+        const payload = {};
+        for (const key of Object.keys(updates)) {
+            if (allowed.includes(key)) payload[key] = updates[key];
+        }
+
+        // Validate status
+        const validStatuses = ['new', 'contacted', 'confirmed', 'completed', 'cancelled'];
+        if (payload.status && !validStatuses.includes(payload.status)) {
+            return { success: false, error: "Invalid status. Valid: " + validStatuses.join(', ') };
+        }
+
+        // Set timestamps
+        if (payload.status === 'confirmed') payload.confirmedAt = new Date();
+        if (payload.status === 'completed') payload.completedAt = new Date();
+
+        // Push admin note if provided
+        const $push = {};
+        if (payload.notes) {
+            $push.adminNotes = { note: payload.notes, addedAt: new Date() };
+            delete payload.notes;
+        }
+
+        const updateOp = { $set: payload };
+        if (Object.keys($push).length) updateOp.$push = $push;
+
+        await db.collection("bookings").updateOne(
+            { _id: new ObjectId(bookingId) },
+            updateOp
+        );
+
+        // If confirmed, trigger staff system sync via internal endpoint
+        if (payload.status === 'confirmed') {
+            try {
+                const http = require("http");
+                const syncSecret = process.env.JWT_SECRET || 'fallback_secret_key';
+                const postData = JSON.stringify({
+                    title: booking.eventType || 'Event',
+                    description: booking.notes || 'Confirmed via PEARL',
+                    location: booking.location || 'TBD',
+                    date: booking.eventDate,
+                    start_time: '09:00',
+                    end_time: '17:00',
+                    pay_rate: 1000,
+                    usherCount: booking.usherCount || 0,
+                    required_staff_count: booking.usherCount || 1,
+                    booking_ref: bookingId,
+                    client_name: booking.clientName || '',
+                    client_email: booking.clientEmail || ''
+                });
+                const port = process.env.STAFF_PORT || process.env.PORT || 3001;
+                const options = {
+                    hostname: 'localhost', port,
+                    path: '/internal/sync-booking',
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-sync-secret': syncSecret,
+                        'Content-Length': Buffer.byteLength(postData)
+                    }
+                };
+                await new Promise((resolve) => {
+                    const req = http.request(options, resolve);
+                    req.on('error', () => resolve());
+                    req.write(postData);
+                    req.end();
+                });
+                console.log('[PEARL] Booking synced to staff system:', bookingId);
+            } catch (syncErr) {
+                console.warn('[PEARL] Sync warning:', syncErr.message);
+            }
+        }
+
+        return { success: true, bookingId, updates: payload };
+    } catch (e) {
+        console.error('[PEARL Action]', e.message);
+        return { success: false, error: e.message };
+    }
+}
+
+async function pearlGetBookingById(bookingId) {
+    try {
+        const mongoose = require("mongoose");
+        const { ObjectId } = require("mongodb");
+        const db = mongoose.connection.db;
+        if (!/^[a-fA-F0-9]{24}$/.test(bookingId)) return null;
+        const b = await db.collection("bookings").findOne({ _id: new ObjectId(bookingId) });
+        if (!b) return null;
+        return {
+            id: b._id.toString(),
+            client: b.clientName || b.client_name || 'Unknown',
+            email: b.clientEmail || b.client_email || '',
+            phone: b.clientPhone || b.client_phone || '',
+            type: b.eventType || b.event_type || 'Event',
+            date: b.eventDate,
+            location: b.location || b.venue || '',
+            guests: b.guests || 0,
+            status: b.status,
+            isPaid: b.isPaid || false,
+            amount: b.totalAmount || b.estimatedTotal || 0,
+            budgetRange: b.budgetRange || '',
+            notes: b.notes || '',
+            reference: b.bookingReference || ''
+        };
+    } catch (e) { return null; }
 }
 
 async function processAssistantQuery(userId, role, query, eventContext = {}, history = []) {
@@ -77,6 +291,88 @@ async function processAssistantQuery(userId, role, query, eventContext = {}, his
 
     const businessData = await getBusinessData(role);
     const memory = await getPersistentMemory(userId);
+    const portalData = (role === 'Admin' || role === 'Supervisor') ? await getMainPortalData() : null;
+
+
+    // ── PEARL ACTION HANDLER ──────────────────────────────────────────────────
+    if (role === 'Admin' || role === 'Supervisor') {
+        const lower = sanitized.toLowerCase();
+        const idMatch = sanitized.match(/\b([a-fA-F0-9]{24})\b/);
+
+        // CONFIRM BOOKING
+        if ((lower.includes('confirm') && lower.includes('booking')) && idMatch) {
+            const result = await pearlUpdateBooking(idMatch[1], { status: 'confirmed' });
+            const reply = result.success
+                ? `Booking ${idMatch[1]} has been confirmed successfully. The event has also been synced to the staff portal for assignment.`
+                : `Could not confirm booking: ${result.error}`;
+            await AIConversationLog.create({ user_id: userId, role, query: sanitized, response: reply, context_used: {} }).catch(() => {});
+            return { reply, response: reply, summary: reply, recommendedActions: [] };
+        }
+
+        // MARK AS CONTACTED
+        if ((lower.includes('mark') && lower.includes('contacted')) && idMatch) {
+            const result = await pearlUpdateBooking(idMatch[1], { status: 'contacted' });
+            const reply = result.success
+                ? `Booking ${idMatch[1]} has been marked as contacted.`
+                : `Could not update booking: ${result.error}`;
+            await AIConversationLog.create({ user_id: userId, role, query: sanitized, response: reply, context_used: {} }).catch(() => {});
+            return { reply, response: reply, summary: reply, recommendedActions: [] };
+        }
+
+        // MARK AS COMPLETED
+        if ((lower.includes('mark') && lower.includes('complet')) && idMatch) {
+            const result = await pearlUpdateBooking(idMatch[1], { status: 'completed' });
+            const reply = result.success
+                ? `Booking ${idMatch[1]} has been marked as completed.`
+                : `Could not update booking: ${result.error}`;
+            await AIConversationLog.create({ user_id: userId, role, query: sanitized, response: reply, context_used: {} }).catch(() => {});
+            return { reply, response: reply, summary: reply, recommendedActions: [] };
+        }
+
+        // CANCEL BOOKING
+        if ((lower.includes('cancel') && lower.includes('booking')) && idMatch) {
+            const result = await pearlUpdateBooking(idMatch[1], { status: 'cancelled' });
+            const reply = result.success
+                ? `Booking ${idMatch[1]} has been cancelled.`
+                : `Could not cancel booking: ${result.error}`;
+            await AIConversationLog.create({ user_id: userId, role, query: sanitized, response: reply, context_used: {} }).catch(() => {});
+            return { reply, response: reply, summary: reply, recommendedActions: [] };
+        }
+
+        // MARK AS PAID
+        if ((lower.includes('mark') && lower.includes('paid')) && idMatch) {
+            const result = await pearlUpdateBooking(idMatch[1], { isPaid: true });
+            const reply = result.success
+                ? `Booking ${idMatch[1]} has been marked as paid.`
+                : `Could not update booking: ${result.error}`;
+            await AIConversationLog.create({ user_id: userId, role, query: sanitized, response: reply, context_used: {} }).catch(() => {});
+            return { reply, response: reply, summary: reply, recommendedActions: [] };
+        }
+
+        // ADD NOTE TO BOOKING
+        if ((lower.includes('add note') || lower.includes('note to booking')) && idMatch) {
+            const noteText = sanitized.replace(/add note (to booking)?/i, '').replace(idMatch[1], '').trim();
+            if (noteText) {
+                const result = await pearlUpdateBooking(idMatch[1], { notes: noteText });
+                const reply = result.success
+                    ? `Note added to booking ${idMatch[1]}: "${noteText}"`
+                    : `Could not add note: ${result.error}`;
+                await AIConversationLog.create({ user_id: userId, role, query: sanitized, response: reply, context_used: {} }).catch(() => {});
+                return { reply, response: reply, summary: reply, recommendedActions: [] };
+            }
+        }
+
+        // GET BOOKING DETAILS
+        if ((lower.includes('show booking') || lower.includes('booking details') || lower.includes('lookup booking')) && idMatch) {
+            const b = await pearlGetBookingById(idMatch[1]);
+            const reply = b
+                ? `Booking Details:\n• Client: ${b.client} (${b.email})\n• Type: ${b.type}\n• Date: ${new Date(b.date).toLocaleDateString('en-KE')}\n• Location: ${b.location}\n• Guests: ${b.guests}\n• Status: ${b.status}\n• Payment: ${b.isPaid ? 'Paid' : 'Pending'} | Budget: ${b.budgetRange}\n• Reference: ${b.reference || 'N/A'}`
+                : `Could not find booking with ID ${idMatch[1]}`;
+            await AIConversationLog.create({ user_id: userId, role, query: sanitized, response: reply, context_used: {} }).catch(() => {});
+            return { reply, response: reply, summary: reply, recommendedActions: [] };
+        }
+    }
+    // ── END ACTION HANDLER ───────────────────────────────────────────────────
 
     // Email command handler
     const emailMatch = sanitized.match(/send.*?email.*?to\s+([\w@.\-]+)(.*)/i);
@@ -113,6 +409,21 @@ LIVE BUSINESS DATA:
 - Upcoming Events: ${JSON.stringify(businessData.upcomingEvents)}
 - Recent Bookings: ${JSON.stringify(businessData.recentBookings)}
 ${role !== "Staff" ? `- Revenue: KSh ${businessData.financials?.totalRevenue || 0} | Pending: KSh ${businessData.financials?.pendingPayments || 0}` : ""}
+${portalData ? `
+MAIN CLIENT PORTAL DATA:
+- Total Bookings: ${portalData.bookings.total} (Confirmed: ${portalData.bookings.confirmed}, Pending: ${portalData.bookings.pending}, Cancelled: ${portalData.bookings.cancelled})
+- Revenue Collected: KSh ${portalData.financials.totalRevenue.toLocaleString()} (${portalData.financials.paidCount} paid bookings)
+- Outstanding Payments: KSh ${portalData.financials.pendingPayments.toLocaleString()} (${portalData.financials.unpaidCount} unpaid)
+- Total Customers: ${portalData.customers.total}
+- Recent Bookings (newest first): ${JSON.stringify(portalData.bookings.recent)}
+- Upcoming Events: ${JSON.stringify(portalData.bookings.upcoming)}
+- Recent Customers: ${JSON.stringify(portalData.customers.recent)}
+
+BOOKING ACTIONS (Admin only - tell user to confirm with booking ID):
+- To confirm a booking: use the admin panel or say "confirm booking [ID]"
+- To update payment status: use the admin panel /bookings section
+- Booking IDs are shown in the recent bookings data above
+` : ""}
 
 CAPABILITIES:
 1. Business assistant � staff, events, bookings, analytics, reports
@@ -138,6 +449,20 @@ WRITING TEMPLATES AVAILABLE:
 - Marketing copy
 
 ${role === "Staff" ? "RESTRICTION: Do not share financial data, other staff salaries, or confidential business metrics with Staff users." : ""}
+
+PEARL BOOKING ACTIONS (Admin/Supervisor only):
+You can directly perform these actions when given a booking ID:
+- "confirm booking [ID]" → confirms booking + syncs to staff portal
+- "mark booking [ID] as contacted" → updates status to contacted
+- "mark booking [ID] as completed" → marks event as done
+- "cancel booking [ID]" → cancels the booking
+- "mark booking [ID] as paid" → marks payment as received
+- "add note to booking [ID] [note text]" → adds admin note
+- "show booking details [ID]" → shows full booking info
+
+Booking IDs are the 24-character codes shown in the booking data above.
+When an admin asks to confirm/update a booking, extract the ID from context and perform the action.
+After any action, confirm what was done and suggest next steps.
 
 IMPORTANT: You are PEARL. Never mention Claude or Anthropic. You are Emerald's own AI.
 Always be helpful, never refuse reasonable requests. If asked something outside business, answer it � you are a full assistant.`;
@@ -169,4 +494,3 @@ Always be helpful, never refuse reasonable requests. If asked something outside 
 }
 
 module.exports = { processAssistantQuery };
-
