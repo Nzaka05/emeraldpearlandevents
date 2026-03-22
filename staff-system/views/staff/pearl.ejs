@@ -19,7 +19,13 @@
             </div>
         </div>
         <div class="border-t border-white/8 p-3">
-            <div class="flex gap-2">
+            <div class="flex gap-2 px-3 pt-2 pb-1 flex-wrap">
+                <button onclick="quickAsk('What are my upcoming assignments?')" class="text-xs px-3 py-1.5 rounded-lg bg-cosmos-600 border border-white/10 text-tx-3 hover:text-tx-1 hover:border-emerald-500 transition-colors">My assignments</button>
+                <button onclick="quickAsk('What is my attendance record?')" class="text-xs px-3 py-1.5 rounded-lg bg-cosmos-600 border border-white/10 text-tx-3 hover:text-tx-1 hover:border-emerald-500 transition-colors">My attendance</button>
+                <button onclick="quickAsk('What are my recent payments?')" class="text-xs px-3 py-1.5 rounded-lg bg-cosmos-600 border border-white/10 text-tx-3 hover:text-tx-1 hover:border-emerald-500 transition-colors">My payments</button>
+                <button onclick="quickAsk('What events are coming up this week?')" class="text-xs px-3 py-1.5 rounded-lg bg-cosmos-600 border border-white/10 text-tx-3 hover:text-tx-1 hover:border-emerald-500 transition-colors">Upcoming events</button>
+            </div>
+            <div class="flex gap-2 px-3 pb-3">
                 <input type="text" id="aiInput" placeholder="Ask PEARL anything..."
                     class="flex-1 form-input rounded-xl bg-cosmos-600 border border-white/10 text-tx-1 px-3 py-2 text-sm focus:outline-none focus:border-emerald-500"
                     onkeypress="if(event.key==='Enter') sendMessage()">
@@ -33,6 +39,7 @@
 <script>
 const csrf = document.querySelector('meta[name="csrf-token"]')?.content || '';
 const conversationHistory = [];
+function quickAsk(q) { document.getElementById('aiInput').value = q; sendMessage(); }
 
 async function sendMessage() {
     const input = document.getElementById('aiInput');
