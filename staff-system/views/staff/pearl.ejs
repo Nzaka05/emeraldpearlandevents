@@ -63,7 +63,7 @@
   </div>
 </div>
 
-<script>
+<script>document.addEventListener("DOMContentLoaded", function() {
 const csrf = document.querySelector('meta[name="csrf-token"]')?.content || '';
 const conversationHistory = [];
 const userName = '<%= user && user.name ? user.name.split(" ")[0] : "there" %>';
@@ -155,4 +155,4 @@ function addMessage(text, from) {
 function addTyping() {
   return addMessage('<span style="opacity:0.5;font-style:italic;font-size:0.8rem;">typing...</span>', 'ai');
 }
-</script>
+});</script>
