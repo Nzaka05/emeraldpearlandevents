@@ -1,83 +1,158 @@
 <% currentPage = 'pearl' %>
-<div class="max-w-2xl mx-auto">
-    <div class="mb-4 flex items-center gap-3">
-        <img src="/images/pearl-logo.png" class="w-10 h-10 rounded-xl object-contain">
-        <div>
-            <h1 class="font-display text-xl font-bold text-tx-1">PEARL</h1>
-            <p class="text-xs text-tx-3">Personal Emerald Assistant</p>
-        </div>
+<style>
+  /* Hide the default page padding so Pearl fills everything */
+  .main-content, main, .pt-\[72px\] { padding: 0 !important; }
+  #pearlFloatBtn { display: none !important; }
+</style>
+
+<div id="pearlWrap" style="position:fixed;top:56px;left:0;right:0;bottom:0;display:flex;flex-direction:column;background:var(--bg-base, #0a0f1e);z-index:50;">
+
+  <!-- Header -->
+  <div style="display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid rgba(255,255,255,0.07);flex-shrink:0;">
+    <div style="width:36px;height:36px;border-radius:50%;overflow:hidden;flex-shrink:0;border:2px solid rgba(5,150,105,0.4);">
+      <img src="/images/pearl-logo.png" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none'">
     </div>
-    <div class="glass-card rounded-2xl overflow-hidden" style="height:60vh;display:flex;flex-direction:column;">
-        <div id="chatMessages" class="flex-1 overflow-y-auto p-4 space-y-4">
-            <div class="flex gap-3">
-                <div class="w-8 h-8 rounded-xl overflow-hidden flex-shrink-0">
-                    <img src="/images/pearl-logo.png" class="w-full h-full object-contain">
-                </div>
-                <div class="glass-card rounded-xl rounded-tl-none p-3 max-w-xs">
-                    <p class="text-sm text-tx-1">Hello! I am PEARL, your Emerald assistant. How can I help you today?</p>
-                </div>
-            </div>
-        </div>
-        <div class="border-t border-white/8 p-3">
-            <div class="flex gap-2 px-3 pt-2 pb-1 flex-wrap">
-                <button onclick="quickAsk('What are my upcoming assignments?')" class="text-xs px-3 py-1.5 rounded-lg bg-cosmos-600 border border-white/10 text-tx-3 hover:text-tx-1 hover:border-emerald-500 transition-colors">My assignments</button>
-                <button onclick="quickAsk('What is my attendance record?')" class="text-xs px-3 py-1.5 rounded-lg bg-cosmos-600 border border-white/10 text-tx-3 hover:text-tx-1 hover:border-emerald-500 transition-colors">My attendance</button>
-                <button onclick="quickAsk('What are my recent payments?')" class="text-xs px-3 py-1.5 rounded-lg bg-cosmos-600 border border-white/10 text-tx-3 hover:text-tx-1 hover:border-emerald-500 transition-colors">My payments</button>
-                <button onclick="quickAsk('What events are coming up this week?')" class="text-xs px-3 py-1.5 rounded-lg bg-cosmos-600 border border-white/10 text-tx-3 hover:text-tx-1 hover:border-emerald-500 transition-colors">Upcoming events</button>
-            </div>
-            <div class="flex gap-2 px-3 pb-3">
-                <input type="text" id="aiInput" placeholder="Ask PEARL anything..."
-                    class="flex-1 form-input rounded-xl bg-cosmos-600 border border-white/10 text-tx-1 px-3 py-2 text-sm focus:outline-none focus:border-emerald-500"
-                    onkeypress="if(event.key==='Enter') sendMessage()">
-                <button onclick="sendMessage()" class="w-10 h-10 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white flex items-center justify-center transition-colors">
-                    <i class="fa-solid fa-paper-plane text-sm"></i>
-                </button>
-            </div>
-        </div>
+    <div>
+      <div style="font-weight:700;font-size:0.95rem;color:var(--tx-1,#f1f5f9);">PEARL</div>
+      <div style="font-size:0.7rem;color:#10b981;" id="pearlStatus">Personal Emerald Assistant</div>
     </div>
+    <button onclick="clearChat()" style="margin-left:auto;font-size:0.72rem;color:var(--tx-3,#64748b);background:none;border:none;cursor:pointer;padding:4px 8px;border-radius:6px;hover:background:rgba(255,255,255,0.05);">Clear</button>
+  </div>
+
+  <!-- Messages -->
+  <div id="chatMessages" style="flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px;">
+    <div class="pearl-msg ai" style="display:flex;gap:10px;align-items:flex-start;">
+      <div style="width:30px;height:30px;border-radius:50%;overflow:hidden;flex-shrink:0;">
+        <img src="/images/pearl-logo.png" style="width:100%;height:100%;object-fit:cover;">
+      </div>
+      <div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);border-radius:0 14px 14px 14px;padding:10px 14px;max-width:80%;font-size:0.875rem;color:var(--tx-1,#f1f5f9);line-height:1.6;" id="greetMsg">
+        Loading...
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick prompts -->
+  <div id="quickPrompts" style="padding:8px 16px;display:flex;gap:8px;flex-wrap:wrap;flex-shrink:0;">
+    <% if (user && (user.role === 'Admin' || user.role === 'Supervisor')) { %>
+    <button onclick="quickAsk('Show me all pending bookings')" style="font-size:0.72rem;padding:5px 12px;border-radius:20px;background:rgba(5,150,105,0.1);border:1px solid rgba(5,150,105,0.3);color:#10b981;cursor:pointer;">Pending bookings</button>
+    <button onclick="quickAsk('Give me a business summary')" style="font-size:0.72rem;padding:5px 12px;border-radius:20px;background:rgba(5,150,105,0.1);border:1px solid rgba(5,150,105,0.3);color:#10b981;cursor:pointer;">Business summary</button>
+    <button onclick="quickAsk('List all staff contacts')" style="font-size:0.72rem;padding:5px 12px;border-radius:20px;background:rgba(5,150,105,0.1);border:1px solid rgba(5,150,105,0.3);color:#10b981;cursor:pointer;">Staff contacts</button>
+    <button onclick="quickAsk('What events are coming up this week?')" style="font-size:0.72rem;padding:5px 12px;border-radius:20px;background:rgba(5,150,105,0.1);border:1px solid rgba(5,150,105,0.3);color:#10b981;cursor:pointer;">Upcoming events</button>
+    <% } else { %>
+    <button onclick="quickAsk('What are my upcoming assignments?')" style="font-size:0.72rem;padding:5px 12px;border-radius:20px;background:rgba(5,150,105,0.1);border:1px solid rgba(5,150,105,0.3);color:#10b981;cursor:pointer;">My assignments</button>
+    <button onclick="quickAsk('What is my attendance record?')" style="font-size:0.72rem;padding:5px 12px;border-radius:20px;background:rgba(5,150,105,0.1);border:1px solid rgba(5,150,105,0.3);color:#10b981;cursor:pointer;">My attendance</button>
+    <button onclick="quickAsk('What are my recent payments?')" style="font-size:0.72rem;padding:5px 12px;border-radius:20px;background:rgba(5,150,105,0.1);border:1px solid rgba(5,150,105,0.3);color:#10b981;cursor:pointer;">My payments</button>
+    <button onclick="quickAsk('What events are coming up this week?')" style="font-size:0.72rem;padding:5px 12px;border-radius:20px;background:rgba(5,150,105,0.1);border:1px solid rgba(5,150,105,0.3);color:#10b981;cursor:pointer;">Upcoming events</button>
+    <% } %>
+  </div>
+
+  <!-- Input -->
+  <div style="padding:10px 16px 16px;flex-shrink:0;border-top:1px solid rgba(255,255,255,0.06);">
+    <div style="display:flex;gap:8px;align-items:center;">
+      <input type="text" id="aiInput" placeholder="Ask PEARL anything..."
+        style="flex:1;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:24px;padding:10px 16px;font-size:0.875rem;color:var(--tx-1,#f1f5f9);outline:none;transition:border-color 0.2s;"
+        onfocus="this.style.borderColor='rgba(5,150,105,0.6)'"
+        onblur="this.style.borderColor='rgba(255,255,255,0.1)'"
+        onkeypress="if(event.key==='Enter') sendMessage()">
+      <button onclick="sendMessage()" id="sendBtn"
+        style="width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#059669,#0d9488);border:none;color:white;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:transform 0.15s;"
+        onmouseover="this.style.transform='scale(1.08)'" onmouseout="this.style.transform='scale(1)'">
+        <i class="fa-solid fa-paper-plane" style="font-size:0.8rem;"></i>
+      </button>
+    </div>
+  </div>
 </div>
+
 <script>
 const csrf = document.querySelector('meta[name="csrf-token"]')?.content || '';
 const conversationHistory = [];
-function quickAsk(q) { document.getElementById('aiInput').value = q; sendMessage(); }
+const userName = '<%= user && user.name ? user.name.split(" ")[0] : "there" %>';
+const userRole = '<%= user && user.role ? user.role : "Staff" %>';
+
+// Greeting based on time
+const hour = new Date().getHours();
+const greet = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+const greetings = {
+  Admin: greet + ', ' + userName + '. What do you need?',
+  Supervisor: greet + ', ' + userName + '. How can I help?',
+  Staff: greet + ', ' + userName + '. What can I do for you?'
+};
+document.getElementById('greetMsg').textContent = greetings[userRole] || greetings.Staff;
+
+function quickAsk(q) {
+  document.getElementById('aiInput').value = q;
+  sendMessage();
+}
+
+function clearChat() {
+  const msgs = document.getElementById('chatMessages');
+  msgs.innerHTML = '';
+  conversationHistory.length = 0;
+  addMessage(greetings[userRole] || greetings.Staff, 'ai');
+}
 
 async function sendMessage() {
-    const input = document.getElementById('aiInput');
-    const query = input.value.trim();
-    if (!query) return;
-    input.value = '';
-    addMessage(query, 'user');
-    const typing = addTyping();
-    try {
-        const res = await fetch('/portal/staff/ai/chat', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'CSRF-Token': csrf },
-            body: JSON.stringify({ query, eventContext: {
-                userName: '<%= user && user.name ? user.name : "Staff" %>',
-                role: '<%= user && user.role ? user.role : "Staff" %>'
-            }, history: conversationHistory })
-        });
-        const data = await res.json();
-        typing.remove();
-        const reply = data.success ? (data.data?.reply || data.data?.response) : (data.message || 'Error');
-        addMessage(reply, 'ai');
-        conversationHistory.push({ query, response: reply });
-    } catch (err) {
-        typing.remove();
-        addMessage('Connection error: ' + err.message, 'ai');
-    }
+  const input = document.getElementById('aiInput');
+  const query = input.value.trim();
+  if (!query) return;
+  input.value = '';
+
+  // Hide quick prompts after first message
+  document.getElementById('quickPrompts').style.display = 'none';
+
+  addMessage(query, 'user');
+  const typing = addTyping();
+  document.getElementById('sendBtn').disabled = true;
+  document.getElementById('pearlStatus').textContent = 'Thinking...';
+
+  try {
+    const res = await fetch('/portal/staff/ai/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'CSRF-Token': csrf },
+      body: JSON.stringify({
+        query,
+        eventContext: { userName: '<%= user && user.name ? user.name : "Staff" %>', role: userRole },
+        history: conversationHistory
+      })
+    });
+    const data = await res.json();
+    typing.remove();
+    const reply = data.success ? (data.data?.reply || data.data?.response || 'No response') : (data.message || 'Something went wrong.');
+    addMessage(reply, 'ai');
+    conversationHistory.push({ query, response: reply });
+  } catch (err) {
+    typing.remove();
+    addMessage('Connection error — please try again.', 'ai');
+  } finally {
+    document.getElementById('sendBtn').disabled = false;
+    document.getElementById('pearlStatus').textContent = 'Personal Emerald Assistant';
+  }
 }
 
 function addMessage(text, from) {
-    const div = document.createElement('div');
-    div.className = 'flex gap-3' + (from === 'user' ? ' flex-row-reverse' : '');
-    div.innerHTML = from === 'user'
-        ? '<div class="glass-card rounded-xl rounded-tr-none p-3 max-w-xs bg-emerald-900/30"><p class="text-sm text-tx-1">' + text + '</p></div>'
-        : '<div class="w-8 h-8 rounded-xl overflow-hidden flex-shrink-0"><img src="/images/pearl-logo.png" class="w-full h-full object-contain"></div><div class="glass-card rounded-xl rounded-tl-none p-3 max-w-xs"><p class="text-sm text-tx-1">' + text + '</p></div>';
-    document.getElementById('chatMessages').appendChild(div);
-    document.getElementById('chatMessages').scrollTop = 999999;
-    return div;
+  const wrap = document.getElementById('chatMessages');
+  const div = document.createElement('div');
+  div.style.cssText = 'display:flex;gap:10px;align-items:flex-start;' + (from === 'user' ? 'flex-direction:row-reverse;' : '');
+
+  const bubble = document.createElement('div');
+  bubble.style.cssText = from === 'user'
+    ? 'background:rgba(5,150,105,0.15);border:1px solid rgba(5,150,105,0.25);border-radius:14px 0 14px 14px;padding:10px 14px;max-width:80%;font-size:0.875rem;color:var(--tx-1,#f1f5f9);line-height:1.6;white-space:pre-wrap;'
+    : 'background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);border-radius:0 14px 14px 14px;padding:10px 14px;max-width:80%;font-size:0.875rem;color:var(--tx-1,#f1f5f9);line-height:1.6;white-space:pre-wrap;';
+  bubble.innerHTML = text;
+
+  if (from === 'ai') {
+    const avatar = document.createElement('div');
+    avatar.style.cssText = 'width:30px;height:30px;border-radius:50%;overflow:hidden;flex-shrink:0;';
+    avatar.innerHTML = '<img src="/images/pearl-logo.png" style="width:100%;height:100%;object-fit:cover;">';
+    div.appendChild(avatar);
+  }
+  div.appendChild(bubble);
+  wrap.appendChild(div);
+  wrap.scrollTop = wrap.scrollHeight;
+  return div;
 }
 
-function addTyping() { return addMessage('<span class="animate-pulse">PEARL is thinking...</span>', 'ai'); }
+function addTyping() {
+  return addMessage('<span style="opacity:0.5;font-style:italic;font-size:0.8rem;">typing...</span>', 'ai');
+}
 </script>
