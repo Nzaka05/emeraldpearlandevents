@@ -716,33 +716,14 @@ if (typeof window.registerPush !== 'function') {
 </button>
 <% } %>
 
-<!-- PEARL Floating Button - Staff only -->
-<% if (_role === 'Staff') { %>
-<button onclick="location.href='/portal/staff/ai'" id="pearlFloatBtn"
-  style="position:fixed;bottom:24px;right:20px;z-index:9999;width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#059669,#0d9488);border:2px solid rgba(255,255,255,0.15);box-shadow:0 4px 20px rgba(5,150,105,0.4);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:transform 0.2s,box-shadow 0.2s;"
-  onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'"
-  title="Ask PEARL">
-  <img src="/images/pearl-logo.png" style="width:28px;height:28px;border-radius:50%;object-fit:cover;" onerror="this.style.display='none';this.nextSibling.style.display='block'">
-  <span style="display:none;color:white;font-size:11px;font-weight:bold;">P</span>
-</button>
-<% } %>
-
 <!-- PEARL Floating Button -->
 <% if (_role === 'Admin') { %>
-<button onclick="location.href='/portal/admin-staff/ai/command-center'" id="pearlFloatBtn"
-  style="position:fixed;bottom:24px;right:20px;z-index:9999;width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#059669,#0d9488);border:2px solid rgba(255,255,255,0.15);box-shadow:0 4px 20px rgba(5,150,105,0.4);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:transform 0.2s,box-shadow 0.2s;"
-  onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'"
-  title="Ask PEARL">
-  <img src="/images/pearl-logo.png" style="width:28px;height:28px;border-radius:50%;object-fit:cover;" onerror="this.style.display='none';this.nextSibling.style.display='block'">
-  <span style="display:none;color:white;font-size:11px;font-weight:bold;">P</span>
+<button onclick="location.href='/portal/admin-staff/ai/command-center'" id="pearlFloatBtn" style="position:fixed;bottom:24px;right:20px;z-index:9999;width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#059669,#0d9488);border:2px solid rgba(255,255,255,0.15);box-shadow:0 4px 20px rgba(5,150,105,0.4);display:flex;align-items:center;justify-content:center;cursor:pointer;" title="Ask PEARL">
+  <img src="/images/pearl-logo.png" style="width:28px;height:28px;border-radius:50%;object-fit:cover;" onerror="this.style.display='none';this.nextSibling.style.display='block'"><span style="display:none;color:white;font-size:11px;font-weight:bold;">P</span>
 </button>
 <% } else { %>
-<button onclick="location.href='/portal/staff/ai'" id="pearlFloatBtn"
-  style="position:fixed;bottom:24px;right:20px;z-index:9999;width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#059669,#0d9488);border:2px solid rgba(255,255,255,0.15);box-shadow:0 4px 20px rgba(5,150,105,0.4);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:transform 0.2s,box-shadow 0.2s;"
-  onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'"
-  title="Ask PEARL">
-  <img src="/images/pearl-logo.png" style="width:28px;height:28px;border-radius:50%;object-fit:cover;" onerror="this.style.display='none';this.nextSibling.style.display='block'">
-  <span style="display:none;color:white;font-size:11px;font-weight:bold;">P</span>
+<button onclick="location.href='/portal/staff/ai'" id="pearlFloatBtn" style="position:fixed;bottom:24px;right:20px;z-index:9999;width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#059669,#0d9488);border:2px solid rgba(255,255,255,0.15);box-shadow:0 4px 20px rgba(5,150,105,0.4);display:flex;align-items:center;justify-content:center;cursor:pointer;" title="Ask PEARL">
+  <img src="/images/pearl-logo.png" style="width:28px;height:28px;border-radius:50%;object-fit:cover;" onerror="this.style.display='none';this.nextSibling.style.display='block'"><span style="display:none;color:white;font-size:11px;font-weight:bold;">P</span>
 </button>
 <% } %>
 </body>
