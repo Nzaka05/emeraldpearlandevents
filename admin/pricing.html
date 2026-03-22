@@ -93,6 +93,13 @@
         @media(max-width:1024px){.g4{grid-template-columns:repeat(2,1fr)}}
         @media(max-width:768px){.sidebar{display:none}.main{margin-left:0}.g2{grid-template-columns:1fr}}
     </style>
+
+<style>
+@media(max-width:768px){
+    #menu-toggle{display:block!important;}
+    .sidebar.open{display:block!important;z-index:997;position:fixed;top:0;left:0;height:100vh;}
+}
+</style>
 </head>
 <body>
 <div class="layout">
@@ -122,7 +129,9 @@
             <button class="lbtn" onclick="handleLogout()"><i class="fas fa-sign-out-alt"></i></button>
         </div>
     </div>
-</aside><div class="main">
+</aside><div id="sidebarOverlay" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.55);z-index:998;" onclick="this.style.display='none';document.querySelector('.sidebar').classList.remove('open');"></div>
+<button id="menu-toggle" onclick="var s=document.querySelector('.sidebar'),o=document.getElementById('sidebarOverlay');s.classList.toggle('open');o.style.display=s.classList.contains('open')?'block':'none';" style="display:none;position:fixed;top:12px;left:12px;z-index:999;background:#1a2235;border:none;color:#c9a84c;font-size:20px;cursor:pointer;padding:8px;border-radius:8px;">&#9776;</button>
+<div class="main">
     <div class="topbar">
         <div>
             <div class="tbtitle"><i class="fas fa-tags" style="color:var(--gold);margin-right:9px;font-size:15px;"></i>Pricing &amp; Rates</div>
@@ -320,5 +329,6 @@ document.addEventListener('DOMContentLoaded',()=>{
     try{const a=JSON.parse(localStorage.getItem('adminUser')||'{}');if(a.name){document.getElementById('adminName').textContent=a.name;document.getElementById('adminAvatar').textContent=a.name[0].toUpperCase();}}catch(e){}
 });
 </script>
+<script src="/admin/assets/mobile-sidebar.js?v=3"></script>
 </body>
 </html>

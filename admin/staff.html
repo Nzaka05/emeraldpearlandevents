@@ -796,6 +796,13 @@
     </style>
 
     <link rel="stylesheet" href="/admin/assets/premium-admin.css">
+
+<style>
+@media(max-width:768px){
+    #menu-toggle{display:block!important;}
+    .sidebar.open{display:block!important;z-index:997;position:fixed;top:0;left:0;height:100vh;}
+}
+</style>
 </head>
 
 <body>
@@ -1166,7 +1173,7 @@
                     const category = document.getElementById('categoryFilter').value;
                     const availability = document.getElementById('availabilityFilter').value;
                     const filtered = staffData.filter(staff => {
-                        const catMatch = !category || staff.category === category;
+                        const catMatch = !category || (staff.category || '').toLowerCase() === category.toLowerCase() || (staff.department || '').toLowerCase() === category.toLowerCase();
                         const availMatch = !availability || (availability === "available" ? staff.isAvailable : !staff.isAvailable);
                         return catMatch && availMatch;
                     });
