@@ -108,8 +108,9 @@ async function sendMessage() {
   try {
     const res = await fetch('/portal/staff/ai/chat', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'CSRF-Token': csrf },
+      headers: { 'Content-Type': 'application/json', 'csrf-token': csrf, 'x-csrf-token': csrf, 'CSRF-Token': csrf },
       body: JSON.stringify({
+        _csrf: csrf,
         query,
         eventContext: { userName: '<%= user && user.name ? user.name : "Staff" %>', role: userRole },
         history: conversationHistory
