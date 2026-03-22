@@ -33,8 +33,8 @@ async function sendEmailViaPearl(to, subject, body) {
 async function getBusinessData(role) {
     const data = { staffCount: 0, availableStaff: 0, busyStaff: 0, onLeave: 0, staff: [], upcomingEvents: [], recentBookings: [], financials: null };
     try {
-        const Staff = require("../models/Staff");
-        const staffList = await Staff.find({ status: "Active" }).select("name role category availability_status title email phone").lean();
+        const db = require("mongoose").connection.db;
+        const staffList = await db.collection("staffs").find({ status: "Active" }).toArray();
         data.staff = staffList;
         data.staffCount = staffList.length;
         data.availableStaff = staffList.filter(s => s.availability_status === "Available").length;
