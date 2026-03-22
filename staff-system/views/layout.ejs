@@ -312,7 +312,7 @@
       <img src="/logo2.png" class="h-7 w-auto object-contain" alt="Emerald">
     </div>
     <div class="flex items-center gap-2">
-      <button onclick="window.location.href=`/portal/staff/notifications`" class="w-8 h-8 rounded-lg bg-cosmos-600 border border-white/5 text-tx-2 flex items-center justify-center hover:text-tx-1 transition-colors text-sm relative">
+      <button onclick="location.href=this.dataset.url" data-url="/portal/staff/notifications" class="w-8 h-8 rounded-lg bg-cosmos-600 border border-white/5 text-tx-2 flex items-center justify-center hover:text-tx-1 transition-colors text-sm relative">
         <i class="fa-regular fa-bell"></i>
         <span id="hdr-notif-badge" class="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-red-500 text-white text-[0.5rem] font-bold flex items-center justify-center hidden">0</span>
       </button>
