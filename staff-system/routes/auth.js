@@ -5,6 +5,12 @@ const { validateLogin, validatePasswordChange, sanitizeRequestBody } = require('
 
 const router = express.Router();
 
+// Disable the global layout for all auth pages globally to prevent double-rendering
+router.use((req, res, next) => {
+    res.locals.layout = false;
+    next();
+});
+
 router.get('/login', (req, res) => {
     res.render('auth/login', { error: req.query.error, message: req.query.message });
 });
