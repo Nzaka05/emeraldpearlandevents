@@ -12,7 +12,7 @@ router.use((req, res, next) => {
 });
 
 router.get('/login', (req, res) => {
-    res.render('auth/login', { error: req.query.error, message: req.query.message });
+    res.render('auth/login', { layout: false, error: req.query.error, message: req.query.message });
 });
 
 router.post('/login', sanitizeRequestBody, validateLogin, login);
@@ -26,7 +26,7 @@ router.get('/me', protect, getProfileJson);
 router.get('/secure-login/:token', secureLogin);
 
 router.get('/forgot-password', (req, res) => {
-    res.render('auth/forgot-password', { error: null, message: null });
+    res.render('auth/forgot-password', { layout: false, error: null, message: null });
 });
 router.post('/forgot-password', sanitizeRequestBody, forgotPassword);
 
@@ -34,12 +34,12 @@ router.post('/forgot-password', sanitizeRequestBody, forgotPassword);
 router.post('/staff-forgot-password', sanitizeRequestBody, staffForgotPassword);
 
 router.get('/reset-password/:token', (req, res) => {
-    res.render('auth/reset-password', { error: null, token: req.params.token });
+    res.render('auth/reset-password', { layout: false, error: null, token: req.params.token });
 });
 router.post('/reset-password/:token', sanitizeRequestBody, resetPassword);
 
 router.get('/change-password', protect, (req, res) => {
-    res.render('auth/change-password', { error: null, user: req.user });
+    res.render('auth/change-password', { layout: false, error: null, user: req.user });
 });
 
 router.post('/change-password', protect, validatePasswordChange, changePassword);

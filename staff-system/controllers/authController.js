@@ -41,7 +41,7 @@ exports.login = async (req, res) => {
                     timestamp: new Date().toISOString()
                 });
             }
-            return res.render('auth/login', { error: 'Please provide an email and password' });
+            return res.render('auth/login', { layout: false, error: 'Please provide an email and password' });
         }
 
         const user = await Staff.findOne({ email }).select('+password');
@@ -53,7 +53,7 @@ exports.login = async (req, res) => {
                     timestamp: new Date().toISOString()
                 });
             }
-            return res.render('auth/login', { error: 'Invalid credentials' });
+            return res.render('auth/login', { layout: false, error: 'Invalid credentials' });
         }
 
         if (user.status === 'Suspended') {
@@ -68,7 +68,7 @@ exports.login = async (req, res) => {
                     timestamp: new Date().toISOString()
                 });
             }
-            return res.render('auth/login', { error: 'Account suspended. Contact Administrator.' });
+            return res.render('auth/login', { layout: false, error: 'Account suspended. Contact Administrator.' });
         }
 
         const isMatch = await bcrypt.compare(password, user.password);
@@ -84,7 +84,7 @@ exports.login = async (req, res) => {
                     timestamp: new Date().toISOString()
                 });
             }
-            return res.render('auth/login', { error: 'Invalid credentials' });
+            return res.render('auth/login', { layout: false, error: 'Invalid credentials' });
         }
 
         await AuditLog.create({
@@ -122,7 +122,7 @@ exports.login = async (req, res) => {
                 timestamp: new Date().toISOString()
             });
         }
-        res.render('auth/login', { error: 'Server Error' });
+        res.render('auth/login', { layout: false, error: 'Server Error' });
     }
 };
 
@@ -137,20 +137,20 @@ exports.changePassword = async (req, res) => {
         // If mustChangePassword is false, verify current password
         if (!user.mustChangePassword) {
             if (!current_password) {
-                return res.render('auth/change-password', { error: 'Current password is required', user, csrfToken: req.csrfToken() });
+                return res.render('auth/change-password', { layout: false, error: 'Current password is required', user, csrfToken: req.csrfToken() });
             }
             const isMatch = await bcrypt.compare(current_password, user.password);
             if (!isMatch) {
-                return res.render('auth/change-password', { error: 'Current password is incorrect', user, csrfToken: req.csrfToken() });
+                return res.render('auth/change-password', { layout: false, error: 'Current password is incorrect', user, csrfToken: req.csrfToken() });
             }
         }
 
         if (new_password !== confirm_new_password) {
-            return res.render('auth/change-password', { error: 'Passwords do not match', user, csrfToken: req.csrfToken() });
+            return res.render('auth/change-password', { layout: false, error: 'Passwords do not match', user, csrfToken: req.csrfToken() });
         }
 
         if (new_password.length < 8) {
-            return res.render('auth/change-password', { error: 'Password must be at least 8 characters', user, csrfToken: req.csrfToken() });
+            return res.render('auth/change-password', { layout: false, error: 'Password must be at least 8 characters', user, csrfToken: req.csrfToken() });
         }
 
         const salt = await bcrypt.genSalt(10);
@@ -167,7 +167,7 @@ exports.changePassword = async (req, res) => {
 
     } catch (error) {
         console.error(error);
-        res.render('auth/change-password', { error: 'Server Error' });
+        res.render('auth/change-password', { layout: false, error: 'Server Error' });
     }
 };
 
@@ -232,7 +232,7 @@ exports.forgotPassword = async (req, res) => {
     try {
         const user = await Staff.findOne({ email: req.body.email });
         if (!user || user.status === 'Suspended') {
-            return res.render('auth/forgot-password', {
+            return res.render('auth/forgot-password', { layout: false,
                 error: null,
                 message: 'If an account exists with that email, a reset link has been sent.'
             });
@@ -253,13 +253,13 @@ exports.forgotPassword = async (req, res) => {
             details: { email: user.email }, ipAddress: req.ip
         });
 
-        res.render('auth/forgot-password', {
+        res.render('auth/forgot-password', { layout: false,
             error: null,
             message: 'If an account exists with that email, a password reset link has been sent.'
         });
     } catch (error) {
         console.error(error);
-        res.render('auth/forgot-password', { error: 'Could not process request. Please try again.', message: null });
+        res.render('auth/forgot-password', { layout: false, error: 'Could not process request. Please try again.', message: null });
     }
 };
 
@@ -275,12 +275,12 @@ exports.resetPassword = async (req, res) => {
         });
 
         if (!user) {
-            return res.render('auth/reset-password', { error: 'Invalid or expired reset link. Please request a new one.', token: req.params.token });
+            return res.render('auth/reset-password', { layout: false, error: 'Invalid or expired reset link. Please request a new one.', token: req.params.token });
         }
 
         const { password } = req.body;
         if (!password || password.length < 8) {
-            return res.render('auth/reset-password', { error: 'Password must be at least 8 characters', token: req.params.token });
+            return res.render('auth/reset-password', { layout: false, error: 'Password must be at least 8 characters', token: req.params.token });
         }
 
         const salt = await bcrypt.genSalt(10);
@@ -295,10 +295,10 @@ exports.resetPassword = async (req, res) => {
             details: { reason: 'Self-Service Forgot Password' }, ipAddress: req.ip
         });
 
-        res.render('auth/login', { error: null, message: 'Password reset successful! You can now log in with your new password.' });
+        res.render('auth/login', { layout: false, error: null, message: 'Password reset successful! You can now log in with your new password.' });
     } catch (error) {
         console.error(error);
-        res.render('auth/reset-password', { error: 'Server Error. Please try again.', token: req.params.token });
+        res.render('auth/reset-password', { layout: false, error: 'Server Error. Please try again.', token: req.params.token });
     }
 };
 
@@ -342,7 +342,7 @@ exports.staffForgotPassword = async (req, res) => {
     try {
         const user = await Staff.findOne({ email: req.body.email });
         if (!user || user.status === 'Suspended') {
-            return res.render('auth/forgot-password', {
+            return res.render('auth/forgot-password', { layout: false,
                 error: null,
                 message: 'If an account exists with that email, a reset link has been sent.'
             });
@@ -363,13 +363,13 @@ exports.staffForgotPassword = async (req, res) => {
             details: { email: user.email }, ipAddress: req.ip
         });
 
-        res.render('auth/forgot-password', {
+        res.render('auth/forgot-password', { layout: false,
             error: null,
             message: 'If an account exists with that email, a password reset link has been sent.'
         });
     } catch (error) {
         console.error(error);
-        res.render('auth/forgot-password', { error: 'Could not process request. Please try again.', message: null });
+        res.render('auth/forgot-password', { layout: false, error: 'Could not process request. Please try again.', message: null });
     }
 };
 
@@ -379,7 +379,7 @@ exports.getPortalChoice = async (req, res) => {
     try {
         const Staff = require('../models/Staff');
         const user = await Staff.findById(req.user._id).select('-password').lean();
-        res.render('auth/portal-choice', { user });
+        res.render('auth/portal-choice', { layout: false, user });
     } catch (error) {
         console.error(error);
         res.redirect('/portal/auth/login');
