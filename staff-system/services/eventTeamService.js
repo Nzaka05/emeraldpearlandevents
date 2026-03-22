@@ -157,11 +157,13 @@ exports.checkDisbandEligibility = async (teamId) => {
     const event = await Assignment.findById(team.event_id);
     if (!event) throw new Error('Event not found');
 
-    const allPaid = event.staff_payments.every(
-        (p) => p.status === 'Received' || p.status === 'Disbursed'
+    const unpaid = event.staff_payments.filter(
+        p => p.status !== 'Received' && p.status !== 'Disbursed'
     );
-
-    return { canDisband: allPaid, reason: allPaid ? '' : 'Not all staff have been paid yet.' };
+    const canDisband = unpaid.length === 0;
+    const unpaidNames = unpaid.map(p => p.staff_name || p.staff_id?.toString() || 'Unknown staff');
+    const reason = canDisband ? '' : unpaid.length + ' staff member(s) still unpaid: ' + unpaidNames.join(', ');
+    return { canDisband, reason, unpaidStaff: unpaidNames };
 };
 
 exports.disbandTeam = async (teamId) => {

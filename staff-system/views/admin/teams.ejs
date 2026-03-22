@@ -411,16 +411,12 @@
           const check = await fetch(`/portal/admin-staff/event-teams/${teamId}/disband-check`);
           const eligibility = await check.json();
 
-          let msg = `Terminate team mapping for [${eventTitle}]?`;
-          if (eligibility.success) {
-              if (!eligibility.eventCompleted) {
-                  msg = `WARNING: Event [${eventTitle}] is not designated as "Completed".\nOverride and terminate mapping regardless?`;
-              } else if (!eligibility.allPaymentsDone) {
-                  msg = `WARNING: Financial transfers pending for [${eventTitle}].\nOverride and terminate mapping regardless?`;
-              }
+          if (eligibility.success && !eligibility.canDisband) {
+              const unpaid = eligibility.unpaidStaff && eligibility.unpaidStaff.length ? '\n\nUnpaid staff: ' + eligibility.unpaidStaff.join(', ') : '';
+              showToast('Cannot disband - ' + (eligibility.reason || 'some staff are unpaid'), 'error');
+              return;
           }
-
-          if (!confirm(msg)) return;
+          if (!confirm('Disband team for [' + eventTitle + ']? This cannot be undone.')) return;
 
           const r = await fetch(`/portal/admin-staff/event-teams/${teamId}/disband`, {
               method: 'POST',
@@ -428,10 +424,10 @@
           });
           const d = await r.json();
           if (d.success) {
-              showToast('Matrix unlinked permanently', 'success');
+              showToast('Team disbanded successfully.', 'success');
               setTimeout(() => location.reload(), 1500);
           } else {
-              showToast(d.error || 'Termination rejected', 'error');
+              showToast(d.message || d.error || 'Could not disband team.', 'error');
           }
       } catch(err) {
           showToast('Connection failed', 'error');

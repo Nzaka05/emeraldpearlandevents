@@ -276,7 +276,7 @@ exports.checkDisbandEligibility = async (req, res) => {
         const eventTeamService = require('../services/eventTeamService');
         const result = await eventTeamService.checkDisbandEligibility(req.params.teamId);
         if (!result.canDisband)
-            return res.json({ success: true, canDisband: false, reason: result.reason });
+            return res.json({ success: true, canDisband: false, reason: result.reason, unpaidStaff: result.unpaidStaff || [] });
         res.json({ success: true, canDisband: true });
     } catch (err) {
         console.error('[adminEventsController] checkDisbandEligibility:', err);
