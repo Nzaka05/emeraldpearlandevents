@@ -797,12 +797,7 @@
 
     <link rel="stylesheet" href="/admin/assets/premium-admin.css">
 
-<style>
-@media(max-width:768px){
-    #menu-toggle{display:block!important;}
-    .sidebar.open{display:block!important;z-index:997;position:fixed;top:0;left:0;height:100vh;}
-}
-</style>
+
 </head>
 
 <body>
@@ -979,10 +974,10 @@
                             <div class="filter-group">
                                 <select class="filter-select" id="categoryFilter" onchange="filterStaff()">
                                     <option value="">All Categories</option>
-                                    <option value="Waiters">Waiters</option>
-                                    <option value="Ushers">Ushers</option>
+                                    <option value="Waiter">Waiters</option>
+                                    <option value="Usher">Ushers</option>
                                     <option value="Protocol">Protocol</option>
-                                    <option value="Chauffeurs">Chauffeurs</option>
+                                    <option value="Chauffeur">Chauffeurs</option>
                                     <option value="Security">Security</option>
                                     <option value="Setup">Setup</option>
                                     <option value="Coordination">Coordination</option>
@@ -1169,11 +1164,19 @@
                 `;
                     }).join('');
                 }
-                function filterStaff() {
+                function handleCategoryChange(val) {
+    const customGroup = document.getElementById('customRoleGroup');
+    if (customGroup) customGroup.style.display = val === 'Other' ? 'block' : 'none';
+}
+function handleCategoryChange(val) {
+    const customGroup = document.getElementById('customRoleGroup');
+    if (customGroup) customGroup.style.display = val === 'Other' ? 'block' : 'none';
+}
+function filterStaff() {
                     const category = document.getElementById('categoryFilter').value;
                     const availability = document.getElementById('availabilityFilter').value;
                     const filtered = staffData.filter(staff => {
-                        const catMatch = !category || (staff.category || '').toLowerCase() === category.toLowerCase() || (staff.department || '').toLowerCase() === category.toLowerCase();
+                        const catMatch = !category || (staff.category || '').toLowerCase() === category.toLowerCase();
                         const availMatch = !availability || (availability === "available" ? staff.isAvailable : !staff.isAvailable);
                         return catMatch && availMatch;
                     });
