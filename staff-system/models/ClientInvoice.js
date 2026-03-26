@@ -42,7 +42,7 @@ const ClientInvoiceSchema = new mongoose.Schema({
     etrIssuedAt: { type: Date }
 }, { timestamps: true });
 
-ClientInvoiceSchema.pre('save', async function() {
+ClientInvoiceSchema.pre('validate', async function() {
     if (this.isNew && !this.invoiceNumber) {
         const count = await this.constructor.countDocuments();
         const year = new Date().getFullYear();

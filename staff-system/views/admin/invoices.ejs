@@ -169,7 +169,7 @@
                 <div id="serviceRows" class="space-y-2">
                     <div class="service-row grid grid-cols-[1fr,60px,80px,30px] gap-2 items-center">
                         <input type="text" placeholder="Description" class="svc-desc bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs text-tx-1 focus:border-blue-500/40 focus:outline-none">
-                        <input type="number" placeholder="Qty" value="1" min="1" class="svc-qty bg-black/40 border border-white/10 rounded-lg px-2 py-2 text-xs text-tx-1 text-center focus:outline-none">
+                        <input type="number" placeholder="Qty" value="1" min="1" class="svc-qty bg-black/40 border border-white/10 rounded-lg px-2 py-2 text-xs text-tx-1 text-center focus:outline-none" oninput="updateTotal()">
                         <input type="number" placeholder="Rate" class="svc-price bg-black/40 border border-white/10 rounded-lg px-2 py-2 text-xs text-tx-1 focus:outline-none" oninput="updateTotal()">
                         <button type="button" onclick="this.closest('.service-row').remove(); updateTotal()" class="text-red-400 hover:text-red-300 w-6 h-6 flex items-center justify-center text-xs">×</button>
                     </div>
@@ -199,7 +199,7 @@ function addServiceRow() {
     document.getElementById('serviceRows').insertAdjacentHTML('beforeend', `
         <div class="service-row grid grid-cols-[1fr,60px,80px,30px] gap-2 items-center">
             <input type="text" placeholder="Description" class="svc-desc bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs text-tx-1 focus:border-blue-500/40 focus:outline-none">
-            <input type="number" placeholder="Qty" value="1" min="1" class="svc-qty bg-black/40 border border-white/10 rounded-lg px-2 py-2 text-xs text-tx-1 text-center focus:outline-none">
+            <input type="number" placeholder="Qty" value="1" min="1" class="svc-qty bg-black/40 border border-white/10 rounded-lg px-2 py-2 text-xs text-tx-1 text-center focus:outline-none" oninput="updateTotal()">
             <input type="number" placeholder="Rate" class="svc-price bg-black/40 border border-white/10 rounded-lg px-2 py-2 text-xs text-tx-1 focus:outline-none" oninput="updateTotal()">
             <button type="button" onclick="this.closest('.service-row').remove(); updateTotal()" class="text-red-400 hover:text-red-300 w-6 h-6 flex items-center justify-center text-xs">×</button>
         </div>`);
@@ -293,7 +293,7 @@ function autoFillFromEvent(select) {
         document.getElementById('serviceRows').insertAdjacentHTML('beforeend', `
             <div class="service-row grid grid-cols-[1fr,60px,80px,30px] gap-2 items-center">
                 <input type="text" value="Event Staffing - ${title}" class="svc-desc bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs text-tx-1 focus:border-blue-500/40 focus:outline-none">
-                <input type="number" value="${staff}" min="1" class="svc-qty bg-black/40 border border-white/10 rounded-lg px-2 py-2 text-xs text-tx-1 text-center focus:outline-none">
+                <input type="number" value="${staff}" min="1" class="svc-qty bg-black/40 border border-white/10 rounded-lg px-2 py-2 text-xs text-tx-1 text-center focus:outline-none" oninput="updateTotal()">
                 <input type="number" value="${rate}" class="svc-price bg-black/40 border border-white/10 rounded-lg px-2 py-2 text-xs text-tx-1 focus:outline-none" oninput="updateTotal()">
                 <button type="button" onclick="this.closest('.service-row').remove(); updateTotal()" class="text-red-400 hover:text-red-300 w-6 h-6 flex items-center justify-center text-xs">&times;</button>
             </div>`);
