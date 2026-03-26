@@ -312,13 +312,13 @@ function openViewModal(id) {
     // --- FALLBACK LOGIC ---
     if (services.length === 0 && inv.eventId) {
         const ev = window.assignmentsData.find(a => a._id === inv.eventId);
-        const rate = (ev && ev.pay_rate) || (inv.subtotal > 0 ? inv.subtotal : 0);
-        const count = (ev && ev.usherCount) || 1;
+        const rate = (ev && ev.pay_rate) || (inv.subtotal > 0 && inv.staffCount > 0 ? inv.subtotal / inv.staffCount : inv.subtotal || 0);
+        const count = (ev && (ev.usherCount || (ev.accepted_staff_ids ? ev.accepted_staff_ids.length : 0))) || inv.staffCount || 1;
         services = [{
             name: `Staffing Services - ${decodeHTMLEntities(inv.eventName || inv.event_name)}`,
             quantity: count,
-            unitPrice: rate / count || rate,
-            total: inv.subtotal || rate
+            unitPrice: rate,
+            total: inv.subtotal || (rate * count)
         }];
     }
     // -----------------------

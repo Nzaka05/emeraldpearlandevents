@@ -324,19 +324,39 @@ const generateInvoicePDF = async function(invoice) {
         doc.fillColor(gold).fontSize(8).font('Helvetica-Bold').text('BILLED TO', 30, y);
         doc.fillColor(darkGreen).rect(30, y + 12, 40, 2).fill();
         doc.fillColor(darkGreen).fontSize(13).font('Helvetica-Bold').text(decodeHTMLEntities(invoice.clientName || invoice.client_name || 'Client'), 30, y + 20, { width: 250 });
-        doc.fillColor(slate).fontSize(10).font('Helvetica').text(decodeHTMLEntities(invoice.clientEmail || invoice.client_email || ''), 30, doc.y + 2, { width: 250 });
-        if (invoice.clientPhone) doc.text(decodeHTMLEntities(invoice.clientPhone), 30, doc.y + 2);
+        doc.fillColor(slate).fontSize(10).font('Helvetica');
+        let currentBilledY = doc.y + 2;
+        if (invoice.clientEmail || invoice.client_email) {
+            doc.text(decodeHTMLEntities(invoice.clientEmail || invoice.client_email), 30, currentBilledY, { width: 250 });
+            currentBilledY = doc.y + 2;
+        }
+        if (invoice.clientPhone) {
+            doc.text(decodeHTMLEntities(invoice.clientPhone), 30, currentBilledY);
+            currentBilledY = doc.y + 2;
+        }
+        const leftColBottom = currentBilledY;
 
         // Right: Event Details
         const eventX = 320;
         doc.fillColor(gold).fontSize(8).font('Helvetica-Bold').text('EVENT DETAILS', eventX, y);
         doc.fillColor(darkGreen).rect(eventX, y + 12, 40, 2).fill();
         doc.fillColor(darkGreen).fontSize(13).font('Helvetica-Bold').text(decodeHTMLEntities(invoice.eventName || invoice.event_name || 'Event'), eventX, y + 20, { width: 245 });
-        const afterEventNameY = doc.y + 4;
+        const eventNameBottomY = doc.y;
         doc.fillColor(slate).fontSize(10).font('Helvetica');
-        if (invoice.eventDate) doc.text(`Date: ${new Date(invoice.eventDate).toLocaleDateString('en-KE', { weekday:'long', day:'2-digit', month:'long', year:'numeric' })}`, eventX, afterEventNameY);
-        if (invoice.eventLocation) doc.text(`Location: ${decodeHTMLEntities(invoice.eventLocation)}`, eventX, doc.y + 2, { width: 245 });
-        if (invoice.staffCount) doc.text(`Staff Deployed: ${invoice.staffCount}`, eventX, doc.y + 2);
+        let currentEventY = eventNameBottomY + 4;
+        if (invoice.eventDate) {
+            doc.text(`Date: ${new Date(invoice.eventDate).toLocaleDateString('en-KE', { weekday:'long', day:'2-digit', month:'long', year:'numeric' })}`, eventX, currentEventY);
+            currentEventY = doc.y + 2;
+        }
+        if (invoice.eventLocation) {
+            doc.text(`Location: ${decodeHTMLEntities(invoice.eventLocation)}`, eventX, currentEventY, { width: 245 });
+            currentEventY = doc.y + 2;
+        }
+        if (invoice.staffCount) {
+            doc.text(`Staff Deployed: ${invoice.staffCount}`, eventX, currentEventY);
+            currentEventY = doc.y + 2;
+        }
+        const rightColBottom = currentEventY;
 
         // -- SERVICES TABLE ---------------------------------------
         // -- DATA BACKFILL / FALLBACK -----------------------------
@@ -348,23 +368,27 @@ const generateInvoicePDF = async function(invoice) {
                 const event = await Assignment.findById(invoice.eventId);
                 if (event) {
                     const rate = event.pay_rate || (invoice.subtotal > 0 ? invoice.subtotal : 0);
-                    const count = event.usherCount || 1;
+                    const count = event.usherCount || (event.accepted_staff_ids ? event.accepted_staff_ids.length : 0) || 1;
                     services = [{
                         name: `Staffing Services - ${event.title}`,
                         description: `Professional event staffing for ${event.title}`,
                         quantity: count,
-                        unitPrice: rate / count || rate,
-                        total: invoice.subtotal || rate
+                        unitPrice: rate,
+                        total: invoice.subtotal || (rate * count)
                     }];
-                    // If subtotal is still 0, use the one from the event
-                    if ((invoice.subtotal === 0 || !invoice.subtotal) && rate > 0) {
-                        invoice.subtotal = rate;
-                        invoice.vatAmount = Math.round(rate * 0.16);
+                    // Update invoice totals if they are zero
+                    if ((!invoice.subtotal || invoice.subtotal === 0) && rate > 0) {
+                        invoice.subtotal = rate * count;
+                        invoice.vatAmount = Math.round(invoice.subtotal * 0.16);
                         invoice.totalAmount = invoice.subtotal + invoice.vatAmount;
                     }
                 }
             } catch (err) { console.error('PDF Fallback Error:', err); }
         }
+
+        // Determine where to start the table safely
+        y = Math.max(leftColBottom, rightColBottom) + 40;
+        if (y < 320) y = 320; // Maintain minimum separation
 
         // Table header
         doc.fillColor(darkGreen).rect(30, y, W - 60, 26).fill();
