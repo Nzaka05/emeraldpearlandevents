@@ -375,7 +375,6 @@ const generateInvoicePDF = async function(invoice) {
         doc.text('TOTAL (KSh)', 475, y + 8, { width: 80, align: 'right' });
         y += 26;
 
-        const services = invoice.services || [];
         services.forEach((svc, i) => {
             const bg = i % 2 === 0 ? '#ffffff' : '#f8fafc';
             doc.fillColor(bg).rect(30, y, W - 60, 26).fill();
