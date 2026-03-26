@@ -9,6 +9,23 @@ const AuditLog      = require('../models/AuditLog');
 const path          = require('path');
 const fs            = require('fs');
 
+/**
+ * Helper: Decode basic HTML entities for PDF rendering
+ */
+function decodeHTMLEntities(str) {
+    if (!str) return '';
+    return str
+        .replace(/&amp;/g, '&')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&quot;/g, '"')
+        .replace(/&#039;/g, "'")
+        .replace(/&#39;/g, "'")
+        .replace(/&apos;/g, "'")
+        .replace(/&#x27;/g, "'")
+        .replace(/&nbsp;/g, ' ');
+}
+
 // —— GET /admin/invoices — List all invoices ——————————————————————————————————
 exports.getInvoicesPage = async (req, res) => {
     try {
@@ -286,7 +303,7 @@ const generateInvoicePDF = async function(invoice) {
         doc.fillColor(gold).rect(0, 130, W, 2).fill();
         // Invoice number
         doc.fillColor(muted).fontSize(8).font('Helvetica').text('INVOICE NO.', 30, 143);
-        doc.fillColor(darkGreen).fontSize(11).font('Helvetica-Bold').text(invoice.invoiceNumber || invoice.invoice_number || 'N/A', 30, 156);
+        doc.fillColor(darkGreen).fontSize(11).font('Helvetica-Bold').text(decodeHTMLEntities(invoice.invoiceNumber || invoice.invoice_number || 'N/A'), 30, 156);
         // Date
         doc.fillColor(muted).fontSize(8).font('Helvetica').text('DATE ISSUED', 185, 143);
         doc.fillColor(darkGreen).fontSize(11).font('Helvetica-Bold').text(new Date(invoice.createdAt || Date.now()).toLocaleDateString('en-KE', { day:'2-digit', month:'long', year:'numeric' }), 185, 156);
@@ -297,7 +314,7 @@ const generateInvoicePDF = async function(invoice) {
         // ETR number if present
         if (invoice.etrNumber) {
             doc.fillColor(muted).fontSize(8).font('Helvetica').text('ETR NO.', 460, 143);
-            doc.fillColor('#059669').fontSize(11).font('Helvetica-Bold').text(invoice.etrNumber, 460, 156);
+            doc.fillColor('#059669').fontSize(11).font('Helvetica-Bold').text(decodeHTMLEntities(invoice.etrNumber), 460, 156);
         }
         doc.fillColor(gold).rect(0, 183, W, 1).fill();
 
@@ -306,21 +323,23 @@ const generateInvoicePDF = async function(invoice) {
         // Left: Billed To
         doc.fillColor(gold).fontSize(8).font('Helvetica-Bold').text('BILLED TO', 30, y);
         doc.fillColor(darkGreen).rect(30, y + 12, 40, 2).fill();
-        doc.fillColor(darkGreen).fontSize(13).font('Helvetica-Bold').text(invoice.clientName || invoice.client_name || 'Client', 30, y + 20);
-        doc.fillColor(slate).fontSize(10).font('Helvetica').text(invoice.clientEmail || invoice.client_email || '', 30, y + 36);
-        if (invoice.clientPhone) doc.text(invoice.clientPhone, 30, y + 50);
+        doc.fillColor(darkGreen).fontSize(13).font('Helvetica-Bold').text(decodeHTMLEntities(invoice.clientName || invoice.client_name || 'Client'), 30, y + 20, { width: 250 });
+        doc.fillColor(slate).fontSize(10).font('Helvetica').text(decodeHTMLEntities(invoice.clientEmail || invoice.client_email || ''), 30, doc.y + 2, { width: 250 });
+        if (invoice.clientPhone) doc.text(decodeHTMLEntities(invoice.clientPhone), 30, doc.y + 2);
 
         // Right: Event Details
-        doc.fillColor(gold).fontSize(8).font('Helvetica-Bold').text('EVENT DETAILS', 320, y);
-        doc.fillColor(darkGreen).rect(320, y + 12, 40, 2).fill();
-        doc.fillColor(darkGreen).fontSize(13).font('Helvetica-Bold').text(invoice.eventName || invoice.event_name || 'Event', 320, y + 20);
+        const eventX = 320;
+        doc.fillColor(gold).fontSize(8).font('Helvetica-Bold').text('EVENT DETAILS', eventX, y);
+        doc.fillColor(darkGreen).rect(eventX, y + 12, 40, 2).fill();
+        doc.fillColor(darkGreen).fontSize(13).font('Helvetica-Bold').text(decodeHTMLEntities(invoice.eventName || invoice.event_name || 'Event'), eventX, y + 20, { width: 245 });
+        const afterEventNameY = doc.y + 4;
         doc.fillColor(slate).fontSize(10).font('Helvetica');
-        if (invoice.eventDate) doc.text(`Date: ${new Date(invoice.eventDate).toLocaleDateString('en-KE', { weekday:'long', day:'2-digit', month:'long', year:'numeric' })}`, 320, y + 36);
-        if (invoice.eventLocation) doc.text(`Location: ${invoice.eventLocation}`, 320, y + 50);
-        if (invoice.staffCount) doc.text(`Staff Deployed: ${invoice.staffCount}`, 320, y + 64);
+        if (invoice.eventDate) doc.text(`Date: ${new Date(invoice.eventDate).toLocaleDateString('en-KE', { weekday:'long', day:'2-digit', month:'long', year:'numeric' })}`, eventX, afterEventNameY);
+        if (invoice.eventLocation) doc.text(`Location: ${decodeHTMLEntities(invoice.eventLocation)}`, eventX, doc.y + 2, { width: 245 });
+        if (invoice.staffCount) doc.text(`Staff Deployed: ${invoice.staffCount}`, eventX, doc.y + 2);
 
         // -- SERVICES TABLE ---------------------------------------
-        y = 310;
+        y = Math.max(doc.y + 30, 310);
         // Table header
         doc.fillColor(darkGreen).rect(30, y, W - 60, 26).fill();
         doc.fillColor(gold).fontSize(9).font('Helvetica-Bold');
@@ -336,7 +355,7 @@ const generateInvoicePDF = async function(invoice) {
             doc.fillColor(bg).rect(30, y, W - 60, 26).fill();
             doc.fillColor('#e2e8f0').rect(30, y + 25, W - 60, 1).fill();
             doc.fillColor(slate).fontSize(10).font('Helvetica');
-            doc.text(svc.name || svc.description || '—', 42, y + 7, { width: 300 });
+            doc.text(decodeHTMLEntities(svc.name || svc.description || '—'), 42, y + 7, { width: 300 });
             doc.text(String(svc.quantity || 1), 355, y + 7, { width: 40, align: 'center' });
             doc.text(Number(svc.unitPrice || svc.unit_price || 0).toLocaleString(), 400, y + 7, { width: 70, align: 'right' });
             doc.fillColor(darkGreen).font('Helvetica-Bold').text(Number(svc.total || 0).toLocaleString(), 475, y + 7, { width: 80, align: 'right' });
@@ -378,7 +397,7 @@ const generateInvoicePDF = async function(invoice) {
         if (invoice.notes && invoice.notes !== `Auto-generated invoice for ${invoice.eventName}`) {
             y += 10;
             doc.fillColor(gold).rect(30, y, 3, 30).fill();
-            doc.fillColor(muted).fontSize(9).font('Helvetica-Oblique').text(invoice.notes, 40, y + 5, { width: W - 80 });
+            doc.fillColor(muted).fontSize(9).font('Helvetica-Oblique').text(decodeHTMLEntities(invoice.notes), 40, y + 5, { width: W - 80 });
             y += 40;
         }
 

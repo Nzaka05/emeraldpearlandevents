@@ -232,7 +232,7 @@ document.getElementById('invoiceForm').addEventListener('submit', async (e) => {
         description: r.querySelector('.svc-desc').value,
         quantity:    r.querySelector('.svc-qty').value,
         unit_price:  r.querySelector('.svc-price').value
-    })).filter(s => s.description && s.unit_price);
+    })).filter(s => s.description);
 
     const body = {
         client_name:   document.getElementById('invClientName').value,
