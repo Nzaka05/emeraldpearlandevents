@@ -60,7 +60,12 @@
                         };
                     %>
                         <tr class="hover:bg-white/[0.02] transition-colors">
-                            <td class="px-4 py-3 text-xs font-mono text-blue-400"><%= (inv.invoiceNumber || inv.invoice_number || '') %></td>
+                            <td class="px-4 py-3 text-xs font-mono">
+                                <a href="/portal/admin-staff/invoices/<%= inv._id %>/download" target="_blank" 
+                                    class="text-blue-400 hover:text-blue-300 hover:underline transition-all" title="View PDF">
+                                    <%= (inv.invoiceNumber || inv.invoice_number || '') %>
+                                </a>
+                            </td>
                             <td class="px-4 py-3">
                                 <div class="text-xs font-bold text-tx-1"><%= inv.clientName || inv.client_name %></div>
                                 <div class="text-[0.6rem] text-tx-3"><%= inv.clientEmail || inv.client_email %></div>
@@ -78,10 +83,14 @@
                             <td class="px-4 py-3">
                                 <div class="flex items-center gap-1">
                                     <a href="/portal/admin-staff/invoices/<%= inv._id %>/download" target="_blank"
+                                        class="btn btn-outline text-[0.6rem] py-1 px-2 border-white/10 text-tx-3 hover:bg-white/5" title="Preview PDF">
+                                        <i class="fa-solid fa-eye text-[0.7rem]"></i>
+                                    </a>
+                                    <a href="/portal/admin-staff/invoices/<%= inv._id %>/download" target="_blank"
                                         class="btn btn-outline text-[0.6rem] py-1 px-2 border-blue-500/20 text-blue-400 hover:bg-blue-500/10" title="Download PDF">
                                         <i class="fa-solid fa-download"></i>
                                     </a>
-                                    <button onclick="sendInvoice('<%= inv._id %>')" title="Send Invoice to Client"
+                                    <button onclick="sendInvoice('<%= inv._id %>')" title="Send Invoice to Client (Before Payment)"
                                         class="btn btn-outline text-[0.6rem] py-1 px-2 border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/10">
                                         <i class="fa-solid fa-paper-plane"></i>
                                     </button>
