@@ -67,10 +67,10 @@
                                 </a>
                             </td>
                             <td class="px-4 py-3">
-                                <div class="text-xs font-bold text-tx-1"><%= inv.clientName || inv.client_name %></div>
+                                <div class="text-xs font-bold text-tx-1"><%- (inv.clientName || inv.client_name || '').replace(/&#x27;/g, "'").replace(/&#39;/g, "'") %></div>
                                 <div class="text-[0.6rem] text-tx-3"><%= inv.clientEmail || inv.client_email %></div>
                             </td>
-                            <td class="px-4 py-3 text-xs text-tx-2 max-w-[160px] truncate"><%= inv.eventName || inv.event_name %></td>
+                            <td class="px-4 py-3 text-xs text-tx-2 max-w-[160px] truncate"><%- (inv.eventName || inv.event_name || '').replace(/&#x27;/g, "'").replace(/&#39;/g, "'") %></td>
                             <td class="px-4 py-3 text-xs font-bold font-mono text-emerald-400">KSh <%= (inv.totalAmount || inv.total_amount || 0).toLocaleString() %></td>
                             <td class="px-4 py-3">
                                 <span class="text-[0.6rem] font-bold uppercase tracking-wider border px-2 py-0.5 rounded <%= stMap[inv.invoiceStatus || inv.status] || stMap.Draft %>">
