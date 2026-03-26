@@ -82,10 +82,10 @@
                             </td>
                             <td class="px-4 py-3">
                                 <div class="flex items-center gap-1">
-                                    <a href="/portal/admin-staff/invoices/<%= inv._id %>/download" target="_blank"
-                                        class="btn btn-outline text-[0.6rem] py-1 px-2 border-white/10 text-tx-3 hover:bg-white/5" title="Preview PDF">
+                                    <button onclick="openViewModal('<%= inv._id %>')"
+                                        class="btn btn-outline text-[0.6rem] py-1 px-2 border-white/10 text-tx-3 hover:bg-white/5" title="View Details in System">
                                         <i class="fa-solid fa-eye text-[0.7rem]"></i>
-                                    </a>
+                                    </button>
                                     <a href="/portal/admin-staff/invoices/<%= inv._id %>/download" target="_blank"
                                         class="btn btn-outline text-[0.6rem] py-1 px-2 border-blue-500/20 text-blue-400 hover:bg-blue-500/10" title="Download PDF">
                                         <i class="fa-solid fa-download"></i>
@@ -203,7 +203,129 @@
     </div>
 </div>
 
+<!-- View Invoice Modal -->
+<div id="viewModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-md z-[9999] flex items-center justify-center p-4">
+    <div class="bg-dark-card border border-white/10 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div class="px-5 py-4 border-b border-white/5 flex items-center justify-between sticky top-0 bg-dark-card">
+            <h3 class="text-sm font-bold text-tx-1 flex items-center gap-2">
+                <i class="fa-solid fa-file-invoice text-blue-400"></i> Invoice Details: <span id="viewInvNo" class="font-mono"></span>
+            </h3>
+            <button onclick="document.getElementById('viewModal').classList.add('hidden')"
+                class="w-8 h-8 rounded-full border border-white/10 flex items-center justify-center text-tx-3 hover:text-tx-1 transition-colors">
+                <i class="fa-solid fa-xmark text-xs"></i>
+            </button>
+        </div>
+        <div class="p-6 space-y-6">
+            <!-- Header Info -->
+            <div class="grid grid-cols-2 gap-6">
+                <div>
+                    <h4 class="text-[0.6rem] font-bold text-tx-3 uppercase tracking-widest mb-1">Billed To</h4>
+                    <div id="viewClientName" class="text-sm font-bold text-tx-1"></div>
+                    <div id="viewClientEmail" class="text-xs text-tx-3"></div>
+                </div>
+                <div>
+                    <h4 class="text-[0.6rem] font-bold text-tx-3 uppercase tracking-widest mb-1">Event Details</h4>
+                    <div id="viewEventName" class="text-sm font-bold text-tx-1"></div>
+                    <div id="viewEventDate" class="text-xs text-tx-3"></div>
+                </div>
+            </div>
+
+            <!-- Items Table -->
+            <div class="border border-white/5 rounded-xl overflow-hidden">
+                <table class="w-full text-left">
+                    <thead class="bg-white/5">
+                        <tr>
+                            <th class="px-4 py-2 text-[0.6rem] font-bold text-tx-3 uppercase">Description</th>
+                            <th class="px-4 py-2 text-[0.6rem] font-bold text-tx-3 uppercase text-center w-16">Qty</th>
+                            <th class="px-4 py-2 text-[0.6rem] font-bold text-tx-3 uppercase text-right w-24">Rate</th>
+                            <th class="px-4 py-2 text-[0.6rem] font-bold text-tx-3 uppercase text-right w-24">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody id="viewItemsBody" class="divide-y divide-white/5 text-xs text-tx-2">
+                        <!-- Rows injected here -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Summary -->
+            <div class="flex justify-end">
+                <div class="w-48 space-y-2">
+                    <div class="flex justify-between text-xs text-tx-3">
+                        <span>Subtotal</span>
+                        <span id="viewSubtotal" class="font-mono text-tx-1"></span>
+                    </div>
+                    <div class="flex justify-between text-xs text-tx-3">
+                        <span>VAT (16%)</span>
+                        <span id="viewVAT" class="font-mono text-tx-1"></span>
+                    </div>
+                    <div class="flex justify-between text-sm font-bold text-emerald-400 pt-2 border-t border-white/5">
+                        <span>Total Due</span>
+                        <span id="viewTotal" class="font-mono"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Notes -->
+            <div id="viewNotesContainer" class="hidden">
+                <h4 class="text-[0.6rem] font-bold text-tx-3 uppercase tracking-widest mb-1">Notes</h4>
+                <div id="viewNotes" class="bg-white/5 rounded-xl p-3 text-xs text-tx-2 italic"></div>
+            </div>
+        </div>
+        <div class="px-6 py-4 border-t border-white/5 bg-white/[0.02] flex justify-end gap-3">
+            <a id="viewDownloadLink" href="#" target="_blank" class="btn btn-outline text-xs px-4 border-blue-500/30 text-blue-400 hover:bg-blue-500/10">
+                <i class="fa-solid fa-download mr-1.5"></i> Download PDF
+            </a>
+            <button onclick="document.getElementById('viewModal').classList.add('hidden')" class="btn btn-outline text-xs px-4 border-white/10 text-tx-3">Close</button>
+        </div>
+    </div>
+</div>
+
 <script>
+window.invoicesData = <%- JSON.stringify(invoices) %>;
+
+function openViewModal(id) {
+    const inv = window.invoicesData.find(i => i._id === id);
+    if (!inv) return showToast('Invoice not found', 'error');
+
+    document.getElementById('viewInvNo').textContent = inv.invoiceNumber || inv.invoice_number || 'Draft';
+    document.getElementById('viewClientName').textContent = inv.clientName || inv.client_name;
+    document.getElementById('viewClientEmail').textContent = inv.clientEmail || inv.client_email;
+    document.getElementById('viewEventName').textContent = inv.eventName || inv.event_name;
+    document.getElementById('viewEventDate').textContent = inv.eventDate ? new Date(inv.eventDate).toLocaleDateString('en-KE', { weekday:'long', day:'2-digit', month:'long', year:'numeric' }) : 'No date';
+    
+    // Services table
+    const body = document.getElementById('viewItemsBody');
+    body.innerHTML = '';
+    const services = inv.services || [];
+    services.forEach(s => {
+        const row = `<tr class="border-b border-white/5">
+            <td class="px-4 py-2">${s.name || s.description || 'Service'}</td>
+            <td class="px-4 py-2 text-center">${s.quantity || 1}</td>
+            <td class="px-4 py-2 text-right">KSh ${Number(s.unitPrice || s.unit_price || 0).toLocaleString()}</td>
+            <td class="px-4 py-2 text-right font-bold text-tx-1">KSh ${Number(s.total || 0).toLocaleString()}</td>
+        </tr>`;
+        body.innerHTML += row;
+    });
+
+    // Summary
+    document.getElementById('viewSubtotal').textContent = 'KSh ' + (inv.subtotal || 0).toLocaleString();
+    document.getElementById('viewVAT').textContent = 'KSh ' + (inv.vatAmount || 0).toLocaleString();
+    document.getElementById('viewTotal').textContent = 'KSh ' + (inv.totalAmount || 0).toLocaleString();
+
+    // Notes
+    if (inv.notes && inv.notes !== `Auto-generated invoice for ${inv.eventName}`) {
+        document.getElementById('viewNotes').textContent = inv.notes;
+        document.getElementById('viewNotesContainer').classList.remove('hidden');
+    } else {
+        document.getElementById('viewNotesContainer').classList.add('hidden');
+    }
+
+    // Download link
+    document.getElementById('viewDownloadLink').href = `/portal/admin-staff/invoices/${inv._id}/download`;
+
+    document.getElementById('viewModal').classList.remove('hidden');
+}
+
 function addServiceRow() {
     document.getElementById('serviceRows').insertAdjacentHTML('beforeend', `
         <div class="service-row grid grid-cols-[1fr,60px,80px,30px] gap-2 items-center">
