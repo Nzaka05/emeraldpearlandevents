@@ -362,10 +362,18 @@ const generateInvoicePDF = async function(invoice) {
         // -- DATA BACKFILL / FALLBACK -----------------------------
         // Populate event if missing and services are empty (for old/broken invoices)
         let services = invoice.services || [];
-        if (services.length === 0 && invoice.eventId) {
+        if (services.length === 0) {
             try {
                 const Assignment = require('../models/Assignment');
-                const event = await Assignment.findById(invoice.eventId);
+                let event = null;
+                
+                if (invoice.eventId) {
+                    event = await Assignment.findById(invoice.eventId);
+                } else if (invoice.eventName || invoice.event_name) {
+                    // Aggressive match by name if ID is missing
+                    event = await Assignment.findOne({ title: invoice.eventName || invoice.event_name });
+                }
+
                 if (event) {
                     const rate = event.pay_rate || (invoice.subtotal > 0 ? invoice.subtotal : 0);
                     const count = event.usherCount || (event.accepted_staff_ids ? event.accepted_staff_ids.length : 0) || 1;

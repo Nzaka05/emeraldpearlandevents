@@ -310,8 +310,13 @@ function openViewModal(id) {
     let services = inv.services || [];
 
     // --- FALLBACK LOGIC ---
-    if (services.length === 0 && inv.eventId) {
-        const ev = window.assignmentsData.find(a => a._id === inv.eventId);
+    if (services.length === 0) {
+        let ev = inv.eventId ? window.assignmentsData.find(a => a._id === inv.eventId) : null;
+        if (!ev && (inv.eventName || inv.event_name)) {
+            // Aggressive match by name
+            ev = window.assignmentsData.find(a => a.title === (inv.eventName || inv.event_name));
+        }
+        
         const rate = (ev && ev.pay_rate) || (inv.subtotal > 0 && inv.staffCount > 0 ? inv.subtotal / inv.staffCount : inv.subtotal || 0);
         const count = (ev && (ev.usherCount || (ev.accepted_staff_ids ? ev.accepted_staff_ids.length : 0))) || inv.staffCount || 1;
         services = [{
