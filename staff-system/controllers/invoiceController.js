@@ -9,7 +9,7 @@ const AuditLog      = require('../models/AuditLog');
 const path          = require('path');
 const fs            = require('fs');
 
-// ── GET /admin/invoices — List all invoices ───────────────────────────────────
+// —— GET /admin/invoices — List all invoices ——————————————————————————————————
 exports.getInvoicesPage = async (req, res) => {
     try {
         const invoices = await ClientInvoice.find()
@@ -46,7 +46,7 @@ exports.getInvoicesPage = async (req, res) => {
     }
 };
 
-// ── POST /admin/invoices/generate — Create and generate PDF invoice ───────────
+// —— POST /admin/invoices/generate — Create and generate PDF invoice ———————————
 exports.generateInvoice = async (req, res) => {
     try {
         const {
@@ -119,33 +119,45 @@ exports.generateInvoice = async (req, res) => {
     }
 };
 
-// ── GET /admin/invoices/:id/download — Download PDF ──────────────────────────
+// @desc    Download PDF invoice
+// @route   GET /admin/invoices/:id/download
 exports.downloadInvoice = async (req, res) => {
     try {
-        const invoice = await ClientInvoice.findById(req.params.id).lean();
+        const invoice = await ClientInvoice.findById(req.params.id);
         if (!invoice) return res.status(404).send('Invoice not found');
 
-        if (!invoice.pdfUrl) {
-            const pdfPath = await generateInvoicePDF(invoice);
-            await ClientInvoice.findByIdAndUpdate(req.params.id, { pdfUrl: pdfPath });
-            invoice.pdfUrl = pdfPath;
+        let pdfPath = invoice.pdfUrl;
+        const publicPath = path.join(__dirname, '..', 'public');
+        const fullPath = pdfPath ? path.join(publicPath, pdfPath) : null;
+        
+        // If pdfUrl is missing OR file doesn't exist on disk, regenerate it
+        if (!pdfPath || !fs.existsSync(fullPath)) {
+            console.log(`[invoiceController] PDF missing for ${invoice.invoiceNumber || invoice._id}, regenerating...`);
+            const newPdfPath = await generateInvoicePDF(invoice);
+            invoice.pdfUrl = newPdfPath;
+            await invoice.save();
+            pdfPath = newPdfPath;
         }
 
-        const fullPath = path.join(__dirname, '..', 'public', invoice.pdfUrl);
-        if (!fs.existsSync(fullPath)) {
-            return res.status(404).send('PDF file not found');
-        }
-
+        const finalPath = path.join(publicPath, pdfPath);
+        
         res.setHeader('Content-Type', 'application/pdf');
-        res.setHeader('Content-Disposition', `attachment; filename="${invoice.invoiceNumber}.pdf"`);
-        fs.createReadStream(fullPath).pipe(res);
+        res.setHeader('Content-Disposition', `attachment; filename="${invoice.invoiceNumber || 'invoice'}.pdf"`);
+        
+        const stream = fs.createReadStream(finalPath);
+        stream.on('error', (err) => {
+            console.error('[invoiceController] stream error:', err);
+            if (!res.headersSent) res.status(500).send('Error streaming PDF');
+        });
+        stream.pipe(res);
 
     } catch (err) {
-        res.status(500).send('Download error: ' + err.message);
+        console.error('[invoiceController] downloadInvoice error:', err);
+        if (!res.headersSent) res.status(500).send('Download error: ' + err.message);
     }
 };
 
-// ── PUT /admin/invoices/:id/status — Update invoice status ───────────────────
+// —— PUT /admin/invoices/:id/status — Update invoice status ———————————————————
 exports.updateInvoiceStatus = async (req, res) => {
     try {
         const { status } = req.body;
@@ -161,7 +173,7 @@ exports.updateInvoiceStatus = async (req, res) => {
     }
 };
 
-// ── POST /admin/invoices/:id/send-email — Email invoice to client ─────────────
+// —— POST /admin/invoices/:id/send-email — Email invoice to client —————————————
 exports.sendInvoiceEmail = async (req, res) => {
     try {
         const invoice = await ClientInvoice.findById(req.params.id)
@@ -221,7 +233,7 @@ exports.sendInvoiceEmail = async (req, res) => {
     }
 };
 
-// ── DELETE /admin/invoices/:id — Delete invoice ───────────────────────────────
+// —— DELETE /admin/invoices/:id — Delete invoice ———————————————————————————————
 exports.deleteInvoice = async (req, res) => {
     try {
         const invoice = await ClientInvoice.findByIdAndDelete(req.params.id);
@@ -232,7 +244,7 @@ exports.deleteInvoice = async (req, res) => {
     }
 };
 
-// ── Helper: Generate PDF using pdfkit ─────────────────────────────────────────
+// —— Helper: Generate PDF using pdfkit ————————————————————————————————————————
 const generateInvoicePDF = async function(invoice) {
     const PDFDocument = require('pdfkit');
     const outputDir = path.join(__dirname, '../public/invoices');
@@ -264,7 +276,7 @@ const generateInvoicePDF = async function(invoice) {
         doc.fillColor(gold).fontSize(20).font('Helvetica-Bold').text('EMERALD PEARLAND', 125, 28);
         doc.fillColor(gold).fontSize(20).font('Helvetica-Bold').text('EVENTS', 125, 50);
         doc.fillColor('#ffffff').fontSize(9).font('Helvetica').text('Professional Event Staffing Services', 125, 74);
-        doc.fillColor('#94a3b8').fontSize(8).text('Nairobi, Kenya  �  emeraldpearlandevents@gmail.com  �  www.emeraldpearlandevents.com', 125, 88);
+        doc.fillColor('#94a3b8').fontSize(8).text('Nairobi, Kenya  ·  emeraldpearlandevents@gmail.com  ·  www.emeraldpearlandevents.com', 125, 88);
         // INVOICE label top right
         doc.fillColor(gold).fontSize(28).font('Helvetica-Bold').text(invoice.etrNumber ? 'RECEIPT' : 'INVOICE', 380, 40, { width: 180, align: 'right' });
         doc.fillColor('#94a3b8').fontSize(8).font('Helvetica').text(invoice.etrNumber ? 'ELECTRONIC TAX RECEIPT' : 'CLIENT INVOICE', 380, 74, { width: 180, align: 'right' });
@@ -324,7 +336,7 @@ const generateInvoicePDF = async function(invoice) {
             doc.fillColor(bg).rect(30, y, W - 60, 26).fill();
             doc.fillColor('#e2e8f0').rect(30, y + 25, W - 60, 1).fill();
             doc.fillColor(slate).fontSize(10).font('Helvetica');
-            doc.text(svc.name || svc.description || '�', 42, y + 7, { width: 300 });
+            doc.text(svc.name || svc.description || '—', 42, y + 7, { width: 300 });
             doc.text(String(svc.quantity || 1), 355, y + 7, { width: 40, align: 'center' });
             doc.text(Number(svc.unitPrice || svc.unit_price || 0).toLocaleString(), 400, y + 7, { width: 70, align: 'right' });
             doc.fillColor(darkGreen).font('Helvetica-Bold').text(Number(svc.total || 0).toLocaleString(), 475, y + 7, { width: 80, align: 'right' });
@@ -375,41 +387,15 @@ const generateInvoicePDF = async function(invoice) {
         doc.fillColor(darkGreen).rect(0, footerY, W, 62).fill();
         doc.fillColor(gold).rect(0, footerY, W, 2).fill();
         doc.fillColor('#ffffff').fontSize(9).font('Helvetica-Bold').text('Thank you for choosing Emerald Pearland Events.', 0, footerY + 12, { width: W, align: 'center' });
-        doc.fillColor('#94a3b8').fontSize(8).font('Helvetica').text('Emerald Pearland Events  �  Nairobi, Kenya  �  emeraldpearlandevents@gmail.com  �  +254 722 446 937', 0, footerY + 28, { width: W, align: 'center' });
+        doc.fillColor('#94a3b8').fontSize(8).font('Helvetica').text('Emerald Pearland Events  ·  Nairobi, Kenya  ·  emeraldpearlandevents@gmail.com  ·  +254 722 446 937', 0, footerY + 28, { width: W, align: 'center' });
         doc.fillColor(gold).fontSize(7).text('This is an electronically generated document and is valid without a physical signature.', 0, footerY + 44, { width: W, align: 'center' });
 
         await new Promise((resolve, reject) => { stream.on('finish', resolve); stream.on('error', reject); doc.end(); });
         return path.join('invoices', filename);
     } catch(err) { doc.end(); throw err; }
 };
+
+/**
+ * Exported PDF generation helper
+ */
 exports.generateInvoicePDF = generateInvoicePDF;
-exports.downloadInvoice = async (req, res) => {
-    try {
-        const ClientInvoice = require('../models/ClientInvoice');
-        const invoice = await ClientInvoice.findById(req.params.id).populate('eventId');
-        if (!invoice) return res.status(404).send('Invoice not found');
-        
-        let pdfPath = invoice.pdfUrl;
-        if (!pdfPath) {
-            pdfPath = await generateInvoicePDF(invoice);
-            invoice.pdfUrl = pdfPath;
-            await invoice.save();
-        }
-        
-        const fs = require('fs');
-        const path = require('path');
-        const fullPath = path.join(process.cwd(), 'uploads', pdfPath);
-        
-        if (fs.existsSync(fullPath)) {
-            res.download(fullPath);
-        } else {
-            const newPdfPath = await generateInvoicePDF(invoice);
-            invoice.pdfUrl = newPdfPath;
-            await invoice.save();
-            res.download(path.join(process.cwd(), 'uploads', newPdfPath));
-        }
-    } catch (e) {
-        console.error('[invoiceController] downloadInvoice error:', e);
-        res.status(500).send('Failed to generate or download invoice PDF.');
-    }
-};
