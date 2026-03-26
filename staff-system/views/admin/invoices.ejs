@@ -282,24 +282,50 @@
 
 <script>
 window.invoicesData = <%- JSON.stringify(invoices) %>;
+window.assignmentsData = <%- JSON.stringify(assignments) %>;
+
+/**
+ * Helper: Decode HTML entities in JS for the modal
+ */
+function decodeHTMLEntities(text) {
+    if (!text) return '';
+    const textArea = document.createElement('textarea');
+    textArea.innerHTML = text;
+    return textArea.value;
+}
 
 function openViewModal(id) {
     const inv = window.invoicesData.find(i => i._id === id);
     if (!inv) return showToast('Invoice not found', 'error');
 
-    document.getElementById('viewInvNo').textContent = inv.invoiceNumber || inv.invoice_number || 'Draft';
-    document.getElementById('viewClientName').textContent = inv.clientName || inv.client_name;
-    document.getElementById('viewClientEmail').textContent = inv.clientEmail || inv.client_email;
-    document.getElementById('viewEventName').textContent = inv.eventName || inv.event_name;
+    document.getElementById('viewInvNo').textContent = decodeHTMLEntities(inv.invoiceNumber || inv.invoice_number || 'Draft');
+    document.getElementById('viewClientName').textContent = decodeHTMLEntities(inv.clientName || inv.client_name);
+    document.getElementById('viewClientEmail').textContent = decodeHTMLEntities(inv.clientEmail || inv.client_email);
+    document.getElementById('viewEventName').textContent = decodeHTMLEntities(inv.eventName || inv.event_name);
     document.getElementById('viewEventDate').textContent = inv.eventDate ? new Date(inv.eventDate).toLocaleDateString('en-KE', { weekday:'long', day:'2-digit', month:'long', year:'numeric' }) : 'No date';
     
     // Services table
     const body = document.getElementById('viewItemsBody');
     body.innerHTML = '';
-    const services = inv.services || [];
+    let services = inv.services || [];
+
+    // --- FALLBACK LOGIC ---
+    if (services.length === 0 && inv.eventId) {
+        const ev = window.assignmentsData.find(a => a._id === inv.eventId);
+        const rate = (ev && ev.pay_rate) || (inv.subtotal > 0 ? inv.subtotal : 0);
+        const count = (ev && ev.usherCount) || 1;
+        services = [{
+            name: `Staffing Services - ${decodeHTMLEntities(inv.eventName || inv.event_name)}`,
+            quantity: count,
+            unitPrice: rate / count || rate,
+            total: inv.subtotal || rate
+        }];
+    }
+    // -----------------------
+    
     services.forEach(s => {
         const row = `<tr class="border-b border-white/5">
-            <td class="px-4 py-2">${s.name || s.description || 'Service'}</td>
+            <td class="px-4 py-2">${decodeHTMLEntities(s.name || s.description || 'Service')}</td>
             <td class="px-4 py-2 text-center">${s.quantity || 1}</td>
             <td class="px-4 py-2 text-right">KSh ${Number(s.unitPrice || s.unit_price || 0).toLocaleString()}</td>
             <td class="px-4 py-2 text-right font-bold text-tx-1">KSh ${Number(s.total || 0).toLocaleString()}</td>

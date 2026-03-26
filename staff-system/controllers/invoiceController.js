@@ -339,7 +339,33 @@ const generateInvoicePDF = async function(invoice) {
         if (invoice.staffCount) doc.text(`Staff Deployed: ${invoice.staffCount}`, eventX, doc.y + 2);
 
         // -- SERVICES TABLE ---------------------------------------
-        y = Math.max(doc.y + 30, 310);
+        // -- DATA BACKFILL / FALLBACK -----------------------------
+        // Populate event if missing and services are empty (for old/broken invoices)
+        let services = invoice.services || [];
+        if (services.length === 0 && invoice.eventId) {
+            try {
+                const Assignment = require('../models/Assignment');
+                const event = await Assignment.findById(invoice.eventId);
+                if (event) {
+                    const rate = event.pay_rate || (invoice.subtotal > 0 ? invoice.subtotal : 0);
+                    const count = event.usherCount || 1;
+                    services = [{
+                        name: `Staffing Services - ${event.title}`,
+                        description: `Professional event staffing for ${event.title}`,
+                        quantity: count,
+                        unitPrice: rate / count || rate,
+                        total: invoice.subtotal || rate
+                    }];
+                    // If subtotal is still 0, use the one from the event
+                    if ((invoice.subtotal === 0 || !invoice.subtotal) && rate > 0) {
+                        invoice.subtotal = rate;
+                        invoice.vatAmount = Math.round(rate * 0.16);
+                        invoice.totalAmount = invoice.subtotal + invoice.vatAmount;
+                    }
+                }
+            } catch (err) { console.error('PDF Fallback Error:', err); }
+        }
+
         // Table header
         doc.fillColor(darkGreen).rect(30, y, W - 60, 26).fill();
         doc.fillColor(gold).fontSize(9).font('Helvetica-Bold');
