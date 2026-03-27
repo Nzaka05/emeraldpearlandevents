@@ -67,6 +67,7 @@ router.get('/invoices', invoiceCtrl.getInvoicesPage);
 router.post('/invoices/generate', sanitizeRequestBody, invoiceCtrl.generateInvoice);
 router.get('/invoices/:id/download', invoiceCtrl.downloadInvoice);
 router.put('/invoices/:id/status', sanitizeRequestBody, invoiceCtrl.updateInvoiceStatus);
+router.put('/invoices/:id', sanitizeRequestBody, invoiceCtrl.updateInvoice);
 router.post('/invoices/:id/send-email', invoiceCtrl.sendInvoiceEmail);
 router.delete('/invoices/:id', invoiceCtrl.deleteInvoice);
 

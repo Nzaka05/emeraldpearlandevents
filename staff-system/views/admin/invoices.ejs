@@ -86,6 +86,10 @@
                                         class="btn btn-outline text-[0.6rem] py-1 px-2 border-white/10 text-tx-3 hover:bg-white/5" title="View Details in System">
                                         <i class="fa-solid fa-eye text-[0.7rem]"></i>
                                     </button>
+                                    <button onclick="openEditModal('<%= inv._id %>')"
+                                        class="btn btn-outline text-[0.6rem] py-1 px-2 border-amber-500/20 text-amber-400 hover:bg-amber-500/10" title="Edit Invoice">
+                                        <i class="fa-solid fa-pen-to-square text-[0.7rem]"></i>
+                                    </button>
                                     <a href="/portal/admin-staff/invoices/<%= inv._id %>/download" target="_blank"
                                         class="btn btn-outline text-[0.6rem] py-1 px-2 border-blue-500/20 text-blue-400 hover:bg-blue-500/10" title="Download PDF">
                                         <i class="fa-solid fa-download"></i>
@@ -280,6 +284,71 @@
     </div>
 </div>
 
+<!-- Edit Invoice Modal -->
+<div id="editModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-md z-[9999] flex items-center justify-center p-4">
+    <div class="bg-dark-card border border-amber-500/30 rounded-2xl shadow-[0_0_40px_rgba(245,158,11,0.1)] max-w-xl w-full max-h-[90vh] overflow-y-auto">
+        <div class="px-5 py-4 border-b border-amber-500/20 flex items-center justify-between sticky top-0 bg-dark-card z-10">
+            <h3 class="text-sm font-bold text-tx-1 flex items-center gap-2">
+                <i class="fa-solid fa-pen-to-square text-amber-400"></i> Edit Invoice
+                <span id="editInvNo" class="text-[0.6rem] font-mono text-tx-3 bg-white/5 px-2 py-0.5 rounded"></span>
+            </h3>
+            <button onclick="document.getElementById('editModal').classList.add('hidden')"
+                class="w-8 h-8 rounded-full border border-white/10 flex items-center justify-center text-tx-3 hover:text-tx-1 transition-colors">
+                <i class="fa-solid fa-xmark text-xs"></i>
+            </button>
+        </div>
+        <form id="editInvoiceForm" class="p-5 space-y-4">
+            <input type="hidden" id="editInvId">
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-[0.65rem] font-bold uppercase tracking-widest text-tx-3 mb-1.5">Client Name *</label>
+                    <input type="text" id="editClientName" required class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-tx-1 focus:border-amber-500/40 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-[0.65rem] font-bold uppercase tracking-widest text-tx-3 mb-1.5">Client Email *</label>
+                    <input type="email" id="editClientEmail" required class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-tx-1 focus:border-amber-500/40 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-[0.65rem] font-bold uppercase tracking-widest text-tx-3 mb-1.5">Event Name *</label>
+                    <input type="text" id="editEventName" required class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-tx-1 focus:border-amber-500/40 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-[0.65rem] font-bold uppercase tracking-widest text-tx-3 mb-1.5">Event Date</label>
+                    <input type="date" id="editEventDate" class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-tx-1 focus:border-amber-500/40 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-[0.65rem] font-bold uppercase tracking-widest text-tx-3 mb-1.5">Staff Count</label>
+                    <input type="number" id="editStaffCount" min="0" class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-tx-1 focus:border-amber-500/40 focus:outline-none">
+                </div>
+            </div>
+
+            <!-- Editable Services -->
+            <div>
+                <div class="flex items-center justify-between mb-2">
+                    <label class="text-[0.65rem] font-bold uppercase tracking-widest text-tx-3">Services</label>
+                    <button type="button" onclick="addEditServiceRow()" class="text-[0.6rem] text-amber-400 hover:text-amber-300 font-bold">+ Add Line</button>
+                </div>
+                <div id="editServiceRows" class="space-y-2"></div>
+            </div>
+
+            <div class="bg-black/30 rounded-xl p-3 text-right space-y-1">
+                <div class="text-xs text-tx-3">Subtotal: <span id="editDisplaySubtotal" class="font-mono text-tx-1">KSh 0</span></div>
+                <div class="text-xs text-tx-3">VAT (16%): <span id="editDisplayVAT" class="font-mono text-tx-1">KSh 0</span></div>
+                <div class="text-sm font-bold text-amber-400">Total: <span id="editDisplayTotal" class="font-mono">KSh 0</span></div>
+            </div>
+
+            <div>
+                <label class="block text-[0.65rem] font-bold uppercase tracking-widest text-tx-3 mb-1.5">Notes</label>
+                <textarea id="editNotes" rows="2" class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-tx-1 focus:border-amber-500/40 focus:outline-none resize-none"></textarea>
+            </div>
+
+            <button type="submit" class="btn btn-primary w-full font-bold" style="background: linear-gradient(135deg, #f59e0b, #d97706); border: none;">
+                <i class="fa-solid fa-save mr-2"></i> Save Changes & Regenerate PDF
+            </button>
+        </form>
+    </div>
+</div>
+
 <script>
 window.invoicesData = <%- JSON.stringify(invoices) %>;
 window.assignmentsData = <%- JSON.stringify(assignments) %>;
@@ -471,4 +540,104 @@ async function resendThankYou(id, email) {
     if (data.success) showToast('Emails resent to ' + email, 'success');
     else showToast(data.error || 'Failed', 'error');
 }
+
+// ════════════ EDIT INVOICE ════════════
+function openEditModal(id) {
+    const inv = window.invoicesData.find(i => i._id === id);
+    if (!inv) return showToast('Invoice not found', 'error');
+
+    document.getElementById('editInvId').value = id;
+    document.getElementById('editInvNo').textContent = inv.invoiceNumber || inv.invoice_number || '';
+    document.getElementById('editClientName').value = decodeHTMLEntities(inv.clientName || inv.client_name || '');
+    document.getElementById('editClientEmail').value = inv.clientEmail || inv.client_email || '';
+    document.getElementById('editEventName').value = decodeHTMLEntities(inv.eventName || inv.event_name || '');
+    document.getElementById('editEventDate').value = inv.eventDate ? new Date(inv.eventDate).toISOString().split('T')[0] : '';
+    document.getElementById('editStaffCount').value = inv.staffCount || 0;
+    document.getElementById('editNotes').value = inv.notes || '';
+
+    // Populate service rows
+    const container = document.getElementById('editServiceRows');
+    container.innerHTML = '';
+    let services = inv.services || [];
+
+    // If no services stored, create a placeholder row from fallback
+    if (services.length === 0) {
+        let ev = inv.eventId ? window.assignmentsData.find(a => a._id === inv.eventId) : null;
+        if (!ev && (inv.eventName || inv.event_name)) {
+            ev = window.assignmentsData.find(a => a.title === (inv.eventName || inv.event_name));
+        }
+        const rate = (ev && ev.pay_rate) || 0;
+        const count = (ev && (ev.usherCount || (ev.accepted_staff_ids ? ev.accepted_staff_ids.length : 0))) || inv.staffCount || 1;
+        services = [{ name: `Event Staffing - ${decodeHTMLEntities(inv.eventName || inv.event_name || 'Event')}`, quantity: count, unitPrice: rate, total: rate * count }];
+    }
+
+    services.forEach(s => {
+        container.insertAdjacentHTML('beforeend', `
+            <div class="edit-svc-row grid grid-cols-[1fr,60px,80px,30px] gap-2 items-center">
+                <input type="text" value="${decodeHTMLEntities(s.name || s.description || '')}" class="edit-svc-desc bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs text-tx-1 focus:border-amber-500/40 focus:outline-none">
+                <input type="number" value="${s.quantity || 1}" min="1" class="edit-svc-qty bg-black/40 border border-white/10 rounded-lg px-2 py-2 text-xs text-tx-1 text-center focus:outline-none" oninput="updateEditTotal()">
+                <input type="number" value="${s.unitPrice || s.unit_price || 0}" class="edit-svc-price bg-black/40 border border-white/10 rounded-lg px-2 py-2 text-xs text-tx-1 focus:outline-none" oninput="updateEditTotal()">
+                <button type="button" onclick="this.closest('.edit-svc-row').remove(); updateEditTotal()" class="text-red-400 hover:text-red-300 w-6 h-6 flex items-center justify-center text-xs">&times;</button>
+            </div>`);
+    });
+    updateEditTotal();
+    document.getElementById('editModal').classList.remove('hidden');
+}
+
+function addEditServiceRow() {
+    document.getElementById('editServiceRows').insertAdjacentHTML('beforeend', `
+        <div class="edit-svc-row grid grid-cols-[1fr,60px,80px,30px] gap-2 items-center">
+            <input type="text" placeholder="Description" class="edit-svc-desc bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs text-tx-1 focus:border-amber-500/40 focus:outline-none">
+            <input type="number" placeholder="Qty" value="1" min="1" class="edit-svc-qty bg-black/40 border border-white/10 rounded-lg px-2 py-2 text-xs text-tx-1 text-center focus:outline-none" oninput="updateEditTotal()">
+            <input type="number" placeholder="Rate" class="edit-svc-price bg-black/40 border border-white/10 rounded-lg px-2 py-2 text-xs text-tx-1 focus:outline-none" oninput="updateEditTotal()">
+            <button type="button" onclick="this.closest('.edit-svc-row').remove(); updateEditTotal()" class="text-red-400 hover:text-red-300 w-6 h-6 flex items-center justify-center text-xs">&times;</button>
+        </div>`);
+}
+
+function updateEditTotal() {
+    let sub = 0;
+    document.querySelectorAll('.edit-svc-row').forEach(r => {
+        const qty = parseFloat(r.querySelector('.edit-svc-qty')?.value) || 1;
+        const price = parseFloat(r.querySelector('.edit-svc-price')?.value) || 0;
+        sub += qty * price;
+    });
+    const vat = Math.round(sub * 0.16);
+    document.getElementById('editDisplaySubtotal').textContent = 'KSh ' + sub.toLocaleString();
+    document.getElementById('editDisplayVAT').textContent = 'KSh ' + vat.toLocaleString();
+    document.getElementById('editDisplayTotal').textContent = 'KSh ' + (sub + vat).toLocaleString();
+}
+
+document.getElementById('editInvoiceForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const id = document.getElementById('editInvId').value;
+    const services = [...document.querySelectorAll('.edit-svc-row')].map(r => ({
+        description: r.querySelector('.edit-svc-desc').value,
+        quantity:    r.querySelector('.edit-svc-qty').value,
+        unit_price:  r.querySelector('.edit-svc-price').value
+    })).filter(s => s.description || s.unit_price);
+
+    const body = {
+        client_name:   document.getElementById('editClientName').value,
+        client_email:  document.getElementById('editClientEmail').value,
+        event_name:    document.getElementById('editEventName').value,
+        event_date:    document.getElementById('editEventDate').value,
+        staff_count:   document.getElementById('editStaffCount').value,
+        notes:         document.getElementById('editNotes').value,
+        services_json: JSON.stringify(services)
+    };
+
+    try {
+        const csrf = document.querySelector('meta[name="csrf-token"]')?.content || '';
+        const res = await fetch(`/portal/admin-staff/invoices/${id}`, {
+            method: 'PUT',
+            headers: {'Content-Type':'application/json', 'CSRF-Token': csrf},
+            body: JSON.stringify(body)
+        });
+        const data = await res.json();
+        if (data.success) {
+            showToast('Invoice updated & PDF regenerated!', 'success');
+            setTimeout(() => location.reload(), 1200);
+        } else showToast(data.error || 'Update failed', 'error');
+    } catch(e) { showToast('Error updating invoice', 'error'); }
+});
 </script>

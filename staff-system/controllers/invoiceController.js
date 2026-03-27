@@ -34,8 +34,8 @@ exports.getInvoicesPage = async (req, res) => {
             .sort({ createdAt: -1 })
             .lean();
 
-        const assignments = await Assignment.find({ status: 'Completed' })
-            .select('title date client_name client_email pay_rate accepted_staff_ids')
+        const assignments = await Assignment.find()
+            .select('title date client_name client_email pay_rate accepted_staff_ids usherCount status')
             .sort({ date: -1 })
             .lean();
 
@@ -257,6 +257,81 @@ exports.deleteInvoice = async (req, res) => {
         if (!invoice) return res.status(404).json({ success: false, error: 'Not found' });
         res.json({ success: true });
     } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+};
+
+// —— PUT /admin/invoices/:id — Update invoice fully ————————————————————————————
+exports.updateInvoice = async (req, res) => {
+    try {
+        const invoice = await ClientInvoice.findById(req.params.id);
+        if (!invoice) return res.status(404).json({ success: false, error: 'Not found' });
+
+        const {
+            client_name, client_email, event_name,
+            event_date, staff_count, services_json, notes, assignment_id
+        } = req.body;
+
+        let services = [];
+        try { services = JSON.parse(services_json || '[]'); } catch(e) { services = []; }
+
+        let vatRate = invoice.vatRate || 16;
+        try {
+            const PricingSettings = require('../models/PricingSettings');
+            const pricing = await PricingSettings.findOne().lean();
+            if (pricing && pricing.vatRate) vatRate = pricing.vatRate;
+        } catch(_) {}
+
+        const subtotal   = services.reduce((sum, s) => sum + (parseFloat(s.unit_price || s.unitPrice || 0) * parseInt(s.quantity || 1)), 0);
+        const vatAmount  = Math.round(subtotal * vatRate / 100);
+        const totalAmount = subtotal + vatAmount;
+
+        const servicesForDb = services.map(s => ({
+            name:       s.description || s.name || 'Service',
+            description: s.description || s.name || '',
+            quantity:   parseInt(s.quantity) || 1,
+            unitPrice:  parseFloat(s.unit_price || s.unitPrice) || 0,
+            total:      parseFloat(s.unit_price || s.unitPrice || 0) * parseInt(s.quantity || 1)
+        }));
+
+        if (client_name) invoice.clientName = client_name;
+        if (client_email) invoice.clientEmail = client_email;
+        if (event_name) invoice.eventName = event_name;
+        if (event_date) invoice.eventDate = new Date(event_date);
+        if (staff_count) invoice.staffCount = parseInt(staff_count) || 0;
+        if (assignment_id) invoice.eventId = assignment_id;
+        if (notes !== undefined) invoice.notes = notes;
+
+        invoice.services = servicesForDb;
+        invoice.markModified('services');
+        invoice.subtotal = subtotal;
+        invoice.vatRate = vatRate;
+        invoice.vatAmount = vatAmount;
+        invoice.totalAmount = totalAmount;
+
+        await invoice.save();
+
+        // Regenerate PDF
+        try {
+            const pdfPath = await generateInvoicePDF(invoice);
+            invoice.pdfUrl = pdfPath;
+            await invoice.save();
+        } catch (pdfErr) {
+            console.error('[invoiceController] PDF regen error:', pdfErr);
+        }
+
+        await AuditLog.create({
+            actionType:  'UPDATE_INVOICE',
+            targetModel: 'ClientInvoice',
+            targetId:    invoice._id,
+            performedBy: req.user._id,
+            details:     { invoiceNumber: invoice.invoiceNumber, totalAmount }
+        });
+
+        res.json({ success: true, invoice: invoice.toObject() });
+
+    } catch (err) {
+        console.error('[invoiceController] updateInvoice error:', err);
         res.status(500).json({ success: false, error: err.message });
     }
 };
