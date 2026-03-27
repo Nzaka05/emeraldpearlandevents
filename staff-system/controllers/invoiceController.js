@@ -72,7 +72,10 @@ exports.generateInvoice = async (req, res) => {
         } = req.body;
 
         let services = [];
-        try { services = JSON.parse(services_json || '[]'); } catch(e) { services = []; }
+        try { 
+            const cleanJson = decodeHTMLEntities(services_json || '[]');
+            services = JSON.parse(cleanJson); 
+        } catch(e) { services = []; }
 
         // Calculate totals using PricingSettings vatRate if available
         let vatRate = 16;
@@ -273,7 +276,10 @@ exports.updateInvoice = async (req, res) => {
         } = req.body;
 
         let services = [];
-        try { services = JSON.parse(services_json || '[]'); } catch(e) { services = []; }
+        try { 
+            const cleanJson = decodeHTMLEntities(services_json || '[]');
+            services = JSON.parse(cleanJson); 
+        } catch(e) { services = []; }
 
         let vatRate = invoice.vatRate || 16;
         try {
