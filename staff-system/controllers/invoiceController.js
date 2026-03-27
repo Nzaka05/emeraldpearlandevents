@@ -386,14 +386,14 @@ const generateInvoicePDF = async function(invoice) {
         }
 
         // Company Details (Center-Left)
-        doc.fillColor('#ffffff').fontSize(22).font('Helvetica-Bold').text('EMERALD PEARLAND', 160, 30);
-        doc.fillColor('#ffffff').fontSize(22).font('Helvetica-Bold').text('EVENTS', 160, 54);
-        doc.fillColor('#d1d5db').fontSize(9).font('Helvetica').text('Professional Event Staffing Services', 160, 84);
-        doc.fillColor('#9ca3af').fontSize(8).text('Nairobi, Kenya  ·  emeraldpearlandevents@gmail.com  ·  www.emeraldpearlandevents.com', 160, 98);
+        doc.fillColor('#ffffff').fontSize(28).font('Helvetica-Bold').text('EMERALD PEARLAND', 160, 26);
+        doc.fillColor('#ffffff').fontSize(28).font('Helvetica-Bold').text('EVENTS', 160, 56);
+        doc.fillColor('#d1d5db').fontSize(9).font('Helvetica').text('Professional Event Staffing Services', 160, 92);
+        doc.fillColor('#9ca3af').fontSize(8).text('Nairobi, Kenya  ·  emeraldpearlandevents@gmail.com  ·  www.emeraldpearlandevents.com', 160, 106);
 
         // INVOICE text (Top Right)
-        doc.fillColor('#ffffff').fontSize(32).font('Helvetica-Bold').text('INVOICE', 380, 30, { width: 180, align: 'right' });
-        doc.fillColor('#9ca3af').fontSize(9).font('Helvetica').text('CLIENT INVOICE', 380, 68, { width: 180, align: 'right' });
+        doc.fillColor('#ffffff').fontSize(28).font('Helvetica-Bold').text('INVOICE', 380, 26, { width: 180, align: 'right' });
+        doc.fillColor('#9ca3af').fontSize(9).font('Helvetica').text('CLIENT INVOICE', 380, 58, { width: 180, align: 'right' });
 
         // -- INVOICE META VALUES (Below Header) -------------------
         doc.fillColor(textMuted).fontSize(8).font('Helvetica-Bold').text('INVOICE NO.', 40, 150);
