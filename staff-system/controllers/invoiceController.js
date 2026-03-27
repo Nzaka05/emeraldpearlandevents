@@ -339,22 +339,38 @@ exports.updateInvoice = async (req, res) => {
 // —— Helper: Generate PDF using pdfkit ————————————————————————————————————————
 const generateInvoicePDF = async function(invoice) {
     const PDFDocument = require('pdfkit');
+    const path = require('path');
+    const fs = require('fs');
     const outputDir = path.join(__dirname, '../public/invoices');
     if (!fs.existsSync(outputDir)) fs.mkdirSync(outputDir, { recursive: true });
-    const filename = `${invoice.invoiceNumber || invoice.invoice_number || 'invoice'}.pdf`;
+    
+    // Properly sanitize invoice number for filename
+    let invNum = invoice.invoiceNumber || invoice.invoice_number || 'invoice';
+    invNum = invNum.replace(/[^a-zA-Z0-9_-]/g, '');
+    const filename = `${invNum}.pdf`;
     const filepath = path.join(outputDir, filename);
+    
     const doc = new PDFDocument({ margin: 0, size: 'A4' });
     const stream = fs.createWriteStream(filepath);
     doc.pipe(stream);
+    
     try {
-        const W = 595, gold = '#C9A84C', darkGreen = '#0D2B1F', midGreen = '#1a472a', lightGrey = '#F7F4EF', slate = '#334155', muted = '#64748b';
+        const W = 595, gold = '#C9A84C', darkGreen = '#1e3b2b', textDark = '#111827', textMuted = '#6b7280', beigeRow = '#FAF8F5';
+
+        // Helper
+        const decodeHTMLEntities = (str) => {
+            if (!str) return '';
+            return str.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"')
+                      .replace(/&#039;/g, "'").replace(/&#39;/g, "'").replace(/&apos;/g, "'").replace(/&#x27;/g, "'");
+        };
 
         // -- HEADER BAND ------------------------------------------
+        // Dark green banner
         doc.fillColor(darkGreen).rect(0, 0, W, 130).fill();
-        // Gold left accent bar
-        doc.fillColor(gold).rect(0, 0, 6, 130).fill();
-        // Logo area circle
-        doc.fillColor('#ffffff').circle(70, 65, 38).fill();
+        // White logo box on the left (matches screenshot exactly)
+        doc.fillColor('#ffffff').rect(0, 0, 140, 130).fill();
+        
+        // Logo image
         try {
             const https = require('https');
             const logoBuffer = await new Promise((res, rej) => {
@@ -362,191 +378,143 @@ const generateInvoicePDF = async function(invoice) {
                     const c = []; r.on('data', d => c.push(d)); r.on('end', () => res(Buffer.concat(c))); r.on('error', rej);
                 }).on('error', rej);
             });
+            // Center the logo in the 140x130 white box
             doc.image(logoBuffer, 35, 30, { width: 70, height: 70 });
-        } catch(e) {}
-        // Company name
-        doc.fillColor(gold).fontSize(20).font('Helvetica-Bold').text('EMERALD PEARLAND', 125, 28);
-        doc.fillColor(gold).fontSize(20).font('Helvetica-Bold').text('EVENTS', 125, 50);
-        doc.fillColor('#ffffff').fontSize(9).font('Helvetica').text('Professional Event Staffing Services', 125, 74);
-        doc.fillColor('#94a3b8').fontSize(8).text('Nairobi, Kenya  ·  emeraldpearlandevents@gmail.com  ·  www.emeraldpearlandevents.com', 125, 88);
-        // INVOICE label top right
-        doc.fillColor(gold).fontSize(28).font('Helvetica-Bold').text(invoice.etrNumber ? 'RECEIPT' : 'INVOICE', 380, 40, { width: 180, align: 'right' });
-        doc.fillColor('#94a3b8').fontSize(8).font('Helvetica').text(invoice.etrNumber ? 'ELECTRONIC TAX RECEIPT' : 'CLIENT INVOICE', 380, 74, { width: 180, align: 'right' });
+        } catch(e) {
+            // Draw circle if image fails to load
+            doc.fillColor(darkGreen).circle(70, 65, 35).fill();
+        }
 
-        // -- INVOICE META BAR -------------------------------------
-        doc.fillColor(lightGrey).rect(0, 130, W, 55).fill();
-        doc.fillColor(gold).rect(0, 130, W, 2).fill();
-        // Invoice number
-        doc.fillColor(muted).fontSize(8).font('Helvetica').text('INVOICE NO.', 30, 143);
-        doc.fillColor(darkGreen).fontSize(11).font('Helvetica-Bold').text(decodeHTMLEntities(invoice.invoiceNumber || invoice.invoice_number || 'N/A'), 30, 156);
-        // Date
-        doc.fillColor(muted).fontSize(8).font('Helvetica').text('DATE ISSUED', 185, 143);
-        doc.fillColor(darkGreen).fontSize(11).font('Helvetica-Bold').text(new Date(invoice.createdAt || Date.now()).toLocaleDateString('en-KE', { day:'2-digit', month:'long', year:'numeric' }), 185, 156);
-        // Status
-        doc.fillColor(muted).fontSize(8).font('Helvetica').text('STATUS', 370, 143);
-        const statusColor = invoice.invoiceStatus === 'Paid' ? '#059669' : invoice.invoiceStatus === 'Sent' ? '#2563eb' : '#92701a';
-        doc.fillColor(statusColor).fontSize(11).font('Helvetica-Bold').text((invoice.invoiceStatus || invoice.status || 'Draft').toUpperCase(), 370, 156);
-        // ETR number if present
-        if (invoice.etrNumber) {
-            doc.fillColor(muted).fontSize(8).font('Helvetica').text('ETR NO.', 460, 143);
-            doc.fillColor('#059669').fontSize(11).font('Helvetica-Bold').text(decodeHTMLEntities(invoice.etrNumber), 460, 156);
-        }
-        doc.fillColor(gold).rect(0, 183, W, 1).fill();
+        // Company Details (Center-Left)
+        doc.fillColor('#ffffff').fontSize(22).font('Helvetica-Bold').text('EMERALD PEARLAND', 160, 30);
+        doc.fillColor('#ffffff').fontSize(22).font('Helvetica-Bold').text('EVENTS', 160, 54);
+        doc.fillColor('#d1d5db').fontSize(9).font('Helvetica').text('Professional Event Staffing Services', 160, 84);
+        doc.fillColor('#9ca3af').fontSize(8).text('Nairobi, Kenya  ·  emeraldpearlandevents@gmail.com  ·  www.emeraldpearlandevents.com', 160, 98);
 
-        // -- BILLED TO + EVENT DETAILS ----------------------------
-        let y = 205;
-        // Left: Billed To
-        doc.fillColor(gold).fontSize(8).font('Helvetica-Bold').text('BILLED TO', 30, y);
-        doc.fillColor(darkGreen).rect(30, y + 12, 40, 2).fill();
-        doc.fillColor(darkGreen).fontSize(13).font('Helvetica-Bold').text(decodeHTMLEntities(invoice.clientName || invoice.client_name || 'Client'), 30, y + 20, { width: 250 });
-        doc.fillColor(slate).fontSize(10).font('Helvetica');
-        let currentBilledY = doc.y + 2;
-        if (invoice.clientEmail || invoice.client_email) {
-            doc.text(decodeHTMLEntities(invoice.clientEmail || invoice.client_email), 30, currentBilledY, { width: 250 });
-            currentBilledY = doc.y + 2;
-        }
-        if (invoice.clientPhone) {
-            doc.text(decodeHTMLEntities(invoice.clientPhone), 30, currentBilledY);
-            currentBilledY = doc.y + 2;
-        }
-        const leftColBottom = currentBilledY;
+        // INVOICE text (Top Right)
+        doc.fillColor('#ffffff').fontSize(32).font('Helvetica-Bold').text('INVOICE', 380, 30, { width: 180, align: 'right' });
+        doc.fillColor('#9ca3af').fontSize(9).font('Helvetica').text('CLIENT INVOICE', 380, 68, { width: 180, align: 'right' });
 
-        // Right: Event Details
-        const eventX = 320;
-        doc.fillColor(gold).fontSize(8).font('Helvetica-Bold').text('EVENT DETAILS', eventX, y);
-        doc.fillColor(darkGreen).rect(eventX, y + 12, 40, 2).fill();
-        doc.fillColor(darkGreen).fontSize(13).font('Helvetica-Bold').text(decodeHTMLEntities(invoice.eventName || invoice.event_name || 'Event'), eventX, y + 20, { width: 245 });
-        const eventNameBottomY = doc.y;
-        doc.fillColor(slate).fontSize(10).font('Helvetica');
-        let currentEventY = eventNameBottomY + 4;
-        if (invoice.eventDate) {
-            doc.text(`Date: ${new Date(invoice.eventDate).toLocaleDateString('en-KE', { weekday:'long', day:'2-digit', month:'long', year:'numeric' })}`, eventX, currentEventY);
-            currentEventY = doc.y + 2;
-        }
-        if (invoice.eventLocation) {
-            doc.text(`Location: ${decodeHTMLEntities(invoice.eventLocation)}`, eventX, currentEventY, { width: 245 });
-            currentEventY = doc.y + 2;
-        }
-        if (invoice.staffCount) {
-            doc.text(`Staff Deployed: ${invoice.staffCount}`, eventX, currentEventY);
-            currentEventY = doc.y + 2;
-        }
-        const rightColBottom = currentEventY;
+        // -- INVOICE META VALUES (Below Header) -------------------
+        doc.fillColor(textMuted).fontSize(8).font('Helvetica-Bold').text('INVOICE NO.', 40, 150);
+        doc.fillColor(darkGreen).fontSize(11).font('Helvetica-Bold').text(decodeHTMLEntities(invoice.invoiceNumber || invoice.invoice_number || 'N/A'), 40, 164);
+        
+        doc.fillColor(textMuted).fontSize(8).font('Helvetica-Bold').text('DATE ISSUED', 220, 150);
+        doc.fillColor(darkGreen).fontSize(11).font('Helvetica-Bold').text(new Date(invoice.createdAt || Date.now()).toLocaleDateString('en-GB', { day:'2-digit', month:'long', year:'numeric' }), 220, 164);
+        
+        doc.fillColor(textMuted).fontSize(8).font('Helvetica-Bold').text('STATUS', 400, 150);
+        const st = (invoice.invoiceStatus || invoice.status || 'DRAFT').toUpperCase();
+        doc.fillColor(st === 'PAID' ? '#059669' : gold).fontSize(11).font('Helvetica-Bold').text(st, 400, 164);
+        
+        // Thin separator line
+        doc.fillColor('#e5e7eb').rect(40, 190, W - 80, 1).fill();
 
-        // -- SERVICES TABLE ---------------------------------------
-        // -- DATA BACKFILL / FALLBACK -----------------------------
-        // Populate event if missing and services are empty (for old/broken invoices)
+        // -- BILLED TO & EVENT DETAILS ----------------------------
+        let y = 220;
+        doc.fillColor(gold).fontSize(9).font('Helvetica-Bold').text('BILLED TO', 40, y);
+        doc.fillColor(darkGreen).fontSize(14).font('Helvetica-Bold').text(decodeHTMLEntities(invoice.clientName || invoice.client_name || 'Client'), 40, y + 16, { width: 250 });
+        doc.fillColor(textMuted).fontSize(10).font('Helvetica').text(decodeHTMLEntities(invoice.clientEmail || invoice.client_email || ''), 40, doc.y + 4, { width: 250 });
+        const leftBottom = doc.y;
+
+        doc.fillColor(gold).fontSize(9).font('Helvetica-Bold').text('EVENT DETAILS', 300, y);
+        doc.fillColor(darkGreen).fontSize(14).font('Helvetica-Bold').text(decodeHTMLEntities(invoice.eventName || invoice.event_name || 'Event Name'), 300, y + 16, { width: 250 });
+        const evtDateStr = invoice.eventDate ? new Date(invoice.eventDate).toLocaleDateString('en-GB', { weekday:'long', day:'2-digit', month:'long', year:'numeric' }) : '';
+        if (evtDateStr) {
+            doc.fillColor(textMuted).fontSize(10).font('Helvetica').text(`Date: ${evtDateStr}`, 300, doc.y + 4, { width: 250 });
+        }
+        const rightBottom = doc.y;
+
+        y = Math.max(leftBottom, rightBottom) + 20;
+
+        // -- DATA BACKFILL ----------------------------------------
         let services = invoice.services || [];
         if (services.length === 0) {
             try {
                 const Assignment = require('../models/Assignment');
                 let event = null;
-                
-                if (invoice.eventId) {
-                    event = await Assignment.findById(invoice.eventId);
-                } else if (invoice.eventName || invoice.event_name) {
-                    // Aggressive match by name if ID is missing
-                    event = await Assignment.findOne({ title: invoice.eventName || invoice.event_name });
-                }
+                if (invoice.eventId) event = await Assignment.findById(invoice.eventId);
+                else if (invoice.eventName || invoice.event_name) event = await Assignment.findOne({ title: invoice.eventName || invoice.event_name });
 
                 if (event) {
                     const rate = event.pay_rate || (invoice.subtotal > 0 ? invoice.subtotal : 0);
                     const count = event.usherCount || (event.accepted_staff_ids ? event.accepted_staff_ids.length : 0) || 1;
                     services = [{
-                        name: `Staffing Services - ${event.title}`,
-                        description: `Professional event staffing for ${event.title}`,
-                        quantity: count,
-                        unitPrice: rate,
-                        total: invoice.subtotal || (rate * count)
+                        name: `Staffing Services - ${event.title}`, quantity: count, unitPrice: rate, total: invoice.subtotal || (rate * count)
                     }];
-                    // Update invoice totals if they are zero
                     if ((!invoice.subtotal || invoice.subtotal === 0) && rate > 0) {
                         invoice.subtotal = rate * count;
                         invoice.vatAmount = Math.round(invoice.subtotal * 0.16);
                         invoice.totalAmount = invoice.subtotal + invoice.vatAmount;
                     }
                 }
-            } catch (err) { console.error('PDF Fallback Error:', err); }
+            } catch (err) {}
         }
 
-        // Determine where to start the table safely
-        y = Math.max(leftColBottom, rightColBottom) + 40;
-        if (y < 320) y = 320; // Maintain minimum separation
+        // -- SERVICES TABLE ---------------------------------------
+        // Table Header (Solid Gold background)
+        doc.fillColor(gold).rect(40, y, W - 80, 24).fill();
+        doc.fillColor(darkGreen).fontSize(9).font('Helvetica-Bold');
+        doc.text('DESCRIPTION', 50, y + 7);
+        doc.text('QTY', 370, y + 7, { width: 40, align: 'center' });
+        doc.text('RATE (KSh)', 420, y + 7, { width: 60, align: 'right' });
+        doc.text('TOTAL (KSh)', 490, y + 7, { width: 60, align: 'right' });
+        y += 24;
 
-        // Table header
-        doc.fillColor(darkGreen).rect(30, y, W - 60, 26).fill();
-        doc.fillColor(gold).fontSize(9).font('Helvetica-Bold');
-        doc.text('DESCRIPTION', 42, y + 8);
-        doc.text('QTY', 355, y + 8, { width: 40, align: 'center' });
-        doc.text('RATE (KSh)', 400, y + 8, { width: 70, align: 'right' });
-        doc.text('TOTAL (KSh)', 475, y + 8, { width: 80, align: 'right' });
-        y += 26;
-
+        // Table Rows (Alternating white/beige)
         services.forEach((svc, i) => {
-            const bg = i % 2 === 0 ? '#ffffff' : '#f8fafc';
-            doc.fillColor(bg).rect(30, y, W - 60, 26).fill();
-            doc.fillColor('#e2e8f0').rect(30, y + 25, W - 60, 1).fill();
-            doc.fillColor(slate).fontSize(10).font('Helvetica');
-            doc.text(decodeHTMLEntities(svc.name || svc.description || '—'), 42, y + 7, { width: 300 });
-            doc.text(String(svc.quantity || 1), 355, y + 7, { width: 40, align: 'center' });
-            doc.text(Number(svc.unitPrice || svc.unit_price || 0).toLocaleString(), 400, y + 7, { width: 70, align: 'right' });
-            doc.fillColor(darkGreen).font('Helvetica-Bold').text(Number(svc.total || 0).toLocaleString(), 475, y + 7, { width: 80, align: 'right' });
+            const bg = i % 2 === 0 ? '#ffffff' : beigeRow;
+            doc.fillColor(bg).rect(40, y, W - 80, 26).fill();
+            doc.fillColor(darkGreen).fontSize(9).font('Helvetica');
+            doc.text(decodeHTMLEntities(svc.name || svc.description || '—'), 50, y + 8, { width: 310 });
+            doc.text(String(svc.quantity || 1), 370, y + 8, { width: 40, align: 'center' });
+            doc.text(Number(svc.unitPrice || svc.unit_price || 0).toLocaleString(), 420, y + 8, { width: 60, align: 'right' });
+            doc.text(Number(svc.total || 0).toLocaleString(), 490, y + 8, { width: 60, align: 'right' });
             y += 26;
         });
 
-        // -- TOTALS BLOCK -----------------------------------------
-        y += 16;
-        const totalsX = 350;
-        // Subtotal row
-        doc.fillColor('#f8fafc').rect(totalsX, y, W - totalsX - 30, 24).fill();
-        doc.fillColor(muted).fontSize(10).font('Helvetica').text('Subtotal', totalsX + 10, y + 6);
-        doc.fillColor(slate).font('Helvetica-Bold').text(`KSh ${Number(invoice.subtotal || 0).toLocaleString()}`, totalsX + 10, y + 6, { width: W - totalsX - 50, align: 'right' });
-        y += 24;
-        // VAT row
-        doc.fillColor('#f1f5f9').rect(totalsX, y, W - totalsX - 30, 24).fill();
-        doc.fillColor(muted).fontSize(10).font('Helvetica').text(`VAT (${invoice.vatRate || 16}%)`, totalsX + 10, y + 6);
-        doc.fillColor(slate).font('Helvetica-Bold').text(`KSh ${Number(invoice.vatAmount || invoice.tax_amount || 0).toLocaleString()}`, totalsX + 10, y + 6, { width: W - totalsX - 50, align: 'right' });
-        y += 24;
-        // Total row - gold highlight
-        doc.fillColor(darkGreen).rect(totalsX, y, W - totalsX - 30, 32).fill();
-        doc.fillColor(gold).rect(totalsX, y, 4, 32).fill();
-        doc.fillColor('#ffffff').fontSize(11).font('Helvetica-Bold').text('TOTAL DUE', totalsX + 14, y + 9);
-        doc.fillColor(gold).fontSize(13).font('Helvetica-Bold').text(`KSh ${Number(invoice.totalAmount || invoice.total_amount || 0).toLocaleString()}`, totalsX + 14, y + 9, { width: W - totalsX - 54, align: 'right' });
-        y += 46;
+        // Add a thin line under the table
+        doc.fillColor('#e5e7eb').rect(40, y + 10, W - 80, 1).fill();
+        
+        y += 30;
 
-        // -- PAYMENT INFO -----------------------------------------
-        if (invoice.paymentMethod || invoice.transactionId) {
-            doc.fillColor(gold).rect(30, y, W - 60, 1).fill();
-            y += 10;
-            doc.fillColor(muted).fontSize(8).font('Helvetica-Bold').text('PAYMENT INFORMATION', 30, y);
-            y += 14;
-            if (invoice.paymentMethod) { doc.fillColor(slate).fontSize(9).font('Helvetica').text(`Method: ${invoice.paymentMethod}`, 30, y); y += 14; }
-            if (invoice.transactionId) { doc.fillColor(slate).fontSize(9).text(`Transaction ID: ${invoice.transactionId}`, 30, y); y += 14; }
-            if (invoice.paymentStatus) { doc.fillColor(invoice.paymentStatus === 'paid' ? '#059669' : '#92701a').fontSize(9).font('Helvetica-Bold').text(`Payment Status: ${invoice.paymentStatus.toUpperCase()}`, 30, y); y += 14; }
-        }
+        // -- TOTALS BLOCK -----------------------------------------
+        const totalsX = 350;
+        const colWidths = [100, 105];
+
+        // Subtotal row (White Background)
+        doc.fillColor(textMuted).fontSize(10).font('Helvetica').text('Subtotal', totalsX, y, { width: colWidths[0], align: 'right' });
+        doc.fillColor(textDark).font('Helvetica-Bold').text(`KSh ${Number(invoice.subtotal || 0).toLocaleString()}`, totalsX + colWidths[0] + 10, y, { width: colWidths[1]-10, align: 'right' });
+        y += 20;
+
+        // VAT row (Light Gray background like screenshot)
+        doc.fillColor('#eeeeee').rect(350, y-4, (W-40)-350, 24).fill();
+        doc.fillColor(textMuted).fontSize(10).font('Helvetica').text(`VAT (${invoice.vatRate || 16}%)`, totalsX, y+2, { width: colWidths[0], align: 'right' });
+        doc.fillColor(textDark).font('Helvetica-Bold').text(`KSh ${Number(invoice.vatAmount || invoice.tax_amount || 0).toLocaleString()}`, totalsX + colWidths[0] + 10, y+2, { width: colWidths[1]-10, align: 'right' });
+        y += 24;
+
+        // TOTAL DUE row (Dark Green Background)
+        doc.fillColor(darkGreen).rect(350, y, (W-40)-350, 28).fill();
+        doc.fillColor('#ffffff').fontSize(11).font('Helvetica-Bold').text('TOTAL DUE', totalsX, y+8, { width: colWidths[0], align: 'right' });
+        doc.fillColor(gold).fontSize(13).font('Helvetica-Bold').text(`KSh ${Number(invoice.totalAmount || invoice.total_amount || 0).toLocaleString()}`, totalsX + colWidths[0] + 10, y+7, { width: colWidths[1]-10, align: 'right' });
+        
+        y += 40;
 
         // -- NOTES ------------------------------------------------
         if (invoice.notes && invoice.notes !== `Auto-generated invoice for ${invoice.eventName}`) {
-            y += 10;
-            doc.fillColor(gold).rect(30, y, 3, 30).fill();
-            doc.fillColor(muted).fontSize(9).font('Helvetica-Oblique').text(decodeHTMLEntities(invoice.notes), 40, y + 5, { width: W - 80 });
-            y += 40;
+            y += 20;
+            doc.fillColor(textMuted).fontSize(9).font('Helvetica-Oblique').text(decodeHTMLEntities(invoice.notes), 40, y, { width: W - 80 });
         }
 
         // -- FOOTER -----------------------------------------------
-        const footerY = 780;
-        doc.fillColor(darkGreen).rect(0, footerY, W, 62).fill();
-        doc.fillColor(gold).rect(0, footerY, W, 2).fill();
-        doc.fillColor('#ffffff').fontSize(9).font('Helvetica-Bold').text('Thank you for choosing Emerald Pearland Events.', 0, footerY + 12, { width: W, align: 'center' });
-        doc.fillColor('#94a3b8').fontSize(8).font('Helvetica').text('Emerald Pearland Events  ·  Nairobi, Kenya  ·  emeraldpearlandevents@gmail.com  ·  +254 722 446 937', 0, footerY + 28, { width: W, align: 'center' });
-        doc.fillColor(gold).fontSize(7).text('This is an electronically generated document and is valid without a physical signature.', 0, footerY + 44, { width: W, align: 'center' });
+        const footerY = 770;
+        doc.fillColor(darkGreen).rect(0, footerY, W, 72).fill();
+        doc.fillColor('#ffffff').fontSize(10).font('Helvetica-Bold').text('Thank you for choosing Emerald Pearland Events.', 0, footerY + 18, { width: W, align: 'center' });
+        doc.fillColor('#d1d5db').fontSize(8).font('Helvetica').text('Emerald Pearland Events  ·  Nairobi, Kenya  ·  emeraldpearlandevents@gmail.com  ·  +254 722 446 937', 0, footerY + 36, { width: W, align: 'center' });
+        doc.fillColor(gold).fontSize(7).font('Helvetica-Oblique').text('This is an electronically generated document and is valid without a physical signature.', 0, footerY + 52, { width: W, align: 'center' });
 
         await new Promise((resolve, reject) => { stream.on('finish', resolve); stream.on('error', reject); doc.end(); });
         return path.join('invoices', filename);
     } catch(err) { doc.end(); throw err; }
 };
 
-/**
- * Exported PDF generation helper
- */
 exports.generateInvoicePDF = generateInvoicePDF;
