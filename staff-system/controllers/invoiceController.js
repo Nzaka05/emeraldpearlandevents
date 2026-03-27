@@ -302,6 +302,18 @@ exports.updateInvoice = async (req, res) => {
         if (assignment_id) invoice.eventId = assignment_id;
         if (notes !== undefined) invoice.notes = notes;
 
+        // If the user accidentally deleted all lines, or if the form filtered them out,
+        // we forcefully add back one line so the invoice doesn't become empty.
+        if (servicesForDb.length === 0) {
+            servicesForDb.push({
+                name: `Staffing Services - ${event_name || invoice.eventName || 'Event'}`,
+                description: '',
+                quantity: parseInt(staff_count) || 1,
+                unitPrice: subtotal || invoice.subtotal || 0,
+                total: subtotal || invoice.subtotal || 0
+            });
+        }
+
         invoice.services = servicesForDb;
         invoice.markModified('services');
         invoice.subtotal = subtotal;
@@ -433,21 +445,36 @@ const generateInvoicePDF = async function(invoice) {
                 const Assignment = require('../models/Assignment');
                 let event = null;
                 if (invoice.eventId) event = await Assignment.findById(invoice.eventId);
-                else if (invoice.eventName || invoice.event_name) event = await Assignment.findOne({ title: invoice.eventName || invoice.event_name });
+                else if (invoice.eventName || invoice.event_name) {
+                    // Use a looser regex match if exact match fails
+                    event = await Assignment.findOne({ title: new RegExp((invoice.eventName || invoice.event_name).replace(/[-\\/\\\\^$*+?.()|[\\]{}]/g, '\\\\$&').substring(0, 15), 'i') });
+                }
 
-                if (event) {
-                    const rate = event.pay_rate || (invoice.subtotal > 0 ? invoice.subtotal : 0);
-                    const count = event.usherCount || (event.accepted_staff_ids ? event.accepted_staff_ids.length : 0) || 1;
-                    services = [{
-                        name: `Staffing Services - ${event.title}`, quantity: count, unitPrice: rate, total: invoice.subtotal || (rate * count)
-                    }];
-                    if ((!invoice.subtotal || invoice.subtotal === 0) && rate > 0) {
-                        invoice.subtotal = rate * count;
-                        invoice.vatAmount = Math.round(invoice.subtotal * 0.16);
-                        invoice.totalAmount = invoice.subtotal + invoice.vatAmount;
-                    }
+                const rate = (event && event.pay_rate) || (invoice.subtotal > 0 ? invoice.subtotal : 0);
+                const count = (event && (event.usherCount || (event.accepted_staff_ids ? event.accepted_staff_ids.length : 0))) || invoice.staffCount || 1;
+                
+                services = [{
+                    name: `Staffing Services - ${event ? event.title : decodeHTMLEntities(invoice.eventName || invoice.event_name || 'Event')}`, 
+                    quantity: count, 
+                    unitPrice: rate, 
+                    total: invoice.subtotal || (rate * count)
+                }];
+                if ((!invoice.subtotal || invoice.subtotal === 0) && rate > 0) {
+                    invoice.subtotal = rate * count;
+                    invoice.vatAmount = Math.round(invoice.subtotal * invoice.vatRate / 100);
+                    invoice.totalAmount = invoice.subtotal + invoice.vatAmount;
                 }
             } catch (err) {}
+            
+            // Bulletproof guarantee: if try-catch completely failed or still left it empty
+            if (services.length === 0) {
+                 services = [{
+                    name: `Staffing Services - ${decodeHTMLEntities(invoice.eventName || invoice.event_name || 'Event')}`, 
+                    quantity: invoice.staffCount || 1, 
+                    unitPrice: invoice.subtotal || 0, 
+                    total: invoice.subtotal || 0
+                }];
+            }
         }
 
         // -- SERVICES TABLE ---------------------------------------
