@@ -6,7 +6,7 @@
             <i class="fa-solid fa-file-invoice text-blue-400"></i>
             <span>Client Invoices</span>
         </h1>
-        <p class="text-[0.7rem] text-tx-3 mt-1 uppercase tracking-widest font-mono">Auto-Generated Invoice Management</p>
+        <p class="text-[0.7rem] text-tx-3 mt-1 uppercase tracking-widest font-mono">Invoice Management & Generation</p>
     </div>
     <button onclick="document.getElementById('generateModal').classList.remove('hidden')"
         class="btn btn-primary text-xs font-bold shadow-glow-emerald">
@@ -50,7 +50,7 @@
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-white/5">
-                    <% invoices.forEach(function(inv) { 
+                    <% invoices.forEach(function(inv) {
                         var stMap = {
                             Draft: 'text-tx-3 border-white/10 bg-white/5',
                             Sent:  'text-blue-400 border-blue-500/30 bg-blue-500/10',
@@ -61,7 +61,7 @@
                     %>
                         <tr class="hover:bg-white/[0.02] transition-colors">
                             <td class="px-4 py-3 text-xs font-mono">
-                                <a href="/portal/admin-staff/invoices/<%= inv._id %>/download" target="_blank" 
+                                <a href="/portal/admin-staff/invoices/<%= inv._id %>/download" target="_blank"
                                     class="text-blue-400 hover:text-blue-300 hover:underline transition-all" title="View PDF">
                                     <%= (inv.invoiceNumber || inv.invoice_number || '') %>
                                 </a>
@@ -83,7 +83,7 @@
                             <td class="px-4 py-3">
                                 <div class="flex items-center gap-1">
                                     <button onclick="openViewModal('<%= inv._id %>')"
-                                        class="btn btn-outline text-[0.6rem] py-1 px-2 border-white/10 text-tx-3 hover:bg-white/5" title="View Details in System">
+                                        class="btn btn-outline text-[0.6rem] py-1 px-2 border-white/10 text-tx-3 hover:bg-white/5" title="View Details">
                                         <i class="fa-solid fa-eye text-[0.7rem]"></i>
                                     </button>
                                     <button onclick="openEditModal('<%= inv._id %>')"
@@ -94,7 +94,7 @@
                                         class="btn btn-outline text-[0.6rem] py-1 px-2 border-blue-500/20 text-blue-400 hover:bg-blue-500/10" title="Download PDF">
                                         <i class="fa-solid fa-download"></i>
                                     </a>
-                                    <button onclick="sendInvoice('<%= inv._id %>')" title="Send Invoice to Client (Before Payment)"
+                                    <button onclick="sendInvoice('<%= inv._id %>')" title="Send Invoice to Client"
                                         class="btn btn-outline text-[0.6rem] py-1 px-2 border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/10">
                                         <i class="fa-solid fa-paper-plane"></i>
                                     </button>
@@ -165,11 +165,39 @@
                                 data-client="<%= a.client_name || '' %>"
                                 data-email="<%= a.client_email || '' %>"
                                 data-staff="<%= a.accepted_staff_ids ? a.accepted_staff_ids.length : 0 %>"
-                                data-rate="<%= a.pay_rate || 0 %>">
+                                data-rate="<%= a.pay_rate || 0 %>"
+                                data-ushers="<%= a.usherCount || 0 %>">
                                 <%= a.title %> — <%= a.date ? new Date(a.date).toLocaleDateString('en-KE') : 'No date' %>
                             </option>
                         <% }); %>
                     </select>
+                </div>
+            </div>
+
+            <!-- ── QUICK-ADD BUTTONS (Phase 3) ── -->
+            <div>
+                <label class="block text-[0.65rem] font-bold uppercase tracking-widest text-tx-3 mb-2">Quick Add</label>
+                <div class="flex flex-wrap gap-2">
+                    <button type="button" onclick="quickAdd('Transport / Logistics Fee', 1, 5000)"
+                        class="text-[0.6rem] font-bold px-3 py-1.5 rounded-lg border border-white/10 bg-white/5 text-tx-3 hover:bg-blue-500/10 hover:text-blue-400 hover:border-blue-500/30 transition-all">
+                        <i class="fa-solid fa-truck mr-1"></i> Transport Fee
+                    </button>
+                    <button type="button" onclick="quickAdd('Management / Coordination Fee', 1, 10000)"
+                        class="text-[0.6rem] font-bold px-3 py-1.5 rounded-lg border border-white/10 bg-white/5 text-tx-3 hover:bg-purple-500/10 hover:text-purple-400 hover:border-purple-500/30 transition-all">
+                        <i class="fa-solid fa-clipboard-list mr-1"></i> Management Fee
+                    </button>
+                    <button type="button" onclick="quickAdd('Overtime — Extended Shift', 1, 3000)"
+                        class="text-[0.6rem] font-bold px-3 py-1.5 rounded-lg border border-white/10 bg-white/5 text-tx-3 hover:bg-amber-500/10 hover:text-amber-400 hover:border-amber-500/30 transition-all">
+                        <i class="fa-solid fa-clock mr-1"></i> Overtime
+                    </button>
+                    <button type="button" onclick="quickAdd('Equipment / Setup Hire', 1, 8000)"
+                        class="text-[0.6rem] font-bold px-3 py-1.5 rounded-lg border border-white/10 bg-white/5 text-tx-3 hover:bg-emerald-500/10 hover:text-emerald-400 hover:border-emerald-500/30 transition-all">
+                        <i class="fa-solid fa-box mr-1"></i> Equipment Hire
+                    </button>
+                    <button type="button" onclick="quickAdd('Miscellaneous', 1, 0)"
+                        class="text-[0.6rem] font-bold px-3 py-1.5 rounded-lg border border-white/10 bg-white/5 text-tx-3 hover:bg-white/10 hover:text-tx-1 transition-all">
+                        <i class="fa-solid fa-plus mr-1"></i> Misc
+                    </button>
                 </div>
             </div>
 
@@ -184,7 +212,7 @@
                         <input type="text" placeholder="Description" class="svc-desc bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs text-tx-1 focus:border-blue-500/40 focus:outline-none">
                         <input type="number" placeholder="Qty" value="1" min="1" class="svc-qty bg-black/40 border border-white/10 rounded-lg px-2 py-2 text-xs text-tx-1 text-center focus:outline-none" oninput="updateTotal()">
                         <input type="number" placeholder="Rate" class="svc-price bg-black/40 border border-white/10 rounded-lg px-2 py-2 text-xs text-tx-1 focus:outline-none" oninput="updateTotal()">
-                        <button type="button" onclick="this.closest('.service-row').remove(); updateTotal()" class="text-red-400 hover:text-red-300 w-6 h-6 flex items-center justify-center text-xs">×</button>
+                        <button type="button" onclick="this.closest('.service-row').remove(); updateTotal()" class="text-red-400 hover:text-red-300 w-6 h-6 flex items-center justify-center text-xs">&times;</button>
                     </div>
                 </div>
             </div>
@@ -207,7 +235,7 @@
     </div>
 </div>
 
-<!-- View Invoice Modal -->
+<!-- View Invoice Modal (unchanged from original) -->
 <div id="viewModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-md z-[9999] flex items-center justify-center p-4">
     <div class="bg-dark-card border border-white/10 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         <div class="px-5 py-4 border-b border-white/5 flex items-center justify-between sticky top-0 bg-dark-card">
@@ -220,7 +248,6 @@
             </button>
         </div>
         <div class="p-6 space-y-6">
-            <!-- Header Info -->
             <div class="grid grid-cols-2 gap-6">
                 <div>
                     <h4 class="text-[0.6rem] font-bold text-tx-3 uppercase tracking-widest mb-1">Billed To</h4>
@@ -233,43 +260,26 @@
                     <div id="viewEventDate" class="text-xs text-tx-3"></div>
                 </div>
             </div>
-
-            <!-- Items Table -->
             <div class="border border-white/5 rounded-xl overflow-hidden">
                 <table class="w-full text-left">
                     <thead class="bg-white/5">
                         <tr>
                             <th class="px-4 py-2 text-[0.6rem] font-bold text-tx-3 uppercase">Description</th>
                             <th class="px-4 py-2 text-[0.6rem] font-bold text-tx-3 uppercase text-center w-16">Qty</th>
-                            <th class="px-4 py-2 text-[0.6rem] font-bold text-tx-3 uppercase text-right w-24">Rate</th>
-                            <th class="px-4 py-2 text-[0.6rem] font-bold text-tx-3 uppercase text-right w-24">Total</th>
+                            <th class="px-4 py-2 text-[0.6rem] font-bold text-tx-3 uppercase text-right w-24">Rate (KSh)</th>
+                            <th class="px-4 py-2 text-[0.6rem] font-bold text-tx-3 uppercase text-right w-24">Total (KSh)</th>
                         </tr>
                     </thead>
-                    <tbody id="viewItemsBody" class="divide-y divide-white/5 text-xs text-tx-2">
-                        <!-- Rows injected here -->
-                    </tbody>
+                    <tbody id="viewItemsBody" class="divide-y divide-white/5 text-xs text-tx-2"></tbody>
                 </table>
             </div>
-
-            <!-- Summary -->
             <div class="flex justify-end">
                 <div class="w-48 space-y-2">
-                    <div class="flex justify-between text-xs text-tx-3">
-                        <span>Subtotal</span>
-                        <span id="viewSubtotal" class="font-mono text-tx-1"></span>
-                    </div>
-                    <div class="flex justify-between text-xs text-tx-3">
-                        <span>VAT (16%)</span>
-                        <span id="viewVAT" class="font-mono text-tx-1"></span>
-                    </div>
-                    <div class="flex justify-between text-sm font-bold text-emerald-400 pt-2 border-t border-white/5">
-                        <span>Total Due</span>
-                        <span id="viewTotal" class="font-mono"></span>
-                    </div>
+                    <div class="flex justify-between text-xs text-tx-3"><span>Subtotal</span><span id="viewSubtotal" class="font-mono text-tx-1"></span></div>
+                    <div class="flex justify-between text-xs text-tx-3"><span>VAT (16%)</span><span id="viewVAT" class="font-mono text-tx-1"></span></div>
+                    <div class="flex justify-between text-sm font-bold text-emerald-400 pt-2 border-t border-white/5"><span>Total Due</span><span id="viewTotal" class="font-mono"></span></div>
                 </div>
             </div>
-
-            <!-- Notes -->
             <div id="viewNotesContainer" class="hidden">
                 <h4 class="text-[0.6rem] font-bold text-tx-3 uppercase tracking-widest mb-1">Notes</h4>
                 <div id="viewNotes" class="bg-white/5 rounded-xl p-3 text-xs text-tx-2 italic"></div>
@@ -284,7 +294,7 @@
     </div>
 </div>
 
-<!-- Edit Invoice Modal -->
+<!-- Edit Invoice Modal (unchanged from original) -->
 <div id="editModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-md z-[9999] flex items-center justify-center p-4">
     <div class="bg-dark-card border border-amber-500/30 rounded-2xl shadow-[0_0_40px_rgba(245,158,11,0.1)] max-w-xl w-full max-h-[90vh] overflow-y-auto">
         <div class="px-5 py-4 border-b border-amber-500/20 flex items-center justify-between sticky top-0 bg-dark-card z-10">
@@ -322,7 +332,18 @@
                 </div>
             </div>
 
-            <!-- Editable Services -->
+            <!-- Quick-add in edit modal too -->
+            <div>
+                <label class="block text-[0.65rem] font-bold uppercase tracking-widest text-tx-3 mb-2">Quick Add</label>
+                <div class="flex flex-wrap gap-2">
+                    <button type="button" onclick="quickAddEdit('Transport / Logistics Fee', 1, 5000)" class="text-[0.6rem] font-bold px-3 py-1.5 rounded-lg border border-white/10 bg-white/5 text-tx-3 hover:bg-blue-500/10 hover:text-blue-400 hover:border-blue-500/30 transition-all"><i class="fa-solid fa-truck mr-1"></i> Transport</button>
+                    <button type="button" onclick="quickAddEdit('Management / Coordination Fee', 1, 10000)" class="text-[0.6rem] font-bold px-3 py-1.5 rounded-lg border border-white/10 bg-white/5 text-tx-3 hover:bg-purple-500/10 hover:text-purple-400 hover:border-purple-500/30 transition-all"><i class="fa-solid fa-clipboard-list mr-1"></i> Management</button>
+                    <button type="button" onclick="quickAddEdit('Overtime — Extended Shift', 1, 3000)" class="text-[0.6rem] font-bold px-3 py-1.5 rounded-lg border border-white/10 bg-white/5 text-tx-3 hover:bg-amber-500/10 hover:text-amber-400 hover:border-amber-500/30 transition-all"><i class="fa-solid fa-clock mr-1"></i> Overtime</button>
+                    <button type="button" onclick="quickAddEdit('Equipment / Setup Hire', 1, 8000)" class="text-[0.6rem] font-bold px-3 py-1.5 rounded-lg border border-white/10 bg-white/5 text-tx-3 hover:bg-emerald-500/10 hover:text-emerald-400 hover:border-emerald-500/30 transition-all"><i class="fa-solid fa-box mr-1"></i> Equipment</button>
+                    <button type="button" onclick="quickAddEdit('Miscellaneous', 1, 0)" class="text-[0.6rem] font-bold px-3 py-1.5 rounded-lg border border-white/10 bg-white/5 text-tx-3 hover:bg-white/10 hover:text-tx-1 transition-all"><i class="fa-solid fa-plus mr-1"></i> Misc</button>
+                </div>
+            </div>
+
             <div>
                 <div class="flex items-center justify-between mb-2">
                     <label class="text-[0.65rem] font-bold uppercase tracking-widest text-tx-3">Services</label>
@@ -350,102 +371,104 @@
 </div>
 
 <script>
-window.invoicesData = <%- JSON.stringify(invoices) %>;
+window.invoicesData   = <%- JSON.stringify(invoices) %>;
 window.assignmentsData = <%- JSON.stringify(assignments) %>;
 
-/**
- * Helper: Decode HTML entities in JS for the modal
- */
 function decodeHTMLEntities(text) {
     if (!text) return '';
-    const textArea = document.createElement('textarea');
-    textArea.innerHTML = text;
-    return textArea.value;
+    const t = document.createElement('textarea');
+    t.innerHTML = text;
+    return t.value;
 }
 
-function openViewModal(id) {
-    const inv = window.invoicesData.find(i => i._id === id);
-    if (!inv) return showToast('Invoice not found', 'error');
+// ── QUICK-ADD helpers (Phase 3) ──────────────────────────────────────────────
+function quickAdd(desc, qty, rate) {
+    document.getElementById('serviceRows').insertAdjacentHTML('beforeend', buildServiceRow(desc, qty, rate, 'svc-desc', 'svc-qty', 'svc-price', 'updateTotal'));
+    updateTotal();
+}
+function quickAddEdit(desc, qty, rate) {
+    document.getElementById('editServiceRows').insertAdjacentHTML('beforeend', buildEditServiceRow(desc, qty, rate));
+    updateEditTotal();
+}
+function buildServiceRow(desc, qty, rate, dc, qc, pc, fn) {
+    return `<div class="service-row grid grid-cols-[1fr,60px,80px,30px] gap-2 items-center">
+        <input type="text" value="${desc}" class="${dc} bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs text-tx-1 focus:border-blue-500/40 focus:outline-none">
+        <input type="number" value="${qty}" min="1" class="${qc} bg-black/40 border border-white/10 rounded-lg px-2 py-2 text-xs text-tx-1 text-center focus:outline-none" oninput="${fn}()">
+        <input type="number" value="${rate}" class="${pc} bg-black/40 border border-white/10 rounded-lg px-2 py-2 text-xs text-tx-1 focus:outline-none" oninput="${fn}()">
+        <button type="button" onclick="this.closest('.service-row').remove(); ${fn}()" class="text-red-400 hover:text-red-300 w-6 h-6 flex items-center justify-center text-xs">&times;</button>
+    </div>`;
+}
+function buildEditServiceRow(desc, qty, rate) {
+    return `<div class="edit-svc-row grid grid-cols-[1fr,60px,80px,30px] gap-2 items-center">
+        <input type="text" value="${desc}" class="edit-svc-desc bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs text-tx-1 focus:border-amber-500/40 focus:outline-none">
+        <input type="number" value="${qty}" min="1" class="edit-svc-qty bg-black/40 border border-white/10 rounded-lg px-2 py-2 text-xs text-tx-1 text-center focus:outline-none" oninput="updateEditTotal()">
+        <input type="number" value="${rate}" class="edit-svc-price bg-black/40 border border-white/10 rounded-lg px-2 py-2 text-xs text-tx-1 focus:outline-none" oninput="updateEditTotal()">
+        <button type="button" onclick="this.closest('.edit-svc-row').remove(); updateEditTotal()" class="text-red-400 hover:text-red-300 w-6 h-6 flex items-center justify-center text-xs">&times;</button>
+    </div>`;
+}
 
-    document.getElementById('viewInvNo').textContent = decodeHTMLEntities(inv.invoiceNumber || inv.invoice_number || 'Draft');
-    document.getElementById('viewClientName').textContent = decodeHTMLEntities(inv.clientName || inv.client_name);
-    document.getElementById('viewClientEmail').textContent = decodeHTMLEntities(inv.clientEmail || inv.client_email);
-    document.getElementById('viewEventName').textContent = decodeHTMLEntities(inv.eventName || inv.event_name);
-    document.getElementById('viewEventDate').textContent = inv.eventDate ? new Date(inv.eventDate).toLocaleDateString('en-KE', { weekday:'long', day:'2-digit', month:'long', year:'numeric' }) : 'No date';
-    
-    // Services table
-    const body = document.getElementById('viewItemsBody');
-    body.innerHTML = '';
-    let services = inv.services || [];
+// ── USHER AUTO-DETECTION (Phase 2) ───────────────────────────────────────────
+function autoFillFromEvent(select) {
+    const opt = select.options[select.selectedIndex];
+    if (!opt || !opt.value) return;
 
-    // --- FALLBACK LOGIC ---
-    if (services.length === 0) {
-        let ev = inv.eventId ? window.assignmentsData.find(a => a._id === inv.eventId) : null;
-        if (!ev && (inv.eventName || inv.event_name)) {
-            // Aggressive match by name
-            ev = window.assignmentsData.find(a => a.title === (inv.eventName || inv.event_name));
+    const title   = opt.dataset.title  || '';
+    const date    = opt.dataset.date   || '';
+    const client  = opt.dataset.client || '';
+    const email   = opt.dataset.email  || '';
+    const staff   = parseInt(opt.dataset.staff)  || 0;
+    const rate    = parseFloat(opt.dataset.rate) || 0;
+    const ushers  = parseInt(opt.dataset.ushers) || 0;
+
+    if (title)  document.getElementById('invEventName').value   = title;
+    if (date)   document.getElementById('invEventDate').value   = date;
+    if (client) document.getElementById('invClientName').value  = client;
+    if (email)  document.getElementById('invClientEmail').value = email;
+    if (staff)  document.getElementById('invStaffCount').value  = staff;
+
+    // Clear existing rows
+    document.getElementById('serviceRows').innerHTML = '';
+
+    if (rate > 0) {
+        // General staffing line (non-usher staff only)
+        const generalStaff = Math.max(0, staff - ushers);
+        if (generalStaff > 0 || ushers === 0) {
+            document.getElementById('serviceRows').insertAdjacentHTML('beforeend',
+                buildServiceRow(`Event Staffing — ${title}`, generalStaff || staff, rate, 'svc-desc', 'svc-qty', 'svc-price', 'updateTotal'));
         }
-        
-        const rate = (ev && ev.pay_rate) || (inv.subtotal > 0 && inv.staffCount > 0 ? inv.subtotal / inv.staffCount : inv.subtotal || 0);
-        const count = (ev && (ev.usherCount || (ev.accepted_staff_ids ? ev.accepted_staff_ids.length : 0))) || inv.staffCount || 1;
-        services = [{
-            name: `Staffing Services - ${decodeHTMLEntities(inv.eventName || inv.event_name)}`,
-            quantity: count,
-            unitPrice: rate,
-            total: inv.subtotal || (rate * count)
-        }];
-    }
-    // -----------------------
-    
-    services.forEach(s => {
-        const row = `<tr class="border-b border-white/5">
-            <td class="px-4 py-2">${decodeHTMLEntities(s.name || s.description || 'Service')}</td>
-            <td class="px-4 py-2 text-center">${s.quantity || 1}</td>
-            <td class="px-4 py-2 text-right">KSh ${Number(s.unitPrice || s.unit_price || 0).toLocaleString()}</td>
-            <td class="px-4 py-2 text-right font-bold text-tx-1">KSh ${Number(s.total || 0).toLocaleString()}</td>
-        </tr>`;
-        body.innerHTML += row;
-    });
 
-    // Summary
-    document.getElementById('viewSubtotal').textContent = 'KSh ' + (inv.subtotal || 0).toLocaleString();
-    document.getElementById('viewVAT').textContent = 'KSh ' + (inv.vatAmount || 0).toLocaleString();
-    document.getElementById('viewTotal').textContent = 'KSh ' + (inv.totalAmount || 0).toLocaleString();
-
-    // Notes
-    if (inv.notes && inv.notes !== `Auto-generated invoice for ${inv.eventName}`) {
-        document.getElementById('viewNotes').textContent = inv.notes;
-        document.getElementById('viewNotesContainer').classList.remove('hidden');
+        // ── USHER LINE (Phase 2 — auto-detected) ──────────────
+        if (ushers > 0) {
+            // Usher rate is typically higher — default to pay_rate * 1.25, admin can edit
+            const usherRate = Math.round(rate * 1.25);
+            document.getElementById('serviceRows').insertAdjacentHTML('beforeend',
+                buildServiceRow(`Professional Ushering Services — ${title}`, ushers, usherRate, 'svc-desc', 'svc-qty', 'svc-price', 'updateTotal'));
+            showToast(`${ushers} usher${ushers > 1 ? 's' : ''} detected — added as separate line item`, 'success');
+        }
     } else {
-        document.getElementById('viewNotesContainer').classList.add('hidden');
+        // No rate yet — add a blank row
+        document.getElementById('serviceRows').insertAdjacentHTML('beforeend',
+            buildServiceRow(`Event Staffing — ${title}`, staff || 1, 0, 'svc-desc', 'svc-qty', 'svc-price', 'updateTotal'));
     }
-
-    // Download link
-    document.getElementById('viewDownloadLink').href = `/portal/admin-staff/invoices/${inv._id}/download`;
-
-    document.getElementById('viewModal').classList.remove('hidden');
+    updateTotal();
 }
 
 function addServiceRow() {
-    document.getElementById('serviceRows').insertAdjacentHTML('beforeend', `
-        <div class="service-row grid grid-cols-[1fr,60px,80px,30px] gap-2 items-center">
-            <input type="text" placeholder="Description" class="svc-desc bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs text-tx-1 focus:border-blue-500/40 focus:outline-none">
-            <input type="number" placeholder="Qty" value="1" min="1" class="svc-qty bg-black/40 border border-white/10 rounded-lg px-2 py-2 text-xs text-tx-1 text-center focus:outline-none" oninput="updateTotal()">
-            <input type="number" placeholder="Rate" class="svc-price bg-black/40 border border-white/10 rounded-lg px-2 py-2 text-xs text-tx-1 focus:outline-none" oninput="updateTotal()">
-            <button type="button" onclick="this.closest('.service-row').remove(); updateTotal()" class="text-red-400 hover:text-red-300 w-6 h-6 flex items-center justify-center text-xs">×</button>
-        </div>`);
+    document.getElementById('serviceRows').insertAdjacentHTML('beforeend',
+        buildServiceRow('', 1, 0, 'svc-desc', 'svc-qty', 'svc-price', 'updateTotal'));
 }
+
 function updateTotal() {
     let sub = 0;
     document.querySelectorAll('.service-row').forEach(r => {
-        const qty = parseFloat(r.querySelector('.svc-qty')?.value) || 1;
+        const qty   = parseFloat(r.querySelector('.svc-qty')?.value)   || 1;
         const price = parseFloat(r.querySelector('.svc-price')?.value) || 0;
         sub += qty * price;
     });
     const vat = Math.round(sub * 0.16);
     document.getElementById('displaySubtotal').textContent = 'KSh ' + sub.toLocaleString();
-    document.getElementById('displayVAT').textContent = 'KSh ' + vat.toLocaleString();
-    document.getElementById('displayTotal').textContent = 'KSh ' + (sub + vat).toLocaleString();
+    document.getElementById('displayVAT').textContent      = 'KSh ' + vat.toLocaleString();
+    document.getElementById('displayTotal').textContent    = 'KSh ' + (sub + vat).toLocaleString();
 }
 
 document.getElementById('invoiceForm').addEventListener('submit', async (e) => {
@@ -469,142 +492,112 @@ document.getElementById('invoiceForm').addEventListener('submit', async (e) => {
 
     try {
         const csrf = document.querySelector('meta[name="csrf-token"]')?.content || '';
-        const res = await fetch('/portal/admin-staff/invoices/generate', { method: 'POST', headers: {'Content-Type':'application/json', 'CSRF-Token': csrf}, body: JSON.stringify(body) });
+        const res  = await fetch('/portal/admin-staff/invoices/generate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'CSRF-Token': csrf },
+            body: JSON.stringify(body)
+        });
         const data = await res.json();
         if (data.success) {
-            showToast(`Invoice ${data.invoice.invoiceNumber || data.invoice.invoice_number} created!`, 'success');
+            showToast(`Invoice ${data.invoice.invoiceNumber || ''} created!`, 'success');
             setTimeout(() => location.reload(), 1500);
         } else showToast(data.error, 'error');
     } catch(e) { showToast('Error creating invoice', 'error'); }
 });
 
-async function sendInvoice(id) {
-    if (!confirm('Send invoice to client email?')) return;
-    const csrf = document.querySelector('meta[name="csrf-token"]')?.content || '';
-    const res = await fetch(`/portal/admin-staff/invoices/${id}/send-email`, { method: 'POST', headers: {'CSRF-Token': csrf} });
-    const data = await res.json();
-    if (data.success) { showToast(data.message, 'success'); location.reload(); }
-    else showToast(data.error, 'error');
-}
-async function updateStatus(id, status) {
-    const csrf = document.querySelector('meta[name="csrf-token"]')?.content || '';
-    const res = await fetch(`/portal/admin-staff/invoices/${id}/status`, { method: 'PUT', headers: {'Content-Type':'application/json', 'CSRF-Token': csrf}, body: JSON.stringify({ status }) });
-    const data = await res.json();
-    if (data.success) showToast('Status updated', 'success');
-    else showToast(data.error, 'error');
-}
-async function deleteInvoice(id) {
-    if (!confirm('Delete this invoice?')) return;
-    const csrf = document.querySelector('meta[name="csrf-token"]')?.content || '';
-    const res = await fetch(`/portal/admin-staff/invoices/${id}`, { method: 'DELETE', headers: {'CSRF-Token': csrf} });
-    const data = await res.json();
-    if (data.success) { showToast('Invoice deleted', 'success'); location.reload(); }
-    else showToast(data.error, 'error');
-}
+// ── VIEW MODAL ───────────────────────────────────────────────────────────────
+function openViewModal(id) {
+    const inv = window.invoicesData.find(i => i._id === id);
+    if (!inv) return showToast('Invoice not found', 'error');
 
-function autoFillFromEvent(select) {
-    const opt = select.options[select.selectedIndex];
-    if (!opt || !opt.value) return;
+    document.getElementById('viewInvNo').textContent      = decodeHTMLEntities(inv.invoiceNumber || 'Draft');
+    document.getElementById('viewClientName').textContent = decodeHTMLEntities(inv.clientName || inv.client_name || '');
+    document.getElementById('viewClientEmail').textContent= decodeHTMLEntities(inv.clientEmail || inv.client_email || '');
+    document.getElementById('viewEventName').textContent  = decodeHTMLEntities(inv.eventName  || inv.event_name  || '');
+    document.getElementById('viewEventDate').textContent  = inv.eventDate ? new Date(inv.eventDate).toLocaleDateString('en-KE', { weekday:'long', day:'2-digit', month:'long', year:'numeric' }) : 'No date';
 
-    const title  = opt.dataset.title  || '';
-    const date   = opt.dataset.date   || '';
-    const client = opt.dataset.client || '';
-    const email  = opt.dataset.email  || '';
-    const staff  = opt.dataset.staff  || '0';
-    const rate   = parseFloat(opt.dataset.rate) || 0;
-
-    if (title)  document.getElementById('invEventName').value   = title;
-    if (date)   document.getElementById('invEventDate').value   = date;
-    if (client) document.getElementById('invClientName').value  = client;
-    if (email)  document.getElementById('invClientEmail').value = email;
-    if (staff)  document.getElementById('invStaffCount').value  = staff;
-
-    if (rate > 0 && parseInt(staff) > 0) {
-        document.getElementById('serviceRows').innerHTML = '';
-        document.getElementById('serviceRows').insertAdjacentHTML('beforeend', `
-            <div class="service-row grid grid-cols-[1fr,60px,80px,30px] gap-2 items-center">
-                <input type="text" value="Event Staffing - ${title}" class="svc-desc bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs text-tx-1 focus:border-blue-500/40 focus:outline-none">
-                <input type="number" value="${staff}" min="1" class="svc-qty bg-black/40 border border-white/10 rounded-lg px-2 py-2 text-xs text-tx-1 text-center focus:outline-none" oninput="updateTotal()">
-                <input type="number" value="${rate}" class="svc-price bg-black/40 border border-white/10 rounded-lg px-2 py-2 text-xs text-tx-1 focus:outline-none" oninput="updateTotal()">
-                <button type="button" onclick="this.closest('.service-row').remove(); updateTotal()" class="text-red-400 hover:text-red-300 w-6 h-6 flex items-center justify-center text-xs">&times;</button>
-            </div>`);
-        updateTotal();
+    const body = document.getElementById('viewItemsBody');
+    body.innerHTML = '';
+    let services = inv.services || [];
+    if (services.length === 0) {
+        const ev = window.assignmentsData.find(a => a._id === (inv.eventId?._id || inv.eventId));
+        const rate  = (ev && ev.pay_rate) || 0;
+        const count = (ev && ev.accepted_staff_ids?.length) || inv.staffCount || 1;
+        services = [{ name: `Event Staffing — ${decodeHTMLEntities(inv.eventName || '')}`, quantity: count, unitPrice: rate, total: inv.subtotal || rate * count }];
     }
-}
-async function resendThankYou(id, email) {
-    if (!email) { showToast('No client email on this invoice', 'error'); return; }
-    if (!confirm('Resend thank you + invoice email to ' + email + '?')) return;
-    const csrf = document.querySelector('meta[name="csrf-token"]')?.content || '';
-    const res = await fetch(`/portal/admin-staff/invoices/${id}/send-email`, { method: 'POST', headers: {'CSRF-Token': csrf} });
-    const data = await res.json();
-    if (data.success) showToast('Emails resent to ' + email, 'success');
-    else showToast(data.error || 'Failed', 'error');
+    services.forEach(s => {
+        body.innerHTML += `<tr class="border-b border-white/5">
+            <td class="px-4 py-2">${decodeHTMLEntities(s.name || s.description || 'Service')}</td>
+            <td class="px-4 py-2 text-center">${s.quantity || 1}</td>
+            <td class="px-4 py-2 text-right">KSh ${Number(s.unitPrice || 0).toLocaleString()}</td>
+            <td class="px-4 py-2 text-right font-bold text-tx-1">KSh ${Number(s.total || 0).toLocaleString()}</td>
+        </tr>`;
+    });
+
+    document.getElementById('viewSubtotal').textContent = 'KSh ' + (inv.subtotal    || 0).toLocaleString();
+    document.getElementById('viewVAT').textContent      = 'KSh ' + (inv.vatAmount   || 0).toLocaleString();
+    document.getElementById('viewTotal').textContent    = 'KSh ' + (inv.totalAmount || 0).toLocaleString();
+
+    if (inv.notes) {
+        document.getElementById('viewNotes').textContent = inv.notes;
+        document.getElementById('viewNotesContainer').classList.remove('hidden');
+    } else {
+        document.getElementById('viewNotesContainer').classList.add('hidden');
+    }
+
+    document.getElementById('viewDownloadLink').href = `/portal/admin-staff/invoices/${inv._id}/download`;
+    document.getElementById('viewModal').classList.remove('hidden');
 }
 
-// ════════════ EDIT INVOICE ════════════
+// ── EDIT MODAL ───────────────────────────────────────────────────────────────
 function openEditModal(id) {
     const inv = window.invoicesData.find(i => i._id === id);
     if (!inv) return showToast('Invoice not found', 'error');
 
-    document.getElementById('editInvId').value = id;
-    document.getElementById('editInvNo').textContent = inv.invoiceNumber || inv.invoice_number || '';
-    document.getElementById('editClientName').value = decodeHTMLEntities(inv.clientName || inv.client_name || '');
-    document.getElementById('editClientEmail').value = inv.clientEmail || inv.client_email || '';
-    document.getElementById('editEventName').value = decodeHTMLEntities(inv.eventName || inv.event_name || '');
-    document.getElementById('editEventDate').value = inv.eventDate ? new Date(inv.eventDate).toISOString().split('T')[0] : '';
-    document.getElementById('editStaffCount').value = inv.staffCount || 0;
-    document.getElementById('editNotes').value = inv.notes || '';
+    document.getElementById('editInvId').value       = id;
+    document.getElementById('editInvNo').textContent = inv.invoiceNumber || '';
+    document.getElementById('editClientName').value  = decodeHTMLEntities(inv.clientName  || inv.client_name  || '');
+    document.getElementById('editClientEmail').value = inv.clientEmail  || inv.client_email  || '';
+    document.getElementById('editEventName').value   = decodeHTMLEntities(inv.eventName   || inv.event_name   || '');
+    document.getElementById('editEventDate').value   = inv.eventDate ? new Date(inv.eventDate).toISOString().split('T')[0] : '';
+    document.getElementById('editStaffCount').value  = inv.staffCount || 0;
+    document.getElementById('editNotes').value        = inv.notes || '';
 
-    // Populate service rows
     const container = document.getElementById('editServiceRows');
     container.innerHTML = '';
     let services = inv.services || [];
-
-    // If no services stored, create a placeholder row from fallback
     if (services.length === 0) {
-        let ev = inv.eventId ? window.assignmentsData.find(a => a._id === inv.eventId) : null;
-        if (!ev && (inv.eventName || inv.event_name)) {
-            ev = window.assignmentsData.find(a => a.title === (inv.eventName || inv.event_name));
-        }
-        const rate = (ev && ev.pay_rate) || 0;
-        const count = (ev && (ev.usherCount || (ev.accepted_staff_ids ? ev.accepted_staff_ids.length : 0))) || inv.staffCount || 1;
-        services = [{ name: `Event Staffing - ${decodeHTMLEntities(inv.eventName || inv.event_name || 'Event')}`, quantity: count, unitPrice: rate, total: rate * count }];
+        const ev    = window.assignmentsData.find(a => a._id === (inv.eventId?._id || inv.eventId));
+        const rate  = (ev && ev.pay_rate) || 0;
+        const count = (ev && ev.accepted_staff_ids?.length) || inv.staffCount || 1;
+        services = [{ name: `Event Staffing — ${decodeHTMLEntities(inv.eventName || '')}`, quantity: count, unitPrice: rate, total: rate * count }];
     }
-
     services.forEach(s => {
-        container.insertAdjacentHTML('beforeend', `
-            <div class="edit-svc-row grid grid-cols-[1fr,60px,80px,30px] gap-2 items-center">
-                <input type="text" value="${decodeHTMLEntities(s.name || s.description || '')}" class="edit-svc-desc bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs text-tx-1 focus:border-amber-500/40 focus:outline-none">
-                <input type="number" value="${s.quantity || 1}" min="1" class="edit-svc-qty bg-black/40 border border-white/10 rounded-lg px-2 py-2 text-xs text-tx-1 text-center focus:outline-none" oninput="updateEditTotal()">
-                <input type="number" value="${s.unitPrice || s.unit_price || 0}" class="edit-svc-price bg-black/40 border border-white/10 rounded-lg px-2 py-2 text-xs text-tx-1 focus:outline-none" oninput="updateEditTotal()">
-                <button type="button" onclick="this.closest('.edit-svc-row').remove(); updateEditTotal()" class="text-red-400 hover:text-red-300 w-6 h-6 flex items-center justify-center text-xs">&times;</button>
-            </div>`);
+        container.insertAdjacentHTML('beforeend', buildEditServiceRow(
+            decodeHTMLEntities(s.name || s.description || ''),
+            s.quantity || 1,
+            s.unitPrice || s.unit_price || 0
+        ));
     });
     updateEditTotal();
     document.getElementById('editModal').classList.remove('hidden');
 }
 
 function addEditServiceRow() {
-    document.getElementById('editServiceRows').insertAdjacentHTML('beforeend', `
-        <div class="edit-svc-row grid grid-cols-[1fr,60px,80px,30px] gap-2 items-center">
-            <input type="text" placeholder="Description" class="edit-svc-desc bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs text-tx-1 focus:border-amber-500/40 focus:outline-none">
-            <input type="number" placeholder="Qty" value="1" min="1" class="edit-svc-qty bg-black/40 border border-white/10 rounded-lg px-2 py-2 text-xs text-tx-1 text-center focus:outline-none" oninput="updateEditTotal()">
-            <input type="number" placeholder="Rate" class="edit-svc-price bg-black/40 border border-white/10 rounded-lg px-2 py-2 text-xs text-tx-1 focus:outline-none" oninput="updateEditTotal()">
-            <button type="button" onclick="this.closest('.edit-svc-row').remove(); updateEditTotal()" class="text-red-400 hover:text-red-300 w-6 h-6 flex items-center justify-center text-xs">&times;</button>
-        </div>`);
+    document.getElementById('editServiceRows').insertAdjacentHTML('beforeend', buildEditServiceRow('', 1, 0));
 }
 
 function updateEditTotal() {
     let sub = 0;
     document.querySelectorAll('.edit-svc-row').forEach(r => {
-        const qty = parseFloat(r.querySelector('.edit-svc-qty')?.value) || 1;
+        const qty   = parseFloat(r.querySelector('.edit-svc-qty')?.value)   || 1;
         const price = parseFloat(r.querySelector('.edit-svc-price')?.value) || 0;
         sub += qty * price;
     });
     const vat = Math.round(sub * 0.16);
     document.getElementById('editDisplaySubtotal').textContent = 'KSh ' + sub.toLocaleString();
-    document.getElementById('editDisplayVAT').textContent = 'KSh ' + vat.toLocaleString();
-    document.getElementById('editDisplayTotal').textContent = 'KSh ' + (sub + vat).toLocaleString();
+    document.getElementById('editDisplayVAT').textContent      = 'KSh ' + vat.toLocaleString();
+    document.getElementById('editDisplayTotal').textContent    = 'KSh ' + (sub + vat).toLocaleString();
 }
 
 document.getElementById('editInvoiceForm').addEventListener('submit', async (e) => {
@@ -628,9 +621,9 @@ document.getElementById('editInvoiceForm').addEventListener('submit', async (e) 
 
     try {
         const csrf = document.querySelector('meta[name="csrf-token"]')?.content || '';
-        const res = await fetch(`/portal/admin-staff/invoices/${id}`, {
+        const res  = await fetch(`/portal/admin-staff/invoices/${id}`, {
             method: 'PUT',
-            headers: {'Content-Type':'application/json', 'CSRF-Token': csrf},
+            headers: { 'Content-Type': 'application/json', 'CSRF-Token': csrf },
             body: JSON.stringify(body)
         });
         const data = await res.json();
@@ -640,4 +633,42 @@ document.getElementById('editInvoiceForm').addEventListener('submit', async (e) 
         } else showToast(data.error || 'Update failed', 'error');
     } catch(e) { showToast('Error updating invoice', 'error'); }
 });
+
+// ── ACTIONS ──────────────────────────────────────────────────────────────────
+async function sendInvoice(id) {
+    if (!confirm('Send invoice to client email?')) return;
+    const csrf = document.querySelector('meta[name="csrf-token"]')?.content || '';
+    const res  = await fetch(`/portal/admin-staff/invoices/${id}/send-email`, { method: 'POST', headers: {'CSRF-Token': csrf} });
+    const data = await res.json();
+    if (data.success) { showToast(data.message, 'success'); location.reload(); }
+    else showToast(data.error, 'error');
+}
+async function updateStatus(id, status) {
+    const csrf = document.querySelector('meta[name="csrf-token"]')?.content || '';
+    const res  = await fetch(`/portal/admin-staff/invoices/${id}/status`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'CSRF-Token': csrf },
+        body: JSON.stringify({ status })
+    });
+    const data = await res.json();
+    if (data.success) showToast('Status updated to ' + status, 'success');
+    else showToast(data.error, 'error');
+}
+async function deleteInvoice(id) {
+    if (!confirm('Delete this invoice? This cannot be undone.')) return;
+    const csrf = document.querySelector('meta[name="csrf-token"]')?.content || '';
+    const res  = await fetch(`/portal/admin-staff/invoices/${id}`, { method: 'DELETE', headers: {'CSRF-Token': csrf} });
+    const data = await res.json();
+    if (data.success) { showToast('Invoice deleted', 'success'); location.reload(); }
+    else showToast(data.error, 'error');
+}
+async function resendThankYou(id, email) {
+    if (!email) { showToast('No client email on this invoice', 'error'); return; }
+    if (!confirm('Resend thank you email to ' + email + '?')) return;
+    const csrf = document.querySelector('meta[name="csrf-token"]')?.content || '';
+    const res  = await fetch(`/portal/admin-staff/invoices/${id}/send-email`, { method: 'POST', headers: {'CSRF-Token': csrf} });
+    const data = await res.json();
+    if (data.success) showToast('Email resent to ' + email, 'success');
+    else showToast(data.error || 'Failed', 'error');
+}
 </script>
