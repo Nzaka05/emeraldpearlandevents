@@ -1,6 +1,6 @@
 <% currentPage = 'events'; %>
 
-<!-- ══ Page Header ══ -->
+<!-- ── Page Header ── -->
 <div class="flex items-center justify-between mb-6 animate-fade-up">
   <div>
     <h1 class="font-display text-2xl font-extrabold text-tx-1 tracking-tight flex items-center gap-3">
@@ -9,12 +9,25 @@
     </h1>
     <p class="text-sm text-tx-3 mt-1">Design, construct, and oversee event deployments</p>
   </div>
-  <button class="btn btn-primary shadow-glow-emerald" onclick="openModal('addEventModal')">
-    <i class="fa-solid fa-plus relative top-[1px]"></i> Launch Event
-  </button>
+  <div class="flex items-center gap-2">
+    <!-- View Toggle -->
+    <div class="flex items-center bg-black/30 border border-white/10 rounded-xl p-1">
+      <button id="btn-kanban" onclick="setView('kanban')"
+        class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all text-emerald-400 bg-emerald-500/10">
+        <i class="fa-solid fa-table-columns mr-1"></i> Kanban
+      </button>
+      <button id="btn-list" onclick="setView('list')"
+        class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all text-tx-3 hover:text-tx-1">
+        <i class="fa-solid fa-list mr-1"></i> List
+      </button>
+    </div>
+    <button class="btn btn-primary shadow-glow-emerald" onclick="openModal('addEventModal')">
+      <i class="fa-solid fa-plus"></i> Launch Event
+    </button>
+  </div>
 </div>
 
-<!-- ══ Metric Cards ══ -->
+<!-- ── Metric Cards ── -->
 <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-7">
   <%- include('../components/metric-card', { value: stats.active || 0, label: 'Active Deployments', icon: 'fa-calendar-check', color: 'emerald', delay: 1 }) %>
   <%- include('../components/metric-card', { value: stats.vip || 0, label: 'VIP Events', icon: 'fa-crown', color: 'gold', delay: 2 }) %>
@@ -22,29 +35,170 @@
   <%- include('../components/metric-card', { value: stats.totalStaffAssigned || 0, label: 'Total Placements', icon: 'fa-users', color: 'purple', delay: 4 }) %>
 </div>
 
-<!-- ══ Filters ══ -->
+<!-- ══════════════════════════════════════════════════
+     KANBAN PIPELINE VIEW
+     ══════════════════════════════════════════════════ -->
+<div id="view-kanban" class="mb-6 animate-fade-up">
+
+  <!-- Pipeline stages header -->
+  <div class="grid grid-cols-7 gap-3 mb-3">
+    <%
+      var stages = [
+        { key: 'PLANNED',          label: 'Confirmed',    color: 'text-blue-400',   bg: 'bg-blue-500/10',   border: 'border-blue-500/20'   },
+        { key: 'STAFFING',         label: 'Staffing',     color: 'text-purple-400', bg: 'bg-purple-500/10', border: 'border-purple-500/20' },
+        { key: 'READY',            label: 'Team Ready',   color: 'text-indigo-400', bg: 'bg-indigo-500/10', border: 'border-indigo-500/20' },
+        { key: 'LIVE',             label: 'Live Now',     color: 'text-emerald-400',bg: 'bg-emerald-500/10',border: 'border-emerald-500/20'},
+        { key: 'COMPLETED',        label: 'Completed',    color: 'text-tx-2',       bg: 'bg-white/5',       border: 'border-white/10'      },
+        { key: 'FINANCE_SETTLED',  label: 'Settled',      color: 'text-tx-3',       bg: 'bg-white/3',       border: 'border-white/5'       },
+        { key: 'Active',           label: 'Active',       color: 'text-emerald-400',bg: 'bg-emerald-500/8', border: 'border-emerald-500/15'},
+      ];
+
+      // Group assignments by lifecycle_state, fallback to status
+      var grouped = {};
+      stages.forEach(function(s) { grouped[s.key] = []; });
+
+      assignments.forEach(function(a) {
+        var key = a.lifecycle_state || a.status || 'Active';
+        if (!grouped[key]) grouped[key] = [];
+        grouped[key].push(a);
+      });
+
+      // Merge 'Active' status into PLANNED if no lifecycle_state
+      if (grouped['Active'] && grouped['Active'].length && !grouped['PLANNED'].length) {
+        grouped['PLANNED'] = grouped['Active'];
+        grouped['Active'] = [];
+      }
+
+      // Remove the generic Active column if not needed
+      var displayStages = stages.filter(function(s) {
+        return s.key !== 'Active' || (grouped['Active'] && grouped['Active'].length > 0);
+      });
+    %>
+
+    <% displayStages.forEach(function(stage) { %>
+      <div class="flex items-center justify-between px-3 py-2 rounded-xl <%= stage.bg %> border <%= stage.border %>">
+        <span class="text-[0.65rem] font-bold uppercase tracking-wider <%= stage.color %>"><%= stage.label %></span>
+        <span class="text-[0.6rem] font-mono font-bold <%= stage.color %> opacity-70">
+          <%= (grouped[stage.key] || []).length %>
+        </span>
+      </div>
+    <% }); %>
+  </div>
+
+  <!-- Kanban columns -->
+  <div class="grid gap-3" style="grid-template-columns: repeat(<%= displayStages.length %>, minmax(0, 1fr));">
+    <% displayStages.forEach(function(stage) {
+      var cards = grouped[stage.key] || [];
+    %>
+      <div class="space-y-3 min-h-[200px]">
+        <% if (cards.length === 0) { %>
+          <div class="rounded-xl border border-dashed border-white/10 p-4 text-center text-[0.6rem] text-tx-3 opacity-40">
+            No events
+          </div>
+        <% } %>
+
+        <% cards.forEach(function(ev) {
+          var accepted = (ev.accepted_staff_ids || []).length;
+          var required = ev.required_staff_count || (ev.assigned_staff_ids || []).length || 1;
+          var pct = Math.min(100, Math.round((accepted / required) * 100));
+          var ringColor = pct >= 100 ? '#10b981' : pct >= 50 ? '#f59e0b' : '#ef4444';
+          var evDate = ev.date ? new Date(ev.date).toLocaleDateString('en-KE', {day:'numeric',month:'short'}) : '—';
+          var isLive = (ev.lifecycle_state === 'LIVE');
+        %>
+          <div class="glass-card p-3 cursor-pointer hover:border-white/20 transition-all <%= isLive ? 'border border-emerald-500/30' : '' %>"
+               onclick="viewEventReport('<%= ev._id %>')">
+
+            <!-- VIP + Live badges -->
+            <div class="flex items-center gap-1.5 mb-2 flex-wrap">
+              <% if (ev.vip_flag) { %>
+                <span class="badge-gold text-[0.55rem] font-bold px-1.5 py-0.5 rounded-full">
+                  <i class="fa-solid fa-crown text-[0.5rem] mr-0.5"></i>VIP
+                </span>
+              <% } %>
+              <% if (isLive) { %>
+                <span class="text-[0.55rem] font-bold px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
+                  <span class="status-dot status-dot-active animate-pulse-dot"></span>LIVE
+                </span>
+              <% } %>
+            </div>
+
+            <!-- Title -->
+            <div class="text-xs font-bold text-tx-1 leading-tight mb-1 truncate" title="<%= ev.title %>">
+              <%= ev.title %>
+            </div>
+
+            <!-- Date + location -->
+            <div class="text-[0.6rem] text-tx-3 mb-2 truncate">
+              <i class="fa-solid fa-calendar mr-1 opacity-60"></i><%= evDate %>
+              <% if (ev.location) { %>&nbsp;·&nbsp;<i class="fa-solid fa-location-dot mr-1 opacity-60"></i><%= ev.location.substring(0,18) %><%= ev.location.length > 18 ? '…' : '' %><% } %>
+            </div>
+
+            <!-- Staff readiness ring -->
+            <div class="flex items-center gap-2">
+              <div class="relative w-8 h-8 flex-shrink-0">
+                <svg viewBox="0 0 32 32" class="w-8 h-8 -rotate-90">
+                  <circle cx="16" cy="16" r="12" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="3"/>
+                  <circle cx="16" cy="16" r="12" fill="none"
+                    stroke="<%= ringColor %>"
+                    stroke-width="3"
+                    stroke-linecap="round"
+                    stroke-dasharray="75.4"
+                    stroke-dashoffset="<%= Math.round(75.4 - (75.4 * pct / 100)) %>"/>
+                </svg>
+                <div class="absolute inset-0 flex items-center justify-center text-[0.5rem] font-bold" style="color:<%= ringColor %>">
+                  <%= pct %>
+                </div>
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="text-[0.6rem] text-tx-3"><%= accepted %>/<%= required %> staff</div>
+                <div class="text-[0.6rem] font-mono text-emerald-400">KSh <%= (ev.pay_rate || 0).toLocaleString() %></div>
+              </div>
+            </div>
+
+            <!-- Quick actions -->
+            <div class="flex gap-1 mt-2 pt-2 border-t border-white/5">
+              <a href="/portal/admin-staff/events?search=<%= encodeURIComponent(ev.title) %>"
+                 onclick="event.stopPropagation()"
+                 class="flex-1 text-center text-[0.55rem] font-bold text-tx-3 hover:text-tx-1 py-1 rounded-lg hover:bg-white/5 transition-all">
+                Detail
+              </a>
+              <a href="/portal/admin-staff/invoices?event=<%= ev._id %>"
+                 onclick="event.stopPropagation()"
+                 class="flex-1 text-center text-[0.55rem] font-bold text-blue-400 hover:text-blue-300 py-1 rounded-lg hover:bg-blue-500/5 transition-all">
+                Invoice
+              </a>
+            </div>
+          </div>
+        <% }); %>
+      </div>
+    <% }); %>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     LIST VIEW (original content below — unchanged)
+     ══════════════════════════════════════════════════ -->
+<div id="view-list" class="hidden">
+
+<!-- ── Filters ── -->
 <div class="glass-card p-4 mb-6 animate-fade-up delay-4">
   <form method="GET" class="flex flex-col md:flex-row gap-3">
-    <!-- Search -->
     <div class="relative flex-1">
       <i class="fa-solid fa-search absolute left-3.5 top-1/2 -translate-y-1/2 text-tx-3 text-sm"></i>
-      <input type="text" name="search" placeholder="Search event matrix..." 
+      <input type="text" name="search" placeholder="Search event matrix..."
         value="<%= (filters && filters.search) || '' %>"
         class="form-input pl-10 w-full">
     </div>
-    
     <select name="status" class="form-input form-select min-w-[150px]">
       <option value="">All Statuses</option>
       <option value="Active" <%= (filters && filters.status === 'Active') ? 'selected' : '' %>>Active</option>
       <option value="Completed" <%= (filters && filters.status === 'Completed') ? 'selected' : '' %>>Completed</option>
       <option value="Cancelled" <%= (filters && filters.status === 'Cancelled') ? 'selected' : '' %>>Cancelled</option>
     </select>
-    
     <select name="vip" class="form-input form-select min-w-[150px]">
       <option value="">All Types</option>
       <option value="true" <%= (filters && filters.vip === 'true') ? 'selected' : '' %>>VIP Only</option>
     </select>
-    
     <div class="flex gap-2">
       <button class="btn btn-primary shadow-glow-emerald flex-1 md:w-auto" type="submit">Filter Matrix</button>
       <a href="/portal/admin-staff/events" class="btn btn-outline flex-1 md:w-auto mt-0">Reset</a>
@@ -52,7 +206,7 @@
   </form>
 </div>
 
-<!-- ══ Events Data Table ══ -->
+<!-- ── Events Data Table ── -->
 <div class="glass-card overflow-hidden animate-fade-up delay-5">
   <div class="px-5 py-4 border-b border-white/5 flex items-center justify-between">
     <h3 class="text-sm font-bold text-tx-1 flex items-center gap-2">
@@ -60,7 +214,6 @@
     </h3>
     <span class="badge-blue text-[0.65rem] font-bold px-2 py-0.5 rounded-full"><%= assignments.length %> Events</span>
   </div>
-  
   <div class="overflow-x-auto">
     <table class="data-table">
       <thead>
@@ -78,6 +231,7 @@
         </tr>
       </thead>
       <tbody>
+
         <% if (assignments.length > 0) { %>
           <% assignments.forEach(function(a) { 
               const psMap = { Pending: 'badge-gold', Sent: 'badge-blue', Received: 'badge-emerald', Disputed: 'badge-red' };
@@ -212,716 +366,43 @@
             </td>
           </tr>
         <% } %>
+      
       </tbody>
     </table>
   </div>
-</div>
+</div><!-- end glass-card table -->
+</div><!-- end #view-list -->
 
-<!-- ══════════════════════════════════════════════════════════════
-     MODALS
-     ══════════════════════════════════════════════════════════ -->
-
-<!-- Add Event Modal -->
-<div class="modal-overlay" id="addEventModal">
-  <div class="modal-content max-w-2xl">
-    <div class="modal-header border-b border-emerald-500/20 pb-4">
-      <h3 class="text-base font-bold text-tx-1 flex items-center gap-2">
-        <div class="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center shadow-glow-emerald"><i class="fa-solid fa-calendar-plus"></i></div>
-        Event Initialization Protocol
-      </h3>
-      <button class="text-tx-3 hover:text-tx-1" onclick="closeModal('addEventModal')"><i class="fa-solid fa-xmark text-lg"></i></button>
-    </div>
-    <div class="modal-body pt-5">
-      <form action="/portal/admin-staff/assignments" method="POST" id="addEventForm" class="space-y-4">
-        <div>
-          <label class="form-label">Event Designation</label>
-          <input type="text" name="title" class="form-input text-lg font-bold" required placeholder="OPERATION: GALAXY PRIME">
-        </div>
-        
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div><label class="form-label">Launch Date</label><input type="date" name="date" class="form-input font-mono" required></div>
-          <div><label class="form-label">Location Matrix</label><input type="text" name="location" class="form-input" placeholder="Origin Coordinates..."></div>
-        </div>
-        
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-white/5 p-3 rounded-xl border border-white/5">
-          <div>
-            <label class="form-label text-emerald-400"><i class="fa-solid fa-satellite mr-1"></i> GPS Latitude</label>
-            <input type="number" step="any" name="gps_lat" id="addGpsLat" class="form-input bg-black/40 font-mono text-xs" placeholder="-1.2921">
-          </div>
-          <div>
-            <label class="form-label text-emerald-400"><i class="fa-solid fa-satellite-dish mr-1"></i> GPS Longitude</label>
-            <div class="flex gap-2">
-              <input type="number" step="any" name="gps_lng" id="addGpsLng" class="form-input flex-1 bg-black/40 font-mono text-xs" placeholder="36.8219">
-              <button type="button" class="btn btn-outline border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20 px-3" onclick="getGPSLocation('add')" title="Lock Current Coords">
-                <i class="fa-solid fa-crosshairs"></i>
-              </button>
-            </div>
-          </div>
-        </div>
-        
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div><label class="form-label">Deployment Time</label><input type="time" name="start_time" class="form-input font-mono" value="09:00"></div>
-          <div><label class="form-label">Extraction Time</label><input type="time" name="end_time" class="form-input font-mono" value="17:00"></div>
-          <div><label class="form-label">Treasury (KSh)</label><input type="number" name="pay_rate" class="form-input font-mono text-gold-400" value="1000" min="0" step="50"></div>
-          <div><label class="form-label">Unit Quota</label><input type="number" name="required_staff_count" id="addStaffCount" class="form-input font-mono text-blue-400" min="1" value="1"></div>
-        </div>
-        
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div><label class="form-label">Uniform Specs</label><input type="text" name="dress_code" class="form-input" placeholder="Tactical Black..."></div>
-          <div>
-            <label class="form-label text-gold-400">Classified Status</label>
-            <label class="flex items-center gap-3 p-2.5 rounded-lg border border-gold-500/30 bg-gold-500/10 cursor-pointer hover:bg-gold-500/20 transition-colors">
-              <input type="checkbox" name="vip_flag" value="true" class="w-4 h-4 rounded border-gold-500/50 bg-dark-card accent-gold-500">
-              <span class="text-sm font-bold text-gold-400 flex items-center gap-2"><i class="fa-solid fa-crown"></i> VIP Protocol Event</span>
-            </label>
-          </div>
-        </div>
-        
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 p-3 rounded-xl border border-blue-500/20 bg-blue-500/5">
-          <div><label class="form-label text-blue-400"><i class="fa-solid fa-user-tie mr-1"></i> Client Name</label><input type="text" name="client_name" class="form-input" placeholder="John Kamau..."></div>
-          <div><label class="form-label text-blue-400"><i class="fa-solid fa-envelope mr-1"></i> Client Email</label><input type="email" name="client_email" class="form-input" placeholder="client@example.com"></div>
-        </div>
-        <div><label class="form-label">Operational Briefing</label><textarea name="description" rows="2" class="form-input placeholder:opacity-50" placeholder="Mission parameters and objectives..."></textarea></div>
-        <div><label class="form-label">Special Directives</label><textarea name="special_instructions" rows="2" class="form-input placeholder:opacity-50" placeholder="Critical restrictions or mandatory protocols..."></textarea></div>
-        
-        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-        <button type="submit" class="btn btn-primary w-full shadow-glow-emerald bg-emerald-600 hover:bg-emerald-500 border-none font-display font-bold text-lg py-3 mt-4">
-          <i class="fa-solid fa-rocket mr-2"></i> INITIALIZE DEPLOYMENT
-        </button>
-      </form>
-    </div>
-  </div>
-</div>
-
-<!-- Edit Event Modal -->
-<div class="modal-overlay" id="editEventModal">
-  <div class="modal-content max-w-2xl">
-    <div class="modal-header border-b border-gold-500/20 pb-4">
-      <h3 class="text-base font-bold text-tx-1 flex items-center gap-2">
-        <div class="w-8 h-8 rounded-lg bg-gold-500/20 text-gold-400 flex items-center justify-center shadow-glow-gold"><i class="fa-solid fa-calendar-pen"></i></div>
-        Recalibrate Event Parameters
-      </h3>
-      <button class="text-tx-3 hover:text-tx-1" onclick="closeModal('editEventModal')"><i class="fa-solid fa-xmark text-lg"></i></button>
-    </div>
-    <div class="modal-body pt-5">
-      <form id="editEventForm" method="POST" class="space-y-4">
-        <input type="hidden" name="_method" value="PUT">
-        
-        <div>
-          <label class="form-label">Designation</label>
-          <input type="text" name="title" id="ev_title" class="form-input text-lg font-bold" required>
-        </div>
-        
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div><label class="form-label">Date</label><input type="date" name="date" id="ev_date" class="form-input font-mono"></div>
-          <div><label class="form-label">Location Matrix</label><input type="text" name="location" id="ev_location" class="form-input"></div>
-        </div>
-        
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-white/5 p-3 rounded-xl border border-white/5">
-          <div><label class="form-label text-gold-400 text-xs">Lat</label><input type="number" step="any" name="gps_lat" id="editGpsLat" class="form-input bg-black/40 font-mono text-xs py-1.5 h-auto"></div>
-          <div>
-            <label class="form-label text-gold-400 text-xs">Lng</label>
-            <div class="flex gap-2">
-              <input type="number" step="any" name="gps_lng" id="editGpsLng" class="form-input flex-1 bg-black/40 font-mono text-xs py-1.5 h-auto">
-              <button type="button" class="btn btn-outline border-gold-500/30 text-gold-400 py-1.5 h-auto px-2" onclick="getGPSLocation('edit')"><i class="fa-solid fa-crosshairs"></i></button>
-            </div>
-          </div>
-        </div>
-        
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div><label class="form-label">Deployment</label><input type="time" name="start_time" id="ev_start" class="form-input font-mono h-9"></div>
-          <div><label class="form-label">Extraction</label><input type="time" name="end_time" id="ev_end" class="form-input font-mono h-9"></div>
-          <div><label class="form-label">Treasury</label><input type="number" name="pay_rate" id="ev_rate" class="form-input font-mono text-gold-400 h-9" min="0" step="50"></div>
-          <div><label class="form-label">Quota</label><input type="number" name="required_staff_count" id="editStaffCount" class="form-input font-mono text-blue-400 h-9" min="1"></div>
-        </div>
-        
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 p-3 rounded-xl border border-blue-500/20 bg-blue-500/5">
-          <div><label class="form-label text-blue-400"><i class="fa-solid fa-user-tie mr-1"></i> Client Name</label><input type="text" name="client_name" id="ev_client_name" class="form-input" placeholder="John Kamau..."></div>
-          <div><label class="form-label text-blue-400"><i class="fa-solid fa-envelope mr-1"></i> Client Email</label><input type="email" name="client_email" id="ev_client_email" class="form-input" placeholder="client@example.com"></div>
-        </div>
-        <div>
-          <label class="form-label text-emerald-400">Operational Status</label>
-          <select name="status" id="ev_status" class="form-input form-select font-bold">
-            <option value="Active" class="text-emerald-400">Active</option>
-            <option value="Completed" class="text-blue-400">Completed</option>
-            <option value="Cancelled" class="text-red-400">Cancelled</option>
-          </select>
-        </div>
-        
-        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-        <button type="submit" class="btn btn-primary w-full mt-4 shadow-glow-gold bg-gradient-to-r from-gold-600 to-amber-500 border-none font-bold text-dark-bg transition-all hover:scale-[1.01]">
-          Commence Recalibration
-        </button>
-      </form>
-    </div>
-  </div>
-</div>
-
-<!-- Assign Supervisor Modal -->
-<div class="modal-overlay" id="assignEventSupervisorModal">
-  <div class="modal-content max-w-sm">
-    <div class="modal-header border-b border-gold-500/20 pb-3">
-      <h3 class="text-base font-bold text-tx-1 flex items-center gap-2"><div class="w-7 h-7 rounded bg-gold-500/20 text-gold-400 flex items-center justify-center text-xs"><i class="fa-solid fa-user-tie"></i></div>Assign Supervisor</h3>
-      <button class="text-tx-3 hover:text-tx-1" onclick="closeModal('assignEventSupervisorModal')"><i class="fa-solid fa-xmark"></i></button>
-    </div>
-    <div class="modal-body pt-4">
-      <p id="assignSupervisorEventName" class="text-sm font-bold text-emerald-400 mb-4 pb-2 border-b border-white/5 truncate"></p>
-      <input type="hidden" id="assignSupervisorEventId">
-      <div class="space-y-4">
-        <div>
-          <label class="form-label text-tx-2">Select Command Authority</label>
-          <select id="supervisorSelect" class="form-input form-select text-sm rounded-xl border-white/10 focus:border-gold-500/50 focus:ring-1 focus:ring-gold-500/50">
-            <option value="">Querying network...</option>
-          </select>
-        </div>
-        <button class="btn btn-primary w-full bg-gold-600 hover:bg-gold-500 text-dark-bg font-bold shadow-glow-gold border-none" onclick="submitAssignSupervisor()">Assign Supervisor</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Assign Units Modal (Checkbox List) -->
-<div class="modal-overlay" id="assignStaffModal">
-  <div class="modal-content max-w-md">
-    <div class="modal-header border-b border-purple-500/20 pb-3">
-      <h3 class="text-base font-bold text-tx-1 flex items-center gap-2"><div class="w-7 h-7 rounded bg-purple-500/20 text-purple-400 flex items-center justify-center text-xs shadow-glow-purple"><i class="fa-solid fa-users-viewfinder"></i></div>Deploy Units</h3>
-      <button class="text-tx-3 hover:text-tx-1" onclick="closeModal('assignStaffModal')"><i class="fa-solid fa-xmark"></i></button>
-    </div>
-    <div class="modal-body pt-4 max-h-[60vh] flex flex-col">
-      <p id="assignStaffEventName" class="text-sm font-bold text-emerald-400 mb-3 pb-2 border-b border-white/5 truncate shrink-0"></p>
-      <input type="hidden" id="assignStaffEventId">
-      
-      <div id="staffCheckboxes" class="flex flex-col gap-2 overflow-y-auto overflow-x-hidden pr-2 flex-1 pb-4 custom-scrollbar">
-        <div class="py-12 flex flex-col items-center justify-center text-tx-3">
-          <i class="fa-solid fa-circle-notch animate-spin text-2xl mb-2 text-purple-500"></i>
-          <p class="text-xs">Querying personnel database...</p>
-        </div>
-      </div>
-      
-      <div class="pt-3 border-t border-white/5 shrink-0 mt-auto">
-        <button class="btn btn-primary w-full bg-purple-600 hover:bg-purple-500 border-none font-bold shadow-glow-purple group" onclick="submitAssignStaff()">
-          <i class="fa-solid fa-satellite-dish mr-2 group-hover:animate-ping-slow"></i> Transmit Deployments
-        </button>  
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Unit Status Modal (Read Only) -->
-<div class="modal-overlay" id="staffStatusModal">
-  <div class="modal-content max-w-md">
-    <div class="modal-header border-b border-blue-500/20 pb-3">
-      <h3 class="text-base font-bold text-tx-1 flex items-center gap-2"><div class="w-7 h-7 rounded bg-blue-500/20 text-blue-400 flex items-center justify-center text-xs"><i class="fa-solid fa-users"></i></div>Unit Status</h3>
-      <button class="text-tx-3 hover:text-tx-1" onclick="closeModal('staffStatusModal')"><i class="fa-solid fa-xmark"></i></button>
-    </div>
-    <div class="modal-body pt-4 max-h-[60vh] flex flex-col">
-      <p id="staffStatusEventName" class="text-sm font-bold text-emerald-400 mb-3 pb-2 border-b border-white/5 truncate shrink-0"></p>
-      
-      <div id="staffStatusList" class="flex flex-col gap-2 overflow-y-auto overflow-x-hidden pr-2 flex-1 pb-4 custom-scrollbar">
-        <div class="py-12 flex flex-col items-center justify-center text-tx-3">
-          <i class="fa-solid fa-circle-notch animate-spin text-2xl mb-2 text-blue-500"></i>
-          <p class="text-xs">Accessing telemetry logic...</p>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Applicants Modal (Approve/Reject) -->
-<div class="modal-overlay" id="applicantsModal">
-  <div class="modal-content max-w-md">
-    <div class="modal-header border-b border-tx-2 pb-3">
-      <h3 class="text-base font-bold text-tx-1 flex items-center gap-2"><div class="w-7 h-7 rounded bg-white/10 text-white flex items-center justify-center text-xs shadow-[0_0_10px_rgba(255,255,255,0.2)]"><i class="fa-solid fa-user-clock"></i></div>Recruit Applications</h3>
-      <button class="text-tx-3 hover:text-tx-1" onclick="closeModal('applicantsModal')"><i class="fa-solid fa-xmark"></i></button>
-    </div>
-    <div class="modal-body pt-4 max-h-[60vh] flex flex-col">
-      <p id="applicantsEventName" class="text-sm font-bold text-emerald-400 mb-3 pb-2 border-b border-white/5 truncate shrink-0"></p>
-      
-      <div id="applicantsList" class="flex flex-col gap-2 overflow-y-auto overflow-x-hidden pr-2 flex-1 pb-4 custom-scrollbar">
-        <div class="py-12 flex flex-col items-center justify-center text-tx-3">
-           <i class="fa-solid fa-circle-notch animate-spin text-2xl mb-2"></i>
-           <p class="text-xs">Loading applicant data...</p>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- ══════════════════════════════════════════════════════════════
-     SCRIPTS
-     ══════════════════════════════════════════════════════════ -->
 <script>
-  // Setup logic for Applicants
-  async function openApplicantsModal(eventId, eventTitle) {
-    document.getElementById('applicantsEventName').textContent = 'Event: ' + eventTitle;
-    const list = document.getElementById('applicantsList');
-    list.innerHTML = '<div class="py-12 flex flex-col items-center text-tx-3"><i class="fa-solid fa-spinner animate-spin text-2xl mb-2"></i><span class="text-xs">Loading logs...</span></div>';
-    openModal('applicantsModal');
+// ── View toggle ──────────────────────────────────────────────────────────────
+function setView(v) {
+  const kanban = document.getElementById('view-kanban');
+  const list   = document.getElementById('view-list');
+  const btnK   = document.getElementById('btn-kanban');
+  const btnL   = document.getElementById('btn-list');
 
-    try {
-      const resp = await fetch(`/portal/admin-staff/assignments/${eventId}/report`, { headers: { 'Accept': 'application/json' } });
-      const data = await resp.json();
-      const assignment = data.data?.assignment || data.data || data;
-      const applicants = assignment.applicant_ids || [];
-
-      if (applicants.length === 0) {
-        list.innerHTML = `
-          <div class="col-span-full py-8 text-center text-tx-3 bg-white/5 rounded-xl border border-white/5">
-            <i class="fa-solid fa-ghost text-2xl mb-2 opacity-50 block"></i>
-            <span class="text-sm">No recruits have applied.</span>
-          </div>
-        `;
-        return;
-      }
-
-      list.innerHTML = applicants.map(s => {
-        const name = s.name || s._id;
-        const email = s.email || '';
-        const initials = name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0,2);
-        const sPhoto = s.photo_url || null;
-        return `
-          <div class="flex items-center justify-between p-3 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition-colors">
-            <div class="flex items-center gap-3">
-              <div class="w-9 h-9 rounded-full overflow-hidden flex-shrink-0 bg-gradient-to-br from-emerald-700 to-emerald-500 flex items-center justify-center text-white font-bold text-xs shadow-lg">
-                ${sPhoto ? `<img src="${sPhoto}" style="width:100%;height:100%;object-fit:cover;">` : initials}
-              </div>
-              <div class="overflow-hidden">
-                <div class="font-bold text-sm text-tx-1 truncate">${name}</div>
-                <div class="text-[0.65rem] text-tx-3 truncate">${email}</div>
-              </div>
-            </div>
-            <div class="flex gap-1.5 flex-shrink-0 ml-2">
-              <button class="btn btn-primary btn-xs bg-emerald-600 border-none shadow-glow-emerald hover:bg-emerald-500 w-8 h-8 !p-0" title="Accept Recruit" onclick="handleApplicant('${eventId}','${s._id}','approve')">
-                <i class="fa-solid fa-check"></i>
-              </button>
-              <button class="btn btn-outline btn-xs border-red-500/30 text-red-400 hover:bg-red-500/20 w-8 h-8 !p-0" title="Reject Recruit" onclick="handleApplicant('${eventId}','${s._id}','reject')">
-                <i class="fa-solid fa-xmark"></i>
-              </button>
-            </div>
-          </div>
-        `;
-      }).join('');
-    } catch(err) {
-      list.innerHTML = '<div class="text-red-400 text-sm text-center p-4">System Fault: Telemetry Failed</div>';
-    }
+  if (v === 'kanban') {
+    kanban.classList.remove('hidden');
+    list.classList.add('hidden');
+    btnK.classList.add('text-emerald-400','bg-emerald-500/10');
+    btnK.classList.remove('text-tx-3');
+    btnL.classList.remove('text-emerald-400','bg-emerald-500/10');
+    btnL.classList.add('text-tx-3');
+    localStorage.setItem('eventsView', 'kanban');
+  } else {
+    list.classList.remove('hidden');
+    kanban.classList.add('hidden');
+    btnL.classList.add('text-emerald-400','bg-emerald-500/10');
+    btnL.classList.remove('text-tx-3');
+    btnK.classList.remove('text-emerald-400','bg-emerald-500/10');
+    btnK.classList.add('text-tx-3');
+    localStorage.setItem('eventsView', 'list');
   }
+}
 
-  async function handleApplicant(eventId, staffId, action) {
-    try {
-      const r = await fetch(`/portal/admin-staff/assignments/${eventId}/applicants/${staffId}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content || ''
-        },
-        body: JSON.stringify({ action })
-      });
-      const d = await r.json();
-      if (d.success) {
-        showToast(action === 'approve' ? 'Recruit linked to matrix' : 'Recruit dismissed', action === 'approve' ? 'success' : 'info');
-        closeModal('applicantsModal');
-        setTimeout(() => location.reload(), 800);
-      } else {
-        showToast(d.error || 'Interface override failed', 'error');
-      }
-    } catch(err) {
-      showToast('Network disruption', 'error');
-    }
-  }
-
-  function openEditEventModal(btnOrData) {
-    const a = typeof btnOrData === 'string' ? JSON.parse(btnOrData) : btnOrData;
-    document.getElementById('ev_title').value = a.title;
-    document.getElementById('ev_date').value = a.date ? a.date.substring(0, 10) : '';
-    document.getElementById('ev_location').value = a.location || '';
-    document.getElementById('editGpsLat').value = a.gps_location?.lat || '';
-    document.getElementById('editGpsLng').value = a.gps_location?.lng || '';
-    document.getElementById('ev_start').value = a.start_time || '';
-    document.getElementById('ev_end').value = a.end_time || '';
-    document.getElementById('ev_rate').value = a.pay_rate || 0;
-    document.getElementById('editStaffCount').value = a.required_staff_count || 1;
-    
-    const sEl = document.getElementById('ev_status');
-    sEl.value = a.status;
-    sEl.className = `form-input form-select font-bold ${a.status === 'Active' ? 'text-emerald-400' : a.status === 'Completed' ? 'text-blue-400' : 'text-red-400'}`;
-    
-    document.getElementById('ev_client_name').value = a.client_name || '';
-    document.getElementById('ev_client_email').value = a.client_email || '';
-    document.getElementById('editEventForm').action = '/portal/admin-staff/assignments/' + a._id;
-    openModal('editEventModal');
-  }
-
-  document.getElementById('ev_status')?.addEventListener('change', function() {
-     this.className = `form-input form-select font-bold ${this.value === 'Active' ? 'text-emerald-400' : this.value === 'Completed' ? 'text-blue-400' : 'text-red-400'}`;
-  });
-
-  document.getElementById('editEventForm').addEventListener('submit', async function(e) {
-    e.preventDefault();
-    const form = e.target;
-    // Map data
-    const formData = new FormData(form);
-    const body = {};
-    formData.forEach((v, k) => body[k] = v);
-
-    try {
-      const r = await fetch(form.action, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content || ''
-        },
-        body: JSON.stringify(body)
-      });
-      const data = await r.json();
-      if (data.success) {
-        closeModal('editEventModal');
-        showToast('Matrix parameters recalibrated', 'success');
-        setTimeout(() => location.reload(), 800);
-      } else {
-        showToast('Recalibration failed: ' + (data.error || 'Unknown'), 'error');
-      }
-    } catch(err) {
-      showToast('Network fault: ' + err.message, 'error');
-    }
-  });
-
-  function getGPSLocation(prefix) {
-    if (!navigator.geolocation) {
-       showToast('Hardware sensor absent', 'error'); return;
-    }
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        document.getElementById(prefix + 'GpsLat').value = pos.coords.latitude.toFixed(6);
-        document.getElementById(prefix + 'GpsLng').value = pos.coords.longitude.toFixed(6);
-        showToast('Coordinates locked', 'success');
-      },
-      () => showToast('Sensor triangulation failed', 'error')
-    );
-  }
-
-  async function deleteEvent(id, title) {
-    if (!confirm(`Warning: Terminating operation [${title}]. This action destroys all telemetry associated with it. Confirm termination?`)) return;
-    try {
-      const r = await fetch('/portal/admin-staff/assignments/' + id, {
-        method: 'DELETE',
-        headers: { 'CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content || '' }
-      });
-      const data = await r.json();
-      if (data.success) {
-        showToast('Operation terminated', 'success');
-        setTimeout(() => location.reload(), 800);
-      } else {
-        showToast(data.error || 'Termination aborted', 'error');
-      }
-    } catch(err) {
-      showToast('System fault', 'error');
-    }
-  }
-
-  async function retryEtr(e, eventId) {
-    if(e) e.stopPropagation();
-    try {
-      const btn = e.target;
-      const originalText = btn.innerHTML;
-      btn.innerHTML = '...';
-      const r = await fetch(`/portal/admin-staff/etr/${eventId}/resend`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content || ''
-        }
-      });
-      const data = await r.json();
-      if (data.success) {
-        showToast('ETR resent successfully', 'success');
-        setTimeout(() => location.reload(), 1000);
-      } else {
-        btn.innerHTML = originalText;
-        showToast(data.error || 'Retry failed', 'error');
-      }
-    } catch(err) {
-      showToast('Network fault', 'error');
-      e.target.innerHTML = 'Retry';
-    }
-  }
-
-  async function openAssignSupervisorModal(eventId, eventTitle) {
-    document.getElementById('assignSupervisorEventId').value = eventId;
-    document.getElementById('assignSupervisorEventName').innerHTML = `<span class="text-tx-3 font-normal mr-1">Target Matrix:</span> ${eventTitle}`;
-    const select = document.getElementById('supervisorSelect');
-    select.innerHTML = '<option value="">Querying network levels...</option>';
-    
-    try {
-      const r = await fetch('/portal/admin-staff/staff', {
-        headers: { 'CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content || '' }
-      });
-      const data = await r.json();
-      if (data.success) {
-        const supervisors = data.data.filter(s => s.status === 'Active');
-        if (supervisors.length === 0) {
-          select.innerHTML = '<option value="">No command units found</option>';
-        } else {
-          select.innerHTML = '<option value="">Select Command Authority</option>' +
-            supervisors.map(s => `<option value="${s._id}">${s.role === 'Admin' ? '[ADM] ' : ''}${s.name}</option>`).join('');
-        }
-      }
-    } catch(err) {
-      select.innerHTML = '<option value="">Network cascade failure</option>';
-    }
-    openModal('assignEventSupervisorModal');
-  }
-
-  async function submitAssignSupervisor() {
-    const eventId = document.getElementById('assignSupervisorEventId').value;
-    const supervisorId = document.getElementById('supervisorSelect').value;
-    if (!supervisorId) return showToast('You must select an authority', 'error');
-    
-    try {
-      const r = await fetch(`/portal/admin-staff/assignments/${eventId}/supervisor`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content || ''
-        },
-        body: JSON.stringify({ supervisor_id: supervisorId })
-      });
-      const data = await r.json();
-      if (data.success) {
-        closeModal('assignEventSupervisorModal');
-        showToast('Supervisor Assigned', 'success');
-        setTimeout(() => location.reload(), 800);
-      } else {
-        showToast(data.message || 'Signal rejected', 'error');
-      }
-    } catch(err) {
-      showToast('System fault', 'error');
-    }
-  }
-
-  async function openAssignStaffModal(eventId, eventTitle) {
-    document.getElementById('assignStaffEventId').value = eventId;
-    document.getElementById('assignStaffEventName').innerHTML = `<span class="text-tx-3 font-normal mr-1">Matrix:</span> ${eventTitle}`;
-    const container = document.getElementById('staffCheckboxes');
-    container.innerHTML = '<div class="py-12 flex flex-col items-center text-tx-3"><i class="fa-solid fa-spinner animate-spin text-2xl mb-2 text-purple-500"></i><span class="text-xs">Accessing personnel node...</span></div>';
-    
-    openModal('assignStaffModal');
-    
-    try {
-      const [staffRes, eventRes] = await Promise.all([
-        fetch('/portal/admin-staff/staff', { headers: { 'CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content || '' } }),
-        fetch(`/portal/admin-staff/assignments/${eventId}/report`)
-      ]);
-      const staffData = await staffRes.json();
-      const eventData = await eventRes.json();
-      
-      if (staffData.success) {
-        const assignedIds = eventData.assignment?.assigned_staff_ids?.map(s => s._id.toString()) || [];
-        const acceptedIds = (eventData.assignment?.accepted_staff_ids || []).map(s => typeof s === 'object' ? s._id.toString() : s.toString());
-        const activeStaff = staffData.data.filter(s => acceptedIds.includes(s._id.toString()));
-        
-        container.innerHTML = activeStaff.map(s => {
-          const initials = s.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0,2);
-          const isChecked = assignedIds.includes(s._id.toString()) ? 'checked' : '';
-          const ringColor = isChecked ? 'ring-purple-500/50' : 'ring-transparent border border-white/5';
-          const bgColor = isChecked ? 'bg-purple-900/20' : 'bg-white/5 hover:bg-white/10 text-tx-3'; // Use tx-3 initially
-          const nameColor = isChecked ? 'text-emerald-400' : 'text-tx-1'; // Switch to emerald if checked
-          const iconStateClass = isChecked ? 'opacity-100 scale-100 text-purple-400' : 'opacity-0 scale-50';
-          return `
-            <label class="relative flex items-center justify-between p-3 rounded-xl transition-all cursor-pointer select-none group focus-within:ring-1 focus-within:ring-white/20 overflow-hidden ${ringColor} ${bgColor}" 
-                   onclick="toggleCardSelect(this)">
-              <div class="flex items-center gap-3 relative z-10 w-full">
-                <!-- Hidden Real Checkbox (used for submission) -->
-                <input type="checkbox" name="staff_ids" value="${s._id}" ${isChecked} class="absolute opacity-0 w-0 h-0 invisible">
-                
-                <!-- Avatar block -->
-                <div class="w-9 h-9 rounded-full bg-gradient-to-br from-dark-card to-dark-bg flex items-center justify-center flex-shrink-0 text-white font-bold text-xs ring-1 ring-white/10 group-hover:ring-white/30 transition-shadow shadow-lg">
-                  ${initials}
-                </div>
-                
-                <div class="overflow-hidden flex-1 select-none pr-8"> <!-- padding right for checkbox -->
-                  <div class="font-bold text-sm ${nameColor} truncate transition-colors card-title">${s.name}</div>
-                  <div class="text-[0.65rem] truncate transition-colors font-medium mt-0.5 card-subtitle ${isChecked? 'text-tx-2' : ''}">${s.role || 'Personnel'} • ${s.department || 'Undesignated'}</div>
-                </div>
-              </div>
-              
-              <!-- Fake visual checkbox element (customized styling) -->
-              <div class="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 rounded-md border border-white/20 bg-dark-bg flex items-center justify-center transition-all bg-opacity-80">
-                 <i class="fa-solid fa-check text-[0.6rem] transition-all transform duration-200 card-check ${iconStateClass}"></i>
-              </div>
-            </label>
-          `;
-        }).join('');
-      } else {
-        container.innerHTML = '<div class="text-red-400 text-sm text-center p-4">Personnel link disconnected</div>';
-      }
-    } catch(err) {
-      container.innerHTML = '<div class="text-red-400 text-sm text-center p-4">Data stream corrupted</div>';
-    }
-  }
-
-  // Visual toggle helper for card-style checkboxes in Assign Modal
-  function toggleCardSelect(labelEl) {
-    const cb = labelEl.querySelector('input[type="checkbox"]');
-    // Using setTimeout because the click event naturally toggles the input checked state right after this triggers.
-    // By deferring check, we read the post-click state accurately.
-    setTimeout(() => {
-      const isChecked = cb.checked;
-      
-      // Toggle card UI classes
-      if (isChecked) {
-        labelEl.classList.remove('ring-transparent', 'border', 'border-white/5', 'bg-white/5', 'hover:bg-white/10', 'text-tx-3');
-        labelEl.classList.add('ring-1', 'ring-purple-500/50', 'bg-purple-900/20');
-        
-        labelEl.querySelector('.card-title').classList.remove('text-tx-1');
-        labelEl.querySelector('.card-title').classList.add('text-emerald-400'); // the "active" selection color
-        
-        labelEl.querySelector('.card-subtitle').classList.add('text-tx-2');
-        
-        const icon = labelEl.querySelector('.card-check');
-        icon.classList.remove('opacity-0', 'scale-50');
-        icon.classList.add('opacity-100', 'scale-100', 'text-purple-400');
-      } else {
-        labelEl.classList.remove('ring-1', 'ring-purple-500/50', 'bg-purple-900/20');
-        labelEl.classList.add('ring-transparent', 'border', 'border-white/5', 'bg-white/5', 'hover:bg-white/10', 'text-tx-3');
-        
-        labelEl.querySelector('.card-title').classList.add('text-tx-1');
-        labelEl.querySelector('.card-title').classList.remove('text-emerald-400');
-        
-        labelEl.querySelector('.card-subtitle').classList.remove('text-tx-2');
-        
-        const icon = labelEl.querySelector('.card-check');
-        icon.classList.add('opacity-0', 'scale-50');
-        icon.classList.remove('opacity-100', 'scale-100', 'text-purple-400');
-      }
-    }, 0);
-  }
-
-  async function submitAssignStaff() {
-    const eventId = document.getElementById('assignStaffEventId').value;
-    const checkboxes = document.querySelectorAll('#staffCheckboxes input[name="staff_ids"]:checked');
-    const staffIds = Array.from(checkboxes).map(cb => cb.value);
-    
-    try {
-      const r = await fetch(`/portal/admin-staff/assignments/${eventId}/assign-staff`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content || ''
-        },
-        body: JSON.stringify({ staff_ids: staffIds })
-      });
-      const data = await r.json();
-      if (data.success) {
-        closeModal('assignStaffModal');
-        showToast('Units deployed to matrix', 'success');
-        setTimeout(() => location.reload(), 800);
-      } else {
-        showToast(data.message || 'Deployment signal failed', 'error');
-      }
-    } catch(err) {
-      showToast('Network fault', 'error');
-    }
-  }
-
-  async function toggleApplications(eventId) {
-    try {
-      const r = await fetch(`/portal/admin-staff/assignments/${eventId}/toggle-applications`, {
-        method: 'PUT',
-        headers: { 'CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content || '' }
-      });
-      const data = await r.json();
-      if (data.success) {
-        showToast(data.open ? 'Ports opened for recruitment' : 'Ports sealed', 'success');
-        setTimeout(() => location.reload(), 800);
-      }
-    } catch(err) {
-      showToast('Interface lock failure', 'error');
-    }
-  }
-
-  async function viewStaffStatus(eventId, title) {
-    document.getElementById('staffStatusEventName').innerHTML = `<span class="text-tx-3 font-normal mr-1">Matrix:</span> ${title}`;
-    const container = document.getElementById('staffStatusList');
-    container.innerHTML = '<div class="py-12 flex flex-col items-center text-tx-3"><i class="fa-solid fa-spinner animate-spin text-2xl mb-2 text-blue-500"></i><span class="text-xs">Accessing unit telemetry...</span></div>';
-    
-    openModal('staffStatusModal');
-    
-    try {
-      const r = await fetch(`/portal/admin-staff/assignments/${eventId}/report`);
-      const data = await r.json();
-      
-      if (data.success && data.data.assignment) {
-        const assignment = data.data.assignment;
-        const assignedIds = assignment.assigned_staff_ids || [];
-        const acceptedIds = (assignment.accepted_staff_ids || []).map(s => typeof s === 'object' ? s._id.toString() : s.toString());
-        const declinedIds = (assignment.declined_staff_ids || []).map(s => typeof s === 'object' ? s._id.toString() : s.toString());
-        
-        if (assignedIds.length === 0) {
-          container.innerHTML = `
-            <div class="col-span-full py-8 text-center text-tx-3 bg-white/5 rounded-xl border border-white/5">
-              <i class="fa-solid fa-ghost text-2xl mb-2 opacity-50 block text-blue-400"></i>
-              <span class="text-sm">Ghost Town: No units deployed.</span>
-            </div>
-          `;
-        } else {
-          container.innerHTML = assignedIds.map(s => {
-            const id = typeof s === 'object' ? s._id.toString() : s.toString();
-            const name = typeof s === 'object' && s.name ? s.name : 'Unknown';
-            const role = typeof s === 'object' && s.role ? s.role : 'Staff';
-            const isAccepted = acceptedIds.includes(id);
-            const isDeclined = declinedIds.includes(id);
-            const status = isAccepted ? 'Deployed' : isDeclined ? 'Evaded' : 'Awaiting';
-            const statusClass = isAccepted ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' : isDeclined ? 'bg-red-500/10 text-red-400 border-red-500/30' : 'bg-gold-500/10 text-gold-400 border-gold-500/30';
-            const statusIcon = isAccepted ? 'fa-check-double' : isDeclined ? 'fa-xmark' : 'fa-hourglass-half';
-            
-            const initials = name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0,2);
-            const photoUrl = typeof s === 'object' && s.photo_url ? s.photo_url : null;
-            const avatarHtml = photoUrl
-                ? `<img src="${photoUrl}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`
-                : initials;
-            
-            return `
-              <div class="flex items-center gap-3 p-3 bg-white/5 border border-white/10 rounded-xl">
-                <div class="w-9 h-9 flex-shrink-0 rounded-full overflow-hidden bg-gradient-to-br from-dark-card to-dark-bg flex items-center justify-center text-white font-bold text-xs ring-1 ring-white/10 shadow-lg">
-                  ${avatarHtml}
-                </div>
-                <div class="flex-1 overflow-hidden pr-2">
-                  <div class="font-bold text-sm text-tx-1 truncate mb-0.5">${name}</div>
-                  <div class="text-[0.65rem] text-tx-3 truncate font-medium flex items-center gap-2">
-                    <span class="text-tx-2"><i class="fa-solid fa-id-badge opacity-50 mr-1"></i>${role}</span>
-                    <span class="${s.status === 'Active' ? 'text-emerald-500/70' : 'text-red-500/70'}"><i class="fa-solid fa-power-off opacity-70 mr-1"></i>${s.status || 'Active'}</span>
-                  </div>
-                </div>
-                <span class="text-[0.6rem] font-bold px-2 py-1 rounded-full border ${statusClass} flex items-center gap-1.5 flex-shrink-0">
-                  <i class="fa-solid ${statusIcon} text-[0.55rem]"></i> ${status}
-                </span>
-              </div>
-            `;
-          }).join('');
-        }
-      } else {
-        container.innerHTML = '<div class="text-red-400 text-sm text-center p-4">Telemetry decode failure</div>';
-      }
-    } catch(err) {
-      container.innerHTML = '<div class="text-red-400 text-sm text-center p-4">Feed corrupted</div>';
-    }
-  }
-
-  // Socket Disband (keeping intact from old system logic)
-  if (typeof socket !== 'undefined') {
-    socket.on('disbandPrompt', function(data) {
-      if(typeof showDisbandPrompt === 'function') {
-        showDisbandPrompt(data);
-      }
-    });
-
-    // Listen for survey creation confirmation
-    socket.on('surveysCreated', function(data) {
-      showToast(`📋 Surveys sent to staff for "${data.eventTitle}"`, 'success');
-    });
-
-    socket.on('invoiceCreated', function(data) {
-      showToast(`📄 Invoice ${data.invoiceNumber} auto-generated for "${data.eventTitle}" — KSh ${(data.total||0).toLocaleString()}`, 'success');
-    });
-  }
+// Restore last view on page load
+(function() {
+  var saved = localStorage.getItem('eventsView') || 'kanban';
+  setView(saved);
+})();
 </script>
