@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Emerald Pearland Events — Luxury Event Staffing &amp; Coordination, Nairobi</title>
+  <meta name="description" content="Bespoke event staffing, ushering, and coordination in Nairobi. Weddings, corporate events, brand activations, VIP protocol. Call +254 722 446 937.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --emerald:      #1a5c3a;
+      --emerald-dark: #0d3322;
+      --emerald-mid:  #246b45;
+      --gold:         #c9a84c;
+      --gold-light:   #e4c97a;
+      --cream:        #f7f3ed;
+      --warm-white:   #fdfbf8;
+      --charcoal:     #1c1c1c;
+      --ink:          #2a2a2a;
+      --muted:        #6b6b6b;
+      --border:       #e2ddd6;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body { font-family: 'DM Sans', sans-serif; color: var(--ink); background: var(--warm-white); overflow-x: hidden; }
+
+    /* ── NAVBAR ── */
+    nav#navbar {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+      height: 72px; padding: 0 6%;
+      display: flex; align-items: center; justify-content: space-between;
+      transition: background 0.4s, box-shadow 0.4s;
+    }
+    nav#navbar.scrolled {
+      background: rgba(13,51,34,0.97);
+      backdrop-filter: blur(8px);
+      box-shadow: 0 2px 30px rgba(0,0,0,0.25);
+    }
+    .nav-logo { display: flex; align-items: center; gap: 12px; text-decoration: none; }
+    .nav-logo img { height: 38px; width: 38px; border-radius: 50%; object-fit: contain; background: var(--gold); padding: 4px; }
+    .nav-logo-gem { width: 38px; height: 38px; border-radius: 50%; background: var(--gold); display: flex; align-items: center; justify-content: center; font-size: 16px; color: var(--emerald-dark); flex-shrink: 0; }
+    .nav-words strong { display: block; font-family: 'Cormorant Garamond', serif; font-weight: 600; font-size: 1.2rem; color: #fff; letter-spacing: 0.02em; line-height: 1.1; }
+    .nav-words span { font-size: 0.58rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--gold-light); font-weight: 300; }
+    .nav-links { display: flex; align-items: center; gap: 28px; list-style: none; }
+    .nav-links a { color: rgba(255,255,255,0.8); text-decoration: none; font-size: 0.84rem; font-weight: 400; letter-spacing: 0.03em; transition: color 0.2s; }
+    .nav-links a:hover { color: var(--gold-light); }
+    .nav-cta { background: var(--gold) !important; color: var(--emerald-dark) !important; padding: 9px 20px; border-radius: 2px; font-weight: 500 !important; }
+    .nav-cta:hover { background: var(--gold-light) !important; }
+    .nav-ham { display: none; background: none; border: none; color: #fff; font-size: 1.4rem; cursor: pointer; }
+    #mobileMenu { display: none; position: fixed; top: 72px; left: 0; right: 0; background: var(--emerald-dark); padding: 16px 6% 28px; z-index: 999; border-top: 1px solid rgba(255,255,255,0.08); }
+    #mobileMenu.open { display: block; }
+    #mobileMenu a { display: block; color: rgba(255,255,255,0.82); text-decoration: none; padding: 13px 0; border-bottom: 1px solid rgba(255,255,255,0.09); font-size: 0.95rem; }
+    .mob-cta { margin-top: 14px; background: var(--gold); color: var(--emerald-dark) !important; text-align: center; padding: 13px; border-radius: 2px; font-weight: 500; border: none; border-bottom: none !important; }
+
+    /* ── HERO ── */
+    #hero { height: 100vh; min-height: 640px; position: relative; display: flex; align-items: center; overflow: hidden; }
+    .hero-bg { position: absolute; inset: 0; background: linear-gradient(135deg, #081d10 0%, #0d3322 35%, #1a5c3a 65%, #0a1f12 100%); }
+    .hero-bg::after {
+      content: ''; position: absolute; inset: 0;
+      background:
+        radial-gradient(ellipse 55% 70% at 75% 50%, rgba(201,168,76,0.07) 0%, transparent 60%),
+        radial-gradient(ellipse 35% 55% at 15% 85%, rgba(45,138,87,0.22) 0%, transparent 55%);
+    }
+    .hero-rings { position: absolute; right: 4%; top: 50%; transform: translateY(-50%); width: 500px; height: 500px; opacity: 0.055; pointer-events: none; }
+    .hero-img-panel { position: absolute; right: 6%; top: 50%; transform: translateY(-50%); width: 370px; height: 490px; border-radius: 2px; overflow: hidden; opacity: 0.32; }
+    .hero-img-panel img { width: 100%; height: 100%; object-fit: cover; }
+    .hero-img-panel .ph { width: 100%; height: 100%; background: linear-gradient(160deg, rgba(201,168,76,0.2), rgba(26,92,58,0.4)); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; color: rgba(255,255,255,0.25); font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase; }
+    .hero-img-panel .ph i { font-size: 2.5rem; }
+    .hero-content { position: relative; z-index: 2; padding: 0 6%; max-width: 680px; }
+    .hero-tag { display: inline-flex; align-items: center; gap: 12px; color: var(--gold); font-size: 0.7rem; letter-spacing: 0.22em; text-transform: uppercase; margin-bottom: 22px; opacity: 0; animation: fadeUp 0.8s 0.2s forwards; }
+    .hero-tag::before { content: ''; width: 28px; height: 1px; background: var(--gold); }
+    .hero-h1 { font-family: 'Cormorant Garamond', serif; font-size: clamp(2.7rem, 6.5vw, 5rem); font-weight: 300; line-height: 1.06; color: #fff; margin-bottom: 24px; opacity: 0; animation: fadeUp 0.8s 0.4s forwards; }
+    .hero-h1 em { font-style: italic; color: var(--gold-light); }
+    .hero-sub { font-size: 0.98rem; line-height: 1.78; color: rgba(255,255,255,0.6); max-width: 460px; font-weight: 300; margin-bottom: 42px; opacity: 0; animation: fadeUp 0.8s 0.6s forwards; }
+    .hero-btns { display: flex; gap: 14px; flex-wrap: wrap; opacity: 0; animation: fadeUp 0.8s 0.8s forwards; }
+    .btn-gold { background: var(--gold); color: var(--emerald-dark); padding: 14px 30px; border-radius: 2px; text-decoration: none; font-weight: 500; font-size: 0.88rem; letter-spacing: 0.04em; display: inline-flex; align-items: center; gap: 8px; transition: background 0.2s, transform 0.2s; }
+    .btn-gold:hover { background: var(--gold-light); transform: translateY(-2px); }
+    .btn-ghost { border: 1px solid rgba(255,255,255,0.35); color: #fff; padding: 14px 30px; border-radius: 2px; text-decoration: none; font-size: 0.88rem; letter-spacing: 0.04em; display: inline-flex; align-items: center; gap: 8px; transition: border-color 0.2s, color 0.2s; }
+    .btn-ghost:hover { border-color: var(--gold); color: var(--gold-light); }
+    .hero-scroll { position: absolute; bottom: 32px; left: 6%; display: flex; align-items: center; gap: 10px; color: rgba(255,255,255,0.3); font-size: 0.68rem; letter-spacing: 0.14em; text-transform: uppercase; z-index: 2; opacity: 0; animation: fadeIn 1s 1.4s forwards; }
+    .scroll-ticker { width: 1px; height: 36px; background: rgba(255,255,255,0.15); overflow: hidden; position: relative; }
+    .scroll-ticker::after { content: ''; position: absolute; top: -36px; left: 0; width: 100%; height: 36px; background: var(--gold); animation: tickDrop 2s 1.8s infinite; }
+
+    /* ── STATS ── */
+    #stats { background: var(--emerald); padding: 54px 6%; }
+    .stats-inner { max-width: 1100px; margin: 0 auto; display: grid; grid-template-columns: repeat(4, 1fr); }
+    .stat-item { text-align: center; padding: 16px 20px; border-right: 1px solid rgba(255,255,255,0.12); opacity: 0; transform: translateY(18px); transition: opacity 0.6s, transform 0.6s; }
+    .stat-item:last-child { border-right: none; }
+    .stat-item.vis { opacity: 1; transform: none; }
+    .stat-num { font-family: 'Cormorant Garamond', serif; font-size: 3rem; font-weight: 300; color: var(--gold-light); line-height: 1; margin-bottom: 6px; }
+    .stat-sup { font-size: 1.7rem; vertical-align: super; line-height: 0; }
+    .stat-label { font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(255,255,255,0.55); }
+
+    /* ── COMMON ── */
+    section { padding: 96px 6%; }
+    .inner { max-width: 1100px; margin: 0 auto; }
+    .sec-tag { display: inline-flex; align-items: center; gap: 10px; font-size: 0.68rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--gold); margin-bottom: 14px; }
+    .sec-tag::before { content: ''; width: 24px; height: 1px; background: var(--gold); }
+    .sec-h2 { font-family: 'Cormorant Garamond', serif; font-size: clamp(2rem, 3.8vw, 3rem); font-weight: 300; line-height: 1.15; color: var(--ink); margin-bottom: 14px; }
+    .sec-h2 em { font-style: italic; color: var(--emerald); }
+    .sec-lead { font-size: 0.94rem; line-height: 1.8; color: var(--muted); max-width: 500px; font-weight: 300; }
+
+    /* ── SERVICES ── */
+    #services { background: var(--cream); }
+    .services-head { margin-bottom: 52px; }
+    .services-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; }
+    .svc-card { background: #fff; padding: 36px 32px; position: relative; overflow: hidden; transition: transform 0.28s; }
+    .svc-card:hover { transform: translateY(-5px); }
+    .svc-card::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, var(--emerald), var(--gold)); transform: scaleX(0); transform-origin: left; transition: transform 0.32s; }
+    .svc-card:hover::after { transform: scaleX(1); }
+    .svc-icon { width: 48px; height: 48px; border-radius: 50%; background: rgba(26,92,58,0.08); display: flex; align-items: center; justify-content: center; font-size: 1.1rem; color: var(--emerald); margin-bottom: 20px; transition: background 0.28s, color 0.28s; }
+    .svc-card:hover .svc-icon { background: var(--emerald); color: #fff; }
+    .svc-name { font-family: 'Cormorant Garamond', serif; font-size: 1.3rem; font-weight: 600; color: var(--ink); margin-bottom: 10px; }
+    .svc-list { list-style: none; }
+    .svc-list li { font-size: 0.82rem; color: var(--muted); padding: 4px 0; display: flex; align-items: center; gap: 8px; }
+    .svc-list li::before { content: ''; width: 4px; height: 4px; border-radius: 50%; background: var(--gold); flex-shrink: 0; }
+
+    /* ── WHY US ── */
+    #why { background: var(--warm-white); }
+    .why-wrap { max-width: 1100px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 72px; align-items: center; }
+    .why-visual { position: relative; height: 500px; }
+    .img-main { position: absolute; top: 0; left: 0; width: 75%; height: 400px; border-radius: 2px; overflow: hidden; }
+    .img-main img { width: 100%; height: 100%; object-fit: cover; }
+    .img-main .ph { width: 100%; height: 100%; background: linear-gradient(135deg, #1a5c3a, #0d3322); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; color: rgba(255,255,255,0.25); font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase; }
+    .img-main .ph i { font-size: 2.2rem; }
+    .img-accent { position: absolute; bottom: 0; right: 0; width: 50%; height: 210px; border-radius: 2px; overflow: hidden; border: 6px solid var(--warm-white); }
+    .img-accent img { width: 100%; height: 100%; object-fit: cover; }
+    .img-accent .ph { width: 100%; height: 100%; background: linear-gradient(135deg, #c9a84c, #7a5c1e); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; color: rgba(255,255,255,0.35); font-size: 0.68rem; letter-spacing: 0.1em; text-transform: uppercase; }
+    .img-accent .ph i { font-size: 1.8rem; }
+    .why-badge { position: absolute; top: 48%; left: 62%; transform: translate(-50%,-50%); width: 94px; height: 94px; border-radius: 50%; background: var(--emerald); border: 5px solid var(--warm-white); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 2; }
+    .why-badge strong { font-family: 'Cormorant Garamond', serif; font-size: 1.8rem; font-weight: 300; line-height: 1; color: var(--gold-light); }
+    .why-badge small { font-size: 0.52rem; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255,255,255,0.6); }
+    .why-pillars { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; margin-top: 38px; }
+    .pillar { display: flex; gap: 12px; align-items: flex-start; }
+    .pillar-icon { width: 38px; height: 38px; flex-shrink: 0; border-radius: 50%; background: rgba(26,92,58,0.08); display: flex; align-items: center; justify-content: center; color: var(--emerald); font-size: 0.95rem; }
+    .pillar-title { font-size: 0.87rem; font-weight: 500; color: var(--ink); margin-bottom: 3px; }
+    .pillar-text { font-size: 0.78rem; line-height: 1.65; color: var(--muted); }
+
+    /* ── PORTFOLIO ── */
+    #portfolio { background: var(--cream); }
+    .port-head { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 40px; flex-wrap: wrap; gap: 16px; }
+    .port-link { font-size: 0.84rem; color: var(--emerald); text-decoration: none; display: flex; align-items: center; gap: 6px; border-bottom: 1px solid var(--emerald); padding-bottom: 2px; transition: color 0.2s, border-color 0.2s; }
+    .port-link:hover { color: var(--gold); border-color: var(--gold); }
+    .port-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px; }
+    .port-item { position: relative; height: 300px; overflow: hidden; cursor: pointer; }
+    .port-item:first-child { grid-row: span 2; height: 603px; }
+    .port-bg { width: 100%; height: 100%; transition: transform 0.5s; }
+    .port-item:hover .port-bg { transform: scale(1.04); }
+    .port-ph { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; color: rgba(255,255,255,0.28); font-size: 0.68rem; letter-spacing: 0.1em; text-transform: uppercase; }
+    .port-ph i { font-size: 1.9rem; }
+    .port-item:nth-child(1) .port-bg { background: linear-gradient(160deg, #1a5c3a, #0a1f12); }
+    .port-item:nth-child(2) .port-bg { background: linear-gradient(160deg, #2d3a2e, #1a2a1c); }
+    .port-item:nth-child(3) .port-bg { background: linear-gradient(160deg, #3a2d1a, #1f1508); }
+    .port-item:nth-child(4) .port-bg { background: linear-gradient(160deg, #1a2d3a, #081520); }
+    .port-item:nth-child(5) .port-bg { background: linear-gradient(160deg, #2d1a3a, #180a20); }
+    .port-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.65) 0%, transparent 50%); opacity: 0; transition: opacity 0.3s; display: flex; align-items: flex-end; padding: 22px; }
+    .port-item:hover .port-overlay { opacity: 1; }
+    .port-label { color: #fff; font-family: 'Cormorant Garamond', serif; font-size: 1.2rem; font-weight: 400; }
+    .port-label small { display: block; font-family: 'DM Sans', sans-serif; font-size: 0.7rem; letter-spacing: 0.1em; color: var(--gold-light); text-transform: uppercase; margin-bottom: 4px; }
+
+    /* ── TESTIMONIALS ── */
+    #testimonials { background: var(--emerald-dark); }
+    .testi-head { margin-bottom: 50px; }
+    .testi-grid { max-width: 1100px; margin: 0 auto; display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }
+    .testi-card { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 2px; padding: 34px 30px; }
+    .testi-quote { font-size: 3.2rem; line-height: 1; color: var(--gold); font-family: 'Cormorant Garamond', serif; margin-bottom: 14px; opacity: 0.5; }
+    .testi-text { font-style: italic; font-family: 'Cormorant Garamond', serif; font-size: 1.05rem; line-height: 1.78; color: rgba(255,255,255,0.75); margin-bottom: 26px; }
+    .testi-author { display: flex; align-items: center; gap: 12px; }
+    .testi-av { width: 42px; height: 42px; border-radius: 50%; background: var(--emerald-mid); display: flex; align-items: center; justify-content: center; font-family: 'Cormorant Garamond', serif; font-size: 1rem; color: var(--gold-light); font-weight: 600; flex-shrink: 0; }
+    .testi-name { font-size: 0.84rem; font-weight: 500; color: #fff; }
+    .testi-role { font-size: 0.73rem; color: rgba(255,255,255,0.42); }
+    .testi-stars { color: var(--gold); font-size: 0.73rem; margin-bottom: 5px; }
+
+    /* ── TRUSTED ── */
+    #trusted { background: var(--cream); padding: 60px 6%; }
+    .trust-inner { max-width: 1100px; margin: 0 auto; text-align: center; }
+    .trust-label { font-size: 0.7rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted); margin-bottom: 34px; }
+    .trust-logos { display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 36px; }
+    .trust-pill { background: #fff; border: 1px solid var(--border); border-radius: 3px; padding: 10px 22px; font-size: 0.77rem; font-weight: 500; letter-spacing: 0.05em; color: var(--muted); text-transform: uppercase; transition: border-color 0.2s, color 0.2s; cursor: default; }
+    .trust-pill:hover { border-color: var(--gold); color: var(--ink); }
+
+    /* ── CTA ── */
+    #cta { background: var(--emerald); padding: 96px 6%; text-align: center; }
+    .cta-inner { max-width: 700px; margin: 0 auto; }
+    .cta-inner .sec-tag { justify-content: center; }
+    .cta-inner .sec-tag::before { display: none; }
+    .cta-h2 { font-family: 'Cormorant Garamond', serif; font-size: clamp(2.2rem, 4.5vw, 3.4rem); font-weight: 300; line-height: 1.12; color: #fff; margin-bottom: 16px; }
+    .cta-h2 em { font-style: italic; color: var(--gold-light); }
+    .cta-sub { font-size: 0.94rem; line-height: 1.78; color: rgba(255,255,255,0.6); margin-bottom: 38px; font-weight: 300; }
+    .cta-contact { display: flex; justify-content: center; gap: 36px; flex-wrap: wrap; margin-bottom: 36px; }
+    .cta-contact a { display: flex; align-items: center; gap: 9px; color: rgba(255,255,255,0.7); text-decoration: none; font-size: 0.9rem; transition: color 0.2s; }
+    .cta-contact a i { color: var(--gold); }
+    .cta-contact a:hover { color: var(--gold-light); }
+    .cta-btns { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+    .btn-white { background: #fff; color: var(--emerald); padding: 14px 32px; border-radius: 2px; text-decoration: none; font-weight: 500; font-size: 0.9rem; display: inline-flex; align-items: center; gap: 8px; transition: background 0.2s; }
+    .btn-white:hover { background: var(--cream); }
+    .btn-gold-outline { border: 1px solid var(--gold); color: var(--gold-light); padding: 14px 32px; border-radius: 2px; text-decoration: none; font-size: 0.9rem; display: inline-flex; align-items: center; gap: 8px; transition: background 0.2s; }
+    .btn-gold-outline:hover { background: rgba(201,168,76,0.1); }
+
+    /* ── FOOTER ── */
+    footer { background: var(--charcoal); color: rgba(255,255,255,0.55); padding: 72px 6% 36px; }
+    .footer-grid { max-width: 1100px; margin: 0 auto; display: grid; grid-template-columns: 2fr 1fr 1fr 1.5fr; gap: 48px; margin-bottom: 48px; }
+    .footer-brand p { font-size: 0.81rem; line-height: 1.78; max-width: 280px; margin-top: 16px; }
+    .footer-socials { display: flex; gap: 10px; margin-top: 20px; }
+    .footer-socials a { width: 35px; height: 35px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.14); display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,0.42); text-decoration: none; font-size: 0.82rem; transition: border-color 0.2s, color 0.2s; }
+    .footer-socials a:hover { border-color: var(--gold); color: var(--gold); }
+    .footer-col h4 { font-size: 0.72rem; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(255,255,255,0.8); font-weight: 500; margin-bottom: 18px; }
+    .footer-col ul { list-style: none; }
+    .footer-col ul li { margin-bottom: 9px; }
+    .footer-col ul li a { color: rgba(255,255,255,0.48); text-decoration: none; font-size: 0.81rem; transition: color 0.2s; }
+    .footer-col ul li a:hover { color: var(--gold-light); }
+    .contact-item { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 13px; font-size: 0.81rem; }
+    .contact-item i { color: var(--gold); margin-top: 3px; font-size: 0.82rem; flex-shrink: 0; }
+    .footer-bottom { max-width: 1100px; margin: 0 auto; padding-top: 24px; border-top: 1px solid rgba(255,255,255,0.07); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; font-size: 0.74rem; }
+    .footer-bottom a { color: rgba(255,255,255,0.32); text-decoration: none; margin-left: 18px; }
+    .footer-bottom a:hover { color: var(--gold-light); }
+
+    /* ── WHATSAPP FLOAT ── */
+    .wa-float { position: fixed; bottom: 28px; right: 28px; z-index: 900; width: 52px; height: 52px; border-radius: 50%; background: #25d366; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 1.5rem; text-decoration: none; box-shadow: 0 4px 16px rgba(37,211,102,0.35); transition: transform 0.2s, box-shadow 0.2s; }
+    .wa-float:hover { transform: scale(1.08); box-shadow: 0 6px 22px rgba(37,211,102,0.5); }
+
+    /* ── REVEAL ── */
+    .reveal { opacity: 0; transform: translateY(22px); transition: opacity 0.7s ease, transform 0.7s ease; }
+    .reveal.vis { opacity: 1; transform: none; }
+
+    /* ── KEYFRAMES ── */
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: none; } }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes tickDrop { 0% { top: -36px; } 100% { top: 36px; } }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 1024px) {
+      .services-grid { grid-template-columns: repeat(2, 1fr); }
+      .why-wrap { grid-template-columns: 1fr; }
+      .why-visual { height: 340px; }
+      .img-main { width: 70%; height: 300px; }
+      .img-accent { height: 170px; }
+      .footer-grid { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 768px) {
+      .nav-links { display: none; }
+      .nav-ham { display: block; }
+      .stats-inner { grid-template-columns: repeat(2, 1fr); }
+      .stat-item:nth-child(2) { border-right: none; }
+      .stat-item:nth-child(1), .stat-item:nth-child(2) { border-bottom: 1px solid rgba(255,255,255,0.12); }
+      .services-grid { grid-template-columns: 1fr; }
+      .port-grid { grid-template-columns: 1fr 1fr; }
+      .port-item:first-child { grid-row: span 1; height: 220px; }
+      .port-item { height: 200px; }
+      .testi-grid { grid-template-columns: 1fr; }
+      .footer-grid { grid-template-columns: 1fr; gap: 32px; }
+      .hero-img-panel { display: none; }
+    }
+    @media (max-width: 480px) {
+      section { padding: 72px 5%; }
+      .port-grid { grid-template-columns: 1fr; }
+      .footer-bottom { flex-direction: column; text-align: center; }
+      .cta-contact { flex-direction: column; align-items: center; gap: 16px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav id="navbar">
+  <a href="/" class="nav-logo">
+    <img src="https://emeraldpearlandevents.netlify.app/images/logo 2.png" alt="Emerald Pearland Events" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+    <div class="nav-logo-gem" style="display:none;"><i class="fa-solid fa-gem"></i></div>
+    <div class="nav-words">
+      <strong>Emerald Pearland</strong>
+      <span>Events &amp; Staffing</span>
+    </div>
+  </a>
+  <ul class="nav-links">
+    <li><a href="#services">Services</a></li>
+    <li><a href="#portfolio">Portfolio</a></li>
+    <li><a href="#why">About</a></li>
+    <li><a href="#testimonials">Testimonials</a></li>
+    <li><a href="#cta">Contact</a></li>
+    <li><a href="/client/login" class="nav-cta">Client Portal</a></li>
+  </ul>
+  <button class="nav-ham" id="navHam" aria-label="Menu"><i class="fa-solid fa-bars"></i></button>
+</nav>
+<div id="mobileMenu">
+  <a href="#services">Services</a>
+  <a href="#portfolio">Portfolio</a>
+  <a href="#why">About</a>
+  <a href="#testimonials">Testimonials</a>
+  <a href="#cta">Contact</a>
+  <a href="/client/login" class="mob-cta">Client Portal</a>
+</div>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="hero-bg"></div>
+  <svg class="hero-rings" viewBox="0 0 500 500" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="250" cy="250" r="240" stroke="#c9a84c" stroke-width="1"/>
+    <circle cx="250" cy="250" r="200" stroke="#c9a84c" stroke-width="0.5"/>
+    <circle cx="250" cy="250" r="150" stroke="#c9a84c" stroke-width="1"/>
+    <circle cx="250" cy="250" r="100" stroke="#c9a84c" stroke-width="0.5"/>
+    <circle cx="250" cy="250" r="50"  stroke="#c9a84c" stroke-width="1"/>
+    <line x1="10"  y1="250" x2="490" y2="250" stroke="#c9a84c" stroke-width="0.4"/>
+    <line x1="250" y1="10"  x2="250" y2="490" stroke="#c9a84c" stroke-width="0.4"/>
+  </svg>
+  <div class="hero-img-panel">
+    <img src="https://images.unsplash.com/photo-1519167758481-83f550bb49b3?auto=format&fit=crop&q=80&w=800" alt="Elegant event setup">
+  </div>
+  <div class="hero-content">
+    <div class="hero-tag">Nairobi&rsquo;s Premier Event Staffing</div>
+    <h1 class="hero-h1">Luxury events<br>crafted to <em>perfection</em></h1>
+    <p class="hero-sub">Bespoke experiences designed to inspire, impress, and endure. Professional ushers, seamless coordination, and dedicated event teams across Kenya.</p>
+    <div class="hero-btns">
+      <a href="#cta" class="btn-gold"><i class="fa-solid fa-calendar-check"></i> Begin the Experience</a>
+      <a href="#portfolio" class="btn-ghost"><i class="fa-solid fa-images"></i> View Portfolio</a>
+    </div>
+  </div>
+  <div class="hero-scroll">
+    <div class="scroll-ticker"></div>
+    Scroll to discover
+  </div>
+</section>
+
+<!-- STATS -->
+<div id="stats">
+  <div class="stats-inner">
+    <div class="stat-item" data-target="350">
+      <div class="stat-num"><span class="count">0</span><span class="stat-sup">+</span></div>
+      <div class="stat-label">Events Delivered</div>
+    </div>
+    <div class="stat-item" data-target="200">
+      <div class="stat-num"><span class="count">0</span><span class="stat-sup">+</span></div>
+      <div class="stat-label">Happy Clients</div>
+    </div>
+    <div class="stat-item" data-target="10">
+      <div class="stat-num"><span class="count">0</span></div>
+      <div class="stat-label">Years of Excellence</div>
+    </div>
+    <div class="stat-item" data-target="120">
+      <div class="stat-num"><span class="count">0</span><span class="stat-sup">+</span></div>
+      <div class="stat-label">Staff Network</div>
+    </div>
+  </div>
+</div>
+
+<!-- SERVICES -->
+<section id="services">
+  <div class="inner">
+    <div class="services-head reveal">
+      <div class="sec-tag">What We Do</div>
+      <h2 class="sec-h2">Curated excellence for<br><em>every occasion</em></h2>
+      <p class="sec-lead">From intimate ceremonies to large-scale corporate events — we bring the right people, training, and energy to every event.</p>
+    </div>
+    <div class="services-grid">
+      <div class="svc-card reveal">
+        <div class="svc-icon"><i class="fa-solid fa-user-tie"></i></div>
+        <div class="svc-name">Event Staffing</div>
+        <ul class="svc-list">
+          <li>Airport Pickups</li>
+          <li>Protocol Officers</li>
+          <li>Registry Staff</li>
+          <li>Chauffeurs</li>
+          <li>Security / Bouncers</li>
+          <li>Waiters</li>
+        </ul>
+      </div>
+      <div class="svc-card reveal">
+        <div class="svc-icon"><i class="fa-solid fa-rings-wedding"></i></div>
+        <div class="svc-name">Social &amp; Private Events</div>
+        <ul class="svc-list">
+          <li>Birthday Parties</li>
+          <li>Family &amp; House Parties</li>
+          <li>Weddings</li>
+          <li>Traditional Ceremonies</li>
+          <li>Memorial Services</li>
+        </ul>
+      </div>
+      <div class="svc-card reveal">
+        <div class="svc-icon"><i class="fa-solid fa-building-columns"></i></div>
+        <div class="svc-name">Corporate &amp; Professional</div>
+        <ul class="svc-list">
+          <li>Corporate Events</li>
+          <li>Brand Ambassadors</li>
+          <li>Product Launches</li>
+          <li>Conferences &amp; AGMs</li>
+          <li>Executive Retreats</li>
+        </ul>
+      </div>
+      <div class="svc-card reveal">
+        <div class="svc-icon"><i class="fa-solid fa-music"></i></div>
+        <div class="svc-name">Entertainment &amp; Glamour</div>
+        <ul class="svc-list">
+          <li>Saxophonists</li>
+          <li>Dancers</li>
+          <li>Event Hostesses</li>
+          <li>Cover Models</li>
+          <li>Vixens</li>
+        </ul>
+      </div>
+      <div class="svc-card reveal">
+        <div class="svc-icon"><i class="fa-solid fa-crown"></i></div>
+        <div class="svc-name">VIP &amp; Protocol</div>
+        <ul class="svc-list">
+          <li>VIP Guest Management</li>
+          <li>Diplomatic Functions</li>
+          <li>Red Carpet Protocol</li>
+          <li>High-Security Events</li>
+          <li>Executive Escort</li>
+        </ul>
+      </div>
+      <div class="svc-card reveal">
+        <div class="svc-icon"><i class="fa-solid fa-bullhorn"></i></div>
+        <div class="svc-name">Brand Activations</div>
+        <ul class="svc-list">
+          <li>Roadshows</li>
+          <li>Experiential Marketing</li>
+          <li>Promotional Campaigns</li>
+          <li>Trade Shows</li>
+          <li>Pop-Up Events</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- WHY US -->
+<section id="why">
+  <div class="why-wrap">
+    <div class="why-visual reveal">
+      <div class="img-main">
+        <img src="https://images.unsplash.com/photo-1519671482749-fd09be7ccebf?auto=format&fit=crop&q=80&w=800" alt="Emerald Pearland Events team">
+      </div>
+      <div class="img-accent">
+        <img src="https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&q=80&w=500" alt="Corporate event">
+      </div>
+      <div class="why-badge">
+        <strong>10+</strong>
+        <small>Years</small>
+      </div>
+    </div>
+    <div class="why-content reveal">
+      <div class="sec-tag">Why Choose Us</div>
+      <h2 class="sec-h2">Where vision meets<br><em>exquisite execution</em></h2>
+      <p class="sec-lead">We curate moments that transcend the ordinary — meticulous attention to detail with an intuitive understanding of luxury. We don't just plan events, we architect experiences.</p>
+      <div class="why-pillars">
+        <div class="pillar">
+          <div class="pillar-icon"><i class="fa-solid fa-handshake"></i></div>
+          <div>
+            <div class="pillar-title">The Welcome</div>
+            <p class="pillar-text">A warm greeting, a reassuring smile. The moment guests know they are in the right place.</p>
+          </div>
+        </div>
+        <div class="pillar">
+          <div class="pillar-icon"><i class="fa-solid fa-shield-check"></i></div>
+          <div>
+            <div class="pillar-title">The Protocol</div>
+            <p class="pillar-text">Graceful introductions and dignified coordination for VIP presence and seamless flow.</p>
+          </div>
+        </div>
+        <div class="pillar">
+          <div class="pillar-icon"><i class="fa-solid fa-arrows-spin"></i></div>
+          <div>
+            <div class="pillar-title">The Flow</div>
+            <p class="pillar-text">Guiding movement and ensuring every moment unfolds effortlessly, like a choreographed dance.</p>
+          </div>
+        </div>
+        <div class="pillar">
+          <div class="pillar-icon"><i class="fa-solid fa-star"></i></div>
+          <div>
+            <div class="pillar-title">The Assurance</div>
+            <p class="pillar-text">Quiet professionalism so your event feels effortless. Excellence without ego.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PORTFOLIO -->
+<section id="portfolio">
+  <div class="inner">
+    <div class="port-head reveal">
+      <div>
+        <div class="sec-tag">Our Work</div>
+        <h2 class="sec-h2">Events we&rsquo;ve<br><em>brought to life</em></h2>
+      </div>
+      <a href="/admin/gallery.html" class="port-link">View full gallery <i class="fa-solid fa-arrow-right"></i></a>
+    </div>
+    <div class="port-grid reveal">
+      <div class="port-item">
+        <div class="port-bg port-ph"><i class="fa-solid fa-camera"></i>Add event photo</div>
+        <div class="port-overlay"><div class="port-label"><small>Corporate</small>Annual Awards Gala</div></div>
+      </div>
+      <div class="port-item">
+        <div class="port-bg port-ph"><i class="fa-solid fa-camera"></i>Add event photo</div>
+        <div class="port-overlay"><div class="port-label"><small>Wedding</small>Garden Ceremony</div></div>
+      </div>
+      <div class="port-item">
+        <div class="port-bg port-ph"><i class="fa-solid fa-camera"></i>Add event photo</div>
+        <div class="port-overlay"><div class="port-label"><small>Brand Activation</small>Product Launch</div></div>
+      </div>
+      <div class="port-item">
+        <div class="port-bg port-ph"><i class="fa-solid fa-camera"></i>Add event photo</div>
+        <div class="port-overlay"><div class="port-label"><small>VIP</small>Diplomatic Dinner</div></div>
+      </div>
+      <div class="port-item">
+        <div class="port-bg port-ph"><i class="fa-solid fa-camera"></i>Add event photo</div>
+        <div class="port-overlay"><div class="port-label"><small>Entertainment</small>Gala Night</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TESTIMONIALS -->
+<section id="testimonials">
+  <div class="inner">
+    <div class="testi-head reveal">
+      <div class="sec-tag" style="color:var(--gold-light);">Client Voices</div>
+      <h2 class="sec-h2" style="color:#fff;">What our clients<br><em style="color:var(--gold-light);">say about us</em></h2>
+      <p class="sec-lead" style="color:rgba(255,255,255,0.5);">From first-time clients to long-term partners — here's what they experience working with Emerald Pearland Events.</p>
+    </div>
+    <div class="testi-grid">
+      <!-- Replace the three testimonials below with real client quotes -->
+      <div class="testi-card reveal">
+        <div class="testi-quote">&ldquo;</div>
+        <div class="testi-stars"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i></div>
+        <p class="testi-text">The ushers were impeccably dressed, on time, and handled our 400-guest gala with such calm professionalism. Guests kept asking where we found them.</p>
+        <div class="testi-author">
+          <div class="testi-av">AM</div>
+          <div>
+            <div class="testi-name">Amina M.</div>
+            <div class="testi-role">Corporate Events Manager, Nairobi</div>
+          </div>
+        </div>
+      </div>
+      <div class="testi-card reveal">
+        <div class="testi-quote">&ldquo;</div>
+        <div class="testi-stars"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i></div>
+        <p class="testi-text">Our wedding day was perfect. The Emerald team handled everything from seating to gifts to guest coordination. I didn't have to worry about a single thing.</p>
+        <div class="testi-author">
+          <div class="testi-av">CK</div>
+          <div>
+            <div class="testi-name">Christine K.</div>
+            <div class="testi-role">Bride — Garden Wedding, Nairobi</div>
+          </div>
+        </div>
+      </div>
+      <div class="testi-card reveal">
+        <div class="testi-quote">&ldquo;</div>
+        <div class="testi-stars"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i></div>
+        <p class="testi-text">We've used Emerald for three consecutive annual conferences. The consistency, discipline, and quality of their staff is unmatched in Nairobi.</p>
+        <div class="testi-author">
+          <div class="testi-av">JO</div>
+          <div>
+            <div class="testi-name">James O.</div>
+            <div class="testi-role">Head of Operations, Finance Firm</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TRUSTED BY -->
+<section id="trusted">
+  <div class="trust-inner reveal">
+    <p class="trust-label">Trusted by leading organisations across Kenya</p>
+    <div class="trust-logos">
+      <!-- Replace pills with real <img> logo tags when you have them -->
+      <div class="trust-pill">Banking Sector</div>
+      <div class="trust-pill">Telecoms</div>
+      <div class="trust-pill">NGOs</div>
+      <div class="trust-pill">Hospitality</div>
+      <div class="trust-pill">Government</div>
+      <div class="trust-pill">FMCG</div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section id="cta">
+  <div class="cta-inner reveal">
+    <div class="sec-tag" style="color:var(--gold);">Get Started</div>
+    <h2 class="cta-h2">Let&rsquo;s create something<br><em>unforgettable</em></h2>
+    <p class="cta-sub">Tell us your vision. We'll get back to you within 24 hours with a tailored staffing plan and quote.</p>
+    <div class="cta-contact">
+      <a href="tel:+254722446937"><i class="fa-solid fa-phone"></i> +254 722 446 937</a>
+      <a href="mailto:emeraldpearlandevents@gmail.com"><i class="fa-solid fa-envelope"></i> emeraldpearlandevents@gmail.com</a>
+      <a href="https://instagram.com/emerald.pearland.events" target="_blank"><i class="fa-brands fa-instagram"></i> @emerald.pearland.events</a>
+    </div>
+    <div class="cta-btns">
+      <a href="/booking" class="btn-white"><i class="fa-solid fa-calendar-plus"></i> Start Your Booking</a>
+      <a href="https://wa.me/254722446937?text=Hi%20Emerald%20Pearland%20Events%2C%20I%27d%20like%20to%20discuss%20an%20event%20booking" target="_blank" class="btn-gold-outline"><i class="fa-brands fa-whatsapp"></i> WhatsApp Us</a>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-grid">
+    <div class="footer-brand">
+      <div class="nav-logo" style="cursor:default; pointer-events:none;">
+        <img src="https://emeraldpearlandevents.netlify.app/images/logo 2.png" alt="Emerald Pearland" style="height:36px;width:36px;border-radius:50%;object-fit:contain;background:var(--gold);padding:4px;" onerror="this.style.display='none'">
+        <div class="nav-words">
+          <strong>Emerald Pearland</strong>
+          <span>Events &amp; Staffing</span>
+        </div>
+      </div>
+      <p>Nairobi's premier event staffing and coordination company. We don't just manage events — we craft atmospheres people remember.</p>
+      <div class="footer-socials">
+        <a href="https://instagram.com/emerald.pearland.events" target="_blank" aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a>
+        <a href="https://wa.me/254722446937" target="_blank" aria-label="WhatsApp"><i class="fa-brands fa-whatsapp"></i></a>
+        <a href="mailto:emeraldpearlandevents@gmail.com" aria-label="Email"><i class="fa-solid fa-envelope"></i></a>
+      </div>
+    </div>
+    <div class="footer-col">
+      <h4>Services</h4>
+      <ul>
+        <li><a href="#services">Event Staffing</a></li>
+        <li><a href="#services">Weddings &amp; Ceremonies</a></li>
+        <li><a href="#services">Corporate Events</a></li>
+        <li><a href="#services">Entertainment</a></li>
+        <li><a href="#services">VIP &amp; Protocol</a></li>
+        <li><a href="#services">Brand Activations</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Company</h4>
+      <ul>
+        <li><a href="#why">About Us</a></li>
+        <li><a href="#portfolio">Portfolio</a></li>
+        <li><a href="#testimonials">Testimonials</a></li>
+        <li><a href="/booking">Book an Event</a></li>
+        <li><a href="/client/login">Client Portal</a></li>
+        <li><a href="/portal/auth/login">Staff Login</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Contact</h4>
+      <div class="contact-item"><i class="fa-solid fa-location-dot"></i><span>Nairobi, Kenya</span></div>
+      <div class="contact-item"><i class="fa-solid fa-phone"></i><a href="tel:+254722446937" style="color:inherit;text-decoration:none;">+254 722 446 937</a></div>
+      <div class="contact-item"><i class="fa-solid fa-envelope"></i><a href="mailto:emeraldpearlandevents@gmail.com" style="color:inherit;text-decoration:none;">emeraldpearlandevents@gmail.com</a></div>
+      <div class="contact-item"><i class="fa-brands fa-instagram"></i><a href="https://instagram.com/emerald.pearland.events" target="_blank" style="color:inherit;text-decoration:none;">@emerald.pearland.events</a></div>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span>&copy; 2026 Emerald Pearland Events. All rights reserved.</span>
+    <div>
+      <a href="#">Privacy Policy</a>
+      <a href="#">Terms of Service</a>
+    </div>
+  </div>
+</footer>
+
+<!-- WhatsApp Float Button -->
+<a href="https://wa.me/254722446937?text=Hi%20Emerald%20Pearland%20Events%2C%20I%27d%20like%20to%20discuss%20an%20event%20booking" target="_blank" class="wa-float" aria-label="Chat on WhatsApp">
+  <i class="fa-brands fa-whatsapp"></i>
+</a>
+
+<script>
+  // Navbar scroll
+  const navbar = document.getElementById('navbar');
+  window.addEventListener('scroll', () => navbar.classList.toggle('scrolled', window.scrollY > 40), { passive: true });
+
+  // Mobile menu
+  const ham = document.getElementById('navHam');
+  const mob = document.getElementById('mobileMenu');
+  ham.addEventListener('click', () => {
+    mob.classList.toggle('open');
+    ham.innerHTML = mob.classList.contains('open') ? '<i class="fa-solid fa-xmark"></i>' : '<i class="fa-solid fa-bars"></i>';
+  });
+  mob.querySelectorAll('a').forEach(a => a.addEventListener('click', () => {
+    mob.classList.remove('open');
+    ham.innerHTML = '<i class="fa-solid fa-bars"></i>';
+  }));
+  window.addEventListener('resize', () => {
+    if (window.innerWidth > 768) { mob.classList.remove('open'); ham.innerHTML = '<i class="fa-solid fa-bars"></i>'; }
+  });
+
+  // Scroll reveal
+  const revObs = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (!entry.isIntersecting) return;
+      const siblings = [...entry.target.parentElement.querySelectorAll('.reveal')];
+      const idx = siblings.indexOf(entry.target);
+      entry.target.style.transitionDelay = idx > 0 ? `${idx * 0.09}s` : '0s';
+      entry.target.classList.add('vis');
+      revObs.unobserve(entry.target);
+    });
+  }, { threshold: 0.1 });
+  document.querySelectorAll('.reveal').forEach(el => revObs.observe(el));
+
+  // Stats counter
+  const statsObs = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (!entry.isIntersecting) return;
+      document.querySelectorAll('.stat-item').forEach((item, idx) => {
+        setTimeout(() => {
+          item.classList.add('vis');
+          const target = parseInt(item.dataset.target, 10);
+          const countEl = item.querySelector('.count');
+          let val = 0;
+          const inc = target / (1600 / 16);
+          const t = setInterval(() => {
+            val += inc;
+            if (val >= target) { val = target; clearInterval(t); }
+            countEl.textContent = Math.floor(val);
+          }, 16);
+        }, idx * 160);
+      });
+      statsObs.unobserve(entry.target);
+    });
+  }, { threshold: 0.3 });
+  const statsEl = document.getElementById('stats');
+  if (statsEl) statsObs.observe(statsEl);
+</script>
+</body>
+</html>

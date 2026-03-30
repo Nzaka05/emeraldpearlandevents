@@ -1013,6 +1013,38 @@ router.delete('/staff/:id', verifyAdminJWT, async (req, res) => {
     }
 });
 
+
+// ── PUBLIC (no auth) endpoints for homepage ──────────────────────────────────
+
+// GET /api/admin/public/gallery
+router.get('/public/gallery', async (req, res) => {
+    try {
+        const gallery = await Gallery.find()
+            .sort({ order: 1, uploadedAt: -1 })
+            .limit(9)
+            .lean();
+        res.json({ success: true, gallery });
+    } catch (err) {
+        res.status(500).json({ success: false, message: 'Error fetching gallery' });
+    }
+});
+
+// GET /api/admin/public/testimonials
+router.get('/public/testimonials', async (req, res) => {
+    try {
+        const Testimonial = require('../models/Testimonial');
+        const testimonials = await Testimonial.find({
+            $or: [{ displayOnWebsite: true }, { status: 'approved' }]
+        })
+        .sort({ createdAt: -1 })
+        .limit(6)
+        .lean();
+        res.json({ success: true, testimonials });
+    } catch (err) {
+        res.status(500).json({ success: false, message: 'Error fetching testimonials' });
+    }
+});
+
 // GET /api/admin/gallery
 router.get('/gallery', verifyAdminJWT, async (req, res) => {
     try {

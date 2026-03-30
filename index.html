@@ -4889,7 +4889,82 @@
                 }, 500);
             });
         }
-    </script>
+    
+  // ── LIVE GALLERY from database ────────────────────────────────────────────
+  (async function loadGallery() {
+    try {
+      const res  = await fetch('/api/admin/public/gallery');
+      const data = await res.json();
+      if (!data.success || !data.gallery.length) return;
+
+      const grid = document.querySelector('.port-grid');
+      if (!grid) return;
+
+      // Keep existing placeholder structure, replace backgrounds with real images
+      const items = grid.querySelectorAll('.port-item');
+      data.gallery.forEach((item, i) => {
+        if (!items[i]) return;
+        const bg = items[i].querySelector('.port-bg');
+        if (bg) {
+          bg.style.background = 'none';
+          bg.style.backgroundImage = `url('${item.url}')`;
+          bg.style.backgroundSize  = 'cover';
+          bg.style.backgroundPosition = 'center';
+          // Remove placeholder icon if present
+          const ph = bg.querySelector('.port-ph');
+          if (ph) ph.style.display = 'none';
+        }
+        // Update overlay label
+        const label = items[i].querySelector('.port-label');
+        if (label && item.caption) {
+          const small = label.querySelector('small');
+          if (small && item.eventType) small.textContent = item.eventType;
+          // Set the main label text (keep the small tag)
+          label.childNodes.forEach(n => { if (n.nodeType === 3) n.textContent = item.caption; });
+        }
+      });
+    } catch (e) { /* silently fall back to placeholders */ }
+  })();
+
+  // ── LIVE TESTIMONIALS from database ───────────────────────────────────────
+  (async function loadTestimonials() {
+    try {
+      const res  = await fetch('/api/admin/public/testimonials');
+      const data = await res.json();
+      if (!data.success || !data.testimonials.length) return;
+
+      const grid = document.querySelector('.testi-grid');
+      if (!grid) return;
+
+      grid.innerHTML = '';
+      data.testimonials.forEach(t => {
+        const stars = '★'.repeat(t.rating || 5) + '☆'.repeat(5 - (t.rating || 5));
+        const initials = (t.name || 'C').split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+        const avatarHtml = t.avatar
+          ? `<img src="${t.avatar}" alt="${t.name}" style="width:42px;height:42px;border-radius:50%;object-fit:cover;">`
+          : `<div class="testi-av">${initials}</div>`;
+
+        grid.insertAdjacentHTML('beforeend', `
+          <div class="testi-card reveal">
+            <div class="testi-quote">&ldquo;</div>
+            <div class="testi-stars">${stars}</div>
+            <p class="testi-text">${t.text}</p>
+            <div class="testi-author">
+              ${avatarHtml}
+              <div>
+                <div class="testi-name">${t.name}</div>
+                <div class="testi-role">${t.role || 'Client'}${t.eventType ? ' &middot; ' + t.eventType : ''}</div>
+              </div>
+            </div>
+          </div>`);
+      });
+
+      // Re-run scroll reveal on new elements
+      document.querySelectorAll('.testi-card.reveal').forEach(el => revObs.observe(el));
+    } catch (e) { /* silently fall back to static testimonials */ }
+  })();
+
+</script>
 
     <!-- Floating WhatsApp Button -->
     <a href="https://wa.me/254722446937?text=Hi%20Emerald%20Pearland%20Events%2C%20I%27d%20like%20to%20discuss%20an%20event%20booking"

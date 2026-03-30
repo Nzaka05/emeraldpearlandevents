@@ -109,6 +109,8 @@ app.use('/admin', express.static(path.join(__dirname, 'admin'), {
     index: false
 }));
 
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'admin', 'index.html')));
+
 app.get('/admin/bookings/new', (req, res) => {
     res.sendFile(path.join(__dirname, 'admin', 'new-booking.html'));
 });
