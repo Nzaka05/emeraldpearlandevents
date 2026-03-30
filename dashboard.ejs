@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard | Emerald Pearland Events</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        emerald: { 400: '#34d399', 500: '#00c896', 600: '#00a87e' },
+                        amber: { 500: '#f59e0b' },
+                        gold: { 400: '#C9A84C' }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .pulse-live { animation: pulse-anim 2s infinite; }
+        @keyframes pulse-anim {
+            0%   { box-shadow: 0 0 0 0 rgba(0,200,150,0.6); }
+            70%  { box-shadow: 0 0 0 8px rgba(0,200,150,0); }
+            100% { box-shadow: 0 0 0 0 rgba(0,200,150,0); }
+        }
+        .timeline-step { position: relative; }
+        .timeline-step:not(:last-child)::after {
+            content: '';
+            position: absolute;
+            top: 18px;
+            left: calc(50% + 18px);
+            right: calc(-50% + 18px);
+            height: 2px;
+            background: #e5e7eb;
+            z-index: 0;
+        }
+        .timeline-step.done:not(:last-child)::after { background: #00c896; }
+        .timeline-step.active:not(:last-child)::after { background: linear-gradient(to right, #00c896, #e5e7eb); }
+        .progress-bar { transition: width 0.8s ease; }
+    </style>
+</head>
+<body class="bg-gray-50 flex flex-col min-h-screen font-sans">
+
+    <!-- Navigation -->
+    <nav class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between h-16">
+            <div class="flex items-center gap-3">
+                <div class="w-1 h-8 bg-emerald-500 rounded-full"></div>
+                <span class="text-lg font-bold text-gray-900">Client Portal</span>
+                <span class="text-xs text-gray-400 font-medium hidden sm:block">Emerald Pearland Events</span>
+            </div>
+            <div class="flex items-center space-x-1 sm:space-x-4">
+                <a href="/client/dashboard" class="px-3 py-2 text-sm font-medium text-emerald-600 bg-emerald-50 rounded-lg">Dashboard</a>
+                <a href="/client/invoices" class="px-3 py-2 text-sm text-gray-500 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-colors">Invoices</a>
+                <a href="/client/sessions" class="px-3 py-2 text-sm text-gray-500 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-colors hidden sm:block">Security</a>
+                <button id="logout-btn" class="px-3 py-2 text-sm text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors font-medium">Log Out</button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+
+        <!-- Welcome Header -->
+        <div class="mb-8 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+            <div>
+                <p class="text-xs font-semibold text-emerald-600 uppercase tracking-widest mb-1">Welcome back</p>
+                <h1 class="text-2xl font-bold text-gray-900"><%= client.email.split('@')[0] %></h1>
+                <p class="text-sm text-gray-400 mt-1" id="last-seen">Loading session info...</p>
+            </div>
+            <div id="countdown-block" class="hidden bg-white border border-emerald-100 rounded-xl px-5 py-3 shadow-sm">
+                <p class="text-xs text-gray-400 uppercase tracking-wider font-semibold">Next event in</p>
+                <p class="text-2xl font-bold text-emerald-600" id="countdown-days">—</p>
+                <p class="text-xs text-gray-400" id="countdown-label">days</p>
+            </div>
+        </div>
+
+        <!-- Metric Cards -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            <div class="bg-white rounded-xl shadow-sm p-5 border border-gray-100">
+                <div class="flex items-center justify-between mb-3">
+                    <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Active Events</p>
+                    <span id="live-indicator" class="hidden w-2.5 h-2.5 bg-emerald-500 rounded-full pulse-live"></span>
+                </div>
+                <p class="text-3xl font-bold text-gray-900" id="metric-active">—</p>
+                <p class="text-xs text-emerald-500 mt-1 font-medium" id="active-label"></p>
+            </div>
+            <div class="bg-white rounded-xl shadow-sm p-5 border border-gray-100">
+                <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Upcoming</p>
+                <p class="text-3xl font-bold text-gray-900" id="metric-upcoming">—</p>
+                <p class="text-xs text-blue-500 mt-1 font-medium" id="upcoming-label"></p>
+            </div>
+            <div class="bg-white rounded-xl shadow-sm p-5 border border-gray-100">
+                <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Completed</p>
+                <p class="text-3xl font-bold text-gray-900" id="metric-completed">—</p>
+                <p class="text-xs text-gray-400 mt-1 font-medium">total events</p>
+            </div>
+            <div class="bg-white rounded-xl shadow-sm p-5 border border-gray-100">
+                <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Outstanding Balance</p>
+                <p class="text-3xl font-bold" id="metric-balance">—</p>
+                <p class="text-xs text-gray-400 mt-1 font-medium" id="balance-label">loading...</p>
+            </div>
+        </div>
+
+        <!-- Payment Progress Bar (shown only if outstanding > 0) -->
+        <div id="payment-progress-section" class="hidden bg-white rounded-xl shadow-sm border border-amber-100 p-5 mb-8">
+            <div class="flex items-center justify-between mb-3">
+                <div>
+                    <p class="text-sm font-semibold text-gray-800">Payment progress</p>
+                    <p class="text-xs text-gray-400 mt-0.5" id="progress-label">Loading...</p>
+                </div>
+                <a href="/client/invoices" class="text-xs font-semibold text-emerald-600 hover:text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-lg transition-colors">View Invoices →</a>
+            </div>
+            <div class="w-full bg-gray-100 rounded-full h-3 overflow-hidden">
+                <div id="progress-bar" class="progress-bar h-3 rounded-full bg-gradient-to-r from-emerald-500 to-emerald-400" style="width: 0%"></div>
+            </div>
+            <div class="flex justify-between mt-2">
+                <span class="text-xs text-gray-400">KSh 0 paid</span>
+                <span class="text-xs font-semibold text-amber-600" id="progress-outstanding">KSh 0 outstanding</span>
+            </div>
+        </div>
+
+        <!-- Event Status Timeline (shown for active/upcoming events) -->
+        <div id="timeline-section" class="hidden bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-8">
+            <div class="flex items-center justify-between mb-6">
+                <div>
+                    <p class="text-sm font-semibold text-gray-800" id="timeline-event-name">Event Journey</p>
+                    <p class="text-xs text-gray-400 mt-0.5" id="timeline-event-date"></p>
+                </div>
+                <span id="timeline-badge" class="text-xs font-bold px-3 py-1 rounded-full"></span>
+            </div>
+            <div class="grid grid-cols-6 gap-1" id="timeline-steps">
+                <!-- Injected by JS -->
+            </div>
+            <p class="text-xs text-gray-400 mt-4 text-center" id="timeline-message"></p>
+        </div>
+
+        <!-- Recent Events -->
+        <div class="bg-white shadow-sm rounded-xl border border-gray-100 overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+                <h3 class="text-sm font-semibold text-gray-800">Your Events</h3>
+                <span class="text-xs text-gray-400" id="events-count"></span>
+            </div>
+            <ul id="events-list" class="divide-y divide-gray-50">
+                <li class="py-8 text-center text-sm text-gray-400">Loading events...</li>
+            </ul>
+        </div>
+
+    </main>
+
+    <script>
+        const TIMELINE_STAGES = [
+            { key: 'PLANNED',        label: 'Confirmed',   icon: '✓' },
+            { key: 'STAFFING',       label: 'Assembling',  icon: '⚙' },
+            { key: 'READY',          label: 'Team Ready',  icon: '★' },
+            { key: 'LIVE',           label: 'Live',        icon: '●' },
+            { key: 'COMPLETED',      label: 'Completed',   icon: '✔' },
+            { key: 'FINANCE_SETTLED',label: 'Settled',     icon: '£' },
+        ];
+
+        const STATUS_MAP = {
+            'PLANNED':         { label: 'Booking Confirmed',   color: 'bg-blue-100 text-blue-700',    badge: 'bg-blue-100 text-blue-700' },
+            'STAFFING':        { label: 'Team Being Assembled',color: 'bg-purple-100 text-purple-700',badge: 'bg-purple-100 text-purple-700' },
+            'READY':           { label: 'Your Team Is Ready',  color: 'bg-indigo-100 text-indigo-700',badge: 'bg-indigo-100 text-indigo-700' },
+            'LIVE':            { label: 'Event In Progress',   color: 'bg-emerald-100 text-emerald-700 pulse-live border border-emerald-200', badge: 'bg-emerald-100 text-emerald-700' },
+            'COMPLETED':       { label: 'Event Completed',     color: 'bg-gray-100 text-gray-600',    badge: 'bg-gray-100 text-gray-600' },
+            'FINANCE_SETTLED': { label: 'Fully Settled',       color: 'bg-gray-100 text-gray-500',    badge: 'bg-gray-100 text-gray-500' },
+        };
+
+        const TIMELINE_MSG = {
+            'PLANNED':         'Your booking is confirmed. We are preparing your dedicated team.',
+            'STAFFING':        'Your team is being carefully selected and briefed for your event.',
+            'READY':           'Your full team has confirmed and is ready for deployment.',
+            'LIVE':            'Your event is live! Our team is on the ground right now.',
+            'COMPLETED':       'Event completed successfully. Your report will be ready shortly.',
+            'FINANCE_SETTLED': 'All payments are settled. Thank you for choosing Emerald Pearland Events.',
+        };
+
+        function formatKSh(amount) {
+            return 'KSh ' + Number(amount || 0).toLocaleString('en-KE', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+        }
+
+        function renderTimeline(status) {
+            const idx = TIMELINE_STAGES.findIndex(s => s.key === status);
+            const container = document.getElementById('timeline-steps');
+            container.innerHTML = '';
+            TIMELINE_STAGES.forEach((stage, i) => {
+                const isDone   = i < idx;
+                const isActive = i === idx;
+                const div = document.createElement('div');
+                div.className = 'timeline-step flex flex-col items-center text-center ' + (isDone ? 'done' : isActive ? 'active' : '');
+                div.innerHTML = `
+                    <div class="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold mb-2 relative z-10 border-2
+                        ${isDone   ? 'bg-emerald-500 border-emerald-500 text-white' :
+                          isActive ? 'bg-white border-emerald-500 text-emerald-600' :
+                                     'bg-white border-gray-200 text-gray-300'}">
+                        ${stage.icon}
+                    </div>
+                    <p class="text-[0.6rem] font-semibold leading-tight
+                        ${isDone   ? 'text-emerald-600' :
+                          isActive ? 'text-gray-800' :
+                                     'text-gray-300'}">
+                        ${stage.label}
+                    </p>`;
+                container.appendChild(div);
+            });
+        }
+
+        const loadDashboard = async () => {
+            try {
+                const res = await fetch('/client/api/dashboard');
+                if (!res.ok) {
+                    if (res.status === 401) window.location.href = '/client/login';
+                    return;
+                }
+                const json = await res.json();
+                const data = json.data;
+
+                // ── Metric cards ──────────────────────────────
+                document.getElementById('metric-active').textContent = data.active ?? 0;
+                document.getElementById('metric-upcoming').textContent = data.upcoming ?? 0;
+                document.getElementById('metric-completed').textContent = data.completed ?? 0;
+
+                if (data.active > 0) {
+                    document.getElementById('live-indicator').classList.remove('hidden');
+                    document.getElementById('active-label').textContent = 'live now';
+                }
+                if (data.upcoming > 0) {
+                    document.getElementById('upcoming-label').textContent = 'scheduled';
+                }
+
+                // ── Outstanding balance (KSh) ─────────────────
+                const bal = data.outstandingBalance || 0;
+                const balEl = document.getElementById('metric-balance');
+                balEl.textContent = formatKSh(bal);
+                if (bal > 0) {
+                    balEl.classList.add('text-amber-500');
+                    document.getElementById('balance-label').textContent = 'due — view invoices';
+                } else {
+                    balEl.classList.add('text-emerald-600');
+                    document.getElementById('balance-label').textContent = 'all settled';
+                }
+
+                // ── Payment progress bar ──────────────────────
+                const totalInvoiced = data.totalInvoiced || 0;
+                const totalPaid     = data.totalPaid     || 0;
+                if (totalInvoiced > 0) {
+                    const pct = Math.min(100, Math.round((totalPaid / totalInvoiced) * 100));
+                    document.getElementById('payment-progress-section').classList.remove('hidden');
+                    document.getElementById('progress-bar').style.width = pct + '%';
+                    document.getElementById('progress-label').textContent = `${pct}% paid — KSh ${totalPaid.toLocaleString('en-KE')} of KSh ${totalInvoiced.toLocaleString('en-KE')}`;
+                    document.getElementById('progress-outstanding').textContent = formatKSh(bal) + ' outstanding';
+                }
+
+                // ── Session label ─────────────────────────────
+                document.getElementById('last-seen').textContent = 'Session active · ' + new Date().toLocaleDateString('en-KE', { weekday: 'long', day: 'numeric', month: 'long' });
+
+                // ── Events list ───────────────────────────────
+                const list = document.getElementById('events-list');
+                list.innerHTML = '';
+                const events = data.recentEvents || [];
+                document.getElementById('events-count').textContent = events.length + ' event' + (events.length !== 1 ? 's' : '');
+
+                if (events.length === 0) {
+                    list.innerHTML = '<li class="py-10 text-center text-sm text-gray-400">No events found. Your bookings will appear here.</li>';
+                    return;
+                }
+
+                // Find the most relevant event for timeline (first active/upcoming)
+                const featured = events.find(e => !['COMPLETED','FINANCE_SETTLED'].includes(e.status)) || events[0];
+
+                // ── Countdown ─────────────────────────────────
+                if (featured && featured.date) {
+                    const evDate = new Date(featured.date);
+                    const today  = new Date();
+                    today.setHours(0,0,0,0);
+                    const diff = Math.ceil((evDate - today) / (1000 * 60 * 60 * 24));
+                    if (diff >= 0 && diff <= 365) {
+                        document.getElementById('countdown-block').classList.remove('hidden');
+                        document.getElementById('countdown-days').textContent = diff;
+                        document.getElementById('countdown-label').textContent = diff === 0 ? 'TODAY!' : diff === 1 ? 'day — tomorrow!' : 'days';
+                    }
+                }
+
+                // ── Timeline ──────────────────────────────────
+                if (featured && !['FINANCE_SETTLED'].includes(featured.status)) {
+                    const statusInfo = STATUS_MAP[featured.status] || {};
+                    document.getElementById('timeline-section').classList.remove('hidden');
+                    document.getElementById('timeline-event-name').textContent = featured.title || 'Your Event';
+                    document.getElementById('timeline-event-date').textContent = featured.date ? new Date(featured.date).toLocaleDateString('en-KE', { weekday:'long', day:'numeric', month:'long', year:'numeric' }) : '';
+                    const badge = document.getElementById('timeline-badge');
+                    badge.textContent = statusInfo.label || featured.status;
+                    badge.className = 'text-xs font-bold px-3 py-1 rounded-full ' + (statusInfo.badge || 'bg-gray-100 text-gray-600');
+                    renderTimeline(featured.status);
+                    document.getElementById('timeline-message').textContent = TIMELINE_MSG[featured.status] || '';
+                }
+
+                // ── Events list rows ──────────────────────────
+                events.forEach(evt => {
+                    const statusObj = STATUS_MAP[evt.status] || { label: evt.status, color: 'bg-gray-100 text-gray-600' };
+                    const isFinished = ['COMPLETED', 'FINANCE_SETTLED'].includes(evt.status);
+                    const dateStr = evt.date ? new Date(evt.date).toLocaleDateString('en-KE', { day: 'numeric', month: 'short', year: 'numeric' }) : '—';
+
+                    list.innerHTML += `
+                        <li class="px-6 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors">
+                            <div class="flex items-center gap-4 min-w-0">
+                                <div class="w-10 h-10 rounded-lg bg-emerald-50 flex items-center justify-center flex-shrink-0">
+                                    <svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                    </svg>
+                                </div>
+                                <div class="min-w-0">
+                                    <p class="text-sm font-semibold text-gray-900 truncate">${evt.title || 'Private Event'}</p>
+                                    <p class="text-xs text-gray-400 mt-0.5">${dateStr}</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-4 flex-shrink-0 ml-4">
+                                <span class="px-2.5 py-1 rounded-full text-xs font-semibold ${statusObj.color} hidden sm:inline-block">${statusObj.label}</span>
+                                <div class="flex flex-col items-end gap-1">
+                                    <a href="/client/events/${evt._id}" class="text-xs font-semibold text-emerald-600 hover:text-emerald-700">View →</a>
+                                    ${isFinished ? `<a href="/client/etr/${evt._id}" class="text-xs text-blue-500 hover:text-blue-700">ETR Report</a>` : ''}
+                                </div>
+                            </div>
+                        </li>`;
+                });
+
+            } catch(e) {
+                console.error('Dashboard load failed:', e);
+            }
+        };
+
+        loadDashboard();
+
+        document.getElementById('logout-btn').addEventListener('click', async () => {
+            await fetch('/client/api/logout', {
+                method: 'POST',
+                body: JSON.stringify({ _csrf: '<%= csrfToken %>' }),
+                headers: { 'Content-Type': 'application/json' }
+            });
+            window.location.href = '/client/login';
+        });
+    </script>
+</body>
+</html>

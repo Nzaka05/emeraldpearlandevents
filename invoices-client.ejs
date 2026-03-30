@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invoices | Emerald Pearland Events</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        emerald: { 500: '#00c896', 600: '#00a87e' },
+                        amber: { 500: '#f59e0b' }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50 flex flex-col min-h-screen font-sans">
+
+    <nav class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between h-16">
+            <div class="flex items-center gap-3">
+                <div class="w-1 h-8 bg-emerald-500 rounded-full"></div>
+                <span class="text-lg font-bold text-gray-900">Client Portal</span>
+            </div>
+            <div class="flex items-center space-x-1 sm:space-x-4">
+                <a href="/client/dashboard" class="px-3 py-2 text-sm text-gray-500 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-colors">Dashboard</a>
+                <a href="/client/invoices"  class="px-3 py-2 text-sm font-medium text-emerald-600 bg-emerald-50 rounded-lg">Invoices</a>
+                <a href="/client/sessions"  class="px-3 py-2 text-sm text-gray-500 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-colors hidden sm:block">Security</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+
+        <!-- Header + summary -->
+        <div class="mb-8">
+            <p class="text-xs font-semibold text-emerald-600 uppercase tracking-widest mb-1">Financial Overview</p>
+            <h1 class="text-2xl font-bold text-gray-900">Your Invoices</h1>
+            <p class="text-sm text-gray-400 mt-1">All amounts in Kenyan Shillings (KSh)</p>
+        </div>
+
+        <!-- Summary cards -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
+            <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
+                <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Total Invoiced</p>
+                <p class="text-2xl font-bold text-gray-900" id="sum-total">—</p>
+            </div>
+            <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
+                <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Total Paid</p>
+                <p class="text-2xl font-bold text-emerald-600" id="sum-paid">—</p>
+            </div>
+            <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
+                <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Outstanding</p>
+                <p class="text-2xl font-bold" id="sum-outstanding">—</p>
+            </div>
+            <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
+                <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Invoices</p>
+                <p class="text-2xl font-bold text-gray-900" id="sum-count">—</p>
+            </div>
+        </div>
+
+        <!-- Invoices table -->
+        <div class="bg-white shadow-sm rounded-xl border border-gray-100 overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+                <h3 class="text-sm font-semibold text-gray-800">All Invoices</h3>
+                <span class="text-xs text-gray-400">Sorted by most recent</span>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="min-w-full">
+                    <thead class="bg-gray-50 border-b border-gray-100">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Invoice</th>
+                            <th class="px-6 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Event</th>
+                            <th class="px-6 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Total (KSh)</th>
+                            <th class="px-6 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Paid (KSh)</th>
+                            <th class="px-6 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Balance (KSh)</th>
+                            <th class="px-6 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Status</th>
+                            <th class="px-6 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="invoices-list" class="bg-white divide-y divide-gray-50">
+                        <tr><td colspan="7" class="px-6 py-10 text-center text-sm text-gray-400">Loading invoices...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Empty state injected by JS -->
+        </div>
+
+        <!-- Payment info banner -->
+        <div class="mt-6 bg-emerald-50 border border-emerald-100 rounded-xl p-5 flex flex-col sm:flex-row items-start sm:items-center gap-4">
+            <div class="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center flex-shrink-0">
+                <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+                </svg>
+            </div>
+            <div>
+                <p class="text-sm font-semibold text-emerald-800">How to pay</p>
+                <p class="text-xs text-emerald-600 mt-0.5">Pay via M-Pesa or bank transfer. Include your invoice number as the reference. Contact us at <a href="mailto:emeraldpearlandevents@gmail.com" class="underline font-medium">emeraldpearlandevents@gmail.com</a> or <strong>+254 722 446 937</strong> to confirm payment.</p>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        function formatKSh(amount) {
+            return 'KSh ' + Number(amount || 0).toLocaleString('en-KE', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+        }
+
+        fetch('/client/api/invoices')
+            .then(r => { if (!r.ok) throw new Error(); return r.json(); })
+            .then(json => {
+                const data = json.data;
+                const tbody = document.getElementById('invoices-list');
+                tbody.innerHTML = '';
+
+                const invoices = data.invoices || [];
+
+                if (invoices.length === 0) {
+                    tbody.innerHTML = `
+                        <tr><td colspan="7" class="px-6 py-16 text-center">
+                            <div class="flex flex-col items-center gap-3">
+                                <div class="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
+                                    <svg class="w-6 h-6 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                    </svg>
+                                </div>
+                                <p class="text-sm text-gray-400 font-medium">No invoices yet</p>
+                                <p class="text-xs text-gray-300">Invoices will appear here once your event is confirmed</p>
+                            </div>
+                        </td></tr>`;
+                    updateSummary(0, 0, 0, 0);
+                    return;
+                }
+
+                let totalInvoiced = 0, totalPaid = 0, totalBalance = 0;
+
+                invoices.forEach(inv => {
+                    const total   = inv.totalAmount || 0;
+                    const paid    = inv.amountPaid  || 0;
+                    const balance = Math.max(0, total - paid);
+
+                    totalInvoiced += total;
+                    totalPaid     += paid;
+                    totalBalance  += balance;
+
+                    const isPaid    = balance === 0 || inv.invoiceStatus === 'Paid';
+                    const isOverdue = inv.invoiceStatus === 'Overdue';
+
+                    // Status badge
+                    let statusClass, statusText;
+                    if (isPaid) {
+                        statusClass = 'bg-emerald-100 text-emerald-700';
+                        statusText  = 'Paid';
+                    } else if (isOverdue) {
+                        statusClass = 'bg-red-100 text-red-700';
+                        statusText  = 'Overdue';
+                    } else if (inv.invoiceStatus === 'Sent') {
+                        statusClass = 'bg-blue-100 text-blue-700';
+                        statusText  = 'Sent';
+                    } else {
+                        statusClass = 'bg-amber-100 text-amber-700';
+                        statusText  = inv.invoiceStatus || 'Pending';
+                    }
+
+                    // Event name
+                    const eventName = inv.eventName || inv.event_name || inv.eventId?.title || 'Event';
+
+                    // Date
+                    const dateStr = inv.invoiceDate
+                        ? new Date(inv.invoiceDate).toLocaleDateString('en-KE', { day:'numeric', month:'short', year:'numeric' })
+                        : new Date(inv.createdAt).toLocaleDateString('en-KE', { day:'numeric', month:'short', year:'numeric' });
+
+                    tbody.innerHTML += `
+                        <tr class="hover:bg-gray-50 transition-colors">
+                            <td class="px-6 py-4">
+                                <p class="text-sm font-semibold text-gray-900 font-mono">${inv.invoiceNumber || '—'}</p>
+                                <p class="text-xs text-gray-400 mt-0.5">${dateStr}</p>
+                            </td>
+                            <td class="px-6 py-4">
+                                <p class="text-sm text-gray-700 font-medium max-w-[180px] truncate">${eventName}</p>
+                            </td>
+                            <td class="px-6 py-4">
+                                <p class="text-sm font-semibold text-gray-900">${formatKSh(total)}</p>
+                            </td>
+                            <td class="px-6 py-4">
+                                <p class="text-sm font-semibold text-emerald-600">${formatKSh(paid)}</p>
+                            </td>
+                            <td class="px-6 py-4">
+                                <p class="text-sm font-bold ${balance > 0 ? 'text-amber-600' : 'text-gray-400'}">${balance > 0 ? formatKSh(balance) : '—'}</p>
+                            </td>
+                            <td class="px-6 py-4">
+                                <span class="px-2.5 py-1 rounded-full text-xs font-semibold ${statusClass}">${statusText}</span>
+                            </td>
+                            <td class="px-6 py-4">
+                                <a href="/client/invoices/${inv._id}/download"
+                                   class="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-colors">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                                    </svg>
+                                    PDF
+                                </a>
+                            </td>
+                        </tr>`;
+                });
+
+                updateSummary(totalInvoiced, totalPaid, totalBalance, invoices.length);
+            })
+            .catch(() => {
+                document.getElementById('invoices-list').innerHTML =
+                    '<tr><td colspan="7" class="px-6 py-8 text-center text-sm text-red-400">Failed to load invoices. Please refresh.</td></tr>';
+            });
+
+        function updateSummary(total, paid, balance, count) {
+            document.getElementById('sum-total').textContent = formatKSh(total);
+            document.getElementById('sum-paid').textContent  = formatKSh(paid);
+            document.getElementById('sum-count').textContent = count;
+
+            const outEl = document.getElementById('sum-outstanding');
+            outEl.textContent = formatKSh(balance);
+            if (balance > 0) {
+                outEl.classList.add('text-amber-500');
+            } else {
+                outEl.classList.add('text-gray-400');
+                outEl.textContent = 'KSh 0';
+            }
+        }
+    </script>
+</body>
+</html>

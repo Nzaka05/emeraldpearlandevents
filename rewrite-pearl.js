@@ -1,7 +1,10 @@
-<% currentPage = 'pearl' %>
+const fs = require('fs');
+
+// ── 1. Rewrite pearl.ejs ──────────────────────────────────────────────────────
+const pearlEjs = `<% currentPage = 'pearl' %>
 <style>
   /* Hide the default page padding so Pearl fills everything */
-  .main-content, main, .pt-\[72px\] { padding: 0 !important; }
+  .main-content, main, .pt-\\[72px\\] { padding: 0 !important; }
   #pearlFloatBtn { display: none !important; }
 </style>
 
@@ -66,7 +69,6 @@
 <script>
 const csrf = document.querySelector('meta[name="csrf-token"]')?.content || '';
 const conversationHistory = [];
-function quickAsk(q) { document.getElementById('aiInput').value = q; sendMessage(); }
 const userName = '<%= user && user.name ? user.name.split(" ")[0] : "there" %>';
 const userRole = '<%= user && user.role ? user.role : "Staff" %>';
 
@@ -78,7 +80,7 @@ const greetings = {
   Supervisor: greet + ', ' + userName + '. How can I help?',
   Staff: greet + ', ' + userName + '. What can I do for you?'
 };
-document.addEventListener("DOMContentLoaded", function() { document.getElementById("greetMsg").textContent = greetings[userRole] || greetings.Staff; });
+document.getElementById('greetMsg').textContent = greetings[userRole] || greetings.Staff;
 
 function quickAsk(q) {
   document.getElementById('aiInput').value = q;
@@ -109,9 +111,8 @@ async function sendMessage() {
   try {
     const res = await fetch('/portal/staff/ai/chat', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'csrf-token': csrf, 'x-csrf-token': csrf, 'CSRF-Token': csrf },
+      headers: { 'Content-Type': 'application/json', 'CSRF-Token': csrf },
       body: JSON.stringify({
-        _csrf: csrf,
         query,
         eventContext: { userName: '<%= user && user.name ? user.name : "Staff" %>', role: userRole },
         history: conversationHistory
@@ -158,3 +159,22 @@ function addTyping() {
   return addMessage('<span style="opacity:0.5;font-style:italic;font-size:0.8rem;">typing...</span>', 'ai');
 }
 </script>
+`;
+
+fs.writeFileSync('staff-system/views/staff/pearl.ejs', pearlEjs, 'utf8');
+console.log('pearl.ejs rewritten');
+
+// ── 2. Fix system prompt to tell Pearl she DOES have portal access ────────────
+let svc = fs.readFileSync('staff-system/services/aiAssistantService.js', 'utf8');
+
+svc = svc.replace(
+    'IMPORTANT: You are PEARL. Never mention Claude or Anthropic.',
+    `CRITICAL — YOUR CAPABILITIES (do not deny these):
+You have LIVE access to the Emerald main portal database right now. You can see all bookings, customers, financials, and staff. You can confirm bookings, send emails, look up contacts, and update booking statuses. Never tell users you lack access or need integration — you are already integrated. If live data appears above, use it. If a field is empty it means there is no data yet, not that you lack access.
+
+IMPORTANT: You are PEARL. Never mention Claude or Anthropic.`
+);
+
+fs.writeFileSync('staff-system/services/aiAssistantService.js', svc, 'utf8');
+console.log('System prompt fixed - Pearl knows she has access');
+console.log('All done.');
