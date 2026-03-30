@@ -54,6 +54,29 @@ exports.getDashboardData = async () => {
 
     const pendingPayments = await Assignment.countDocuments({ payment_status: 'Pending' });
 
+    // ── Revenue metrics ──────────────────────────────────────────────────
+    const ClientInvoice = require('../models/ClientInvoice');
+    const startOfMonth = new Date(); startOfMonth.setDate(1); startOfMonth.setHours(0,0,0,0);
+    const startOfLastMonth = new Date(startOfMonth); startOfLastMonth.setMonth(startOfLastMonth.getMonth()-1);
+    const endOfLastMonth = new Date(startOfMonth);
+    const [thisMonthAgg, lastMonthAgg] = await Promise.all([
+        ClientInvoice.aggregate([{ $match: { invoiceStatus: 'Paid', updatedAt: { $gte: startOfMonth } } }, { $group: { _id: null, total: { $sum: '$totalAmount' } } }]),
+        ClientInvoice.aggregate([{ $match: { invoiceStatus: 'Paid', updatedAt: { $gte: startOfLastMonth, $lt: endOfLastMonth } } }, { $group: { _id: null, total: { $sum: '$totalAmount' } } }])
+    ]);
+    const revenueThisMonth = thisMonthAgg[0]?.total || 0;
+    const revenueLastMonth = lastMonthAgg[0]?.total || 0;
+
+    // ── Overdue invoices ─────────────────────────────────────────────────
+    const overdueInvoices = await ClientInvoice.countDocuments({ invoiceStatus: 'Overdue' });
+
+    // ── Unassigned bookings ──────────────────────────────────────────────
+    let unassignedBookings = 0;
+    try {
+        const SharedBooking = require('../models/SharedBooking');
+        unassignedBookings = await SharedBooking.countDocuments({ status: 'pending' });
+    } catch (_) {}
+    // ────────────────────────────────────────────────────────────────────
+
     const recentAuditLogs = await AuditLog.find()
         .sort({ timestamp: -1 })
         .limit(10)
@@ -89,7 +112,11 @@ exports.getDashboardData = async () => {
     }
 
     return {
-        stats: { totalStaff, availableStaff, busyStaff, activeAssignments, clockedInStaff, pendingPayments },
+        stats: {
+            totalStaff, availableStaff, busyStaff, activeAssignments,
+            clockedInStaff, pendingPayments,
+            revenueThisMonth, revenueLastMonth, overdueInvoices, unassignedBookings
+        },
         recentAuditLogs, allAssignments, pendingReplacements, recentSubmissions, activeTeams
     };
 };
