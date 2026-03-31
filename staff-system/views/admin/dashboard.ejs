@@ -107,14 +107,26 @@
 
 </div>
 
-<!-- ── Metric Cards (original 6) ── -->
+<!-- ── Metric Cards (clickable) ── -->
 <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-7">
-  <%- include('../components/metric-card', { value: metrics.totalStaff, label: 'Total Staff', icon: 'fa-users', color: 'emerald', delay: 1 }) %>
-  <%- include('../components/metric-card', { value: metrics.availableStaff, label: 'Available Now', icon: 'fa-circle-check', color: 'emerald', delay: 2 }) %>
-  <%- include('../components/metric-card', { value: metrics.busyStaff, label: 'On Shift', icon: 'fa-user-clock', color: 'gold', delay: 3 }) %>
-  <%- include('../components/metric-card', { value: metrics.activeAssignments, label: 'Active Events', icon: 'fa-calendar-days', color: 'blue', delay: 4 }) %>
-  <%- include('../components/metric-card', { value: metrics.clockedInStaff, label: 'Clocked In', icon: 'fa-fingerprint', color: 'cyan', delay: 5 }) %>
-  <%- include('../components/metric-card', { value: metrics.pendingPayments, label: 'Pending Pay', icon: 'fa-money-bills', color: 'gold', delay: 6 }) %>
+  <a href="/portal/admin-staff/staff-management" class="block hover:scale-[1.02] transition-transform">
+    <%- include('../components/metric-card', { value: metrics.totalStaff, label: 'Total Staff', icon: 'fa-users', color: 'emerald', delay: 1 }) %>
+  </a>
+  <a href="/portal/admin-staff/staff-management?status=Active" class="block hover:scale-[1.02] transition-transform">
+    <%- include('../components/metric-card', { value: metrics.availableStaff, label: 'Available Now', icon: 'fa-circle-check', color: 'emerald', delay: 2 }) %>
+  </a>
+  <a href="/portal/admin-staff/attendance" class="block hover:scale-[1.02] transition-transform">
+    <%- include('../components/metric-card', { value: metrics.busyStaff, label: 'On Shift', icon: 'fa-user-clock', color: 'gold', delay: 3 }) %>
+  </a>
+  <a href="/portal/admin-staff/events" class="block hover:scale-[1.02] transition-transform">
+    <%- include('../components/metric-card', { value: metrics.activeAssignments, label: 'Active Events', icon: 'fa-calendar-days', color: 'blue', delay: 4 }) %>
+  </a>
+  <a href="/portal/admin-staff/attendance" class="block hover:scale-[1.02] transition-transform">
+    <%- include('../components/metric-card', { value: metrics.clockedInStaff, label: 'Clocked In', icon: 'fa-fingerprint', color: 'cyan', delay: 5 }) %>
+  </a>
+  <a href="/portal/admin-staff/payments" class="block hover:scale-[1.02] transition-transform">
+    <%- include('../components/metric-card', { value: metrics.pendingPayments, label: 'Pending Pay', icon: 'fa-money-bills', color: 'gold', delay: 6 }) %>
+  </a>
 </div>
 
 <!-- ── NEW: Today's Events Spotlight (shown only if events today) ── -->
@@ -320,6 +332,9 @@
     </a>
     <a href="/portal/admin-staff/reports" class="btn btn-outline">
       <i class="fa-solid fa-chart-bar text-purple-400"></i> View Reports
+    </a>
+    <a href="/client/login" target="_blank" class="btn btn-outline">
+      <i class="fa-solid fa-user text-emerald-400"></i> Client Portal
     </a>
     <a href="/portal/admin-staff/events" class="btn btn-outline">
       <i class="fa-solid fa-calendar-days text-emerald-400"></i> All Events

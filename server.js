@@ -109,7 +109,7 @@ app.use('/admin', express.static(path.join(__dirname, 'admin'), {
     index: false
 }));
 
-app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'admin', 'index.html')));
+// Route removed — homepage served by index.html route below
 
 app.get('/admin/bookings/new', (req, res) => {
     res.sendFile(path.join(__dirname, 'admin', 'new-booking.html'));
