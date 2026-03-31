@@ -14,6 +14,7 @@ const jwt = require('jsonwebtoken');
 // Import routes and services
 const bookingRoutes = require('./server/routes/bookingRoutes');
 const adminRoutes = require('./server/routes/adminRoutes');
+const clientPortalRoutes = require('./server/routes/clientPortalRoutes');
 const { verifyAdminPage } = require('./server/middleware/adminAuth');
 const { initializeEmailService } = require('./server/services/emailService');
 const { initializeCronJobs, stopCronJobs } = require('./server/services/cronService');
@@ -299,6 +300,13 @@ app.get('/admin/403', (req, res) => {
 });
 
 // ═══════════════════════════════════════════════════════════
+// VIEW ENGINE (for EJS client portal)
+// ═══════════════════════════════════════════════════════════
+const path = require('path');
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, 'views'));
+
+// ═══════════════════════════════════════════════════════════
 // API ROUTES
 // ═══════════════════════════════════════════════════════════
 
@@ -306,6 +314,8 @@ app.get('/admin/403', (req, res) => {
 app.use('/api/admin', adminRoutes);
 // Main booking API
 app.use('/api', bookingRoutes);
+// Client portal (EJS-rendered, session-based)
+app.use('/client', clientPortalRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

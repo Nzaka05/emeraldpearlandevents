@@ -1,0 +1,40 @@
+# Netlify configuration for Emerald Pearland Events
+# Static files are served by Netlify; dynamic routes proxy to Render backend
+
+[build]
+  publish = "."
+
+# Proxy /client/* to Render (EJS client portal)
+[[redirects]]
+  from = "/client/*"
+  to = "https://emeraldpearlandevents.onrender.com/client/:splat"
+  status = 200
+  force = true
+
+# Proxy /api/* to Render (all API calls)
+[[redirects]]
+  from = "/api/*"
+  to = "https://emeraldpearlandevents.onrender.com/api/:splat"
+  status = 200
+  force = true
+
+# Proxy /admin/* to Render (admin pages are served by Express)
+[[redirects]]
+  from = "/admin/*"
+  to = "https://emeraldpearlandevents.onrender.com/admin/:splat"
+  status = 200
+  force = true
+
+# Proxy /internal/* to Render
+[[redirects]]
+  from = "/internal/*"
+  to = "https://emeraldpearlandevents.onrender.com/internal/:splat"
+  status = 200
+  force = true
+
+# Let static files (index.html, booking.html, images, etc.) be served by Netlify directly
+[[redirects]]
+  from = "/*"
+  to = "https://emeraldpearlandevents.onrender.com/:splat"
+  status = 200
+  force = false
