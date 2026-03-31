@@ -14,7 +14,12 @@ const jwt = require('jsonwebtoken');
 // Import routes and services
 const bookingRoutes = require('./server/routes/bookingRoutes');
 const adminRoutes = require('./server/routes/adminRoutes');
-const clientPortalRoutes = require('./server/routes/clientPortalRoutes');
+let clientPortalRoutes = null;
+try {
+    clientPortalRoutes = require('./server/routes/clientPortalRoutes');
+} catch (e) {
+    console.warn('[WARN] clientPortalRoutes failed to load:', e.message);
+}
 const { verifyAdminPage } = require('./server/middleware/adminAuth');
 const { initializeEmailService } = require('./server/services/emailService');
 const { initializeCronJobs, stopCronJobs } = require('./server/services/cronService');
@@ -315,7 +320,12 @@ app.use('/api/admin', adminRoutes);
 // Main booking API
 app.use('/api', bookingRoutes);
 // Client portal (EJS-rendered, session-based)
-app.use('/client', clientPortalRoutes);
+if (clientPortalRoutes) {
+    app.use('/client', clientPortalRoutes);
+    console.log('✅ Client portal routes loaded');
+} else {
+    console.warn('[WARN] Client portal unavailable - missing staff-models dependency');
+}
 
 // Health check
 app.get('/api/health', (req, res) => {
