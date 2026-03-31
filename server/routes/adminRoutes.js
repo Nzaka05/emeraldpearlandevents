@@ -1082,6 +1082,7 @@ router.get('/testimonials', verifyAdminJWT, async (req, res) => {
             message: 'Error fetching testimonials'
         });
     }
+});
 
 // POST /api/admin/testimonials
 router.post('/testimonials', verifyAdminJWT, async (req, res) => {
@@ -1118,7 +1119,6 @@ router.delete('/testimonials/:id', verifyAdminJWT, async (req, res) => {
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }
-});
 });
 
 // GET /api/admin/settings
@@ -1421,6 +1421,66 @@ router.patch('/gallery/:id', verifyAdminJWT, async (req, res) => {
         res.json({ success: true, item });
     } catch (error) {
         res.status(500).json({ success: false, message: 'Error updating image' });
+    }
+});
+
+// ═══════════════════════════════════════════════════════════
+// GALLERY — AI CAPTION GENERATION (PEARL)
+// ═══════════════════════════════════════════════════════════
+
+// POST /api/admin/gallery/generate-captions
+// Body: { eventType: string, filename: string }
+// Returns: { success: true, captions: string[] }  (always 5 options)
+router.post('/gallery/generate-captions', verifyAdminJWT, async (req, res) => {
+    try {
+        const { eventType, filename } = req.body;
+
+        const eventLabel = eventType || 'event';
+        const nameHint = filename ? ` The image filename is: "${filename}".` : '';
+
+        const prompt = `You are PEARL, the AI assistant for Emerald Pearland Events — a premium event staffing and coordination company in Nairobi, Kenya. 
+
+Generate exactly 5 short, professional image captions for a gallery photo from a ${eventLabel}.${nameHint}
+
+Requirements:
+- Each caption should be 5–12 words long
+- Tone: elegant, warm, and professional — fitting a luxury Nairobi events company
+- Vary the style: some descriptive, some evocative, some action-oriented
+- Do not number them or add bullet points
+- Return ONLY the 5 captions, one per line, nothing else
+
+Example format:
+Elegance in every detail at this stunning wedding
+Our team brings warmth and professionalism to every event
+A moment of joy captured at the reception
+Flawless coordination for an unforgettable evening
+Where memories are made and moments become magic`;
+
+        const axios = require('axios');
+        const response = await axios.post(
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+            {
+                contents: [{ parts: [{ text: prompt }] }],
+                generationConfig: { maxOutputTokens: 300, temperature: 0.8 }
+            },
+            { headers: { 'Content-Type': 'application/json' } }
+        );
+
+        const raw = response.data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+        const captions = raw
+            .split('\n')
+            .map(line => line.replace(/^[\d\.\-\*\s]+/, '').trim())
+            .filter(line => line.length > 4)
+            .slice(0, 5);
+
+        if (captions.length < 5) {
+            return res.status(500).json({ success: false, message: 'Caption generation returned fewer than 5 options.' });
+        }
+
+        res.json({ success: true, captions });
+    } catch (error) {
+        console.error('Caption generation error:', error?.response?.data || error.message);
+        res.status(500).json({ success: false, message: 'Error generating captions: ' + error.message });
     }
 });
 

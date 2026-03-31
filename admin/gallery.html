@@ -993,6 +993,24 @@
                         <label for="editorCaption">Caption</label>
                         <input type="text" id="editorCaption" class="editor-input" placeholder="e.g. Elegant Setup">
                     </div>
+
+                    <!-- ═══ PEARL AI CAPTION GENERATOR ═══ -->
+                    <div class="editor-form-group" id="pearlCaptionSection">
+                        <label style="display:flex;align-items:center;gap:6px;">
+                            <span style="color:var(--accent-gold);font-size:13px;">✦</span>
+                            PEARL Captions
+                        </label>
+                        <button type="button" id="generateCaptionsBtn" onclick="generateCaptions()"
+                            style="width:100%;padding:10px 14px;background:linear-gradient(135deg,#C9A84C,#A3822E);
+                                   color:#fff;border:none;border-radius:6px;font-size:13px;font-weight:600;
+                                   cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;
+                                   transition:opacity 0.2s;">
+                            <i class="fas fa-magic"></i>
+                            <span id="generateBtnText">Generate 5 Captions</span>
+                        </button>
+                        <div id="captionOptions" style="display:none;margin-top:4px;display:flex;flex-direction:column;gap:6px;"></div>
+                    </div>
+                    <!-- ═══ END PEARL AI CAPTION GENERATOR ═══ -->
                     <div class="editor-form-group">
                         <label for="editorEventType">Event Type</label>
                         <select id="editorEventType" class="editor-input" style="padding:12px">
@@ -1477,6 +1495,89 @@
             document.getElementById('editMetaModal').style.display = 'none';
             editingImageId = null;
         }
+
+        // ═══ PEARL AI CAPTION GENERATOR ═══
+        async function generateCaptions() {
+            const btn = document.getElementById('generateCaptionsBtn');
+            const btnText = document.getElementById('generateBtnText');
+            const optionsContainer = document.getElementById('captionOptions');
+            const eventType = document.getElementById('editorEventType').value;
+
+            btnText.textContent = 'Generating...';
+            btn.disabled = true;
+            btn.style.opacity = '0.7';
+            optionsContainer.style.display = 'none';
+            optionsContainer.innerHTML = '';
+
+            try {
+                const res = await fetch('/api/admin/gallery/generate-captions', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        eventType: eventType || 'event',
+                        filename: document.getElementById('editorCaption').value || ''
+                    })
+                });
+                const result = await res.json();
+
+                if (!result.success || !result.captions?.length) {
+                    btnText.textContent = 'Try Again';
+                    btn.disabled = false;
+                    btn.style.opacity = '1';
+                    return;
+                }
+
+                optionsContainer.innerHTML = '';
+                result.captions.forEach((caption, i) => {
+                    const chip = document.createElement('button');
+                    chip.type = 'button';
+                    chip.textContent = caption;
+                    chip.style.cssText = `
+                        width: 100%;
+                        text-align: left;
+                        padding: 9px 12px;
+                        background: rgba(201,168,76,0.07);
+                        border: 1px solid rgba(201,168,76,0.3);
+                        border-radius: 6px;
+                        font-size: 12px;
+                        color: var(--text-main);
+                        cursor: pointer;
+                        transition: all 0.2s;
+                        font-family: inherit;
+                        line-height: 1.4;
+                    `;
+                    chip.onmouseenter = () => {
+                        chip.style.background = 'rgba(201,168,76,0.18)';
+                        chip.style.borderColor = 'var(--accent-gold)';
+                    };
+                    chip.onmouseleave = () => {
+                        chip.style.background = 'rgba(201,168,76,0.07)';
+                        chip.style.borderColor = 'rgba(201,168,76,0.3)';
+                    };
+                    chip.onclick = () => {
+                        document.getElementById('editorCaption').value = caption;
+                        // Highlight the selected chip briefly
+                        chip.style.background = 'rgba(201,168,76,0.35)';
+                        chip.style.borderColor = 'var(--accent-gold)';
+                        setTimeout(() => {
+                            chip.style.background = 'rgba(201,168,76,0.07)';
+                            chip.style.borderColor = 'rgba(201,168,76,0.3)';
+                        }, 600);
+                    };
+                    optionsContainer.appendChild(chip);
+                });
+
+                optionsContainer.style.display = 'flex';
+                btnText.textContent = 'Regenerate';
+            } catch (e) {
+                console.error('Caption generation failed:', e);
+                btnText.textContent = 'Try Again';
+            } finally {
+                btn.disabled = false;
+                btn.style.opacity = '1';
+            }
+        }
+        // ═══ END PEARL AI CAPTION GENERATOR ═══
 
         async function saveEditedMetadata() {
             if (!editingImageId) return;
