@@ -1,7 +1,11 @@
 const clientAuthService = require('../services/clientAuthService');
-const Assignment = require('../../staff-models/Assignment');
-const ClientInvoice = require('../../staff-system/models/ClientInvoice');
 const ClientSession = require('../models/ClientSession');
+
+// staff-models loaded lazily — not available in all deployments
+let Assignment = null;
+let ClientInvoice = null;
+try { Assignment = require('../../staff-models/Assignment'); } catch(e) { console.warn('[ClientPortalController] Assignment model unavailable'); }
+try { ClientInvoice = require('../../staff-system/models/ClientInvoice'); } catch(e) { console.warn('[ClientPortalController] ClientInvoice model unavailable'); }
 
 // --- EJS VIEW CONTROLLERS ---
 
