@@ -4893,7 +4893,7 @@
   // ── LIVE GALLERY from database ────────────────────────────────────────────
   (async function loadGallery() {
     try {
-      const res  = await fetch('/api/admin/public/gallery');
+      const res  = await fetch('https://emerald-staff-system.onrender.com/api/admin/public/gallery');
       const data = await res.json();
       if (!data.success || !data.gallery.length) return;
 
@@ -4929,7 +4929,7 @@
   // ── LIVE TESTIMONIALS from database ───────────────────────────────────────
   (async function loadTestimonials() {
     try {
-      const res  = await fetch('/api/admin/public/testimonials');
+      const res  = await fetch('https://emerald-staff-system.onrender.com/api/admin/public/testimonials');
       const data = await res.json();
       if (!data.success || !data.testimonials.length) return;
 
