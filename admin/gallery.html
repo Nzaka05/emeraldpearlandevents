@@ -1513,6 +1513,7 @@
                 const res = await fetch('/api/admin/gallery/generate-captions', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
                     body: JSON.stringify({
                         eventType: eventType || 'event',
                         filename: document.getElementById('editorCaption').value || ''

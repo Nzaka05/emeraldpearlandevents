@@ -76,8 +76,15 @@ router.get('/api/sessions', clientPortalController.apiGetSessions);
 router.delete('/api/sessions/:sessionId', clientPortalController.apiDeleteSession);
 
 // ── Client Event Health (AI-powered, safe exposure only) ──
-const { clientHealthLimiter } = require('../../staff-middleware/aiRateLimiter');
-const { isValidObjectId: isValidOid } = require('../../staff-system/utils/validateObjectId');
+// Wrapped in try/catch: staff-system dependencies may not be available in all deployments
+let clientHealthLimiter = (req, res, next) => next(); // fallback no-op
+let isValidOid = (id) => /^[a-f\d]{24}$/i.test(id); // fallback ObjectId check
+try {
+    clientHealthLimiter = require('../../staff-middleware/aiRateLimiter').clientHealthLimiter;
+} catch(e) { console.warn('[ClientPortal] aiRateLimiter not available, using fallback'); }
+try {
+    isValidOid = require('../../staff-system/utils/validateObjectId').isValidObjectId;
+} catch(e) { console.warn('[ClientPortal] validateObjectId not available, using fallback'); }
 
 router.get('/api/event-health/:eventId', clientHealthLimiter, enforceDataOwnership, async (req, res) => {
     try {
@@ -85,7 +92,10 @@ router.get('/api/event-health/:eventId', clientHealthLimiter, enforceDataOwnersh
             return res.status(400).json({ success: false, error: 'Invalid ID' });
         }
 
-        const Assignment = require('../../staff-system/models/Assignment');
+        let Assignment;
+        try { Assignment = require('../../staff-system/models/Assignment'); }
+        catch(e) { return res.status(503).json({ success: false, error: 'Event health service unavailable' }); }
+
         const assignment = await Assignment.findOne({
             _id: req.params.eventId,
             client_id: req.clientUser._id
@@ -93,7 +103,6 @@ router.get('/api/event-health/:eventId', clientHealthLimiter, enforceDataOwnersh
 
         if (!assignment) return res.status(404).json({ success: false, error: 'Event not found' });
 
-        // Map internal states to safe progress stages
         const stateMap = {
             'PLANNED': 'Booking Confirmed', 'STAFFING': 'Team Being Assembled',
             'READY': 'Team Ready', 'LIVE': 'Event Live', 'COMPLETED': 'Event Completed',
@@ -101,7 +110,6 @@ router.get('/api/event-health/:eventId', clientHealthLimiter, enforceDataOwnersh
         };
         const progress = stateMap[assignment.lifecycle_state] || stateMap[assignment.status] || 'Processing';
 
-        // Get safe risk level (never expose raw score or internals)
         let riskLevel = 'LOW';
         try {
             const predictionService = require('../../staff-system/services/eventPredictionService');
