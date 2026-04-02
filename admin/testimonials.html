@@ -26,8 +26,8 @@
 
         .sidebar {
             width: 280px;
-            background: var(--primary);
-            border-right: 1px solid var(--accent-gold-hover);
+            background: var(--sidebar-bg, #FFFFFF);
+            border-right: 1px solid var(--border-color);
             padding: 32px 0;
             position: fixed;
             left: 0;
@@ -40,15 +40,8 @@
             -webkit-overflow-scrolling: touch;
         }
 
-        .sidebar-logo {
-            padding: 0 24px;
-            margin-bottom: 48px;
-            font-family: 'Cormorant Garamond', serif;
-            font-size: 24px;
-            font-weight: 700;
-            color: var(--text-main);
-            letter-spacing: 2px;
-            animation: floatIdle 6s ease-in-out infinite;
+        .sidebar-logo-old-rule {
+            /* superseded by later .sidebar-logo block */
         }
 
         .nav-item {
@@ -87,23 +80,7 @@
             border-top: 1px solid rgba(201, 168, 76, 0.2);
         }
 
-        .logout-btn {
-            width: 100%;
-            padding: 8px 12px;
-            background: var(--text-main);
-            color: var(--bg-primary);
-            border: none;
-            border-radius: 4px;
-            font-size: 12px;
-            font-weight: 600;
-            cursor: pointer;
-            margin-top: 16px;
-        }
-
-        .logout-btn:hover {
-            background: var(--accent-gold);
-            color: var(--text-main);
-        }
+        /* .logout-btn — defined correctly in sidebar-footer block below */
 
         .main-content {
             flex: 1;

@@ -227,6 +227,11 @@
     .port-label { color: #fff; font-family: 'Cormorant Garamond', serif; font-size: 1.2rem; font-weight: 400; }
     .port-label small { display: block; font-family: 'DM Sans', sans-serif; font-size: 0.7rem; letter-spacing: 0.1em; color: var(--gold-light); text-transform: uppercase; margin-bottom: 4px; }
 
+    /* ── PORTFOLIO SKELETON ── */
+    .port-skeleton .port-bg { background: linear-gradient(90deg, #1a2e1e 25%, #223828 50%, #1a2e1e 75%); background-size: 200% 100%; animation: shimmer 1.6s infinite; }
+    @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+    .port-item .port-bg.loaded { background-size: cover; background-position: center; background-repeat: no-repeat; animation: none; }
+
     /* ── TESTIMONIALS ── */
     #testimonials { background: var(--emerald-dark); }
     .testi-head { margin-bottom: 50px; }
@@ -552,28 +557,23 @@
         <div class="sec-tag">Our Work</div>
         <h2 class="sec-h2">Events we&rsquo;ve<br><em>brought to life</em></h2>
       </div>
-      <a href="/admin/gallery.html" class="port-link">View full gallery <i class="fa-solid fa-arrow-right"></i></a>
+      <a href="/gallery.html" class="port-link">View full gallery <i class="fa-solid fa-arrow-right"></i></a>
     </div>
-    <div class="port-grid reveal">
-      <div class="port-item">
-        <div class="port-bg port-ph"><i class="fa-solid fa-camera"></i>Add event photo</div>
-        <div class="port-overlay"><div class="port-label"><small>Corporate</small>Annual Awards Gala</div></div>
+    <div class="port-grid reveal" id="port-grid">
+      <div class="port-item port-skeleton">
+        <div class="port-bg port-ph"><i class="fa-solid fa-camera"></i></div>
       </div>
-      <div class="port-item">
-        <div class="port-bg port-ph"><i class="fa-solid fa-camera"></i>Add event photo</div>
-        <div class="port-overlay"><div class="port-label"><small>Wedding</small>Garden Ceremony</div></div>
+      <div class="port-item port-skeleton">
+        <div class="port-bg port-ph"><i class="fa-solid fa-camera"></i></div>
       </div>
-      <div class="port-item">
-        <div class="port-bg port-ph"><i class="fa-solid fa-camera"></i>Add event photo</div>
-        <div class="port-overlay"><div class="port-label"><small>Brand Activation</small>Product Launch</div></div>
+      <div class="port-item port-skeleton">
+        <div class="port-bg port-ph"><i class="fa-solid fa-camera"></i></div>
       </div>
-      <div class="port-item">
-        <div class="port-bg port-ph"><i class="fa-solid fa-camera"></i>Add event photo</div>
-        <div class="port-overlay"><div class="port-label"><small>VIP</small>Diplomatic Dinner</div></div>
+      <div class="port-item port-skeleton">
+        <div class="port-bg port-ph"><i class="fa-solid fa-camera"></i></div>
       </div>
-      <div class="port-item">
-        <div class="port-bg port-ph"><i class="fa-solid fa-camera"></i>Add event photo</div>
-        <div class="port-overlay"><div class="port-label"><small>Entertainment</small>Gala Night</div></div>
+      <div class="port-item port-skeleton">
+        <div class="port-bg port-ph"><i class="fa-solid fa-camera"></i></div>
       </div>
     </div>
   </div>
@@ -653,7 +653,7 @@
     <p class="cta-sub">Tell us your vision. We'll get back to you within 24 hours with a tailored staffing plan and quote.</p>
     <div class="cta-contact">
       <a href="tel:+254722446937"><i class="fa-solid fa-phone"></i> +254 722 446 937</a>
-      <a href="mailto:emeraldpearlandevents@gmail.com"><i class="fa-solid fa-envelope"></i> emeraldpearlandevents@gmail.com</a>
+      <a href="/cdn-cgi/l/email-protection#66030b0314070a02160307140a07080203100308121526010b070f0a4805090b"><i class="fa-solid fa-envelope"></i> <span class="__cf_email__" data-cfemail="bfdad2dacdded3dbcfdadecdd3ded1dbdac9dad1cbccffd8d2ded6d391dcd0d2">[email&#160;protected]</span></a>
       <a href="https://instagram.com/emerald.pearland.events" target="_blank"><i class="fa-brands fa-instagram"></i> @emerald.pearland.events</a>
     </div>
     <div class="cta-btns">
@@ -678,7 +678,7 @@
       <div class="footer-socials">
         <a href="https://instagram.com/emerald.pearland.events" target="_blank" aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a>
         <a href="https://wa.me/254722446937" target="_blank" aria-label="WhatsApp"><i class="fa-brands fa-whatsapp"></i></a>
-        <a href="mailto:emeraldpearlandevents@gmail.com" aria-label="Email"><i class="fa-solid fa-envelope"></i></a>
+        <a href="/cdn-cgi/l/email-protection#92f7fff7e0f3fef6e2f7f3e0fef3fcf6f7e4f7fce6e1d2f5fff3fbfebcf1fdff" aria-label="Email"><i class="fa-solid fa-envelope"></i></a>
       </div>
     </div>
     <div class="footer-col">
@@ -707,7 +707,7 @@
       <h4>Contact</h4>
       <div class="contact-item"><i class="fa-solid fa-location-dot"></i><span>Nairobi, Kenya</span></div>
       <div class="contact-item"><i class="fa-solid fa-phone"></i><a href="tel:+254722446937" style="color:inherit;text-decoration:none;">+254 722 446 937</a></div>
-      <div class="contact-item"><i class="fa-solid fa-envelope"></i><a href="mailto:emeraldpearlandevents@gmail.com" style="color:inherit;text-decoration:none;">emeraldpearlandevents@gmail.com</a></div>
+      <div class="contact-item"><i class="fa-solid fa-envelope"></i><a href="/cdn-cgi/l/email-protection#4a2f272f382b262e3a2f2b38262b242e2f3c2f243e390a2d272b232664292527" style="color:inherit;text-decoration:none;"><span class="__cf_email__" data-cfemail="f89d959d8a99949c889d998a9499969c9d8e9d968c8bb89f95999194d69b9795">[email&#160;protected]</span></a></div>
       <div class="contact-item"><i class="fa-brands fa-instagram"></i><a href="https://instagram.com/emerald.pearland.events" target="_blank" style="color:inherit;text-decoration:none;">@emerald.pearland.events</a></div>
     </div>
   </div>
@@ -725,7 +725,7 @@
   <i class="fa-brands fa-whatsapp"></i>
 </a>
 
-<script>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
   // Navbar scroll
   const navbar = document.getElementById('navbar');
   window.addEventListener('scroll', () => navbar.classList.toggle('scrolled', window.scrollY > 40), { passive: true });
@@ -767,20 +767,36 @@
           item.classList.add('vis');
           const target = parseInt(item.dataset.target, 10);
           const countEl = item.querySelector('.count');
-          let val = 0;
-          const inc = target / (1600 / 16);
-          const t = setInterval(() => {
-            val += inc;
-            if (val >= target) { val = target; clearInterval(t); }
-            countEl.textContent = Math.floor(val);
-          }, 16);
-        }, idx * 160);
-      });
-      statsObs.unobserve(entry.target);
-    });
-  }, { threshold: 0.3 });
-  const statsEl = document.getElementById('stats');
-  if (statsEl) statsObs.observe(statsEl);
+          let 
+<script>
+(async function loadGallery() {
+  const grid = document.getElementById('port-grid');
+  if (!grid) return;
+
+  const BACKEND = 'https://emeraldpearlandevents.onrender.com';
+
+  try {
+    const res = await fetch(BACKEND + '/api/gallery');
+    const data = await res.json();
+
+    if (!data.success || !data.gallery || !data.gallery.length) return;
+
+    const items = data.gallery.slice(0, 5);
+
+    grid.innerHTML = items.map((item, i) => `
+      <div class="port-item">
+        <div class="port-bg loaded" style="background-image:url('${item.url}');background-size:cover;background-position:center;"></div>
+        <div class="port-overlay">
+          <div class="port-label">
+            <small>${item.eventType || ''}</small>
+            ${item.caption || ''}
+          </div>
+        </div>
+      </div>
+    `).join('');
+
+  } catch(e) {
+    console.warn('[Gallery] Could not load gallery images:', e.message);
+  }
+})();
 </script>
-</body>
-</html>

@@ -1,29 +1,23 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gallery - Emerald Admin</title>
-    <link
-        href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap"
-        rel="stylesheet">
-    <script>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-        (function () {
+    <!-- Dark mode init (must be before paint) -->
+    <script>
+        (function() {
             if (localStorage.getItem('emeraldDarkMode') === 'true') {
                 document.documentElement.classList.add('dark-mode');
             }
         })();
     </script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box
-        }
 
+    <style>
+        /* ─── CSS VARS (light + dark, mirrors testimonials.html) ─── */
         :root {
             --bg-primary: #F7F4EF;
             --bg-card: #FFFFFF;
@@ -32,1656 +26,920 @@
             --accent-gold: #C9A84C;
             --accent-gold-hover: #E9A825;
             --accent-danger: #B5332A;
-            --sidebar-bg: #FFFFFF
-        }
+            --sidebar-bg: #FFFFFF;
 
+            /* aliases used by premium-admin.css */
+            --primary: #0D2B1F;
+            --surface: #F7F4EF;
+            --accent: #C9A84C;
+        }
         html.dark-mode {
             --bg-primary: #0a1f16;
             --bg-card: #0d2b1f;
             --text-main: #F7F4EF;
             --border-color: #1a3d2e;
-            --sidebar-bg: #091a13
+            --sidebar-bg: #091a13;
         }
 
-        html.dark-mode .sidebar,
-        .dark-mode .topbar {
-            background: var(--sidebar-bg);
-            border-color: var(--border-color)
-        }
+        /* ─── RESETS ─── */
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'DM Sans', sans-serif; background: var(--bg-primary); color: var(--text-main); }
 
-        html.dark-mode .modal-content,
-        html.dark-mode input,
-        html.dark-mode select,
-        html.dark-mode textarea {
-            background: var(--sidebar-bg);
-            color: var(--text-main)
-        }
+        /* ─── LAYOUT ─── */
+        .admin-layout { display: flex; min-height: 100vh; }
 
-        body {
-            font-family: 'DM Sans', sans-serif;
-            background: var(--bg-primary);
-            color: var(--text-main)
-        }
-
-        .admin-layout {
-            display: flex;
-            min-height: 100vh
-        }
-
+        /* ─── SIDEBAR (verbatim from testimonials.html) ─── */
         .sidebar {
             width: 280px;
-            background: var(--primary);
-            border-right: 1px solid var(--accent-gold-hover);
+            background: var(--sidebar-bg, var(--bg-card));
+            border-right: 1px solid var(--border-color);
             padding: 32px 0;
-            position: fixed;
-            left: 0;
-            top: 0;
+            position: fixed; left: 0; top: 0;
             height: 100vh;
             z-index: 100;
-            display: flex;
-            flex-direction: column;
+            display: flex; flex-direction: column;
             overflow-y: auto;
             -webkit-overflow-scrolling: touch;
         }
+        html.dark-mode .sidebar { background: var(--sidebar-bg); border-right-color: var(--border-color); }
 
-        .sidebar-logo {
-            padding: 0 24px;
-            margin-bottom: 48px;
+        .sidebar-logo { text-align: center; margin-bottom: 40px; padding: 0 24px; }
+        .sidebar-logo-img { max-width: 80px; margin: 0 auto 15px; display: block; }
+        .sidebar-logo h1 {
             font-family: 'Cormorant Garamond', serif;
-            font-size: 24px;
-            font-weight: 700;
-            letter-spacing: 2px;
-            color: var(--accent-gold)
+            font-size: 20px; font-weight: 600; letter-spacing: 0.1em;
+            color: var(--text-main);
         }
+        .sidebar-logo p { font-size: 11px; opacity: 0.7; margin-top: 5px; letter-spacing: 0.1em; color: var(--text-main); }
 
-        .nav-item {
-            display: flex;
-            align-items: center;
-            padding: 12px 24px;
-            margin: 0 12px;
-            border-radius: 6px;
+        .sidebar-nav { list-style: none; margin-bottom: 40px; padding: 0 12px; }
+        .sidebar-nav-item { margin-bottom: 8px; }
+        .sidebar-nav-link {
+            display: flex; align-items: center;
+            padding: 12px 14px;
             color: var(--text-main);
             text-decoration: none;
-            font-size: 14px;
-            font-weight: 500;
-            transition: all .3s;
-            cursor: pointer;
-            position: relative
+            border-radius: 6px;
+            transition: all 0.3s ease;
+            position: relative; overflow: hidden;
+            font-size: 14px; font-weight: 500;
         }
-
-        .nav-item:hover,
-        .nav-item.active {
-            background: rgba(201, 168, 76, .1)
+        .sidebar-nav-link::before {
+            content: ''; position: absolute; left: 0; top: 0; bottom: 0;
+            width: 4px; background: var(--accent);
+            transform: scaleY(0); transform-origin: center;
+            transition: transform 0.3s ease;
         }
-
-        .nav-item.active::before {
-            content: '';
-            position: absolute;
-            left: 0;
-            top: 0;
-            bottom: 0;
-            width: 3px;
-            background: var(--accent-gold)
+        .sidebar-nav-link:hover::before,
+        .sidebar-nav-link.active::before { transform: scaleY(1); }
+        .sidebar-nav-link:hover { background: rgba(201,168,76,0.1); color: var(--accent-gold); }
+        .sidebar-nav-link.active { background: rgba(201,168,76,0.15); color: var(--accent-gold); }
+        .sidebar-nav-icon { width: 20px; margin-right: 12px; text-align: center; }
+        .nav-badge {
+            margin-left: auto;
+            background: var(--accent); color: var(--primary);
+            padding: 2px 8px; border-radius: 12px;
+            font-size: 11px; font-weight: 700;
         }
 
         .sidebar-footer {
-            padding: 20px 24px;
-            margin-top: auto;
-            flex-shrink: 0;
-            border-top: 1px solid rgba(201, 168, 76, 0.2);
+            border-top: 1px solid rgba(201,168,76,0.2);
+            padding: 20px 12px 0; margin-top: auto;
         }
-
+        .admin-profile {
+            display: flex; align-items: center; gap: 12px;
+            padding: 12px; border-radius: 6px;
+            cursor: pointer; transition: all 0.3s ease;
+        }
+        .admin-profile:hover { background: rgba(201,168,76,0.1); }
+        .admin-avatar {
+            width: 40px; height: 40px; border-radius: 50%;
+            background: var(--accent-gold); color: var(--primary);
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 700; font-size: 16px; flex-shrink: 0;
+        }
+        .admin-info { flex: 1; }
+        .admin-name { font-size: 13px; font-weight: 600; display: block; color: var(--text-main); }
+        .admin-role { font-size: 11px; opacity: 0.7; color: var(--text-main); }
         .logout-btn {
-            width: 100%;
-            padding: 8px 12px;
-            background: var(--text-main);
-            color: var(--bg-primary);
-            border: none;
-            border-radius: 4px;
-            font-size: 12px;
-            font-weight: 600;
-            cursor: pointer
+            background: none; border: none; color: var(--text-main);
+            cursor: pointer; padding: 8px; border-radius: 4px;
+            transition: all 0.3s ease;
         }
+        .logout-btn:hover { background: rgba(181,51,42,0.2); color: #ff6b6b; }
 
-        .logout-btn:hover {
-            background: var(--accent-gold);
-            color: var(--text-main)
-        }
-
-        .main-content {
-            flex: 1;
-            margin-left: 280px;
-            display: flex;
-            flex-direction: column
-        }
+        /* ─── MAIN CONTENT ─── */
+        .main-content { flex: 1; margin-left: 280px; display: flex; flex-direction: column; }
 
         .topbar {
             background: var(--bg-card);
             border-bottom: 1px solid var(--border-color);
             padding: 16px 32px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            position: sticky;
-            top: 0;
-            z-index: 50
+            display: flex; justify-content: space-between; align-items: center;
+            position: sticky; top: 0; z-index: 50;
         }
+        html.dark-mode .topbar { background: var(--sidebar-bg); border-bottom-color: var(--border-color); }
 
         .page-title {
             font-family: 'Cormorant Garamond', serif;
-            font-size: 28px;
-            font-weight: 600
+            font-size: 28px; font-weight: 600; color: var(--text-main);
         }
 
-        .content {
-            flex: 1;
-            padding: 32px;
-            overflow-y: auto
+        .mobile-menu-btn {
+            display: none; background: none; border: none;
+            font-size: 24px; color: var(--text-main);
+            cursor: pointer; margin-right: 15px;
         }
 
-        .header-controls {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 24px
-        }
+        .content { flex: 1; padding: 32px; }
 
-        .btn-primary {
-            padding: 10px 20px;
-            background: var(--text-main);
-            color: var(--bg-primary);
-            border: none;
-            border-radius: 4px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all .3s;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px
-        }
-
-        .btn-primary:hover {
-            background: var(--accent-gold);
-            color: var(--text-main)
-        }
-
-        .btn-secondary {
-            padding: 10px 20px;
-            background: transparent;
+        /* ─── UPLOAD PANEL ─── */
+        .upload-panel {
+            background: var(--bg-card);
             border: 1px solid var(--border-color);
-            border-radius: 4px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all .3s;
-            color: var(--text-main)
-        }
-
-        .btn-secondary:hover {
-            border-color: var(--accent-gold);
-            color: var(--accent-gold)
-        }
-
-        .upload-zone {
-            border: 2px dashed var(--accent-gold);
-            border-radius: 8px;
-            padding: 40px;
-            text-align: center;
-            background: rgba(201, 168, 76, .05);
-            transition: all .3s;
-            cursor: pointer;
-            margin-bottom: 32px
-        }
-
-        .upload-zone:hover,
-        .upload-zone.dragover {
-            background: rgba(201, 168, 76, .12);
-            border-color: var(--accent-gold-hover)
-        }
-
-        .upload-icon {
-            font-size: 48px;
-            margin-bottom: 16px
-        }
-
-        #fileInput {
-            display: none
-        }
-
-        .gallery-stats {
-            display: flex;
-            gap: 16px;
-            margin-bottom: 24px
-        }
-
-        .stat-chip {
-            padding: 8px 16px;
-            background: var(--bg-primary);
-            border: 1px solid var(--accent-gold);
-            border-radius: 30px;
-            font-size: 13px;
-            font-weight: 600;
-            color: var(--text-main);
-            box-shadow: 0 4px 12px rgba(201, 168, 76, 0.1);
-        }
-
-        .gallery-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-            gap: 24px;
-            padding-top: 10px;
-        }
-
-        .gallery-item {
-            position: relative;
-            overflow: hidden;
             border-radius: 12px;
-            background: var(--bg-card);
-            border: 1px solid var(--border-color);
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            padding: 28px;
+            margin-bottom: 28px;
         }
+        html.dark-mode .upload-panel { background: var(--bg-card); border-color: var(--border-color); }
 
-        .gallery-item:hover {
-            box-shadow: 0 15px 35px rgba(13, 43, 31, 0.15);
-            transform: translateY(-8px);
-            border-color: var(--accent-gold);
+        .panel-header {
+            display: flex; align-items: center; gap: 10px;
+            margin-bottom: 20px;
         }
-
-        .gallery-item:hover .gallery-overlay {
-            opacity: 1
-        }
-
-        .gallery-img {
-            width: 100%;
-            height: 160px;
-            object-fit: cover;
-            display: block
-        }
-
-        .gallery-overlay {
-            position: absolute;
-            inset: 0;
-            background: rgba(13, 43, 31, .7);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            opacity: 0;
-            transition: all .3s
-        }
-
-        .gallery-overlay button {
-            padding: 6px 14px;
-            border: none;
-            border-radius: 4px;
-            font-size: 12px;
-            font-weight: 700;
-            cursor: pointer;
-            width: 80%
-        }
-
-        .btn-view {
-            background: var(--accent-gold);
-            color: #0D2B1F
-        }
-
-        .btn-delete-img {
-            background: var(--accent-danger);
-            color: #fff
-        }
-
-        .gallery-meta {
-            padding: 10px 12px;
-            font-size: 12px
-        }
-
-        .gallery-caption {
-            font-weight: 600;
-            color: var(--text-main);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis
-        }
-
-        .gallery-tag {
-            display: inline-block;
-            background: rgba(201, 168, 76, .15);
-            color: var(--accent-gold);
-            padding: 2px 8px;
-            border-radius: 10px;
-            font-size: 10px;
-            font-weight: 700;
-            margin-top: 4px
-        }
-
-        .empty-state {
-            text-align: center;
-            padding: 80px 20px;
-            color: #999
-        }
-
-        .empty-state .empty-icon {
-            font-size: 64px;
-            margin-bottom: 16px
-        }
-
-        .upload-progress {
-            display: none;
-            background: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 16px;
-            margin-bottom: 16px
-        }
-
-        .progress-bar {
-            height: 4px;
-            background: #eee;
-            border-radius: 2px;
-            overflow: hidden;
-            margin-top: 8px
-        }
-
-        .progress-fill {
-            height: 100%;
-            background: var(--accent-gold);
-            width: 0%;
-            transition: width .3s
-        }
-
-        /* Lightbox */
-        .lightbox {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, .9);
-            z-index: 200;
-            align-items: center;
-            justify-content: center
-        }
-
-        .lightbox.show {
-            display: flex
-        }
-
-        .lightbox-img {
-            max-width: 90vw;
-            max-height: 90vh;
-            object-fit: contain;
-            border-radius: 4px
-        }
-
-        .lightbox-close {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            background: var(--accent-gold);
-            border: none;
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            font-size: 20px;
-            cursor: pointer;
-            font-weight: 700;
-            color: #0D2B1F
-        }
-
-        /* Filter bar */
-        .filter-bar {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 24px;
-            flex-wrap: wrap
-        }
-
-        .filter-btn {
-            padding: 6px 14px;
-            border: 1px solid var(--border-color);
-            border-radius: 20px;
-            background: transparent;
-            cursor: pointer;
-            font-size: 12px;
-            font-weight: 600;
-            color: var(--text-main);
-            transition: all .2s
-        }
-
-        .filter-btn.active,
-        .filter-btn:hover {
-            background: var(--accent-gold);
-            color: #0D2B1F;
-            border-color: var(--accent-gold)
-        }
-
-        /* ═══════════════════════════════════════════════════════════
-           PRE-UPLOAD EDITOR MODAL
-           ═══════════════════════════════════════════════════════════ */
-        .editor-modal {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.85);
-            backdrop-filter: blur(8px);
-            z-index: 3000;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-
-        .editor-modal.show {
-            display: flex;
-            animation: fadeIn 0.3s ease;
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-            }
-
-            to {
-                opacity: 1;
-            }
-        }
-
-        .editor-content {
-            background: var(--bg-card);
-            border-radius: 12px;
-            width: 100%;
-            max-width: 900px;
-            max-height: 90vh;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            border: 1px solid var(--border-color);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-        }
-
-        .editor-header {
-            padding: 20px 24px;
-            border-bottom: 1px solid var(--border-color);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: rgba(201, 168, 76, 0.05);
-        }
-
-        .editor-title {
+        .panel-header h2 {
             font-family: 'Cormorant Garamond', serif;
-            font-size: 24px;
-            font-weight: 600;
-            color: var(--text-main);
+            font-size: 20px; font-weight: 600; color: var(--text-main);
         }
+        .panel-header i { color: var(--accent-gold); }
 
-        .editor-close {
-            background: none;
-            border: none;
-            font-size: 24px;
-            color: var(--text-main);
+        .upload-drop-zone {
+            border: 2px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 36px 24px;
+            text-align: center;
             cursor: pointer;
-            transition: color 0.3s;
+            transition: all 0.3s ease;
+            background: var(--bg-primary);
+            margin-bottom: 20px;
+        }
+        .upload-drop-zone:hover,
+        .upload-drop-zone.dragover {
+            border-color: var(--accent-gold);
+            background: rgba(201,168,76,0.05);
+        }
+        .upload-drop-zone i { font-size: 2rem; color: var(--accent-gold); margin-bottom: 12px; display: block; }
+        .upload-drop-zone p { font-size: 14px; color: var(--text-main); opacity: 0.7; margin-bottom: 6px; }
+        .upload-drop-zone small { font-size: 11px; color: var(--text-main); opacity: 0.5; }
+        #fileInput { display: none; }
+
+        .upload-meta {
+            display: grid; grid-template-columns: 1fr 1fr auto; gap: 12px; align-items: end;
+        }
+        .form-group { display: flex; flex-direction: column; gap: 6px; }
+        .form-group label { font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-main); opacity: 0.7; }
+        .form-group input,
+        .form-group select {
+            padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 6px;
+            font-family: 'DM Sans', sans-serif; font-size: 13px;
+            background: var(--bg-primary); color: var(--text-main);
+            transition: border-color 0.2s;
+        }
+        .form-group input:focus,
+        .form-group select:focus { outline: none; border-color: var(--accent-gold); }
+        html.dark-mode .form-group input,
+        html.dark-mode .form-group select { background: var(--sidebar-bg); color: var(--text-main); border-color: var(--border-color); }
+
+        /* ─── BUTTONS ─── */
+        .btn { padding: 10px 18px; border: none; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 8px; }
+        .btn-gold { background: var(--accent-gold); color: #0D2B1F; }
+        .btn-gold:hover { background: var(--accent-gold-hover); }
+        .btn-outline { background: transparent; border: 1px solid var(--border-color); color: var(--text-main); }
+        .btn-outline:hover { border-color: var(--accent-gold); color: var(--accent-gold); }
+        .btn-danger { background: var(--accent-danger); color: #fff; }
+        .btn-danger:hover { background: #8B2620; }
+        .btn-pearl {
+            background: linear-gradient(135deg, #0D2B1F, #1a5c3a);
+            color: var(--accent-gold);
+            border: 1px solid var(--accent-gold);
+            position: relative; overflow: hidden;
+        }
+        .btn-pearl::before {
+            content: '';
+            position: absolute; inset: 0;
+            background: linear-gradient(90deg, transparent 0%, rgba(201,168,76,0.15) 50%, transparent 100%);
+            transform: translateX(-100%);
+            transition: transform 0.6s ease;
+        }
+        .btn-pearl:hover::before { transform: translateX(100%); }
+        .btn-pearl:hover { box-shadow: 0 0 12px rgba(201,168,76,0.3); }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-sm { padding: 6px 12px; font-size: 11px; }
+
+        /* ─── GALLERY GRID ─── */
+        .gallery-section-header {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 20px; flex-wrap: wrap; gap: 12px;
+        }
+        .gallery-section-header h2 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 20px; font-weight: 600; color: var(--text-main);
+        }
+        .gallery-count-badge {
+            background: rgba(201,168,76,0.15);
+            color: var(--accent-gold);
+            padding: 4px 12px; border-radius: 20px;
+            font-size: 12px; font-weight: 600;
         }
 
-        .editor-close:hover {
-            color: var(--accent-danger);
-        }
-
-        .editor-body {
-            display: flex;
-            flex: 1;
-            overflow: hidden;
-        }
-
-        .editor-image-area {
-            flex: 1;
-            background: #111;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-            min-height: 400px;
-            border-right: 1px solid var(--border-color);
-        }
-
-        .editor-image-wrap {
-            width: 100%;
-            height: 100%;
-        }
-
-        .editor-image-wrap img {
-            max-width: 100%;
-            max-height: 100%;
-            display: block;
-        }
-
-        .editor-sidebar {
-            width: 320px;
-            padding: 24px;
-            overflow-y: auto;
-            background: var(--bg-card);
-            display: flex;
-            flex-direction: column;
+        .image-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
             gap: 20px;
         }
 
-        .editor-form-group {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .editor-form-group label {
-            font-size: 13px;
-            font-weight: 600;
-            color: var(--text-main);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .editor-input {
-            padding: 12px;
+        .image-card {
+            background: var(--bg-card);
             border: 1px solid var(--border-color);
-            border-radius: 6px;
-            background: transparent;
-            color: var(--text-main);
-            font-family: inherit;
-            font-size: 14px;
-            transition: border-color 0.3s;
-        }
-
-        .editor-input:focus {
-            outline: none;
-            border-color: var(--accent-gold);
-        }
-
-        .editor-actions {
-            margin-top: auto;
-            display: flex;
-            gap: 12px;
-            flex-direction: column;
-        }
-
-        .cropper-toolbar {
-            position: absolute;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            display: flex;
-            gap: 10px;
-            background: rgba(0, 0, 0, 0.6);
-            padding: 8px 16px;
-            border-radius: 20px;
-            backdrop-filter: blur(4px);
-        }
-
-        .cropper-btn {
-            background: transparent;
-            border: none;
-            color: white;
-            cursor: pointer;
-            padding: 6px 12px;
-            font-size: 14px;
-            transition: color 0.2s;
-        }
-
-        .cropper-btn:hover {
-            color: var(--accent-gold);
-        }
-
-        @media (max-width: 768px) {
-            .editor-body {
-                flex-direction: column;
-                overflow-y: auto;
-            }
-
-            .editor-sidebar {
-                width: 100%;
-                border-left: none;
-            }
-
-            .editor-image-area {
-                min-height: 300px;
-            }
-        }
-
-        /* ═══════════════════════════════════════════════════════════
-           MOBILE RESPONSIVENESS (Injected via Phase 10 Overhaul)
-           ═══════════════════════════════════════════════════════════ */
-
-        /* Hamburger Menu Icon (Hidden on Desktop) */
-        .mobile-menu-btn {
-            display: none;
-            background: none;
-            border: none;
-            font-size: 24px;
-            color: var(--text-main);
-            cursor: pointer;
-            margin-right: 15px;
-        }
-
-        @media (max-width: 768px) {
-
-            /* Show Hamburger */
-            .mobile-menu-btn {
-                display: block;
-            }
-
-            /* Sidebar becomes a drawer */
-            .sidebar {
-                transform: translateX(-100%);
-                transition: transform 0.3s ease-in-out;
-                z-index: 2000;
-            }
-
-            .sidebar.active {
-                transform: translateX(0);
-            }
-
-            /* Main content expands to full width */
-            .main-content {
-                margin-left: 0;
-                width: 100vw;
-            }
-
-            /* Topbar adjustments */
-            .topbar {
-                padding: 15px 20px;
-                flex-wrap: wrap;
-                gap: 15px;
-            }
-
-            .page-title {
-                font-size: 22px;
-            }
-
-            .search-bar {
-                display: none;
-                /* Hide search on extreme mobile to save space */
-            }
-
-            /* Stats Grid Stacking */
-            .stats-grid {
-                grid-template-columns: 1fr;
-            }
-
-            /* Charts & Tables Stacking */
-            .dashboard-grid {
-                grid-template-columns: 1fr;
-            }
-
-            /* Modals */
-            .modal-content {
-                width: 95%;
-                margin: 20px auto;
-                padding: 20px;
-            }
-
-            /* Form Rows */
-            .form-row,
-            .booking-grid {
-                grid-template-columns: 1fr;
-            }
-
-            /* Tables */
-            .table-container {
-                overflow-x: auto;
-            }
-        }
-
-
-        /* ═══════════════════════════════════════════════════════════
-           MOBILE QUICK ACTION FAB
-           ═══════════════════════════════════════════════════════════ */
-        .mobile-fab-container {
-            display: none;
-            position: fixed;
-            bottom: 25px;
-            right: 25px;
-            z-index: 999;
-        }
-
-        .mobile-fab-btn {
-            width: 56px;
-            height: 56px;
-            border-radius: 50%;
-            background: var(--accent);
-            color: var(--primary);
-            border: none;
-            box-shadow: 0 4px 15px rgba(201, 168, 76, 0.4);
-            font-size: 24px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: transform 0.3s ease, background 0.3s ease;
-        }
-
-        .mobile-fab-btn:active {
-            transform: scale(0.92);
-        }
-
-        .mobile-fab-menu {
-            position: absolute;
-            bottom: 70px;
-            right: 0;
-            background: var(--card-bg);
-            border-radius: 12px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
-            padding: 10px 0;
-            min-width: 180px;
-            opacity: 0;
-            pointer-events: none;
-            transform: translateY(20px);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            border: 1px solid rgba(201, 168, 76, 0.2);
-        }
-
-        .mobile-fab-container.active .mobile-fab-menu {
-            opacity: 1;
-            pointer-events: auto;
-            transform: translateY(0);
-        }
-
-        .mobile-fab-container.active .mobile-fab-btn {
-            transform: rotate(45deg);
-        }
-
-        .fab-item {
-            display: flex;
-            align-items: center;
-            padding: 12px 20px;
-            color: var(--text-dark);
-            text-decoration: none;
-            font-size: 14px;
-            font-weight: 500;
-            transition: background 0.2s;
-            cursor: pointer;
-            border: none;
-            width: 100%;
-            background: transparent;
-            text-align: left;
-        }
-
-        .fab-item i {
-            margin-right: 12px;
-            color: var(--accent);
-            width: 16px;
-        }
-
-        .fab-item:hover,
-        .fab-item:active {
-            background: rgba(201, 168, 76, 0.1);
-        }
-
-        @media (max-width: 768px) {
-            .mobile-fab-container {
-                display: block;
-            }
-        }
-    </style>
-    <style>
-        .sidebar-logo {
-            text-align: center;
-            margin-bottom: 40px;
-        }
-        .sidebar-logo-img {
-            max-width: 80px;
-            margin: 0 auto 15px;
-            display: block;
-        }
-        .sidebar-logo h1 {
-            font-family: 'Cormorant Garamond', serif;
-            font-size: 20px;
-            font-weight: 600;
-            letter-spacing: 0.1em;
-        }
-        .sidebar-logo p {
-            font-size: 11px;
-            opacity: 0.7;
-            margin-top: 5px;
-            letter-spacing: 0.1em;
-        }
-        .sidebar-nav {
-            list-style: none;
-            margin-bottom: 40px;
-        }
-        .sidebar-nav-item {
-            margin-bottom: 8px;
-        }
-        .sidebar-nav-link {
-            display: flex;
-            align-items: center;
-            padding: 12px 14px;
-            color: var(--surface);
-            text-decoration: none;
-            border-radius: 6px;
-            transition: all 0.3s ease;
-            position: relative;
+            border-radius: 10px;
             overflow: hidden;
-            font-size: 14px;
-            font-weight: 500;
+            transition: box-shadow 0.3s, transform 0.2s;
+            position: relative;
         }
-        .sidebar-nav-link::before {
-            content: '';
-            position: absolute;
-            left: 0;
-            top: 0;
-            bottom: 0;
-            width: 4px;
-            background: var(--accent);
-            transform: scaleY(0);
-            transform-origin: center;
-            transition: transform 0.3s ease;
+        .image-card:hover { box-shadow: 0 8px 28px rgba(13,43,31,0.12); transform: translateY(-2px); }
+        html.dark-mode .image-card { background: var(--bg-card); border-color: var(--border-color); }
+
+        .image-card-thumb {
+            position: relative; width: 100%; padding-top: 66%;
+            background: var(--bg-primary); overflow: hidden;
         }
-        .sidebar-nav-link:hover::before,
-        .sidebar-nav-link.active::before {
-            transform: scaleY(1);
+        .image-card-thumb img {
+            position: absolute; inset: 0; width: 100%; height: 100%;
+            object-fit: cover; transition: transform 0.4s ease;
         }
-        .sidebar-nav-link:hover {
-            background: rgba(201, 168, 76, 0.1);
-            color: var(--accent);
+        .image-card:hover .image-card-thumb img { transform: scale(1.04); }
+
+        .image-card-overlay {
+            position: absolute; inset: 0;
+            background: linear-gradient(to top, rgba(13,51,34,0.8) 0%, transparent 55%);
+            opacity: 0; transition: opacity 0.3s;
+            display: flex; align-items: flex-end; padding: 12px;
         }
-        .sidebar-nav-link.active {
-            background: rgba(201, 168, 76, 0.15);
-            color: var(--accent);
+        .image-card:hover .image-card-overlay { opacity: 1; }
+        .image-card-overlay .view-btn {
+            background: rgba(255,255,255,0.15); backdrop-filter: blur(4px);
+            border: 1px solid rgba(255,255,255,0.3);
+            color: #fff; padding: 5px 10px; border-radius: 4px;
+            font-size: 11px; cursor: pointer; transition: background 0.2s;
         }
-        .sidebar-nav-icon {
-            width: 20px;
-            margin-right: 12px;
-            text-align: center;
+        .image-card-overlay .view-btn:hover { background: rgba(255,255,255,0.25); }
+
+        .image-card-body { padding: 14px; }
+        .image-card-caption {
+            font-size: 13px; font-weight: 500; color: var(--text-main);
+            margin-bottom: 4px;
+            display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
         }
-        .nav-badge {
-            margin-left: auto;
-            background: var(--accent);
-            color: var(--primary);
-            padding: 2px 8px;
+        .image-card-type {
+            font-size: 11px; color: var(--accent-gold); font-weight: 600;
+            letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 12px;
+        }
+        .image-card-actions {
+            display: flex; gap: 6px; padding-top: 10px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        /* ─── PEARL AI PANEL ─── */
+        .pearl-panel {
+            background: linear-gradient(135deg, rgba(13,43,31,0.04) 0%, rgba(201,168,76,0.06) 100%);
+            border: 1px solid rgba(201,168,76,0.25);
             border-radius: 12px;
-            font-size: 11px;
-            font-weight: 700;
+            padding: 24px;
+            margin-top: 20px;
         }
-        .sidebar-footer {
-            border-top: 1px solid rgba(201, 168, 76, 0.2);
-            padding-top: 20px;
-            margin-top: auto;
+        html.dark-mode .pearl-panel {
+            background: linear-gradient(135deg, rgba(13,43,31,0.4) 0%, rgba(201,168,76,0.08) 100%);
         }
-        .admin-profile {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 12px;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: all 0.3s ease;
+        .pearl-panel-header { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+        .pearl-label {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 17px; font-weight: 600; color: var(--text-main);
         }
-        .admin-profile:hover {
-            background: rgba(201, 168, 76, 0.1);
+        .pearl-gem-icon {
+            width: 28px; height: 28px; border-radius: 50%;
+            background: linear-gradient(135deg, #0D2B1F, #1a5c3a);
+            border: 1px solid var(--accent-gold);
+            display: flex; align-items: center; justify-content: center;
+            color: var(--accent-gold); font-size: 11px;
         }
-        .admin-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: var(--accent);
-            color: var(--primary);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-            font-size: 16px;
+        .pearl-instructions { font-size: 13px; color: var(--text-main); opacity: 0.7; margin-bottom: 14px; line-height: 1.6; }
+        .caption-suggestions { display: flex; flex-direction: column; gap: 8px; margin-top: 16px; }
+        .caption-pill {
+            display: flex; align-items: center; justify-content: space-between;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 10px 14px;
+            font-size: 13px; color: var(--text-main);
+            cursor: pointer; transition: all 0.2s;
+            gap: 10px;
         }
-        .admin-info { flex: 1; }
-        .admin-name { font-size: 13px; font-weight: 600; display: block; }
-        .admin-role { font-size: 11px; opacity: 0.7; }
-        .logout-btn {
-            background: none;
-            border: none;
-            color: var(--surface);
-            cursor: pointer;
-            padding: 8px;
-            border-radius: 4px;
-            transition: all 0.3s ease;
+        .caption-pill:hover { border-color: var(--accent-gold); background: rgba(201,168,76,0.06); }
+        .caption-pill .use-btn {
+            flex-shrink: 0; font-size: 11px; font-weight: 600;
+            color: var(--accent-gold); background: none; border: none;
+            cursor: pointer; white-space: nowrap;
         }
-        .logout-btn:hover { background: rgba(181, 51, 42, 0.2); color: #ff6b6b; }
+        .pearl-spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(201,168,76,0.3); border-top-color: var(--accent-gold); border-radius: 50%; animation: spin 0.7s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ─── UPLOAD PROGRESS ─── */
+        .upload-progress-wrap { margin-top: 16px; display: none; }
+        .upload-progress-bar-bg { background: var(--border-color); border-radius: 4px; height: 6px; overflow: hidden; }
+        .upload-progress-bar { height: 100%; background: var(--accent-gold); border-radius: 4px; width: 0; transition: width 0.3s; }
+        .upload-progress-label { font-size: 12px; color: var(--text-main); opacity: 0.7; margin-top: 6px; }
+
+        /* ─── EMPTY STATE ─── */
+        .empty-state { text-align: center; padding: 60px 20px; color: var(--text-main); opacity: 0.5; }
+        .empty-state i { font-size: 3rem; margin-bottom: 16px; display: block; color: var(--border-color); }
+        .empty-state p { font-size: 14px; }
+
+        /* ─── TOAST ─── */
+        .toast-container { position: fixed; bottom: 24px; right: 24px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; }
+        .toast {
+            background: var(--bg-card); border: 1px solid var(--border-color);
+            border-left: 4px solid var(--accent-gold);
+            padding: 12px 18px; border-radius: 6px;
+            font-size: 13px; color: var(--text-main);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+            animation: slideIn 0.3s ease;
+            min-width: 240px;
+        }
+        .toast.error { border-left-color: var(--accent-danger); }
+        .toast.success { border-left-color: #2D6A4F; }
+        @keyframes slideIn { from { opacity:0; transform: translateX(20px); } to { opacity:1; transform: translateX(0); } }
+
+        /* ─── LIGHTBOX ─── */
+        .lightbox { display: none; position: fixed; inset: 0; z-index: 2000; background: rgba(8,20,12,0.95); align-items: center; justify-content: center; }
+        .lightbox.open { display: flex; }
+        .lightbox-img { max-width: 88vw; max-height: 88vh; object-fit: contain; border: 1px solid rgba(201,168,76,0.15); }
+        .lightbox-close { position: absolute; top: 24px; right: 28px; background: none; border: none; color: rgba(255,255,255,0.5); font-size: 1.4rem; cursor: pointer; }
+        .lightbox-close:hover { color: var(--accent-gold); }
+
+        /* ─── MOBILE ─── */
+        @media (max-width: 768px) {
+            .mobile-menu-btn { display: block; }
+            .sidebar { transform: translateX(-100%); transition: transform 0.3s ease-in-out; z-index: 2000; }
+            .sidebar.active { transform: translateX(0); }
+            .main-content { margin-left: 0; width: 100vw; }
+            .topbar { padding: 15px 20px; }
+            .content { padding: 20px 16px; }
+            .upload-meta { grid-template-columns: 1fr; }
+            .image-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }
+        }
+        #sidebarOverlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 1999; }
+        #sidebarOverlay.active { display: block; }
     </style>
+
     <link rel="stylesheet" href="/admin/assets/premium-admin.css">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
-
-
 </head>
-
 <body>
 
-    <!-- Mobile Quick Action FAB -->
+    <!-- Mobile FAB -->
     <div class="mobile-fab-container" id="mobileFab">
-        <button class="mobile-fab-btn" onclick="toggleFab()">
+        <button class="mobile-fab-btn" onclick="document.getElementById('fileInput').click()">
             <i class="fas fa-plus"></i>
         </button>
-        <div class="mobile-fab-menu">
-            <a href="/admin/bookings/new" class="fab-item">
-                <i class="fas fa-calendar-plus"></i> New Booking
-            </a>
-            <a href="/admin/clients" class="fab-item">
-                <i class="fas fa-user-plus"></i> New Client
-            </a>
-        </div>
     </div>
-
-    <!-- PRE-UPLOAD EDITOR MODAL -->
-    <div class="editor-modal" id="editorModal">
-        <div class="editor-content">
-            <div class="editor-header">
-                <h2 class="editor-title">Edit Image Details</h2>
-                <button class="editor-close" onclick="closeEditorModal()"><i class="fas fa-times"></i></button>
-            </div>
-            <div class="editor-body">
-                <div class="editor-image-area">
-                    <div class="editor-image-wrap">
-                        <img id="cropperImage" src="" alt="Image to Edit">
-                    </div>
-                    <div class="cropper-toolbar">
-                        <button class="cropper-btn" onclick="cropper.zoom(0.1)"><i class="fas fa-search"></i>+</button>
-                        <button class="cropper-btn" onclick="cropper.zoom(-0.1)"><i class="fas fa-search"></i>-</button>
-                        <button class="cropper-btn" onclick="cropper.rotate(90)"><i class="fas fa-redo"></i></button>
-                        <button class="cropper-btn" onclick="cropper.setAspectRatio(16/9)">16:9</button>
-                        <button class="cropper-btn" onclick="cropper.setAspectRatio(4/3)">4:3</button>
-                        <button class="cropper-btn" onclick="cropper.setAspectRatio(1)">1:1</button>
-                        <button class="cropper-btn" onclick="cropper.setAspectRatio(NaN)">Free</button>
-                    </div>
-                </div>
-                <div class="editor-sidebar">
-                    <div class="editor-form-group">
-                        <label for="editorCaption">Caption</label>
-                        <input type="text" id="editorCaption" class="editor-input" placeholder="e.g. Elegant Setup">
-                    </div>
-
-                    <!-- ═══ PEARL AI CAPTION GENERATOR ═══ -->
-                    <div class="editor-form-group" id="pearlCaptionSection">
-                        <label style="display:flex;align-items:center;gap:6px;">
-                            <span style="color:var(--accent-gold);font-size:13px;">✦</span>
-                            PEARL Captions
-                        </label>
-                        <button type="button" id="generateCaptionsBtn" onclick="generateCaptions()"
-                            style="width:100%;padding:10px 14px;background:linear-gradient(135deg,#C9A84C,#A3822E);
-                                   color:#fff;border:none;border-radius:6px;font-size:13px;font-weight:600;
-                                   cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;
-                                   transition:opacity 0.2s;">
-                            <i class="fas fa-magic"></i>
-                            <span id="generateBtnText">Generate 5 Captions</span>
-                        </button>
-                        <div id="captionOptions" style="display:none;margin-top:4px;display:flex;flex-direction:column;gap:6px;"></div>
-                    </div>
-                    <!-- ═══ END PEARL AI CAPTION GENERATOR ═══ -->
-                    <div class="editor-form-group">
-                        <label for="editorEventType">Event Type</label>
-                        <select id="editorEventType" class="editor-input" style="padding:12px">
-                            <option value="">-- Select Event Type --</option>
-                            <option value="Wedding">Wedding</option>
-                            <option value="Corporate Event">Corporate Event</option>
-                            <option value="Birthday Party">Birthday Party</option>
-                            <option value="Traditional Ceremony">Traditional Ceremony</option>
-                            <option value="Private Celebration">Private Celebration</option>
-                            <option value="Other">Other</option>
-                        </select>
-                    </div>
-                    <div class="editor-actions">
-                        <button class="btn-primary" onclick="saveEditedImage()"
-                            style="justify-content:center; width: 100%;"><i class="fas fa-save"></i> Save & Upload</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        function toggleFab() {
-            document.getElementById('mobileFab').classList.toggle('active');
-        }
-
-        // Close FAB if clicking outside
-        document.addEventListener('click', (e) => {
-            const fab = document.getElementById('mobileFab');
-            if (fab && fab.classList.contains('active') && !fab.contains(e.target)) {
-                fab.classList.remove('active');
-            }
-        });
-    </script>
 
     <div class="admin-layout">
         <div id="sidebarOverlay"></div>
-        <aside class="sidebar">
-        <div class="sidebar-logo">
-            <img src="../images/logo%202.png" alt="Emerald Logo" class="sidebar-logo-img" onerror="this.style.display='none'" />
-            <h1>ADMIN PORTAL</h1>
-            <p>Emerald Pearland</p>
-        </div>
-        <nav class="sidebar-nav">
-            <li class="sidebar-nav-item">
-                <a href="/admin/dashboard" class="sidebar-nav-link"><!-- add 'active' on dashboard.html -->
-                    <span class="sidebar-nav-icon"><i class="fas fa-home"></i></span>
-                    <span>Dashboard</span>
-                </a>
-            </li>
-            <li class="sidebar-nav-item">
-                <a href="/admin/bookings" class="sidebar-nav-link"><!-- add 'active' on bookings.html -->
-                    <span class="sidebar-nav-icon"><i class="fas fa-calendar"></i></span>
-                    <span>Bookings</span>
-                    <span class="nav-badge" id="navBadgeBookings" style="display:none"></span>
-                </a>
-            </li>
-            <li class="sidebar-nav-item">
-                <a href="/admin/clients" class="sidebar-nav-link"><!-- add 'active' on clients.html -->
-                    <span class="sidebar-nav-icon"><i class="fas fa-users"></i></span>
-                    <span>Clients</span>
-                </a>
-            </li>
-            <li class="sidebar-nav-item">
-                <a href="/admin/calendar" class="sidebar-nav-link"><!-- add 'active' on calendar.html -->
-                    <span class="sidebar-nav-icon"><i class="fas fa-calendar-alt"></i></span>
-                    <span>Calendar</span>
-                </a>
-            </li>
-            <li class="sidebar-nav-item">
-                <a href="/admin/analytics" class="sidebar-nav-link"><!-- add 'active' on analytics.html -->
-                    <span class="sidebar-nav-icon"><i class="fas fa-chart-bar"></i></span>
-                    <span>Analytics</span>
-                </a>
-            </li>
-            <li class="sidebar-nav-item">
-                <a href="/admin/notifications" class="sidebar-nav-link"><!-- add 'active' on notifications.html -->
-                    <span class="sidebar-nav-icon"><i class="fas fa-bell"></i></span>
-                    <span>Notifications</span>
-                </a>
-            </li>
-            <li class="sidebar-nav-item">
-                <a href="/admin/gallery" class="sidebar-nav-link active"><!-- add 'active' on gallery.html -->
-                    <span class="sidebar-nav-icon"><i class="fas fa-image"></i></span>
-                    <span>Gallery</span>
-                </a>
-            </li>
-            <li class="sidebar-nav-item">
-                <a href="/admin/testimonials" class="sidebar-nav-link"><!-- add 'active' on testimonials.html -->
-                    <span class="sidebar-nav-icon"><i class="fas fa-star"></i></span>
-                    <span>Testimonials</span>
-                </a>
-            </li>
-            <li class="sidebar-nav-item">
-                <a href="/admin/staff" class="sidebar-nav-link"><!-- add 'active' on staff.html -->
-                    <span class="sidebar-nav-icon"><i class="fas fa-user-tie"></i></span>
-                    <span>Staff</span>
-                </a>
-            </li>
-                        <li class="sidebar-nav-item">
-                <a href="https://emerald-staff-system.onrender.com" target="_blank" class="sidebar-nav-link" style="color: var(--accent); background: rgba(201, 168, 76, 0.05);">
-                    <span class="sidebar-nav-icon"><i class="fas fa-external-link-alt"></i></span>
-                    <span>Staff System</span>
-                </a>
-            </li>
-            <li class="sidebar-nav-item">
-                <a href="/admin/pricing" class="sidebar-nav-link"><!-- add 'active' on pricing.html -->
-                    <span class="sidebar-nav-icon"><i class="fas fa-tags"></i></span>
-                    <span>Pricing & Rates</span>
-                </a>
-            </li>
-<li class="sidebar-nav-item">
-                <a href="/admin/settings" class="sidebar-nav-link"><!-- add 'active' on settings.html -->
-                    <span class="sidebar-nav-icon"><i class="fas fa-cog"></i></span>
-                    <span>Settings</span>
-                </a>
-            </li>
-        </nav>
-        <div class="sidebar-footer">
-            <div class="admin-profile">
-                <div class="admin-avatar" id="adminAvatar">A</div>
-                <div class="admin-info">
-                    <span class="admin-name" id="adminName">Admin</span>
-                    <span class="admin-role">Super Admin</span>
-                </div>
-                <button class="logout-btn" onclick="handleLogout()">
-                    <i class="fas fa-sign-out-alt"></i>
-                </button>
-            </div>
-        </div>
-    </aside>
 
+        <!-- ─── SIDEBAR ─── -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-logo">
+                <img src="../images/logo%202.png" alt="Emerald Logo" class="sidebar-logo-img" onerror="this.style.display='none'">
+                <h1>ADMIN PORTAL</h1>
+                <p>Emerald Pearland</p>
+            </div>
+            <nav>
+                <ul class="sidebar-nav">
+                    <li class="sidebar-nav-item">
+                        <a href="/admin/dashboard" class="sidebar-nav-link">
+                            <span class="sidebar-nav-icon"><i class="fas fa-home"></i></span>
+                            <span>Dashboard</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-nav-item">
+                        <a href="/admin/bookings" class="sidebar-nav-link">
+                            <span class="sidebar-nav-icon"><i class="fas fa-calendar"></i></span>
+                            <span>Bookings</span>
+                            <span class="nav-badge" id="navBadgeBookings" style="display:none"></span>
+                        </a>
+                    </li>
+                    <li class="sidebar-nav-item">
+                        <a href="/admin/clients" class="sidebar-nav-link">
+                            <span class="sidebar-nav-icon"><i class="fas fa-users"></i></span>
+                            <span>Clients</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-nav-item">
+                        <a href="/admin/calendar" class="sidebar-nav-link">
+                            <span class="sidebar-nav-icon"><i class="fas fa-calendar-alt"></i></span>
+                            <span>Calendar</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-nav-item">
+                        <a href="/admin/analytics" class="sidebar-nav-link">
+                            <span class="sidebar-nav-icon"><i class="fas fa-chart-bar"></i></span>
+                            <span>Analytics</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-nav-item">
+                        <a href="/admin/notifications" class="sidebar-nav-link">
+                            <span class="sidebar-nav-icon"><i class="fas fa-bell"></i></span>
+                            <span>Notifications</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-nav-item">
+                        <a href="/admin/gallery" class="sidebar-nav-link active">
+                            <span class="sidebar-nav-icon"><i class="fas fa-image"></i></span>
+                            <span>Gallery</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-nav-item">
+                        <a href="/admin/testimonials" class="sidebar-nav-link">
+                            <span class="sidebar-nav-icon"><i class="fas fa-star"></i></span>
+                            <span>Testimonials</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-nav-item">
+                        <a href="/admin/staff" class="sidebar-nav-link">
+                            <span class="sidebar-nav-icon"><i class="fas fa-user-tie"></i></span>
+                            <span>Staff</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-nav-item">
+                        <a href="https://emerald-staff-system.onrender.com" target="_blank" class="sidebar-nav-link" style="color:var(--accent-gold);background:rgba(201,168,76,0.05);">
+                            <span class="sidebar-nav-icon"><i class="fas fa-external-link-alt"></i></span>
+                            <span>Staff System</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-nav-item">
+                        <a href="/admin/pricing" class="sidebar-nav-link">
+                            <span class="sidebar-nav-icon"><i class="fas fa-tags"></i></span>
+                            <span>Pricing & Rates</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-nav-item">
+                        <a href="/admin/settings" class="sidebar-nav-link">
+                            <span class="sidebar-nav-icon"><i class="fas fa-cog"></i></span>
+                            <span>Settings</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="admin-profile">
+                    <div class="admin-avatar" id="adminAvatar">A</div>
+                    <div class="admin-info">
+                        <span class="admin-name" id="adminName">Admin</span>
+                        <span class="admin-role">Super Admin</span>
+                    </div>
+                    <button class="logout-btn" onclick="handleLogout()" title="Logout">
+                        <i class="fas fa-sign-out-alt"></i>
+                    </button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- ─── MAIN ─── -->
         <div class="main-content">
-            <div class="topbar" id="adminTopbar">
+            <div class="topbar">
                 <button class="menu-toggle mobile-menu-btn" id="menu-toggle" aria-label="Open navigation menu">
-        <i class="fas fa-bars"></i>
-    </button>
+                    <i class="fas fa-bars"></i>
+                </button>
                 <h1 class="page-title">Gallery</h1>
-                <div style="display:flex;gap:12px;align-items:center">
-                    <span style="font-style:italic;color:var(--accent-gold);font-weight:600" id="todayDate"></span>
-                    <button class="btn-primary" onclick="document.getElementById('fileInput').click()"><i class="fas fa-camera"></i> Upload
-                        Images</button>
+                <div style="flex:1;text-align:right;">
+                    <span style="font-style:italic;color:var(--accent-gold);font-weight:600;" id="todayDate"></span>
                 </div>
             </div>
 
             <div class="content">
-                <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()">
-                    <div class="upload-icon"><i class="fas fa-arrow-up"></i></div>
-                    <div style="font-size:14px;font-weight:600">Drop images here or click to upload</div>
-                    <div style="font-size:12px;color:#999;margin-top:8px">PNG, JPG, GIF, WebP up to 10MB  &mdash;  instantly
-                        visible to clients</div>
-                </div>
-                <input type="file" id="fileInput" multiple accept="image/*">
 
-                <div class="upload-progress" id="uploadProgress">
-                    <div style="font-size:13px;font-weight:600" id="uploadProgressText">Uploading...</div>
-                    <div class="progress-bar">
-                        <div class="progress-fill" id="progressFill"></div>
+                <!-- ── UPLOAD PANEL ── -->
+                <div class="upload-panel">
+                    <div class="panel-header">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <h2>Upload Image</h2>
+                    </div>
+
+                    <div class="upload-drop-zone" id="dropZone">
+                        <i class="fas fa-image"></i>
+                        <p>Drop an image here, or <strong>click to browse</strong></p>
+                        <small>JPG, PNG, WebP — max 10 MB</small>
+                        <input type="file" id="fileInput" accept="image/*">
+                    </div>
+
+                    <div id="uploadPreviewWrap" style="display:none;margin-bottom:16px;">
+                        <img id="uploadPreview" style="max-height:140px;border-radius:6px;border:1px solid var(--border-color);" alt="Preview">
+                    </div>
+
+                    <div class="upload-meta">
+                        <div class="form-group">
+                            <label>Caption</label>
+                            <input type="text" id="uploadCaption" placeholder="e.g. Elegant wedding reception setup">
+                        </div>
+                        <div class="form-group">
+                            <label>Event Type</label>
+                            <select id="uploadEventType">
+                                <option value="">Select type…</option>
+                                <option>Wedding</option>
+                                <option>Corporate</option>
+                                <option>Brand Activation</option>
+                                <option>VIP & Protocol</option>
+                                <option>Entertainment</option>
+                                <option>Other</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-gold" id="uploadBtn" onclick="uploadImage()">
+                            <i class="fas fa-upload"></i> Upload
+                        </button>
+                    </div>
+
+                    <div class="upload-progress-wrap" id="uploadProgressWrap">
+                        <div class="upload-progress-bar-bg">
+                            <div class="upload-progress-bar" id="uploadProgressBar"></div>
+                        </div>
+                        <div class="upload-progress-label" id="uploadProgressLabel">Uploading…</div>
+                    </div>
+
+                    <!-- PEARL AI Caption Suggestion -->
+                    <div class="pearl-panel" id="pearlPanel" style="display:none;">
+                        <div class="pearl-panel-header">
+                            <div class="pearl-gem-icon"><i class="fas fa-gem"></i></div>
+                            <span class="pearl-label">Pearl AI — Caption Suggestions</span>
+                        </div>
+                        <p class="pearl-instructions">
+                            Pearl generates 5 professional captions based on the event type and filename.
+                            Select an event type above for best results, then click Suggest.
+                        </p>
+                        <button class="btn btn-pearl" id="suggestBtn" onclick="suggestCaptions()">
+                            <i class="fas fa-magic"></i> Suggest Captions
+                        </button>
+                        <div class="caption-suggestions" id="captionSuggestions"></div>
                     </div>
                 </div>
 
-                <div class="header-controls">
-                    <div class="gallery-stats">
-                        <span class="stat-chip" id="totalCount">0 images</span>
+                <!-- ── IMAGE GRID ── -->
+                <div class="gallery-section-header">
+                    <h2>All Images</h2>
+                    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+                        <span class="gallery-count-badge" id="imageTotalBadge">— images</span>
+                        <select id="filterType" onchange="applyFilter()" style="padding:7px 10px;border:1px solid var(--border-color);border-radius:6px;background:var(--bg-card);color:var(--text-main);font-size:13px;">
+                            <option value="all">All Types</option>
+                            <option>Wedding</option>
+                            <option>Corporate</option>
+                            <option>Brand Activation</option>
+                            <option>VIP & Protocol</option>
+                            <option>Entertainment</option>
+                            <option>Other</option>
+                        </select>
                     </div>
                 </div>
 
-                <div class="filter-bar">
-                    <button class="filter-btn active" onclick="filterGallery('')" id="filter-all">All</button>
-                    <button class="filter-btn" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)"
-                        ondrop="handleDrop(event, 'Wedding')" onclick="filterGallery('Wedding')"
-                        id="filter-Wedding">Weddings</button>
-                    <button class="filter-btn" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)"
-                        ondrop="handleDrop(event, 'Birthday Party')" onclick="filterGallery('Birthday Party')"
-                        id="filter-Birthday Party">Birthdays</button>
-                    <button class="filter-btn" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)"
-                        ondrop="handleDrop(event, 'Corporate Event')" onclick="filterGallery('Corporate Event')"
-                        id="filter-Corporate Event">Corporate</button>
-                    <button class="filter-btn" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)"
-                        ondrop="handleDrop(event, 'Traditional Ceremony')"
-                        onclick="filterGallery('Traditional Ceremony')"
-                        id="filter-Traditional Ceremony">Traditional</button>
-                    <button class="filter-btn" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)"
-                        ondrop="handleDrop(event, 'Private Celebration')" onclick="filterGallery('Private Celebration')"
-                        id="filter-Private Celebration">Celebrations</button>
-                    <button class="filter-btn" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)"
-                        ondrop="handleDrop(event, 'Other')" onclick="filterGallery('Other')"
-                        id="filter-Other">Other</button>
+                <div class="image-grid" id="imageGrid">
+                    <!-- populated by JS -->
                 </div>
 
-                <div class="gallery-grid" id="galleryGrid">
-                    <div class="empty-state" style="grid-column:1/-1">
-                        <div class="empty-icon"><i class="fas fa-image"></i></div>
-                        <p>Loading gallery...</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+            </div><!-- /content -->
+        </div><!-- /main-content -->
+    </div><!-- /admin-layout -->
 
+    <!-- Lightbox -->
     <div class="lightbox" id="lightbox">
-        <img class="lightbox-img" id="lightboxImg" alt="">
         <button class="lightbox-close" onclick="closeLightbox()"><i class="fas fa-times"></i></button>
+        <img class="lightbox-img" id="lbImg" src="" alt="">
     </div>
 
+    <!-- Toast container -->
+    <div class="toast-container" id="toastContainer"></div>
+
     <script>
-        let allGallery = [];
-        let currentFilter = '';
+    /* ─────────────────────────────────────────────────────────
+       STATE
+    ───────────────────────────────────────────────────────── */
+    let allImages = [];
+    let pendingImageData = null; // base64 of the currently staged image
 
-        window.addEventListener('load', () => {
-            document.getElementById('todayDate').textContent = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
-            loadGallery();
-        });
+    /* ─────────────────────────────────────────────────────────
+       INIT
+    ───────────────────────────────────────────────────────── */
+    window.addEventListener('load', () => {
+        updateDate();
+        loadGallery();
+    });
 
-        async function loadGallery() {
-            try {
-                const res = await fetch('/api/admin/gallery');
-                const result = await res.json();
-                if (result.success) {
-                    allGallery = result.gallery || [];
-                    renderGallery();
-                }
-            } catch (err) {
-                console.error('Failed to load gallery:', err);
-            }
+    function updateDate() {
+        document.getElementById('todayDate').textContent =
+            new Date().toLocaleDateString('en-US', { year:'numeric', month:'short', day:'numeric' });
+    }
+
+    /* ─────────────────────────────────────────────────────────
+       GALLERY LOAD
+    ───────────────────────────────────────────────────────── */
+    async function loadGallery() {
+        const grid = document.getElementById('imageGrid');
+        grid.innerHTML = '<div class="empty-state"><div class="pearl-spinner" style="margin:0 auto;width:24px;height:24px;border-width:3px;"></div></div>';
+        try {
+            const res = await fetch('/api/admin/gallery');
+            const data = await res.json();
+            if (!data.success) throw new Error(data.message || 'Load failed');
+            allImages = data.gallery || [];
+            renderGrid(allImages);
+        } catch(e) {
+            grid.innerHTML = `<div class="empty-state"><i class="fas fa-exclamation-triangle"></i><p>${e.message}</p></div>`;
         }
+    }
 
-        function filterGallery(type) {
-            currentFilter = type;
-            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-            // Escaping spaces for IDs
-            const safeId = `filter-${type || 'all'}`.replace(/ /g, '\\ ');
-            const btn = document.querySelector('#' + safeId);
-            if (btn) btn.classList.add('active');
-            renderGallery();
+    function renderGrid(images) {
+        const grid = document.getElementById('imageGrid');
+        document.getElementById('imageTotalBadge').textContent = `${images.length} image${images.length !== 1 ? 's' : ''}`;
+        if (!images.length) {
+            grid.innerHTML = '<div class="empty-state"><i class="fas fa-images"></i><p>No images yet. Upload one above.</p></div>';
+            return;
         }
-
-        function renderGallery() {
-            const grid = document.getElementById('galleryGrid');
-            const items = currentFilter ? allGallery.filter(i => i.eventType === currentFilter) : allGallery;
-
-            document.getElementById('totalCount').textContent = `${allGallery.length} image${allGallery.length !== 1 ? 's' : ''}`;
-
-            if (!items.length) {
-                grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon"><i class="fas fa-image"></i></div><p>No images yet. Upload your first photo above!</p></div>`;
-                return;
-            }
-
-            grid.innerHTML = items.map(item => {
-            if (!item) return '';
-            return `
-            <div class="gallery-item" id="img-${item._id}" draggable="true" ondragstart="handleDragStart(event, '${item._id}')">
-                <img class="gallery-img" src="${item.url}" alt="${item.caption || item.filename}" >
-                <div class="gallery-overlay">
-                    <button class="btn-view" onclick="openLightbox('${item.url}')"><i class="fas fa-eye"></i> Preview</button>
-                    <button class="btn-view" style="background:rgba(201,168,76,0.85);" onclick="openEditModal('${item._id}', this)"><i class="fas fa-edit"></i> Edit</button>
-                    <button class="btn-delete-img" onclick="deleteImage('${item._id}')"><i class="fas fa-trash"></i> Delete</button>
+        grid.innerHTML = images.map(img => `
+            <div class="image-card">
+                <div class="image-card-thumb">
+                    <img src="${img.url}" alt="${img.caption || ''}" loading="lazy">
+                    <div class="image-card-overlay">
+                        <button class="view-btn" onclick="openLightbox('${img.url}')"><i class="fas fa-expand"></i> View</button>
+                    </div>
                 </div>
-                <div class="gallery-meta">
-                    <div class="gallery-caption">${item.caption || item.filename}</div>
-                    ${item.eventType ? `<span class="gallery-tag">${item.eventType}</span>` : ''}
+                <div class="image-card-body">
+                    <div class="image-card-caption">${img.caption || '<em style="opacity:.4">No caption</em>'}</div>
+                    <div class="image-card-type">${img.eventType || '—'}</div>
+                    <div class="image-card-actions">
+                        <button class="btn btn-outline btn-sm" onclick="openEditModal('${img._id}', this)" data-caption="${escHtml(img.caption||'')}" data-type="${escHtml(img.eventType||'')}">
+                            <i class="fas fa-pen"></i> Edit
+                        </button>
+                        <button class="btn btn-danger btn-sm" onclick="deleteImage('${img._id}')">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
                 </div>
             </div>
-        `;
-        }).join('');
-        }
+        `).join('');
+    }
 
-        // ═══════════════════════════════════════════════════════════
-        // CROPPER & UPLOAD LOGIC
-        // ═══════════════════════════════════════════════════════════
-        let cropper = null;
-        let currentFile = null;
+    function applyFilter() {
+        const v = document.getElementById('filterType').value;
+        renderGrid(v === 'all' ? allImages : allImages.filter(i => i.eventType === v));
+    }
 
-        document.getElementById('fileInput').addEventListener('change', (e) => {
-            const files = Array.from(e.target.files);
-            if (!files.length) return;
+    /* ─────────────────────────────────────────────────────────
+       FILE INPUT + DRAG & DROP
+    ───────────────────────────────────────────────────────── */
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
 
-            // Only handle one file at a time for cropping
-            currentFile = files[0];
-            const url = URL.createObjectURL(currentFile);
+    dropZone.addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', e => handleFile(e.target.files[0]));
 
-            // Setup Modal
-            document.getElementById('cropperImage').src = url;
-            document.getElementById('editorCaption').value = currentFile.name.replace(/\.[^.]+$/, '').replace(/_/g, ' ');
-            document.getElementById('editorEventType').value = '';
+    dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+    dropZone.addEventListener('drop', e => {
+        e.preventDefault();
+        dropZone.classList.remove('dragover');
+        handleFile(e.dataTransfer.files[0]);
+    });
 
-            document.getElementById('editorModal').classList.add('show');
+    function handleFile(file) {
+        if (!file || !file.type.startsWith('image/')) return toast('Please select an image file.', 'error');
+        if (file.size > 10 * 1024 * 1024) return toast('File too large (max 10 MB).', 'error');
 
-            if (cropper) cropper.destroy();
-            cropper = new Cropper(document.getElementById('cropperImage'), {
-                viewMode: 2,
-                background: false,
-                autoCropArea: 1,
-                responsive: true
+        const reader = new FileReader();
+        reader.onload = e => {
+            pendingImageData = e.target.result; // full data URL
+            document.getElementById('uploadPreview').src = pendingImageData;
+            document.getElementById('uploadPreviewWrap').style.display = 'block';
+            document.getElementById('pearlPanel').style.display = 'block';
+            document.getElementById('captionSuggestions').innerHTML = '';
+            dropZone.innerHTML = `<i class="fas fa-check-circle" style="color:#2D6A4F;"></i><p style="color:#2D6A4F;font-weight:600;">${escHtml(file.name)}</p><small>Ready to upload</small>`;
+        };
+        reader.readAsDataURL(file);
+    }
+
+    /* ─────────────────────────────────────────────────────────
+       UPLOAD
+    ───────────────────────────────────────────────────────── */
+    async function uploadImage() {
+        if (!pendingImageData) return toast('Please select an image first.', 'error');
+        const caption = document.getElementById('uploadCaption').value.trim();
+        const eventType = document.getElementById('uploadEventType').value;
+
+        const btn = document.getElementById('uploadBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="pearl-spinner"></span> Uploading…';
+
+        showProgress(10, 'Uploading…');
+
+        try {
+            const res = await fetch('/api/admin/gallery/upload', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ url: pendingImageData, caption, eventType })
             });
-
-            e.target.value = ''; // Reset input
-        });
-
-        function closeEditorModal() {
-            document.getElementById('editorModal').classList.remove('show');
-            if (cropper) cropper.destroy();
-            cropper = null;
-            currentFile = null;
+            showProgress(80, 'Processing…');
+            const data = await res.json();
+            if (!data.success) throw new Error(data.message || 'Upload failed');
+            showProgress(100, 'Done!');
+            toast('Image uploaded successfully.', 'success');
+            resetUploadForm();
+            await loadGallery();
+        } catch(e) {
+            toast(e.message, 'error');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-upload"></i> Upload';
+            setTimeout(() => { document.getElementById('uploadProgressWrap').style.display = 'none'; }, 1200);
         }
+    }
 
-        async function saveEditedImage() {
-            if (!cropper) return;
+    function showProgress(pct, label) {
+        const wrap = document.getElementById('uploadProgressWrap');
+        wrap.style.display = 'block';
+        document.getElementById('uploadProgressBar').style.width = pct + '%';
+        document.getElementById('uploadProgressLabel').textContent = label;
+    }
 
-            const btn = document.querySelector('.editor-actions .btn-primary');
-            btn.innerHTML = '<i class="fas fa-hourglass-half"></i> Uploading...';
-            btn.disabled = true;
+    function resetUploadForm() {
+        pendingImageData = null;
+        fileInput.value = '';
+        document.getElementById('uploadCaption').value = '';
+        document.getElementById('uploadEventType').value = '';
+        document.getElementById('uploadPreviewWrap').style.display = 'none';
+        document.getElementById('pearlPanel').style.display = 'none';
+        document.getElementById('captionSuggestions').innerHTML = '';
+        dropZone.innerHTML = `
+            <i class="fas fa-image"></i>
+            <p>Drop an image here, or <strong>click to browse</strong></p>
+            <small>JPG, PNG, WebP — max 10 MB</small>`;
+    }
 
-            const canvas = cropper.getCroppedCanvas({
-                maxWidth: 1920,
-                maxHeight: 1920,
-                fillColor: '#fff'
+    /* ─────────────────────────────────────────────────────────
+       PEARL AI — CAPTION SUGGESTIONS
+    ───────────────────────────────────────────────────────── */
+    async function suggestCaptions() {
+        if (!pendingImageData) return toast('Please select an image first.', 'error');
+
+        const btn = document.getElementById('suggestBtn');
+        const suggestionsEl = document.getElementById('captionSuggestions');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="pearl-spinner"></span> Asking Pearl…';
+        suggestionsEl.innerHTML = '';
+
+        // Backend expects { eventType, filename } — no image bytes needed
+        const eventType = document.getElementById('uploadEventType').value || '';
+        const filename  = document.getElementById('fileInput').files[0]?.name || '';
+
+        try {
+            const res = await fetch('/api/admin/gallery/generate-captions', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ eventType, filename })
             });
+            const data = await res.json();
+            if (!data.success) throw new Error(data.message || 'Caption generation failed');
 
-            const base64 = canvas.toDataURL('image/jpeg', 0.85);
-            const caption = document.getElementById('editorCaption').value.trim();
-            const eventType = document.getElementById('editorEventType').value;
-            const filename = currentFile ? currentFile.name : `image_${Date.now()}.jpg`;
+            const captions = Array.isArray(data.captions) ? data.captions : [];
+            if (!captions.length) throw new Error('No captions returned');
 
-            try {
-                const res = await fetch('/api/admin/gallery/upload', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ filename, url: base64, caption, eventType })
-                });
-
-                const result = await res.json();
-                if (result.success) {
-                    allGallery.unshift(result.item);
-                    renderGallery();
-                    closeEditorModal();
-                } else {
-                    alert('Upload failed: ' + result.message);
-                }
-            } catch (err) {
-                console.error('Error uploading:', err);
-                alert('Error uploading image.');
-            } finally {
-                btn.innerHTML = '<i class="fas fa-save"></i> Save & Upload';
-                btn.disabled = false;
-            }
+            suggestionsEl.innerHTML = captions.map((c, i) => `
+                <div class="caption-pill" onclick="applyCaption(${JSON.stringify(escHtml(c))})">
+                    <span>${escHtml(c)}</span>
+                    <button class="use-btn">Use <i class="fas fa-arrow-right" style="font-size:10px;"></i></button>
+                </div>
+            `).join('');
+            toast(`${captions.length} caption suggestions ready.`, 'success');
+        } catch(e) {
+            toast('Pearl: ' + e.message, 'error');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-magic"></i> Suggest Captions';
         }
+    }
 
-        function fileToBase64(file) {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onload = e => resolve(e.target.result);
-                reader.onerror = reject;
-                reader.readAsDataURL(file);
-            });
+    function applyCaption(text) {
+        document.getElementById('uploadCaption').value = text;
+        toast('Caption applied.', 'success');
+    }
+
+    /* ─────────────────────────────────────────────────────────
+       DELETE
+    ───────────────────────────────────────────────────────── */
+    async function deleteImage(id) {
+        if (!confirm('Delete this image? This cannot be undone.')) return;
+        try {
+            const res = await fetch(`/api/admin/gallery/${id}`, { method: 'DELETE' });
+            const data = await res.json();
+            if (!data.success) throw new Error(data.message || 'Delete failed');
+            toast('Image deleted.', 'success');
+            await loadGallery();
+        } catch(e) {
+            toast(e.message, 'error');
         }
+    }
 
-        async function deleteImage(id) {
-            if (!confirm('Delete this image? It will also be removed from the client gallery.')) return;
-            try {
-                const res = await fetch(`/api/admin/gallery/${id}`, { method: 'DELETE' });
-                const result = await res.json();
-                if (result.success) {
-                    allGallery = allGallery.filter(i => i._id !== id);
-                    renderGallery();
-                } else {
-                    alert('Failed to delete: ' + result.message);
-                }
-            } catch (err) {
-                alert('Error deleting image.');
-            }
-        }
+    /* ─────────────────────────────────────────────────────────
+       INLINE EDIT (caption + eventType)
+    ───────────────────────────────────────────────────────── */
+    function openEditModal(id, btn) {
+        const card = btn.closest('.image-card-body');
+        const currentCaption = btn.dataset.caption;
+        const currentType = btn.dataset.type;
 
-        // Drag and drop zone mapping
-        const uploadZone = document.getElementById('uploadZone');
-        if (uploadZone) {
-            uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('dragover'); });
-            uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('dragover'));
-            uploadZone.addEventListener('drop', e => {
-                e.preventDefault();
-                uploadZone.classList.remove('dragover');
-                const dt = new DataTransfer();
-                Array.from(e.dataTransfer.files).forEach(f => dt.items.add(f));
-                document.getElementById('fileInput').files = dt.files;
-                document.getElementById('fileInput').dispatchEvent(new Event('change'));
-            });
-        }
-
-        function openLightbox(src) {
-            document.getElementById('lightboxImg').src = src;
-            document.getElementById('lightbox').classList.add('show');
-        }
-        function closeLightbox() {
-            document.getElementById('lightbox').classList.remove('show');
-        }
-        document.getElementById('lightbox').addEventListener('click', e => {
-            if (e.target.id === 'lightbox') closeLightbox();
-        });
-
-        function handleLogout() {
-            fetch('/api/admin/logout', { method: 'POST' })
-                .then(() => window.location.href = '/admin/login')
-                .catch(err => console.error(err));
-        }
-
-        // ═══ CATEGORY DRAG & DROP LOGIC ═══
-        function handleDragStart(e, id) {
-            e.dataTransfer.setData('image_id', id);
-            e.target.style.opacity = '0.5';
-        }
-
-        document.addEventListener('dragend', (e) => {
-            if (e.target.classList && e.target.classList.contains('gallery-item')) {
-                e.target.style.opacity = '1';
-            }
-        });
-
-        function handleDragOver(e) {
-            e.preventDefault();
-            e.currentTarget.classList.add('drag-hover');
-            e.currentTarget.style.transform = 'scale(1.05)';
-            e.currentTarget.style.boxShadow = '0 0 15px var(--accent-gold)';
-        }
-
-        function handleDragLeave(e) {
-            e.currentTarget.classList.remove('drag-hover');
-            e.currentTarget.style.transform = '';
-            e.currentTarget.style.boxShadow = '';
-        }
-
-        async function handleDrop(e, category) {
-            e.preventDefault();
-            e.currentTarget.classList.remove('drag-hover');
-            e.currentTarget.style.transform = '';
-            e.currentTarget.style.boxShadow = '';
-
-            const imageId = e.dataTransfer.getData('image_id');
-            if (!imageId) return;
-
-            const idx = allGallery.findIndex(i => i._id === imageId);
-            if (idx !== -1) {
-                const oldCategory = allGallery[idx].eventType;
-                if (oldCategory === category) return;
-
-                allGallery[idx].eventType = category;
-
-                const origText = e.currentTarget.textContent;
-                e.currentTarget.textContent = '<i class="fas fa-check-circle"></i> Moved!';
-                setTimeout(() => e.currentTarget.textContent = origText, 1500);
-
-                if (currentFilter && currentFilter !== category) {
-                    renderGallery();
-                } else if (!currentFilter) {
-                    renderGallery();
-                }
-
-                try {
-                    await fetch(`/api/admin/gallery/${imageId}`, {
-                        method: 'PATCH',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ eventType: category })
-                    });
-                } catch (err) {
-                    console.error('Quietly failed to classify dropped image:', err);
-                }
-            }
-        }
-
-        // ═══ EDIT METADATA MODAL LOGIC ═══
-        let editingImageId = null;
-
-        function openEditModal(id) {
-            editingImageId = id;
-            const item = allGallery.find(i => i._id === id);
-            if (!item) return;
-            document.getElementById('editCaption').value = item.caption || item.filename || '';
-            document.getElementById('editEventType').value = item.eventType || '';
-            document.getElementById('editMetaModal').style.display = 'flex';
-        }
-
-        function closeEditModal() {
-            document.getElementById('editMetaModal').style.display = 'none';
-            editingImageId = null;
-        }
-
-        // ═══ PEARL AI CAPTION GENERATOR ═══
-        async function generateCaptions() {
-            const btn = document.getElementById('generateCaptionsBtn');
-            const btnText = document.getElementById('generateBtnText');
-            const optionsContainer = document.getElementById('captionOptions');
-            const eventType = document.getElementById('editorEventType').value;
-
-            btnText.textContent = 'Generating...';
-            btn.disabled = true;
-            btn.style.opacity = '0.7';
-            optionsContainer.style.display = 'none';
-            optionsContainer.innerHTML = '';
-
-            try {
-                const res = await fetch('/api/admin/gallery/generate-captions', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    credentials: 'include',
-                    body: JSON.stringify({
-                        eventType: eventType || 'event',
-                        filename: document.getElementById('editorCaption').value || ''
-                    })
-                });
-                const result = await res.json();
-
-                if (!result.success || !result.captions?.length) {
-                    btnText.textContent = 'Try Again';
-                    btn.disabled = false;
-                    btn.style.opacity = '1';
-                    return;
-                }
-
-                optionsContainer.innerHTML = '';
-                result.captions.forEach((caption, i) => {
-                    const chip = document.createElement('button');
-                    chip.type = 'button';
-                    chip.textContent = caption;
-                    chip.style.cssText = `
-                        width: 100%;
-                        text-align: left;
-                        padding: 9px 12px;
-                        background: rgba(201,168,76,0.07);
-                        border: 1px solid rgba(201,168,76,0.3);
-                        border-radius: 6px;
-                        font-size: 12px;
-                        color: var(--text-main);
-                        cursor: pointer;
-                        transition: all 0.2s;
-                        font-family: inherit;
-                        line-height: 1.4;
-                    `;
-                    chip.onmouseenter = () => {
-                        chip.style.background = 'rgba(201,168,76,0.18)';
-                        chip.style.borderColor = 'var(--accent-gold)';
-                    };
-                    chip.onmouseleave = () => {
-                        chip.style.background = 'rgba(201,168,76,0.07)';
-                        chip.style.borderColor = 'rgba(201,168,76,0.3)';
-                    };
-                    chip.onclick = () => {
-                        document.getElementById('editorCaption').value = caption;
-                        // Highlight the selected chip briefly
-                        chip.style.background = 'rgba(201,168,76,0.35)';
-                        chip.style.borderColor = 'var(--accent-gold)';
-                        setTimeout(() => {
-                            chip.style.background = 'rgba(201,168,76,0.07)';
-                            chip.style.borderColor = 'rgba(201,168,76,0.3)';
-                        }, 600);
-                    };
-                    optionsContainer.appendChild(chip);
-                });
-
-                optionsContainer.style.display = 'flex';
-                btnText.textContent = 'Regenerate';
-            } catch (e) {
-                console.error('Caption generation failed:', e);
-                btnText.textContent = 'Try Again';
-            } finally {
-                btn.disabled = false;
-                btn.style.opacity = '1';
-            }
-        }
-        // ═══ END PEARL AI CAPTION GENERATOR ═══
-
-        async function saveEditedMetadata() {
-            if (!editingImageId) return;
-            const caption = document.getElementById('editCaption').value.trim();
-            const eventType = document.getElementById('editEventType').value;
-            const btn = document.getElementById('saveEditMetaBtn');
-            btn.textContent = '<i class="fas fa-hourglass-half"></i> Saving...';
-            btn.disabled = true;
-            try {
-                const res = await fetch(`/api/admin/gallery/${editingImageId}`, {
-                    method: 'PATCH',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ caption, eventType })
-                });
-                const result = await res.json();
-                if (result.success) {
-                    const idx = allGallery.findIndex(i => i._id === editingImageId);
-                    if (idx !== -1) { allGallery[idx].caption = caption; allGallery[idx].eventType = eventType; }
-                    renderGallery();
-                    closeEditModal();
-                } else { alert('Save failed: ' + result.message); }
-            } catch (e) { alert('Error saving changes.'); }
-            finally { btn.textContent = '<i class="fas fa-save"></i> Save Changes'; btn.disabled = false; }
-        }
-    </script>
-
-    <!-- Edit Metadata Modal -->
-    <div id="editMetaModal"
-        style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.7);backdrop-filter:blur(6px);align-items:center;justify-content:center;">
-        <div
-            style="background:#fff;border-radius:12px;padding:36px;max-width:460px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.3);position:relative;">
-            <button onclick="closeEditModal()"
-                style="position:absolute;top:16px;right:16px;background:none;border:none;font-size:20px;cursor:pointer;color:#888;"><i class="fas fa-times"></i></button>
-            <h3
-                style="font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600;color:#0D2B1F;margin-bottom:6px;">
-                Edit Image Details</h3>
-            <p style="font-size:13px;color:#888;margin-bottom:24px;">Update the caption and category for this image.</p>
-            <div style="margin-bottom:16px;">
-                <label
-                    style="display:block;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;color:#555;margin-bottom:6px;">Caption</label>
-                <input type="text" id="editCaption" placeholder="Describe this photo..."
-                    style="width:100%;padding:12px 14px;border:1px solid #e0e0e0;border-radius:6px;font-size:14px;font-family:'Outfit',sans-serif;outline:none;transition:border 0.2s;"
-                    onfocus="this.style.borderColor='#C9A84C'" onblur="this.style.borderColor='#e0e0e0'">
-            </div>
-            <div style="margin-bottom:24px;">
-                <label
-                    style="display:block;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;color:#555;margin-bottom:6px;">Event
-                    Type</label>
-                <select id="editEventType"
-                    style="width:100%;padding:12px 14px;border:1px solid #e0e0e0;border-radius:6px;font-size:14px;font-family:'Outfit',sans-serif;outline:none;background:#fff;cursor:pointer;">
-                    <option value=""> &mdash;  Select Category  &mdash; </option>
-                    <option value="Wedding"><i class="fas fa-ring"></i> Wedding</option>
-                    <option value="Birthday Party"><i class="fas fa-birthday-cake"></i> Birthday</option>
-                    <option value="Corporate Event"><i class="fas fa-building"></i> Corporate</option>
-                    <option value="Traditional Ceremony"><i class="fas fa-leaf"></i> Traditional Ceremony</option>
-                    <option value="Private Celebration"><i class="fas fa-glass-cheers"></i> Private Celebration</option>
-                    <option value="Other"><i class="fas fa-camera"></i> Other</option>
+        // Replace actions row with inline edit form
+        card.querySelector('.image-card-actions').innerHTML = `
+            <div style="display:flex;flex-direction:column;gap:8px;width:100%;">
+                <input id="edit-caption-${id}" type="text" value="${escHtml(currentCaption)}" placeholder="Caption"
+                    style="padding:7px 10px;border:1px solid var(--border-color);border-radius:5px;font-size:13px;background:var(--bg-primary);color:var(--text-main);width:100%;">
+                <select id="edit-type-${id}"
+                    style="padding:7px 10px;border:1px solid var(--border-color);border-radius:5px;font-size:13px;background:var(--bg-primary);color:var(--text-main);">
+                    <option value="">— type —</option>
+                    ${['Wedding','Corporate','Brand Activation','VIP & Protocol','Entertainment','Other']
+                        .map(t => `<option ${t===currentType?'selected':''}>${t}</option>`).join('')}
                 </select>
-            </div>
-            <div style="display:flex;gap:12px;">
-                <button id="saveEditMetaBtn" onclick="saveEditedMetadata()"
-                    style="flex:1;padding:13px;background:linear-gradient(135deg,#C9A84C,#A3822E);color:#fff;border:none;border-radius:6px;font-size:13px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;transition:all 0.3s;"><i class="fas fa-save"></i>
-                    Save Changes</button>
-                <button onclick="closeEditModal()"
-                    style="padding:13px 20px;background:#f5f5f5;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-weight:500;color:#555;">Cancel</button>
-            </div>
-        </div>
-    </div>
-    <script>
-        document.getElementById('editMetaModal').addEventListener('click', function (e) {
-            if (e.target === this) closeEditModal();
-        });
-        const origOpenEditModal = openEditModal;
-        window.openEditModal = function (id, btn) {
-            document.getElementById('editMetaModal').style.display = 'flex';
-            origOpenEditModal(id, btn);
-        };
-        const origCloseEditModal = closeEditModal;
-        window.closeEditModal = function () {
-            document.getElementById('editMetaModal').style.display = 'none';
-            origCloseEditModal();
-        };
+                <div style="display:flex;gap:6px;">
+                    <button class="btn btn-gold btn-sm" onclick="saveEdit('${id}')"><i class="fas fa-check"></i> Save</button>
+                    <button class="btn btn-outline btn-sm" onclick="loadGallery()">Cancel</button>
+                </div>
+            </div>`;
+    }
+
+    async function saveEdit(id) {
+        const caption = document.getElementById(`edit-caption-${id}`).value.trim();
+        const eventType = document.getElementById(`edit-type-${id}`).value;
+        try {
+            const res = await fetch(`/api/admin/gallery/${id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ caption, eventType })
+            });
+            const data = await res.json();
+            if (!data.success) throw new Error(data.message || 'Update failed');
+            toast('Image updated.', 'success');
+            await loadGallery();
+        } catch(e) {
+            toast(e.message, 'error');
+        }
+    }
+
+    /* ─────────────────────────────────────────────────────────
+       LIGHTBOX
+    ───────────────────────────────────────────────────────── */
+    function openLightbox(url) {
+        document.getElementById('lbImg').src = url;
+        document.getElementById('lightbox').classList.add('open');
+        document.body.style.overflow = 'hidden';
+    }
+    function closeLightbox() {
+        document.getElementById('lightbox').classList.remove('open');
+        document.body.style.overflow = '';
+    }
+    document.getElementById('lightbox').addEventListener('click', e => {
+        if (e.target === e.currentTarget) closeLightbox();
+    });
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape') closeLightbox();
+    });
+
+    /* ─────────────────────────────────────────────────────────
+       UTILS
+    ───────────────────────────────────────────────────────── */
+    function toast(msg, type = '') {
+        const c = document.getElementById('toastContainer');
+        const t = document.createElement('div');
+        t.className = `toast ${type}`;
+        t.innerHTML = `<i class="fas fa-${type==='error'?'exclamation-circle':type==='success'?'check-circle':'info-circle'}" style="margin-right:8px;"></i>${msg}`;
+        c.appendChild(t);
+        setTimeout(() => t.remove(), 4000);
+    }
+
+    function escHtml(str) {
+        return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+    }
+
+    async function handleLogout() {
+        await fetch('/admin/logout', { method: 'POST' }).catch(() => {});
+        window.location.href = '/admin/login';
+    }
     </script>
 
-    
-    <!-- Mobile Drag and Drop Polyfill -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/mobile-drag-drop@2.3.0-rc.2/default.css">
-    <script src="https://cdn.jsdelivr.net/npm/mobile-drag-drop@2.3.0-rc.2/index.min.js"></script>
-    <script>
-        // Enable touch drag and drop polyfill with 300ms delay
-        MobileDragDrop.polyfill({
-            holdToDrag: 300,
-            dragImageCenterOnTouch: true
-        });
-
-        // Prevent scroll on touchmove during drag
-        window.addEventListener('touchmove', function (e) {
-            if (e.cancelable && e.defaultPrevented) { e.preventDefault(); }
-        }, { passive: false });
-    </script>
+    <!-- Shared sidebar mobile toggle -->
     <script src="/admin/assets/mobile-sidebar.js?v=3"></script>
+    <!-- Admin profile (populates adminName / adminAvatar) -->
     <script src="/admin/admin-profile.js"></script>
 </body>
-
 </html>
-
