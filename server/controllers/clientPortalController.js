@@ -10,39 +10,39 @@ try { ClientInvoice = require('../../staff-system/models/ClientInvoice'); } catc
 // --- EJS VIEW CONTROLLERS ---
 
 exports.renderLogin = (req, res) => {
-    res.render('client/login', { csrfToken: req.csrfToken ? req.csrfToken() : '' });
+    res.render('client/login', { layout: false, csrfToken: req.csrfToken ? req.csrfToken() : '' });
 };
 
 exports.renderSignup = (req, res) => {
-    res.render('client/signup', { csrfToken: req.csrfToken ? req.csrfToken() : '' });
+    res.render('client/signup', { layout: false, csrfToken: req.csrfToken ? req.csrfToken() : '' });
 };
 
 exports.renderDashboard = (req, res) => {
-    res.render('client/dashboard', { csrfToken: req.csrfToken ? req.csrfToken() : '', client: req.client });
+    res.render('client/dashboard', { layout: false, csrfToken: req.csrfToken ? req.csrfToken() : '', client: req.client });
 };
 
 exports.renderEventDetail = (req, res) => {
-    res.render('client/eventDetail', { csrfToken: req.csrfToken ? req.csrfToken() : '', client: req.client, eventId: req.params.eventId });
+    res.render('client/eventDetail', { layout: false, csrfToken: req.csrfToken ? req.csrfToken() : '', client: req.client, eventId: req.params.eventId });
 };
 
 exports.renderInvoices = (req, res) => {
-    res.render('client/invoices', { csrfToken: req.csrfToken ? req.csrfToken() : '', client: req.client });
+    res.render('client/invoices', { layout: false, csrfToken: req.csrfToken ? req.csrfToken() : '', client: req.client });
 };
 
 exports.renderEtrView = (req, res) => {
-    res.render('client/etrView', { csrfToken: req.csrfToken ? req.csrfToken() : '', client: req.client, eventId: req.params.eventId });
+    res.render('client/etrView', { layout: false, csrfToken: req.csrfToken ? req.csrfToken() : '', client: req.client, eventId: req.params.eventId });
 };
 
 exports.renderSessions = (req, res) => {
-    res.render('client/sessions', { csrfToken: req.csrfToken ? req.csrfToken() : '', client: req.client });
+    res.render('client/sessions', { layout: false, csrfToken: req.csrfToken ? req.csrfToken() : '', client: req.client });
 };
 
 exports.renderPasswordResetRequest = (req, res) => {
-    res.render('client/passwordResetRequest', { csrfToken: req.csrfToken ? req.csrfToken() : '' });
+    res.render('client/passwordResetRequest', { layout: false, csrfToken: req.csrfToken ? req.csrfToken() : '' });
 };
 
 exports.renderPasswordResetConfirm = (req, res) => {
-    res.render('client/passwordResetConfirm', { csrfToken: req.csrfToken ? req.csrfToken() : '', token: req.query.token });
+    res.render('client/passwordResetConfirm', { layout: false, csrfToken: req.csrfToken ? req.csrfToken() : '', token: req.query.token });
 };
 
 exports.handleLogoutView = (req, res) => {

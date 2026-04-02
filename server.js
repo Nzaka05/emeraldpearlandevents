@@ -52,11 +52,11 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'", "cdn.jsdelivr.net", "cdnjs.cloudflare.com"],
-      styleSrc: ["'self'", "'unsafe-inline'", "cdn.jsdelivr.net", "fonts.googleapis.com", "cdnjs.cloudflare.com"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "cdn.jsdelivr.net", "cdnjs.cloudflare.com", "cdn.tailwindcss.com"],
+      styleSrc: ["'self'", "'unsafe-inline'", "cdn.jsdelivr.net", "fonts.googleapis.com", "cdnjs.cloudflare.com", "cdn.tailwindcss.com"],
       fontSrc: ["'self'", "fonts.gstatic.com", "cdnjs.cloudflare.com"],
       imgSrc: ["'self'", "data:", "res.cloudinary.com"],
-      connectSrc: ["'self'", "wss:", "ws:"]
+      connectSrc: ["'self'", "wss:", "ws:", "cdn.tailwindcss.com"]
     }
   }
 }));
@@ -65,7 +65,7 @@ if (process.env.NODE_ENV === 'production') {
   app.use(morgan('combined'));
 }
 const server = http.createServer(app);
-require('./staff-config/socket')(server);
+require('./staff-system/config/socket')(server);
 const PORT = process.env.PORT || 3000;
 
 // ── EJS SETUP FOR STAFF PORTAL ──
@@ -649,11 +649,11 @@ app.use('/portal', portalCsrf, (req, res, next) => {
 });
 
 // ── STAFF PORTAL ROUTES ──
-const portalAuthRoutes = require('./staff-routes/auth');
-const portalStaffRoutes = require('./staff-routes/staff');
-const portalSupervisorRoutes = require('./staff-routes/supervisor');
-const portalAdminStaffRoutes = require('./staff-routes/admin');
-const portalAiRoutes = require('./staff-routes/aiRoutes');
+const portalAuthRoutes = require('./staff-system/staff-routes/auth');
+const portalStaffRoutes = require('./staff-system/staff-routes/staff');
+const portalSupervisorRoutes = require('./staff-system/staff-routes/supervisor');
+const portalAdminStaffRoutes = require('./staff-system/staff-routes/admin');
+const portalAiRoutes = require('./staff-system/staff-routes/aiRoutes');
 
 app.use('/portal/auth', portalAuthRoutes);
 app.use('/portal/staff', portalStaffRoutes);
