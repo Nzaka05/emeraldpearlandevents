@@ -49,6 +49,8 @@
     "multer-storage-cloudinary": "^2.2.1",
     "node-cron": "^3.0.0",
     "nodemailer": "^8.0.1",
+    "passport": "^0.7.0",
+    "passport-google-oauth20": "^2.0.0",
     "pdfkit": "^0.17.2",
     "playwright": "^1.58.2",
     "sib-api-v3-sdk": "^8.5.0",
