@@ -19,14 +19,20 @@ exports.protectClient = async (req, res, next) => {
         }
 
         if (!token) {
-            return res.status(401).json({ success: false, error: 'Not authorized to access this route' });
+            if (req.originalUrl.includes('/api/')) {
+                return res.status(401).json({ success: false, error: 'Not authorized to access this route' });
+            }
+            return res.redirect('/client/login');
         }
 
         try {
             const decoded = jwt.verify(token, process.env.CLIENT_JWT_SECRET);
             req.client = decoded;
         } catch (err) {
-            return res.status(401).json({ success: false, error: 'access token expired, please refresh.' });
+            if (req.originalUrl.includes('/api/')) {
+                return res.status(401).json({ success: false, error: 'access token expired, please refresh.' });
+            }
+            return res.redirect('/client/login');
         }
 
         // Update last_active asynchronously (don't block request)
@@ -34,7 +40,10 @@ exports.protectClient = async (req, res, next) => {
 
         next();
     } catch (err) {
-        return res.status(500).json({ success: false, error: 'Server Error' });
+        if (req.originalUrl.includes('/api/')) {
+            return res.status(500).json({ success: false, error: 'Server Error' });
+        }
+        return res.redirect('/client/login');
     }
 };
 
@@ -51,7 +60,10 @@ exports.enforceDataOwnership = async (req, res, next) => {
             } catch(e) {} // Ignore CastError
             
             if (!assignedEvent || assignedEvent.client_id.toString() !== clientId) {
-                return res.status(403).json({ success: false, error: 'access denied' });
+                if (req.originalUrl.includes('/api/')) {
+                    return res.status(403).json({ success: false, error: 'access denied' });
+                }
+                return res.redirect('/client/dashboard');
             }
         }
 
@@ -64,13 +76,19 @@ exports.enforceDataOwnership = async (req, res, next) => {
             } catch(e) {} // Ignore CastError
             
             if (!invoice || invoice.client_id.toString() !== clientId) {
-                return res.status(403).json({ success: false, error: 'access denied' });
+                if (req.originalUrl.includes('/api/')) {
+                    return res.status(403).json({ success: false, error: 'access denied' });
+                }
+                return res.redirect('/client/dashboard');
             }
         }
 
         next();
     } catch (err) {
         console.error(err);
-        return res.status(500).json({ success: false, error: 'Server Error' });
+        if (req.originalUrl.includes('/api/')) {
+            return res.status(500).json({ success: false, error: 'Server Error' });
+        }
+        return res.redirect('/client/dashboard');
     }
 };
