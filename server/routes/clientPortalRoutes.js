@@ -8,6 +8,7 @@ Client Login button linking to portal.emeraldpearlandevents.com/client/login.
 No backend changes needed on Netlify. Marketing site remains fully static.
 */
 
+console.trace('[DEBUG] clientPortalRoutes started loading');
 const express = require('express');
 const router = express.Router();
 const csrf = require('csurf');
@@ -90,7 +91,8 @@ router.delete('/api/sessions/:sessionId', clientPortalController.apiDeleteSessio
 let clientHealthLimiter = (req, res, next) => next(); // fallback no-op
 let isValidOid = (id) => /^[a-f\d]{24}$/i.test(id); // fallback ObjectId check
 try {
-    clientHealthLimiter = require('../../staff-middleware/aiRateLimiter').clientHealthLimiter;
+    // Check staff-system/middleware for equivalent rate limiting if needed
+    // Currently using fallback no-op as aiRateLimiter.js is missing
 } catch(e) { console.warn('[ClientPortal] aiRateLimiter not available, using fallback'); }
 try {
     isValidOid = require('../../staff-system/utils/validateObjectId').isValidObjectId;

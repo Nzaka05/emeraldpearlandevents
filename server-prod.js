@@ -1,4 +1,5 @@
 require('dotenv').config();
+const path = require('path');
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
@@ -21,6 +22,7 @@ try {
     console.warn('[WARN] clientPortalRoutes failed to load:', e.message);
 }
 const { verifyAdminPage } = require('./server/middleware/adminAuth');
+const passport = require('./server/config/passport'); // Register Google Strategy
 const { initializeEmailService } = require('./server/services/emailService');
 const { initializeCronJobs, stopCronJobs } = require('./server/services/cronService');
 const Analytics = require('./server/models/Analytics');
@@ -54,13 +56,13 @@ app.use(helmet({
     contentSecurityPolicy: {
         directives: {
             defaultSrc: ["'self'"],
-            scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://cdnjs.cloudflare.com", "https://cdn.jsdelivr.net"],
+            scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://cdnjs.cloudflare.com", "https://cdn.jsdelivr.net", "https://www.googletagmanager.com"],
             scriptSrcAttr: ["'unsafe-inline'"],
             styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://cdnjs.cloudflare.com", "https://cdn.jsdelivr.net"],
             fontSrc: ["'self'", "https://fonts.gstatic.com", "https://cdnjs.cloudflare.com", "data:"],
-            imgSrc: ["'self'", "data:", "blob:", "https://res.cloudinary.com", "'unsafe-inline'"],
+            imgSrc: ["'self'", "data:", "blob:", "https://res.cloudinary.com", "https://images.unsplash.com", "https://emeraldpearlandevents.netlify.app", "'unsafe-inline'"],
             mediaSrc: ["'self'", "blob:"],
-            connectSrc: ["'self'", "blob:", "https://api.cloudinary.com", "https://res.cloudinary.com", "https://fonts.googleapis.com", "https://fonts.gstatic.com", "https://cdnjs.cloudflare.com", "https://cdn.jsdelivr.net"],
+            connectSrc: ["'self'", "blob:", "https://api.cloudinary.com", "https://res.cloudinary.com", "https://fonts.googleapis.com", "https://fonts.gstatic.com", "https://cdnjs.cloudflare.com", "https://cdn.jsdelivr.net", "https://emeraldpearlandevents.onrender.com"],
         }
     }
 }));
@@ -99,6 +101,9 @@ app.use(bodyParser.urlencoded({ limit: '10mb', extended: true }));
 
 // Cookie parser
 app.use(cookieParser());
+
+// Initialize Passport
+app.use(passport.initialize());
 
 // General rate limiting
 const limiter = rateLimit({
@@ -307,7 +312,6 @@ app.get('/admin/403', (req, res) => {
 // ═══════════════════════════════════════════════════════════
 // VIEW ENGINE (for EJS client portal)
 // ═══════════════════════════════════════════════════════════
-const path = require('path');
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 

@@ -15,7 +15,7 @@ const csrf = require('csurf');
 const helmet = require('helmet');
 const compression = require('compression');
 const morgan = require('morgan');
-const passport = require('./server/config/passport');
+const passport = require(path.join(__dirname, 'server/config/passport'));
 require('dotenv').config();
 
 // ── TWILIO CLIENT (optional – only used if credentials are set) ──
