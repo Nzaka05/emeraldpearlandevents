@@ -122,9 +122,9 @@ const validateEmail = (email) => {
 };
 
 const validatePhone = (phone) => {
-    // Accepts E.164 international numbers and common local digit-only formats.
-    const normalized = String(phone).replace(/[\s()-]/g, '');
-    const phoneRegex = /^\+?[1-9]\d{9,14}$/;
+    // Accepts E.164 international numbers and Kenyan local formats (07..., 01...)
+    const normalized = String(phone).replace(/[\s().-]/g, '');
+    const phoneRegex = /^(\+?[1-9]\d{9,14}|0[17]\d{8})$/;
     return phoneRegex.test(normalized);
 };
 
