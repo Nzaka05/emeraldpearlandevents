@@ -15,6 +15,7 @@ const csrf = require('csurf');
 const helmet = require('helmet');
 const compression = require('compression');
 const morgan = require('morgan');
+const passport = require('./server/config/passport');
 require('dotenv').config();
 
 // ── TWILIO CLIENT (optional – only used if credentials are set) ──
@@ -77,6 +78,7 @@ app.set('layout', 'layout');
 
 // ── MIDDLEWARE ──
 app.use(cookieParser());
+app.use(passport.initialize());
 app.use(cors({
     origin: [
         'http://localhost:3000',

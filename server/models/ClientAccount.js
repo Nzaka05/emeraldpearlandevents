@@ -16,7 +16,17 @@ const clientAccountSchema = new mongoose.Schema({
     },
     password_hash: {
         type: String,
-        required: true
+        required: function() { return this.provider === 'local'; }
+    },
+    googleId: {
+        type: String,
+        unique: true,
+        sparse: true
+    },
+    provider: {
+        type: String,
+        enum: ['local', 'google'],
+        default: 'local'
     },
     last_login: {
         type: Date

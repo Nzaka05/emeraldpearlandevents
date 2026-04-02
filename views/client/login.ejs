@@ -280,6 +280,32 @@
         .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
         .submit-btn span { position: relative; z-index: 1; }
 
+        /* ── GOOGLE LOGIN ── */
+        .google-btn {
+            width: 100%;
+            margin-top: 16px;
+            padding: 14px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(201,168,76,0.15);
+            border-radius: 2px;
+            color: var(--cream);
+            font-family: 'Jost', sans-serif;
+            font-size: 10px;
+            font-weight: 400;
+            letter-spacing: 2.5px;
+            text-transform: uppercase;
+            text-decoration: none;
+            display: flex; align-items: center; justify-content: center; gap: 12px;
+            transition: all 0.35s ease;
+            animation: rise 0.9s 0.42s cubic-bezier(0.16,1,0.3,1) both;
+        }
+        .google-btn:hover {
+            background: rgba(201,168,76,0.08);
+            border-color: rgba(201,168,76,0.4);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+        }
+        .google-btn i { color: var(--gold); font-size: 14px; }
+
         /* ── ERROR ── */
         .error-box {
             display: none;
@@ -299,6 +325,7 @@
         .card-footer {
             margin-top: 32px;
             text-align: center;
+            display: flex; flex-direction: column; gap: 12px;
             animation: rise 0.9s 0.45s cubic-bezier(0.16,1,0.3,1) both;
         }
         .card-footer a {
@@ -387,15 +414,31 @@
                 <button type="submit" class="submit-btn" id="submit-btn">
                     <span>Sign In Securely</span>
                 </button>
+
+                <a href="/client/auth/google" class="google-btn">
+                    <i class="fab fa-google"></i>
+                    <span>Sign in with Google</span>
+                </a>
             </form>
 
             <div class="card-footer">
+                <a href="/client/signup" style="color:var(--gold); font-weight:400; opacity:1;">Don't have an account? Sign Up</a>
                 <a href="https://emeraldpearlandevents.netlify.app">&larr; Return to Main Website</a>
             </div>
         </div>
     </div>
 
     <script>
+        // Check for URL errors (like Google Auth failure)
+        const urlParams = new URLSearchParams(window.location.search);
+        const error = urlParams.get('error');
+        if (error) {
+            const errAlert = document.getElementById('error-alert');
+            const errMsg = document.getElementById('error-message');
+            errMsg.textContent = decodeURIComponent(error);
+            errAlert.classList.add('visible');
+        }
+
         document.getElementById('toggle-password').addEventListener('click', function() {
             const passInput = document.getElementById('password');
             if (passInput.type === 'password') {

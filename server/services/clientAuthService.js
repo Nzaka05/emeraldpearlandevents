@@ -5,6 +5,7 @@ const ClientAccount = require('../models/ClientAccount');
 const ClientSession = require('../models/ClientSession');
 const ClientAuditLog = require('../models/ClientAuditLog');
 const ClientEmailLog = require('../models/ClientEmailLog');
+const Customer = require('../models/Customer');
 const clientNotificationService = require('./clientNotificationService');
 
 const logAudit = async (clientId, eventType, reqData, metadata = {}) => {
@@ -54,6 +55,118 @@ exports.registerClient = async (clientId, email, password) => {
     return accountObj;
 };
 
+exports.registerNewClient = async (name, email, phone, password, ipAddress, userAgent) => {
+    const errorMsg = validatePasswordRules(password);
+    if (errorMsg) throw new Error(errorMsg);
+
+    // Check if account already exists
+    const existingAccount = await ClientAccount.findOne({ email: email.toLowerCase() });
+    if (existingAccount) throw new Error("An account already exists with this email.");
+
+    // Find or create Customer
+    let customer = await Customer.findOne({ email: email.toLowerCase() });
+    if (!customer) {
+        customer = await Customer.create({
+            name,
+            email: email.toLowerCase(),
+            phone,
+            status: 'active'
+        });
+    }
+
+    const salt = await bcrypt.genSalt(12);
+    const password_hash = await bcrypt.hash(password, salt);
+
+    const newAccount = await ClientAccount.create({
+        client_id: customer._id,
+        email: email.toLowerCase(),
+        password_hash,
+        provider: 'local'
+    });
+
+    await logAudit(customer._id, 'registration_success', { ip_address: ipAddress, user_agent: userAgent });
+    
+    return {
+        _id: newAccount._id,
+        email: newAccount.email,
+        name: customer.name
+    };
+};
+
+exports.findOrCreateGoogleClient = async (profile, ipAddress, userAgent) => {
+    const email = profile.emails[0].value.toLowerCase();
+    const googleId = profile.id;
+    const name = profile.displayName;
+
+    let account = await ClientAccount.findOne({ $or: [{ googleId }, { email }] });
+
+    if (!account) {
+        // Find or create Customer
+        let customer = await Customer.findOne({ email });
+        if (!customer) {
+            customer = await Customer.create({
+                name,
+                email,
+                phone: 'Not Provided', // Will need to update later
+                status: 'active'
+            });
+        }
+
+        account = await ClientAccount.create({
+            client_id: customer._id,
+            email,
+            googleId,
+            provider: 'google',
+            portal_access_enabled: true
+        });
+        await logAudit(customer._id, 'registration_google', { ip_address: ipAddress, user_agent: userAgent });
+    } else if (!account.googleId) {
+        // Link existing local account to google
+        account.googleId = googleId;
+        account.provider = 'google';
+        await account.save();
+        await logAudit(account.client_id, 'link_google', { ip_address: ipAddress, user_agent: userAgent });
+    }
+
+    // Success - generate session tokens
+    return await this.generateDeviceSession(account, ipAddress, userAgent);
+};
+
+exports.generateDeviceSession = async (account, ipAddress, userAgent) => {
+    account.login_attempts = 0;
+    account.locked_until = null;
+    account.last_login = new Date();
+    account.last_active = new Date();
+    await account.save();
+
+    const accessToken = jwt.sign(
+        { client_id: account.client_id, email: account.email },
+        process.env.CLIENT_JWT_SECRET,
+        { expiresIn: process.env.CLIENT_JWT_EXPIRY || '15m' }
+    );
+
+    const rawRefreshToken = crypto.randomBytes(64).toString('hex');
+    const refreshSalt = await bcrypt.genSalt(10);
+    const refresh_token_hash = await bcrypt.hash(rawRefreshToken, refreshSalt);
+
+    const expiryDate = new Date();
+    expiryDate.setDate(expiryDate.getDate() + 30);
+
+    await ClientSession.create({
+        client_id: account.client_id,
+        refresh_token_hash,
+        ip_address: ipAddress,
+        user_agent: userAgent,
+        device_name: userAgent ? userAgent.split(' ')[0] : 'Unknown Device',
+        expires_at: expiryDate
+    });
+
+    return {
+        accessToken,
+        refreshToken: rawRefreshToken
+    };
+};
+
 exports.loginClient = async (email, password, ipAddress, userAgent) => {
     const account = await ClientAccount.findOne({ email: email.toLowerCase() });
     if (!account) throw new Error('Invalid credentials');
@@ -80,41 +193,9 @@ exports.loginClient = async (email, password, ipAddress, userAgent) => {
         throw new Error('Invalid credentials');
     }
 
-    // Success
-    account.login_attempts = 0;
-    account.locked_until = null;
-    account.last_login = new Date();
-    account.last_active = new Date();
-    await account.save();
-
-    const accessToken = jwt.sign(
-        { client_id: account.client_id, email: account.email },
-        process.env.CLIENT_JWT_SECRET,
-        { expiresIn: process.env.CLIENT_JWT_EXPIRY || '15m' }
-    );
-
-    const rawRefreshToken = crypto.randomBytes(64).toString('hex');
-    const refreshSalt = await bcrypt.genSalt(10);
-    const refresh_token_hash = await bcrypt.hash(rawRefreshToken, refreshSalt);
-
-    const expiryDate = new Date();
-    expiryDate.setDate(expiryDate.getDate() + 30); // 30 days expiry
-
-    await ClientSession.create({
-        client_id: account.client_id,
-        refresh_token_hash,
-        ip_address: ipAddress,
-        user_agent: userAgent,
-        device_name: userAgent ? userAgent.split(' ')[0] : 'Unknown Device',
-        expires_at: expiryDate
-    });
-
     await logAudit(account.client_id, 'login_success', { ip_address: ipAddress, user_agent: userAgent });
 
-    return {
-        accessToken,
-        refreshToken: rawRefreshToken
-    };
+    return await this.generateDeviceSession(account, ipAddress, userAgent);
 };
 
 exports.refreshToken = async (rawRefreshToken, ipAddress, userAgent) => {

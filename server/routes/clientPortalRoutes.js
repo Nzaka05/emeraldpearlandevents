@@ -14,6 +14,7 @@ const csrf = require('csurf');
 const { protectClient, enforceDataOwnership } = require('../middleware/clientAuthMiddleware');
 const { loginLimiter, passwordResetLimiter, generalApiLimiter } = require('../middleware/clientRateLimiter');
 const clientPortalController = require('../controllers/clientPortalController');
+const passport = require('passport');
 
 // CSRF Protection config
 const csrfProtection = csrf({ cookie: { httpOnly: true, sameSite: 'strict', secure: process.env.NODE_ENV === 'production' } });
@@ -43,9 +44,17 @@ router.use((req, res, next) => {
 
 // ── EJS VIEW ROUTES ──
 router.get('/login', clientPortalController.renderLogin);
+router.get('/signup', clientPortalController.renderSignup);
 router.get('/logout', clientPortalController.handleLogoutView);
 router.get('/password-reset/request', clientPortalController.renderPasswordResetRequest);
 router.get('/password-reset/confirm', clientPortalController.renderPasswordResetConfirm);
+
+// --- GOOGLE OAUTH ROUTES ---
+router.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
+router.get('/auth/google/callback', 
+    passport.authenticate('google', { failureRedirect: '/client/login?error=Google auth failed', session: false }),
+    clientPortalController.googleAuthCallback
+);
 
 router.get('/dashboard', protectClient, clientPortalController.renderDashboard);
 router.get('/events/:eventId', protectClient, enforceDataOwnership, clientPortalController.renderEventDetail);
@@ -58,6 +67,7 @@ router.get('/sessions', protectClient, clientPortalController.renderSessions);
 
 // ── API ROUTES ──
 router.post('/api/login', loginLimiter, clientPortalController.apiLogin);
+router.post('/api/signup', loginLimiter, clientPortalController.apiRegister);
 router.post('/api/refresh-token', clientPortalController.apiRefreshToken);
 router.post('/api/password-reset/request', passwordResetLimiter, clientPortalController.apiPasswordResetRequest);
 router.post('/api/password-reset/confirm', passwordResetLimiter, clientPortalController.apiPasswordResetConfirm);

@@ -13,6 +13,10 @@ exports.renderLogin = (req, res) => {
     res.render('client/login', { csrfToken: req.csrfToken ? req.csrfToken() : '' });
 };
 
+exports.renderSignup = (req, res) => {
+    res.render('client/signup', { csrfToken: req.csrfToken ? req.csrfToken() : '' });
+};
+
 exports.renderDashboard = (req, res) => {
     res.render('client/dashboard', { csrfToken: req.csrfToken ? req.csrfToken() : '', client: req.client });
 };
@@ -69,6 +73,52 @@ exports.apiLogin = async (req, res) => {
             return res.status(403).json({ success: false, data: { message: e.message.substring(4) }, timestamp: new Date() });
         }
         res.status(401).json({ success: false, data: { message: e.message }, timestamp: new Date() });
+    }
+};
+
+exports.apiRegister = async (req, res) => {
+    try {
+        const { name, email, phone, password } = req.body;
+        if (!name || !email || !phone || !password) {
+            return res.status(400).json({ success: false, data: { message: 'All fields are required' } });
+        }
+
+        const result = await clientAuthService.registerNewClient(name, email, phone, password, req.ip, req.headers['user-agent']);
+        
+        // Auto-login after registration?
+        const loginResult = await clientAuthService.loginClient(email, password, req.ip, req.headers['user-agent']);
+        
+        res.cookie('client_token', loginResult.accessToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'Strict',
+            maxAge: 15 * 60 * 1000
+        });
+
+        res.json({ success: true, data: { ...result, ...loginResult }, timestamp: new Date() });
+    } catch (e) {
+        res.status(400).json({ success: false, data: { message: e.message }, timestamp: new Date() });
+    }
+};
+
+exports.googleAuthCallback = async (req, res) => {
+    try {
+        if (!req.user) throw new Error('Authentication failed');
+        
+        res.cookie('client_token', req.user.accessToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'Strict',
+            maxAge: 15 * 60 * 1000
+        });
+
+        // Store refresh token in localStorage via a temporary landing page or just redirect if using only cookies
+        // But the previous implementation used localStorage for refresh token.
+        // For SSO, we might need a bridge page or just set a refresh cookie too.
+        // Let's redirect to dashboard and let the frontend handle it if needed.
+        res.redirect('/client/dashboard?sso=true&ref=' + req.user.refreshToken);
+    } catch (e) {
+        res.redirect('/client/login?error=' + encodeURIComponent(e.message));
     }
 };
 

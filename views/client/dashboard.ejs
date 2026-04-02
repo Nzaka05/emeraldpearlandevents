@@ -209,6 +209,15 @@
         }
 
         const loadDashboard = async () => {
+            // Check for SSO refresh token in URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const ssoRef = urlParams.get('ref');
+            if (ssoRef) {
+                localStorage.setItem('portal_refresh_token', ssoRef);
+                // Clean URL
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+
             try {
                 const res = await fetch('/client/api/dashboard');
                 if (!res.ok) {
