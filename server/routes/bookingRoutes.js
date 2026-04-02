@@ -7,6 +7,7 @@ const AdminNotification = require('../models/AdminNotification');
 const Gallery = require('../models/Gallery');
 const { initializeEmailService, sendBusinessBookingNotification, sendClientBookingConfirmation, sendFollowUpEmail } = require('../services/emailService');
 const { sendPushNotificationToAdmins } = require('../services/notificationService');
+const { normalizePhone, normalizeEmail } = require('../utils/normalization');
 
 // ── INITIALIZE EMAIL TRANSPORTER ──
 initializeEmailService();
@@ -263,8 +264,8 @@ router.post('/book-event', bookingLimiter, bookingValidationRules, handleBooking
         const normalizedNeedUshers = canonicalizeEnum(rawData.needUshers, NEED_USHERS_ENUM, NEED_USHERS_ALIASES) || 'Not specified';
         const data = {
             fullName: sanitizeInput(rawData.fullName),
-            phone: sanitizeInput(rawData.phone),
-            email: sanitizeInput(rawData.email),
+            phone: normalizePhone(sanitizeInput(rawData.phone)),
+            email: normalizeEmail(sanitizeInput(rawData.email)),
             eventType: canonicalizeEnumOrDefault(sanitizeInput(rawData.eventType), EVENT_TYPE_ENUM, EVENT_TYPE_ALIASES, 'Other'),
             eventDate: rawData.eventDate,
             eventDuration: sanitizeInput(rawData.eventDuration),
@@ -278,6 +279,7 @@ router.post('/book-event', bookingLimiter, bookingValidationRules, handleBooking
 
         // ───────────────────────────────────────────────────────────
         // STEP 2: CHECK FOR EXISTING CUSTOMER / CREATE NEW
+        // Searches by normalized email AND phone (including 01/07 variants)
         // ───────────────────────────────────────────────────────────
         let customer = await Customer.findOne({
             $or: [
@@ -286,15 +288,25 @@ router.post('/book-event', bookingLimiter, bookingValidationRules, handleBooking
             ]
         });
 
+        // Fallback: try original (unnormalized) phone in case DB has legacy data
+        if (!customer && rawData.phone) {
+            const rawPhone = sanitizeInput(rawData.phone);
+            customer = await Customer.findOne({ phone: rawPhone });
+        }
+
         if (customer) {
-            // Existing customer - mark as returning
+            // Existing customer - mark as returning, update contact info
             if (!customer.tags.includes('returning')) {
                 customer.tags = ['returning'];
             }
             customer.lastContactDate = new Date();
             customer.totalBookings += 1;
+            // Sync normalized values so future lookups match
+            if (customer.email !== data.email) customer.email = data.email;
+            if (customer.phone !== data.phone) customer.phone = data.phone;
+            console.log(`[BOOKING] Matched existing customer: ${customer.name} (${customer.email})`);
         } else {
-            // New customer - create record
+            // New customer - create record with normalized phone/email
             customer = new Customer({
                 name: data.fullName,
                 email: data.email,
@@ -303,6 +315,7 @@ router.post('/book-event', bookingLimiter, bookingValidationRules, handleBooking
                 totalBookings: 1,
                 firstContactDate: new Date()
             });
+            console.log(`[BOOKING] Created new customer: ${data.fullName} (${data.email}, ${data.phone})`);
         }
 
         await customer.save();
@@ -368,38 +381,48 @@ router.post('/book-event', bookingLimiter, bookingValidationRules, handleBooking
         });
 
         // ───────────────────────────────────────────────────────────
-        // STEP 4: SEND EMAILS
+        // STEP 4: SEND EMAILS (admin + client in parallel, independent)
+        // Neither email failing will block the other or the response.
         // ───────────────────────────────────────────────────────────
-        try {
-            // Email 1: To business
-            await sendBusinessBookingNotification(booking, customer);
-            console.log(`[BOOKING] Business notification sent for ${booking.bookingReference}`);
-        } catch (emailError) {
-            console.error('[BOOKING] Failed to send business notification:', emailError.message);
-            // Don't fail the booking if email fails
-        }
+        const emailPromises = [];
 
-        try {
-            // Email 2: To client — immediate thank-you
-            await sendClientBookingConfirmation(booking, customer);
-            console.log(`[BOOKING] Client confirmation sent for ${booking.bookingReference}`);
-            booking.emailSentAt = new Date();
-            await booking.save();
+        // Email 1: To business admin
+        emailPromises.push(
+            sendBusinessBookingNotification(booking, customer)
+                .then(() => console.log(`[BOOKING] ✅ Admin notification sent for ${booking.bookingReference}`))
+                .catch(err => console.error(`[BOOKING] ❌ Admin notification FAILED for ${booking.bookingReference}:`, err.message))
+        );
 
-            // Email 3: Delayed follow-up to client (~90 seconds later)
-            const bookingSnapshot = { ...booking.toObject() };
-            const customerSnapshot = { ...customer.toObject() };
-            setTimeout(async () => {
-                try {
-                    await sendFollowUpEmail(bookingSnapshot, customerSnapshot);
-                    console.log(`[BOOKING] Follow-up email sent for ${bookingSnapshot.bookingReference}`);
-                } catch (followUpError) {
-                    console.error('[BOOKING] Failed to send follow-up email:', followUpError.message);
-                }
-            }, 5 * 60 * 1000); // 5 minutes
-        } catch (emailError) {
-            console.error('[BOOKING] Failed to send client confirmation:', emailError.message);
-        }
+        // Email 2: To client — immediate thank-you
+        emailPromises.push(
+            sendClientBookingConfirmation(booking, customer)
+                .then(async () => {
+                    console.log(`[BOOKING] ✅ Client confirmation sent for ${booking.bookingReference}`);
+                    try {
+                        booking.emailSentAt = new Date();
+                        await booking.save();
+                    } catch (saveErr) {
+                        console.error('[BOOKING] Failed to update emailSentAt:', saveErr.message);
+                    }
+                })
+                .catch(err => console.error(`[BOOKING] ❌ Client confirmation FAILED for ${booking.bookingReference}:`, err.message))
+        );
+
+        // Wait for both emails to settle (success or fail), but don't block the response
+        // We use Promise.allSettled so neither rejection kills the other
+        await Promise.allSettled(emailPromises);
+
+        // Email 3: Delayed follow-up to client (~5 minutes later)
+        const bookingSnapshot = { ...booking.toObject() };
+        const customerSnapshot = { ...customer.toObject() };
+        setTimeout(async () => {
+            try {
+                await sendFollowUpEmail(bookingSnapshot, customerSnapshot);
+                console.log(`[BOOKING] ✅ Follow-up email sent for ${bookingSnapshot.bookingReference}`);
+            } catch (followUpError) {
+                console.error(`[BOOKING] ❌ Follow-up email FAILED for ${bookingSnapshot.bookingReference}:`, followUpError.message);
+            }
+        }, 5 * 60 * 1000);
 
         // ───────────────────────────────────────────────────────────
         // STEP 5: GENERATE WHATSAPP LINK

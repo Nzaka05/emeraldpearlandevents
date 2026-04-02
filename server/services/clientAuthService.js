@@ -7,6 +7,7 @@ const ClientAuditLog = require('../models/ClientAuditLog');
 const ClientEmailLog = require('../models/ClientEmailLog');
 const Customer = require('../models/Customer');
 const clientNotificationService = require('./clientNotificationService');
+const { normalizePhone, normalizeEmail } = require('../utils/normalization');
 
 const logAudit = async (clientId, eventType, reqData, metadata = {}) => {
     try {
@@ -59,19 +60,62 @@ exports.registerNewClient = async (name, email, phone, password, ipAddress, user
     const errorMsg = validatePasswordRules(password);
     if (errorMsg) throw new Error(errorMsg);
 
-    // Check if account already exists
-    const existingAccount = await ClientAccount.findOne({ email: email.toLowerCase() });
+    const normEmail = normalizeEmail(email);
+    const normPhone = normalizePhone(phone);
+
+    // Check if portal account already exists
+    const existingAccount = await ClientAccount.findOne({ email: normEmail });
     if (existingAccount) throw new Error("An account already exists with this email.");
 
-    // Find or create Customer
-    let customer = await Customer.findOne({ email: email.toLowerCase() });
-    if (!customer) {
+    // ── Find existing Customer by email OR phone (covers pre-account bookings) ──
+    let customer = await Customer.findOne({
+        $or: [
+            { email: normEmail },
+            { phone: normPhone }
+        ]
+    });
+
+    // Fallback: try raw phone in case DB has legacy format
+    if (!customer && phone) {
+        customer = await Customer.findOne({ phone: phone.trim() });
+    }
+
+    if (customer) {
+        // Existing CRM record found — sync normalized contact info
+        console.log(`[AUTH] Linking portal account to existing Customer: ${customer.name} (${customer._id})`);
+        if (customer.email !== normEmail) customer.email = normEmail;
+        if (customer.phone !== normPhone) customer.phone = normPhone;
+        if (!customer.name || customer.name === '') customer.name = name;
+        await customer.save();
+
+        // ── Consolidate bookings from any other Customer with same email/phone ──
+        try {
+            const Booking = require('../models/Booking');
+            const dupes = await Customer.find({
+                _id: { $ne: customer._id },
+                $or: [{ email: normEmail }, { phone: normPhone }]
+            });
+            for (const dupe of dupes) {
+                const migrated = await Booking.updateMany(
+                    { customerId: dupe._id },
+                    { $set: { customerId: customer._id } }
+                );
+                if (migrated.modifiedCount > 0) {
+                    console.log(`[AUTH] Migrated ${migrated.modifiedCount} bookings from duplicate Customer ${dupe._id} to ${customer._id}`);
+                }
+            }
+        } catch (mergeErr) {
+            console.warn('[AUTH] Booking consolidation skipped:', mergeErr.message);
+        }
+    } else {
+        // Brand new customer — no prior bookings
         customer = await Customer.create({
             name,
-            email: email.toLowerCase(),
-            phone,
+            email: normEmail,
+            phone: normPhone,
             status: 'active'
         });
+        console.log(`[AUTH] Created new Customer: ${customer.name} (${customer._id})`);
     }
 
     const salt = await bcrypt.genSalt(12);
@@ -79,7 +123,7 @@ exports.registerNewClient = async (name, email, phone, password, ipAddress, user
 
     const newAccount = await ClientAccount.create({
         client_id: customer._id,
-        email: email.toLowerCase(),
+        email: normEmail,
         password_hash,
         provider: 'local'
     });

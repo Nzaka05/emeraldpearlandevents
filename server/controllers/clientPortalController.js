@@ -7,6 +7,37 @@ let ClientInvoice = null;
 try { Assignment = require('../../staff-system/models/Assignment'); } catch(e) { console.warn('[ClientPortalController] Assignment model unavailable'); }
 try { ClientInvoice = require('../../staff-system/models/ClientInvoice'); } catch(e) { console.warn('[ClientPortalController] ClientInvoice model unavailable'); }
 
+// ── BOOKING STATUS → TIMELINE STAGE MAP ──────────────────────────────────────
+// Booking.status values:  new | contacted | confirmed | completed | cancelled
+// Dashboard timeline keys: PLANNED | STAFFING | READY | LIVE | COMPLETED | FINANCE_SETTLED
+const BOOKING_STATUS_TO_STAGE = {
+    'new':       'PLANNED',
+    'contacted': 'STAFFING',
+    'confirmed': 'READY',
+    'completed': 'COMPLETED',
+    'cancelled': 'CANCELLED',
+};
+
+// Helper: map a Booking document to a dashboard event object
+function bookingToEvent(b) {
+    const stage = BOOKING_STATUS_TO_STAGE[b.status] || 'PLANNED';
+    const total = b.estimatedTotal || 0;
+    const paid  = b.amountPaid    || 0;
+    return {
+        _id:          b._id,
+        title:        b.eventType || 'Private Event',
+        date:         b.eventDate,
+        location:     b.location,
+        status:       stage,
+        bookingRef:   b.bookingReference,
+        estimatedTotal: total,
+        amountPaid:   paid,
+        outstanding:  Math.max(0, total - paid),
+        // Keep raw booking status for display fallback
+        rawStatus:    b.status,
+    };
+}
+
 // --- EJS VIEW CONTROLLERS ---
 
 exports.renderLogin = (req, res) => {
@@ -85,7 +116,6 @@ exports.apiRegister = async (req, res) => {
 
         const result = await clientAuthService.registerNewClient(name, email, phone, password, req.ip, req.headers['user-agent']);
         
-        // Auto-login after registration?
         const loginResult = await clientAuthService.loginClient(email, password, req.ip, req.headers['user-agent']);
         
         res.cookie('client_token', loginResult.accessToken, {
@@ -112,10 +142,6 @@ exports.googleAuthCallback = async (req, res) => {
             maxAge: 15 * 60 * 1000
         });
 
-        // Store refresh token in localStorage via a temporary landing page or just redirect if using only cookies
-        // But the previous implementation used localStorage for refresh token.
-        // For SSO, we might need a bridge page or just set a refresh cookie too.
-        // Let's redirect to dashboard and let the frontend handle it if needed.
         res.redirect('/client/dashboard?sso=true&ref=' + req.user.refreshToken);
     } catch (e) {
         res.redirect('/client/login?error=' + encodeURIComponent(e.message));
@@ -124,9 +150,6 @@ exports.googleAuthCallback = async (req, res) => {
 
 exports.apiLogout = async (req, res) => {
     try {
-        // Find session by refresh token? No, we don't have session id directly in JWT.
-        // The prompt says logoutClient(clientId, sessionId). We'll assume the client is ending all or we can fetch current session id if tracking it.
-        // Since JWT doesn't have sessionId, we will just clear cookie and optionally revoke if passed.
         res.clearCookie('client_token');
         if (req.body.sessionId) {
             await clientAuthService.logoutClient(req.client.client_id, req.body.sessionId);
@@ -167,30 +190,96 @@ exports.apiRefreshToken = async (req, res) => {
     }
 };
 
+// ── DASHBOARD API ─────────────────────────────────────────────────────────────
+// FIX: Was querying Assignment (staff-system model) — client bookings live in
+//      the Booking collection keyed by customerId = ClientAccount.client_id.
+//      Also pulls PricingSettings.paymentMethods so admin rate changes reflect
+//      immediately in the client portal without a redeploy.
+// ─────────────────────────────────────────────────────────────────────────────
 exports.apiGetDashboard = async (req, res) => {
     try {
-        const events = await Assignment.find({ client_id: req.client.client_id }).sort({ date: -1 });
-        const invoices = await ClientInvoice.find({ client_id: req.client.client_id });
-        
-        const active = events.filter(e => e.status === 'LIVE').length;
-        const upcoming = events.filter(e => ['PLANNED', 'STAFFING', 'READY'].includes(e.status)).length;
-        const completed = events.filter(e => ['COMPLETED', 'FINANCE_SETTLED'].includes(e.status)).length;
-        
-        const outstanding = invoices.reduce((sum, inv) => sum + (inv.totalAmount - inv.amountPaid), 0);
+        const Booking         = require('../models/Booking');
+        const PricingSettings = require('../models/PricingSettings');
+
+        // ── 1. Load all bookings for this customer ────────────────────────────
+        // ClientAccount.client_id references Customer._id, which is the same
+        // ObjectId stored in Booking.customerId.
+        const rawBookings = await Booking.find({ customerId: req.client.client_id })
+            .select('eventType eventDate location status estimatedTotal amountPaid bookingReference')
+            .lean();
+
+        const events = rawBookings.map(bookingToEvent);
+
+        // ── 2. Counts ─────────────────────────────────────────────────────────
+        const now     = new Date();
+        const active  = events.filter(e => e.status === 'LIVE').length;
+        const upcoming = events.filter(e =>
+            ['PLANNED', 'STAFFING', 'READY'].includes(e.status) && new Date(e.date) > now
+        ).length;
+        const completed = events.filter(e =>
+            ['COMPLETED', 'FINANCE_SETTLED'].includes(e.status)
+        ).length;
+
+        // ── 3. Payment totals ─────────────────────────────────────────────────
+        const totalInvoiced    = events.reduce((s, e) => s + e.estimatedTotal, 0);
+        const totalPaid        = events.reduce((s, e) => s + e.amountPaid,     0);
+        const outstandingBalance = Math.max(0, totalInvoiced - totalPaid);
+
+        // ── 4. Next upcoming event for countdown ──────────────────────────────
+        const futureEvents = events
+            .filter(e => e.date && new Date(e.date) >= now && e.status !== 'CANCELLED')
+            .sort((a, b) => new Date(a.date) - new Date(b.date));
+        const nextEvent = futureEvents[0] || null;
+
+        // ── 5. Recent events (latest 5, sorted desc by date) ─────────────────
+        const recentEvents = [...events]
+            .filter(e => e.status !== 'CANCELLED')
+            .sort((a, b) => new Date(b.date) - new Date(a.date))
+            .slice(0, 5);
+
+        // ── 6. Payment methods from PricingSettings (live from admin) ─────────
+        let paymentMethods = [];
+        try {
+            const pricing = await PricingSettings.findOne().select('paymentMethods').lean();
+            if (pricing && pricing.paymentMethods) {
+                paymentMethods = pricing.paymentMethods.filter(m => m.isActive);
+            }
+        } catch (pmErr) {
+            console.warn('[Dashboard] Could not load paymentMethods:', pmErr.message);
+        }
 
         res.json({
             success: true,
-            data: { active, upcoming, completed, outstandingBalance: outstanding, recentEvents: events.slice(0, 5) },
+            data: {
+                active,
+                upcoming,
+                completed,
+                totalInvoiced,
+                totalPaid,
+                outstandingBalance,
+                nextEvent,
+                recentEvents,
+                paymentMethods,   // ← admin-configured, always fresh
+            },
             timestamp: new Date()
         });
+
     } catch (e) {
+        console.error('[apiGetDashboard]', e);
         res.status(500).json({ success: false, data: { message: e.message }, timestamp: new Date() });
     }
 };
 
+// ── EVENTS API ────────────────────────────────────────────────────────────────
+// Also fixed to query Booking instead of Assignment.
+// ─────────────────────────────────────────────────────────────────────────────
 exports.apiGetEvents = async (req, res) => {
     try {
-        const events = await Assignment.find({ client_id: req.client.client_id }).sort({ date: -1 });
+        const Booking = require('../models/Booking');
+        const rawBookings = await Booking.find({ customerId: req.client.client_id })
+            .select('eventType eventDate location status estimatedTotal amountPaid bookingReference')
+            .lean();
+        const events = rawBookings.map(bookingToEvent);
         res.json({ success: true, data: { events }, timestamp: new Date() });
     } catch (e) {
         res.status(500).json({ success: false, data: { message: e.message }, timestamp: new Date() });
@@ -199,10 +288,14 @@ exports.apiGetEvents = async (req, res) => {
 
 exports.apiGetEventDetail = async (req, res) => {
     try {
-        // Data ownership already verified by middleware
-        const event = await Assignment.findById(req.params.eventId);
-        if (!event) return res.status(404).json({ success: false, data: { message: 'Not found' }, timestamp: new Date() });
-        res.json({ success: true, data: { event }, timestamp: new Date() });
+        const Booking = require('../models/Booking');
+        // enforceDataOwnership middleware has already verified ownership
+        const booking = await Booking.findOne({
+            _id: req.params.eventId,
+            customerId: req.client.client_id
+        }).lean();
+        if (!booking) return res.status(404).json({ success: false, data: { message: 'Not found' }, timestamp: new Date() });
+        res.json({ success: true, data: { event: bookingToEvent(booking) }, timestamp: new Date() });
     } catch (e) {
         res.status(500).json({ success: false, data: { message: e.message }, timestamp: new Date() });
     }
@@ -210,7 +303,30 @@ exports.apiGetEventDetail = async (req, res) => {
 
 exports.apiGetInvoices = async (req, res) => {
     try {
-        const invoices = await ClientInvoice.find({ client_id: req.client.client_id }).sort({ createdAt: -1 });
+        // ClientInvoice may not exist yet — fall back to deriving from Bookings
+        if (ClientInvoice) {
+            const invoices = await ClientInvoice.find({ client_id: req.client.client_id }).sort({ createdAt: -1 });
+            return res.json({ success: true, data: { invoices }, timestamp: new Date() });
+        }
+
+        // Fallback: synthesise invoice-like objects from Bookings
+        const Booking = require('../models/Booking');
+        const rawBookings = await Booking.find({ customerId: req.client.client_id })
+            .select('eventType eventDate estimatedTotal amountPaid bookingReference status createdAt')
+            .lean();
+
+        const invoices = rawBookings.map(b => ({
+            _id:          b._id,
+            ref:          b.bookingReference,
+            description:  b.eventType,
+            date:         b.eventDate,
+            totalAmount:  b.estimatedTotal || 0,
+            amountPaid:   b.amountPaid     || 0,
+            outstanding:  Math.max(0, (b.estimatedTotal || 0) - (b.amountPaid || 0)),
+            status:       b.amountPaid >= b.estimatedTotal && b.estimatedTotal > 0 ? 'paid' : 'partial',
+            createdAt:    b.createdAt,
+        }));
+
         res.json({ success: true, data: { invoices }, timestamp: new Date() });
     } catch (e) {
         res.status(500).json({ success: false, data: { message: e.message }, timestamp: new Date() });
@@ -219,9 +335,16 @@ exports.apiGetInvoices = async (req, res) => {
 
 exports.apiGetInvoiceDetail = async (req, res) => {
     try {
-        const invoice = await ClientInvoice.findById(req.params.invoiceId);
-        if (!invoice) return res.status(404).json({ success: false, data: { message: 'Not found' }, timestamp: new Date() });
-        res.json({ success: true, data: { invoice }, timestamp: new Date() });
+        if (ClientInvoice) {
+            const invoice = await ClientInvoice.findById(req.params.invoiceId);
+            if (!invoice) return res.status(404).json({ success: false, data: { message: 'Not found' }, timestamp: new Date() });
+            return res.json({ success: true, data: { invoice }, timestamp: new Date() });
+        }
+        // Fallback to Booking
+        const Booking = require('../models/Booking');
+        const booking = await Booking.findOne({ _id: req.params.invoiceId, customerId: req.client.client_id }).lean();
+        if (!booking) return res.status(404).json({ success: false, data: { message: 'Not found' }, timestamp: new Date() });
+        res.json({ success: true, data: { invoice: booking }, timestamp: new Date() });
     } catch (e) {
         res.status(500).json({ success: false, data: { message: e.message }, timestamp: new Date() });
     }

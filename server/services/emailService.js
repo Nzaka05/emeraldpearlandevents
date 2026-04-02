@@ -27,10 +27,13 @@ const initializeEmailService = () => {
 };
 
 // ─────────────────────────────────────────────────────────────
-// HELPER: Send an email via Brevo SDK
+// HELPER: Send an email via Brevo SDK (with timeout protection)
 // ─────────────────────────────────────────────────────────────
+const BREVO_TIMEOUT_MS = 10000; // 10 seconds
+
 const sendEmail = async ({ to, subject, htmlContent, replyTo }) => {
     if (!apiInstance) {
+        console.error('[EMAIL] Brevo SDK not initialized — BREVO_API_KEY missing');
         throw new Error('Brevo SDK not initialized — BREVO_API_KEY missing');
     }
 
@@ -49,7 +52,24 @@ const sendEmail = async ({ to, subject, htmlContent, replyTo }) => {
         sendSmtpEmail.replyTo = { email: replyTo };
     }
 
-    return apiInstance.sendTransacEmail(sendSmtpEmail);
+    const recipientList = sendSmtpEmail.to.map(t => t.email || t).join(', ');
+    console.log(`[EMAIL] Sending "${subject}" to ${recipientList}...`);
+
+    // Race the Brevo call against a timeout so it never hangs the server
+    const brevoPromise = apiInstance.sendTransacEmail(sendSmtpEmail);
+    const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error(`[EMAIL] Brevo timed out after ${BREVO_TIMEOUT_MS}ms`)), BREVO_TIMEOUT_MS)
+    );
+
+    try {
+        const result = await Promise.race([brevoPromise, timeoutPromise]);
+        console.log(`[EMAIL] ✅ Sent "${subject}" to ${recipientList} — messageId: ${result?.body?.messageId || result?.messageId || 'N/A'}`);
+        return result;
+    } catch (err) {
+        console.error(`[EMAIL] ❌ Failed "${subject}" to ${recipientList}:`, err.message);
+        // Re-throw so callers can handle, but the timeout prevents infinite hang
+        throw err;
+    }
 };
 
 // ─────────────────────────────────────────────────────────────
