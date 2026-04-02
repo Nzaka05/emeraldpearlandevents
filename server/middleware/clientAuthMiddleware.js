@@ -5,7 +5,7 @@ const Booking = require('../models/Booking');
 // staff-models loaded lazily — not available in all deployments
 let Assignment = null;
 let ClientInvoice = null;
-try { Assignment = require('../../staff-models/Assignment'); } catch(e) { console.warn('[ClientAuth] Assignment model unavailable'); }
+try { Assignment = require('../../staff-system/models/Assignment'); } catch(e) { console.warn('[ClientAuth] Assignment model unavailable'); }
 try { ClientInvoice = require('../../staff-system/models/ClientInvoice'); } catch(e) { console.warn('[ClientAuth] ClientInvoice model unavailable'); }
 
 exports.protectClient = async (req, res, next) => {
