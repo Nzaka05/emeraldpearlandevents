@@ -767,36 +767,54 @@
           item.classList.add('vis');
           const target = parseInt(item.dataset.target, 10);
           const countEl = item.querySelector('.count');
-          let 
-<script>
-(async function loadGallery() {
-  const grid = document.getElementById('port-grid');
-  if (!grid) return;
+          let current = 0;
+          const increment = target / 40;
+          const timer = setInterval(() => {
+            current += increment;
+            if (current >= target) {
+              countEl.innerText = target;
+              clearInterval(timer);
+            } else {
+              countEl.innerText = Math.floor(current);
+            }
+          }, 25);
+        }, idx * 150);
+      });
+      statsObs.unobserve(entry.target);
+    });
+  }, { threshold: 0.2 });
+  const statsSection = document.getElementById('stats');
+  if (statsSection) statsObs.observe(statsSection);
 
-  const BACKEND = 'https://emeraldpearlandevents.onrender.com';
+  // Gallery Loader
+  (async function loadGallery() {
+    const grid = document.getElementById('port-grid');
+    if (!grid) return;
 
-  try {
-    const res = await fetch(BACKEND + '/api/gallery');
-    const data = await res.json();
+    const BACKEND = 'https://emeraldpearlandevents.onrender.com';
 
-    if (!data.success || !data.gallery || !data.gallery.length) return;
+    try {
+      const res = await fetch(BACKEND + '/api/gallery');
+      const data = await res.json();
 
-    const items = data.gallery.slice(0, 5);
+      if (!data.success || !data.gallery || !data.gallery.length) return;
 
-    grid.innerHTML = items.map((item, i) => `
-      <div class="port-item">
-        <div class="port-bg loaded" style="background-image:url('${item.url}');background-size:cover;background-position:center;"></div>
-        <div class="port-overlay">
-          <div class="port-label">
-            <small>${item.eventType || ''}</small>
-            ${item.caption || ''}
+      const items = data.gallery.slice(0, 5);
+
+      grid.innerHTML = items.map((item, i) => `
+        <div class="port-item">
+          <div class="port-bg loaded" style="background-image:url('${item.url}');background-size:cover;background-position:center;"></div>
+          <div class="port-overlay">
+            <div class="port-label">
+              <small>${item.eventType || ''}</small>
+              ${item.caption || ''}
+            </div>
           </div>
         </div>
-      </div>
-    `).join('');
+      `).join('');
 
-  } catch(e) {
-    console.warn('[Gallery] Could not load gallery images:', e.message);
-  }
-})();
+    } catch(e) {
+      console.warn('[Gallery] Could not load gallery images:', e.message);
+    }
+  })();
 </script>
