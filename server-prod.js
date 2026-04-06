@@ -35,7 +35,7 @@ const app = express();
 app.set('trust proxy', 1);
 const PORT = process.env.PORT || 3000;
 const NODE_ENV = process.env.NODE_ENV || 'development';
-const STAFF_SYSTEM_BASE_URL = process.env.STAFF_SYSTEM_BASE_URL || 'http://localhost:3001';
+const STAFF_SYSTEM_BASE_URL = process.env.STAFF_SYSTEM_BASE_URL;
 
 // ═══════════════════════════════════════════════════════════
 // MIDDLEWARE - SECURITY & PARSING
@@ -181,6 +181,10 @@ setInterval(() => {
 // SSO Bridge — stores token server-side, redirects with nonce only
 app.get('/admin/staff-operations-sso', verifyAdminPage, async (req, res) => {
     try {
+        if (!STAFF_SYSTEM_BASE_URL) {
+            console.error('SSO config error: STAFF_SYSTEM_BASE_URL is not set');
+            return res.status(500).send('SSO configuration error');
+        }
         const ssoSecret = process.env.SSO_JWT_SECRET || process.env.JWT_SECRET;
         const adminId = req.admin.adminId;
         const email = req.admin.email;
