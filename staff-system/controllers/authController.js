@@ -4,10 +4,11 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const emailService = require('../services/emailService');
+const staffAuthSecret = process.env.STAFF_JWT_SECRET || process.env.JWT_SECRET;
 
 // Send token in cookie
 const sendTokenResponse = (user, statusCode, res) => {
-    const token = jwt.sign({ id: user._id }, process.env.STAFF_JWT_SECRET, {
+    const token = jwt.sign({ id: user._id }, staffAuthSecret, {
         expiresIn: process.env.JWT_EXPIRE
     });
 
@@ -199,7 +200,7 @@ exports.refresh = async (req, res) => {
 
         if (!token) return res.status(401).json({ success: false, error: 'Not authorized' });
 
-        const decoded = jwt.verify(token, process.env.STAFF_JWT_SECRET, { ignoreExpiration: true });
+        const decoded = jwt.verify(token, staffAuthSecret, { ignoreExpiration: true });
         
         const Staff = require('../models/Staff');
         const user = await Staff.findById(decoded.id);
@@ -209,7 +210,7 @@ exports.refresh = async (req, res) => {
 
         const newToken = jwt.sign(
             { id: user._id, role: user.role, mustChangePassword: user.mustChangePassword },
-            process.env.STAFF_JWT_SECRET,
+            staffAuthSecret,
             { expiresIn: '8h' }
         );
 

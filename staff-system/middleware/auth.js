@@ -1,6 +1,21 @@
 const jwt = require('jsonwebtoken');
 const Staff = require('../models/Staff');
 
+function verifyWithStaffSecrets(token) {
+    const secrets = [process.env.STAFF_JWT_SECRET, process.env.JWT_SECRET].filter(Boolean);
+    let lastError;
+
+    for (const secret of secrets) {
+        try {
+            return jwt.verify(token, secret);
+        } catch (err) {
+            lastError = err;
+        }
+    }
+
+    throw lastError || new Error('JWT secret not configured');
+}
+
 // Helper: detect API/JSON request vs browser request
 function isApiRequest(req) {
     return (req.headers['content-type'] && req.headers['content-type'].includes('application/json')) ||
@@ -34,8 +49,8 @@ exports.protect = async (req, res, next) => {
     }
 
     try {
-        // Verify token
-        const decoded = jwt.verify(token, process.env.STAFF_JWT_SECRET);
+        // Verify token with either staff-specific or legacy secret
+        const decoded = verifyWithStaffSecrets(token);
 
         req.user = await Staff.findById(decoded.id);
 
