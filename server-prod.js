@@ -1,3 +1,4 @@
+require('./scripts/checkEnv');
 require('dotenv').config();
 const path = require('path');
 const express = require('express');
@@ -67,30 +68,15 @@ app.use(helmet({
     }
 }));
 
-// CORS configuration
+// CORS — explicit allowlist from environment variable (never hardcode origins)
+// Set ALLOWED_ORIGINS in Render env vars as comma-separated URLs:
+//   https://emeraldpearlandevents.netlify.app,https://emeraldpearlandevents.onrender.com
+const _allowedOrigins = (process.env.ALLOWED_ORIGINS || '').split(',').map(o => o.trim()).filter(Boolean);
 app.use(cors({
-    origin: [
-        'http://localhost:3000',
-        'http://localhost:3001',
-        'http://localhost:3002',
-        'http://localhost:4000',
-        'http://localhost:4200',
-        'http://localhost:5500',
-        'http://localhost:5501',
-        'http://localhost:8000',
-        'http://localhost:8080',
-        'http://127.0.0.1:3000',
-        'http://127.0.0.1:3001',
-        'http://127.0.0.1:4000',
-        'http://127.0.0.1:4200',
-        'http://127.0.0.1:5500',
-        'http://127.0.0.1:5501',
-        'http://127.0.0.1:8000',
-        'http://127.0.0.1:8080',
-        'https://emeraldpearlandevents.netlify.app', // ✅ Netlify production
-        'https://emeraldpearlandevents.onrender.com', // ✅ Render production
-        'null' // file:// protocol (opening HTML directly)
-    ],
+    origin: (origin, callback) => {
+        if (!origin || _allowedOrigins.includes(origin)) return callback(null, true);
+        callback(new Error(`CORS: origin '${origin}' not permitted`));
+    },
     methods: ['GET', 'POST', 'PATCH', 'DELETE'],
     credentials: true
 }));
@@ -181,10 +167,21 @@ app.get('/admin/dashboard', verifyAdminPage, (req, res) => {
     res.sendFile(__dirname + '/admin/dashboard.html');
 });
 
-// SSO Bridge — generates short-lived token for Staff Operations access
+// SSO nonce store — short-lived, single-use, server-side only
+const ssoNonceStore = new Map();
+
+// Clean up expired nonces every 5 minutes
+setInterval(() => {
+    const now = Date.now();
+    for (const [nonce, entry] of ssoNonceStore.entries()) {
+        if (now > entry.expiresAt) ssoNonceStore.delete(nonce);
+    }
+}, 5 * 60 * 1000);
+
+// SSO Bridge — stores token server-side, redirects with nonce only
 app.get('/admin/staff-operations-sso', verifyAdminPage, async (req, res) => {
     try {
-        const ssoSecret = process.env.SSO_JWT_SECRET || process.env.JWT_SECRET || 'fallback_secret_key';
+        const ssoSecret = process.env.SSO_JWT_SECRET || process.env.JWT_SECRET;
         const adminId = req.admin.adminId;
         const email = req.admin.email;
 
@@ -192,12 +189,10 @@ app.get('/admin/staff-operations-sso', verifyAdminPage, async (req, res) => {
         const adminDoc = await Admin.findById(adminId).select('role').lean();
         const role = adminDoc?.role || 'admin';
 
-        // Admin model uses: super_admin, admin, manager
         if (!['super_admin', 'admin'].includes(role)) {
             return res.status(403).send('Access denied');
         }
 
-        // Map to Staff-style role for token (Staff only has 'Admin')
         const tokenRole = role === 'super_admin' ? 'Super Admin' : 'Admin';
 
         const ssoToken = jwt.sign(
@@ -206,8 +201,12 @@ app.get('/admin/staff-operations-sso', verifyAdminPage, async (req, res) => {
             { expiresIn: '2m' }
         );
 
+        // Store token server-side — only nonce goes in the URL
+        const nonce = require('crypto').randomBytes(32).toString('hex');
+        ssoNonceStore.set(nonce, { token: ssoToken, expiresAt: Date.now() + 60_000 });
+
         return res.redirect(
-            `${STAFF_SYSTEM_BASE_URL}/staff-admin/sso-login?token=${encodeURIComponent(ssoToken)}`
+            `${STAFF_SYSTEM_BASE_URL}/staff-admin/sso-handoff?nonce=${nonce}`
         );
     } catch (err) {
         console.error('SSO generation error:', err.message);
@@ -215,10 +214,26 @@ app.get('/admin/staff-operations-sso', verifyAdminPage, async (req, res) => {
     }
 });
 
+// SSO exchange endpoint — staff system POSTs nonce here to get the real token
+app.post('/admin/sso-exchange', express.json(), (req, res) => {
+    const { nonce } = req.body;
+    if (!nonce) return res.status(400).json({ error: 'Nonce required' });
+
+    const entry = ssoNonceStore.get(nonce);
+    if (!entry || Date.now() > entry.expiresAt) {
+        ssoNonceStore.delete(nonce);
+        return res.status(401).json({ error: 'Invalid or expired nonce' });
+    }
+
+    // Single-use — delete immediately after exchange
+    ssoNonceStore.delete(nonce);
+    return res.json({ token: entry.token });
+});
+
 // Staff profile sync receiver from port 3001
 app.post('/internal/sync-staff-update', express.json(), async (req, res) => {
     try {
-        const syncSecret = process.env.JWT_SECRET || 'fallback_secret_key';
+        const syncSecret = process.env.SYNC_SECRET;
         if (req.headers['x-sync-secret'] !== syncSecret) {
             return res.status(401).json({ error: 'Unauthorized' });
         }
@@ -430,7 +445,7 @@ app.use('/api/admin/forgot-password', authLimiter);
 // Internal sync route � receives event completion from port 3001
 app.post('/internal/sync-event-complete', async (req, res) => {
     try {
-        const syncSecret = process.env.JWT_SECRET || 'fallback_secret_key';
+        const syncSecret = process.env.SYNC_SECRET;
         if (req.headers['x-sync-secret'] !== syncSecret) {
             return res.status(401).json({ error: 'Unauthorized' });
         }

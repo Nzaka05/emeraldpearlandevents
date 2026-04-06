@@ -69,7 +69,18 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
-app.use(cors());
+// CORS — explicit allowlist from environment variable (never wildcard with credentials)
+// Set ALLOWED_ORIGINS in Render env vars as comma-separated URLs:
+//   https://yourbookingsite.netlify.app,https://admin.yourdomain.com
+const _allowedOrigins = (process.env.ALLOWED_ORIGINS || '').split(',').map(o => o.trim()).filter(Boolean);
+app.use(cors({
+    origin: (origin, callback) => {
+        if (!origin || _allowedOrigins.includes(origin)) return callback(null, true);
+        callback(new Error(`CORS: origin '${origin}' not permitted`));
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PATCH', 'DELETE']
+}));
 // Note: Skipping mongoSanitize for Express 5 compatibility - using manual sanitization in routes instead
 
 // Security headers
@@ -170,7 +181,7 @@ app.use('/portal/auth/reset-password', authLimiter);
 // Booking sync receiver from port 3000
 app.post('/internal/sync-booking', async (req, res) => {
   try {
-    const syncSecret = process.env.JWT_SECRET || 'fallback_secret_key';
+    const syncSecret = process.env.SYNC_SECRET;
     if (req.headers['x-internal-secret'] !== syncSecret) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
@@ -270,7 +281,7 @@ app.post('/internal/sync-booking', async (req, res) => {
   // Event completion sync from port 3000
   app.post('/internal/sync-event-complete', async (req, res) => {
     try {
-      const syncSecret = process.env.JWT_SECRET || 'fallback_secret_key';
+      const syncSecret = process.env.SYNC_SECRET;
       if (req.headers['x-internal-secret'] !== syncSecret) {
         return res.status(401).json({ error: 'Unauthorized' });
       }
@@ -294,7 +305,7 @@ app.post('/internal/sync-booking', async (req, res) => {
 
 // Staff sync endpoint from port 3000
 app.post('/internal/sync-staff', async (req, res) => {
-  const syncSecret = process.env.JWT_SECRET || 'fallback_secret_key';
+  const syncSecret = process.env.SYNC_SECRET;
   const authHeader = req.headers['x-internal-secret'];
   
   if (authHeader !== syncSecret) {
@@ -350,7 +361,7 @@ app.post('/internal/sync-staff', async (req, res) => {
 // ── Internal: Sync client payment amount to staff-system assignment ────────────
 app.post('/internal/sync-payment', async (req, res) => {
     try {
-        const syncSecret = process.env.JWT_SECRET || 'fallback_secret_key';
+    const syncSecret = process.env.SYNC_SECRET;
         if (req.headers['x-internal-secret'] !== syncSecret) return res.status(401).json({ error: 'Unauthorized' });
         const { booking_ref, clientPaymentAmount, paymentMethod, transactionId } = req.body;
         const Assignment = require('./models/Assignment');
@@ -372,7 +383,7 @@ app.post('/internal/sync-payment', async (req, res) => {
 // ── Internal: Sync pricing settings from main portal ─────────────────────────
 app.post('/internal/sync-pricing', async (req, res) => {
     try {
-        const syncSecret = process.env.JWT_SECRET || 'fallback_secret_key';
+    const syncSecret = process.env.SYNC_SECRET;
         if (req.headers['x-internal-secret'] !== syncSecret) return res.status(401).json({ error: 'Unauthorized' });
         const PricingSettings = require('./models/PricingSettings');
         const { categories, vatRate, globalSupervisorRate, paymentMethods } = req.body;
@@ -412,62 +423,81 @@ app.use('/portal/ai', require('./staff-routes/aiRoutes'));
 app.use('/portal/finance', require('./financials/routes/financeRoutes'));
 app.use('/', require('./routes/performanceRoutes'));
 
-// SSO Login — accepts short-lived token from Main Admin (port 3000)
-app.get('/staff-admin/sso-login', async (req, res) => {
-    const { token } = req.query;
-    const ssoSecret = process.env.SSO_JWT_SECRET || process.env.JWT_SECRET || 'fallback_secret_key';
-    const loginRedirect = '/portal/auth/login?error=sso_failed';
+// SSO Handoff — receives nonce from Main Admin, exchanges it for the real token
+app.get('/staff-admin/sso-handoff', async (req, res) => {
+  const { nonce } = req.query;
+  const loginRedirect = '/portal/auth/login?error=sso_failed';
 
-    if (!token) return res.redirect(loginRedirect);
+  if (!nonce) return res.redirect(loginRedirect);
 
-    let payload;
-    try {
-        payload = jwt.verify(token, ssoSecret);
-    } catch (err) {
-        console.warn('SSO token verification failed:', err.message);
-        return res.redirect(loginRedirect);
+  let token;
+  try {
+    const fetch = require('node-fetch');
+    const exchangeRes = await fetch(
+      `${process.env.ADMIN_SERVER_URL}/admin/sso-exchange`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nonce })
+      }
+    );
+    if (!exchangeRes.ok) {
+      console.warn('SSO exchange failed: status', exchangeRes.status);
+      return res.redirect(loginRedirect);
+    }
+    const data = await exchangeRes.json();
+    token = data.token;
+  } catch (err) {
+    console.error('SSO exchange request error:', err.message);
+    return res.redirect(loginRedirect);
+  }
+
+  const ssoSecret = process.env.SSO_JWT_SECRET || process.env.JWT_SECRET;
+  let payload;
+  try {
+    payload = jwt.verify(token, ssoSecret);
+  } catch (err) {
+    console.warn('SSO token verification failed:', err.message);
+    return res.redirect(loginRedirect);
+  }
+
+  if (payload.type !== 'staff-ops-sso' || !payload.email) return res.redirect(loginRedirect);
+  if (!['Admin', 'Super Admin'].includes(payload.role)) return res.redirect(loginRedirect);
+
+  try {
+    const user = await Staff.findOne({ email: payload.email, role: 'Admin' });
+
+    if (!user) {
+      console.warn('SSO: no matching admin found for email:', payload.email);
+      return res.redirect(loginRedirect);
     }
 
-    if (payload.type !== 'staff-ops-sso' || !payload.email) return res.redirect(loginRedirect);
-    if (!['Admin', 'Super Admin'].includes(payload.role)) return res.redirect(loginRedirect);
+    const sessionToken = jwt.sign(
+      { id: user._id },
+      process.env.JWT_SECRET,
+      { expiresIn: process.env.JWT_EXPIRE || '30d' }
+    );
 
-    try {
-        const user = await Staff.findOne({
-            email: payload.email,
-            role: 'Admin'
-        });
+    res.cookie('portal_token', sessionToken, {
+      expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+      httpOnly: true
+    });
 
-        if (!user) {
-            console.warn('SSO: no matching admin found for email:', payload.email);
-            return res.redirect(loginRedirect);
-        }
+    await AuditLog.create({
+      actionType: 'SSO_LOGIN',
+      targetModel: 'Staff',
+      targetId: user._id,
+      performedBy: user._id,
+      details: { source: 'MAIN_ADMIN', email: payload.email, role: payload.role },
+      ipAddress: req.ip || req.headers['x-forwarded-for'] || 'unknown',
+      timestamp: new Date()
+    });
 
-        const sessionToken = jwt.sign(
-            { id: user._id },
-            process.env.JWT_SECRET || 'fallback_secret_key',
-            { expiresIn: process.env.JWT_EXPIRE || '30d' }
-        );
-
-        res.cookie('portal_token', sessionToken, {
-            expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-            httpOnly: true
-        });
-
-        await AuditLog.create({
-            actionType: 'SSO_LOGIN',
-            targetModel: 'Staff',
-            targetId: user._id,
-            performedBy: user._id,
-            details: { source: 'MAIN_ADMIN', email: payload.email, role: payload.role },
-            ipAddress: req.ip || req.headers['x-forwarded-for'] || 'unknown',
-            timestamp: new Date()
-        });
-
-        return res.redirect('/staff-admin/dashboard');
-    } catch (err) {
-        console.error('SSO login error:', err.message);
-        return res.redirect(loginRedirect);
-    }
+    return res.redirect('/staff-admin/dashboard');
+  } catch (err) {
+    console.error('SSO login error:', err.message);
+    return res.redirect(loginRedirect);
+  }
 });
 
 // Staff Admin dashboard alias — protected, redirects to existing portal
