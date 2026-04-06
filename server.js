@@ -79,10 +79,11 @@ app.set('layout', 'layout');
 // ── MIDDLEWARE ──
 app.use(cookieParser());
 app.use(passport.initialize());
-const allowedOrigins = process.env.ALLOWED_ORIGINS.split(',');
+const allowedOrigins = (process.env.ALLOWED_ORIGINS || '').split(',').map(o => o.trim()).filter(Boolean);
 app.use(cors({
     origin: (origin, callback) => {
-        if (!origin || allowedOrigins.includes(origin)) callback(null, true);
+        // Allow if no origin, or if origin is in the allowlist, or if origin is the string 'null' (same-origin requests)
+        if (!origin || origin === 'null' || allowedOrigins.includes(origin)) callback(null, true);
         else callback(new Error('Not allowed by CORS'));
     },
     credentials: true

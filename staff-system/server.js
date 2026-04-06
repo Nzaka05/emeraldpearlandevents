@@ -75,7 +75,8 @@ app.use(express.static(path.join(__dirname, 'public')));
 const _allowedOrigins = (process.env.ALLOWED_ORIGINS || '').split(',').map(o => o.trim()).filter(Boolean);
 app.use(cors({
     origin: (origin, callback) => {
-        if (!origin || _allowedOrigins.includes(origin)) return callback(null, true);
+        // Allow if no origin, or if origin is in the allowlist, or if origin is the string 'null' (same-origin requests)
+        if (!origin || origin === 'null' || _allowedOrigins.includes(origin)) return callback(null, true);
         callback(new Error(`CORS: origin '${origin}' not permitted`));
     },
     credentials: true,
