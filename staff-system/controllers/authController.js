@@ -14,7 +14,10 @@ const sendTokenResponse = (user, statusCode, res) => {
 
     const options = {
         expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-        httpOnly: true
+        httpOnly: true,
+        path: '/',
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
     };
 
     // Use portal_token name to isolate from admin panel cookies
@@ -217,7 +220,9 @@ exports.refresh = async (req, res) => {
         res.cookie('portal_token', newToken, {
             expires: new Date(Date.now() + 8 * 60 * 60 * 1000), // 8 hours
             httpOnly: true,
-            secure: process.env.NODE_ENV === 'production'
+            path: '/',
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
         });
 
         res.json({ success: true, token: newToken });

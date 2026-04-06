@@ -482,7 +482,10 @@ app.get('/staff-admin/sso-handoff', async (req, res) => {
 
     res.cookie('portal_token', sessionToken, {
       expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-      httpOnly: true
+      httpOnly: true,
+      path: '/',
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
     });
 
     await AuditLog.create({
