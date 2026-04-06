@@ -7,8 +7,8 @@ const emailService = require('../services/emailService');
 
 // Send token in cookie
 const sendTokenResponse = (user, statusCode, res) => {
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET || 'fallback_secret_key', {
-        expiresIn: process.env.JWT_EXPIRE || '30d'
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+        expiresIn: process.env.JWT_EXPIRE
     });
 
     const options = {
@@ -243,7 +243,7 @@ exports.forgotPassword = async (req, res) => {
         user.resetPasswordExpire = Date.now() + 10 * 60 * 1000; // 10 minutes
         await user.save({ validateBeforeSave: false });
 
-        const baseUrl = process.env.STAFF_APP_URL || `${req.protocol}://${req.get('host')}`;
+        const baseUrl = process.env.STAFF_APP_URL;
         const resetUrl = `${baseUrl}/portal/auth/reset-password/${resetToken}`;
 
         await emailService.sendPasswordResetEmail(user, resetUrl);
@@ -353,7 +353,7 @@ exports.staffForgotPassword = async (req, res) => {
         user.resetPasswordExpire = Date.now() + 10 * 60 * 1000; // 10 minutes
         await user.save({ validateBeforeSave: false });
 
-        const baseUrl = process.env.STAFF_APP_URL || `${req.protocol}://${req.get('host')}`;
+        const baseUrl = process.env.STAFF_APP_URL;
         const resetUrl = `${baseUrl}/portal/auth/reset-password/${resetToken}`;
 
         await emailService.sendPasswordResetEmail(user, resetUrl);

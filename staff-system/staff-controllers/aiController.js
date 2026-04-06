@@ -8,10 +8,10 @@ const AIFeedback = require('../ai-learning/models/AIFeedback');
 exports.queryAssistant = async (req, res) => {
     try {
         const { query, eventContext } = req.body;
-        // Mocking robust user identity. 
-        // In reality, this relies on req.user injected by auth middleware.
-        const userId = req.user ? req.user._id : '000000000000000000000000';
-        const role = req.user ? req.user.role : 'Admin'; // Default Admin for testing if not auth'd
+        if (!req.user) return res.status(401).json({ success: false, message: 'Unauthorized' });
+
+        const userId = req.user._id;
+        const role = req.user.role;
 
         if (!query) return res.status(400).json({ success: false, message: 'Query is required' });
 
@@ -30,7 +30,8 @@ exports.queryAssistant = async (req, res) => {
 exports.submitFeedback = async (req, res) => {
     try {
         const { event_id, prediction_id, marked_accurate, comments } = req.body;
-        const userId = req.user ? req.user._id : '000000000000000000000000';
+        if (!req.user) return res.status(401).json({ success: false, message: 'Unauthorized' });
+        const userId = req.user._id;
 
         await AIFeedback.create({
             event_id,

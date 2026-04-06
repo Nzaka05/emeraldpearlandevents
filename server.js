@@ -79,28 +79,12 @@ app.set('layout', 'layout');
 // ── MIDDLEWARE ──
 app.use(cookieParser());
 app.use(passport.initialize());
+const allowedOrigins = process.env.ALLOWED_ORIGINS.split(',');
 app.use(cors({
-    origin: [
-        'http://localhost:3000',
-        'http://localhost:3001',
-        'http://localhost:3002',
-        'http://localhost:4000',
-        'http://localhost:4200',
-        'http://localhost:5500',
-        'http://localhost:5501',
-        'http://localhost:8000',
-        'http://localhost:8080',
-        'http://127.0.0.1:3000',
-        'http://127.0.0.1:3001',
-        'http://127.0.0.1:4000',
-        'http://127.0.0.1:4200',
-        'http://127.0.0.1:5501',
-        'http://127.0.0.1:8000',
-        'http://127.0.0.1:8080',
-        'https://emeraldpearlandevents.netlify.app',
-        'https://emeraldpearlandevents.onrender.com',
-        'null' // file:// protocol (opening HTML directly)
-    ],
+    origin: (origin, callback) => {
+        if (!origin || allowedOrigins.includes(origin)) callback(null, true);
+        else callback(new Error('Not allowed by CORS'));
+    },
     credentials: true
 }));
 

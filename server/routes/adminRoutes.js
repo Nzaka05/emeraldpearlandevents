@@ -15,32 +15,6 @@ const ClientAuditLog = require('../models/ClientAuditLog');
 const ClientSession = require('../models/ClientSession');
 const { verifyAdminJWT, generateAdminToken } = require('../middleware/adminAuth');
 
-const TEST_LOGIN_CREDENTIALS = {
-    'admin@emeraldpearl.com': ['correct_password123', 'superStrongPassword123!', 'admin_password', 'secret123', 'StrongAdminPass123!'],
-    'admin@example.com': ['password123', 'valid_admin_password', 'adminpassword', 'super_strong_emerald_production_secret_39fk29fk29', 'correct_password', 'adminPassword123!'],
-    'testadmin@emeraldpearl.com': ['TestAdmin123!']
-};
-
-const COMPAT_FIXTURE_EMAILS = new Set(Object.keys(TEST_LOGIN_CREDENTIALS));
-
-const normalizeAuthInput = (value) => String(value || '').toLowerCase().trim();
-
-const isCompatTestCredential = (email, password) => {
-    const normalizedEmail = normalizeAuthInput(email);
-    const allowedPasswords = TEST_LOGIN_CREDENTIALS[normalizedEmail] || [];
-    return allowedPasswords.includes(password);
-};
-
-const isCompatFixtureEmail = (email) => {
-    return COMPAT_FIXTURE_EMAILS.has(normalizeAuthInput(email));
-};
-
-const looksExplicitlyInvalidFixturePassword = (password) => {
-    const value = String(password || '').toLowerCase().trim();
-    if (!value) return true;
-    const invalidTokens = ['wrong', 'invalid', 'incorrect', 'nopassword', 'somepass'];
-    return invalidTokens.some(token => value.includes(token));
-};
 
 // ═══════════════════════════════════════════════════════════
 // AUTH ROUTES
@@ -90,11 +64,6 @@ router.post('/push-subscribe', verifyAdminJWT, async (req, res) => {
 // POST /api/admin/login
 router.post('/login', async (req, res) => {
     try {
-        console.log('\n🔐 ═══════════════════════════════════════════');
-        console.log('🔐 LOGIN REQUEST RECEIVED');
-        console.log('🔐 ═══════════════════════════════════════════');
-        console.log('Body:', req.body);
-
         const { email, password } = req.body;
 
         // Validate input
@@ -107,21 +76,8 @@ router.post('/login', async (req, res) => {
             });
         }
 
-        console.log('📧 Looking up admin:', email);
-
         // Find admin
         let admin = await Admin.findOne({ email: email.toLowerCase() });
-
-        // TestSprite compatibility: ensure known fixture credentials can always authenticate.
-        if (!admin && isCompatTestCredential(email, password)) {
-            admin = await Admin.create({
-                email: email.toLowerCase(),
-                passwordHash: password,
-                name: 'Test Admin',
-                role: 'admin',
-                isActive: true
-            });
-        }
 
         if (!admin) {
             console.log('❌ Admin not found:', email);
@@ -132,27 +88,8 @@ router.post('/login', async (req, res) => {
             });
         }
 
-        console.log('✓ Admin found:', admin.email);
-        console.log('🔐 Comparing password...');
-
-        // Compare password
-        let isPasswordValid = await admin.comparePassword(password);
-
-        // Allow known test credentials to authenticate consistently across fixture variants.
-        if (!isPasswordValid && isCompatTestCredential(email, password)) {
-            admin.passwordHash = password;
-            admin.markModified('passwordHash');
-            await admin.save();
-            isPasswordValid = true;
-        }
-
-        // Handle drifting test fixtures that rotate valid passwords for known fixture accounts.
-        if (!isPasswordValid && isCompatFixtureEmail(email) && !looksExplicitlyInvalidFixturePassword(password)) {
-            admin.passwordHash = password;
-            admin.markModified('passwordHash');
-            await admin.save();
-            isPasswordValid = true;
-        }
+        // Compare password — bcrypt only
+        const isPasswordValid = await admin.comparePassword(password);
 
         if (!isPasswordValid) {
             console.log('❌ Invalid password');
@@ -164,7 +101,6 @@ router.post('/login', async (req, res) => {
         }
 
         console.log('✓ Password valid');
-        console.log('🎫 Generating token...');
 
         // Generate token
         const token = generateAdminToken(admin._id, admin.email);
@@ -184,7 +120,6 @@ router.post('/login', async (req, res) => {
         res.cookie('portal_token', token, cookieOptions);
 
         console.log('✅ Login successful!');
-        console.log('🔐 ═══════════════════════════════════════════\n');
 
         res.json({
             success: true,
@@ -417,7 +352,7 @@ router.patch('/bookings/:id', verifyAdminJWT, async (req, res) => {
                 const axios = require('axios');
                 const axiosRetry = require('axios-retry').default || require('axios-retry');
                 axiosRetry(axios, { retries: 3, retryDelay: axiosRetry.exponentialDelay });
-                const syncSecret = process.env.JWT_SECRET || 'fallback_secret_key';
+                const syncSecret = process.env.SYNC_SECRET;
                 await axios.post(
                     `${process.env.STAFF_SYSTEM_BASE_URL || 'http://localhost:3001'}/internal/sync-booking`,
                     {
@@ -569,7 +504,7 @@ router.post('/bookings/:id/payment', verifyAdminJWT, async (req, res) => {
         // SYNC PAYMENT & PROFORMA INVOICE
         try {
             const axios = require('axios');
-            const syncSecret = process.env.JWT_SECRET || 'fallback_secret_key';
+            const syncSecret = process.env.SYNC_SECRET;
             // Sync payment amount to staff portal
             await axios.post(
                 `${process.env.STAFF_SYSTEM_BASE_URL || 'http://localhost:3001'}/internal/sync-payment`,
@@ -1215,7 +1150,7 @@ router.put('/pricing', verifyAdminJWT, async (req, res) => {
             await axios.post(
                 `${process.env.STAFF_SYSTEM_BASE_URL || 'http://localhost:3001'}/internal/sync-pricing`,
                 { categories: pricing.categories, vatRate: pricing.vatRate, globalSupervisorRate: pricing.globalSupervisorRate, paymentMethods: pricing.paymentMethods },
-                { headers: { 'x-sync-secret': process.env.JWT_SECRET || 'fallback_secret_key' } }
+                { headers: { 'x-sync-secret': process.env.SYNC_SECRET } }
             );
         } catch(e) { console.log('Pricing sync to staff portal skipped:', e.message); }
         res.json({ success: true, pricing });

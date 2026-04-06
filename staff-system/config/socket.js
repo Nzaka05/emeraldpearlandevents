@@ -1,10 +1,15 @@
 const { Server } = require('socket.io');
 
 module.exports = function (server) {
+    const _allowedOrigins = (process.env.ALLOWED_ORIGINS || '').split(',').map(o => o.trim()).filter(Boolean);
     const io = new Server(server, {
         cors: {
-            origin: "*",
-            methods: ["GET", "POST"]
+            origin: (origin, callback) => {
+                if (!origin || _allowedOrigins.includes(origin)) return callback(null, true);
+                callback(new Error(`Socket CORS: origin '${origin}' not permitted`));
+            },
+            methods: ["GET", "POST"],
+            credentials: true
         },
         transports: ['websocket', 'polling'] // Mobile readiness
     });
@@ -31,7 +36,7 @@ module.exports = function (server) {
         if (!token) return next(new Error('Authentication required'));
 
         try {
-            const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback_secret_key');
+            const decoded = jwt.verify(token, process.env.JWT_SECRET);
             socket.user = decoded;
             next();
         } catch (err) {

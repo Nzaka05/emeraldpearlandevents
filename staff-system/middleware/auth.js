@@ -35,7 +35,7 @@ exports.protect = async (req, res, next) => {
 
     try {
         // Verify token
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback_secret_key');
+        const decoded = jwt.verify(token, process.env.STAFF_JWT_SECRET);
 
         req.user = await Staff.findById(decoded.id);
 

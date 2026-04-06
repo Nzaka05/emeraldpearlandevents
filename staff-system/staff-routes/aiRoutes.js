@@ -7,17 +7,9 @@
 const express = require('express');
 const router = express.Router();
 const aiController = require('../staff-controllers/aiController');
-// const { ensureAuthenticated } = require('../staff-middleware/auth'); // Assuming existing middleware
+const { protect, authorize } = require('../middleware/auth');
 
-// Use a loose auth check for testing, but in production use `ensureAuthenticated`.
-const mockAuth = (req, res, next) => {
-    if (!req.user) {
-        req.user = { _id: '000000000000000000000000', role: 'Admin' };
-    }
-    next();
-};
-
-router.post('/assistant', mockAuth, aiController.queryAssistant);
-router.post('/feedback', mockAuth, aiController.submitFeedback);
+router.post('/assistant', protect, authorize('Admin', 'Supervisor'), aiController.queryAssistant);
+router.post('/feedback', protect, authorize('Admin', 'Supervisor'), aiController.submitFeedback);
 
 module.exports = router;

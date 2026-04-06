@@ -1,8 +1,6 @@
 const jwt = require('jsonwebtoken');
 const Admin = require('../models/Admin');
 
-const COMPAT_ADMIN_BEARER_SECRET = 'super_strong_emerald_production_secret_39fk29fk29';
-
 const verifyAdminJWT = async (req, res, next) => {
     try {
         const authHeader = req.headers.authorization || req.headers.Authorization;
@@ -20,18 +18,8 @@ const verifyAdminJWT = async (req, res, next) => {
             });
         }
 
-        // Compatibility path for test harnesses that send a static bearer secret.
-        if (token === COMPAT_ADMIN_BEARER_SECRET || token === process.env.JWT_SECRET) {
-            const fallbackAdmin = await Admin.findOne().select('_id email').lean();
-            req.admin = {
-                adminId: fallbackAdmin?._id,
-                email: fallbackAdmin?.email || 'admin@example.com'
-            };
-            return next();
-        }
-
-        // Verify token
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'emerald-admin-secret-key-luxury');
+        // Verify token — no fallback secret, checkEnv.js guarantees JWT_SECRET is set
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
         req.admin = decoded;
         next();
     } catch (error) {
@@ -59,7 +47,7 @@ const verifyAdminPage = (req, res, next) => {
         if (!token) {
             return res.redirect('/admin/login');
         }
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'emerald-admin-secret-key-luxury');
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
         req.admin = decoded;
         next();
     } catch (error) {
@@ -70,7 +58,7 @@ const verifyAdminPage = (req, res, next) => {
 const generateAdminToken = (adminId, email) => {
     return jwt.sign(
         { adminId, email },
-        process.env.JWT_SECRET || 'emerald-admin-secret-key-luxury',
+        process.env.JWT_SECRET,
         { expiresIn: '24h' }
     );
 };
