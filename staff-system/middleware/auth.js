@@ -1,5 +1,7 @@
 const jwt = require('jsonwebtoken');
 const Staff = require('../models/Staff');
+const STAFF_COOKIE = 'staff_portal_token';
+const LEGACY_COOKIE = 'portal_token';
 
 function verifyWithStaffSecrets(token) {
     const secrets = [process.env.STAFF_JWT_SECRET, process.env.JWT_SECRET].filter(Boolean);
@@ -32,8 +34,12 @@ exports.protect = async (req, res, next) => {
         token = req.headers.authorization.split(' ')[1];
     }
     // Fallback to cookies (Browser / Portal)
-    else if (req.cookies && req.cookies.portal_token) {
-        token = req.cookies.portal_token;
+    else if (req.cookies && req.cookies[STAFF_COOKIE]) {
+        token = req.cookies[STAFF_COOKIE];
+    }
+    // Legacy fallback cookie
+    else if (req.cookies && req.cookies[LEGACY_COOKIE]) {
+        token = req.cookies[LEGACY_COOKIE];
     }
 
     // Make sure token exists

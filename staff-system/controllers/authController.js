@@ -5,6 +5,8 @@ const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const emailService = require('../services/emailService');
 const staffAuthSecret = process.env.STAFF_JWT_SECRET || process.env.JWT_SECRET;
+const STAFF_COOKIE = 'staff_portal_token';
+const LEGACY_COOKIE = 'portal_token';
 
 // Send token in cookie
 const sendTokenResponse = (user, statusCode, res) => {
@@ -20,8 +22,9 @@ const sendTokenResponse = (user, statusCode, res) => {
         sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
     };
 
-    // Use portal_token name to isolate from admin panel cookies
-    res.status(statusCode).cookie('portal_token', token, options);
+    // Set dedicated staff cookie and a legacy cookie for transition compatibility
+    res.status(statusCode).cookie(STAFF_COOKIE, token, options);
+    res.cookie(LEGACY_COOKIE, token, options);
 };
 
 // Helper: detect API/JSON request
@@ -178,7 +181,13 @@ exports.changePassword = async (req, res) => {
 // @desc    Logout user
 // @route   GET /auth/logout, POST /portal/auth/logout
 exports.logout = (req, res) => {
-    res.clearCookie('portal_token', { httpOnly: true });
+    const clearOptions = { httpOnly: true, path: '/' };
+    const legacyPaths = ['/', '/portal/auth', '/staff-admin'];
+
+    res.clearCookie(STAFF_COOKIE, clearOptions);
+    for (const p of legacyPaths) {
+        res.clearCookie(LEGACY_COOKIE, { ...clearOptions, path: p });
+    }
     
     // Check if JSON request
     const isApiRequest = req.headers['content-type'] === 'application/json' || req.headers['authorization'];
@@ -197,8 +206,10 @@ exports.refresh = async (req, res) => {
         let token;
         if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
             token = req.headers.authorization.split(' ')[1];
-        } else if (req.cookies.portal_token) {
-            token = req.cookies.portal_token;
+        } else if (req.cookies[STAFF_COOKIE]) {
+            token = req.cookies[STAFF_COOKIE];
+        } else if (req.cookies[LEGACY_COOKIE]) {
+            token = req.cookies[LEGACY_COOKIE];
         }
 
         if (!token) return res.status(401).json({ success: false, error: 'Not authorized' });
@@ -217,13 +228,15 @@ exports.refresh = async (req, res) => {
             { expiresIn: '8h' }
         );
 
-        res.cookie('portal_token', newToken, {
+        const refreshOptions = {
             expires: new Date(Date.now() + 8 * 60 * 60 * 1000), // 8 hours
             httpOnly: true,
             path: '/',
             secure: process.env.NODE_ENV === 'production',
             sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
-        });
+        };
+        res.cookie(STAFF_COOKIE, newToken, refreshOptions);
+        res.cookie(LEGACY_COOKIE, newToken, refreshOptions);
 
         res.json({ success: true, token: newToken });
     } catch (err) {

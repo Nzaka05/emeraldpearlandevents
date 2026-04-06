@@ -35,6 +35,8 @@ const AuditLog = require('./models/AuditLog');
 const { protect, authorize } = require('./middleware/auth');
 const emailService = require('./services/emailService');
 emailService.initializeEmailService();
+const STAFF_COOKIE = 'staff_portal_token';
+const LEGACY_COOKIE = 'portal_token';
 
 const app = express();
 app.set('trust proxy', 1);
@@ -480,13 +482,15 @@ app.get('/staff-admin/sso-handoff', async (req, res) => {
       { expiresIn: process.env.JWT_EXPIRE || '30d' }
     );
 
-    res.cookie('portal_token', sessionToken, {
+    const cookieOptions = {
       expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
       httpOnly: true,
       path: '/',
       secure: process.env.NODE_ENV === 'production',
       sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
-    });
+    };
+    res.cookie(STAFF_COOKIE, sessionToken, cookieOptions);
+    res.cookie(LEGACY_COOKIE, sessionToken, cookieOptions);
 
     await AuditLog.create({
       actionType: 'SSO_LOGIN',

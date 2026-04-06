@@ -26,7 +26,7 @@ module.exports = function (server) {
             const cookies = socket.handshake.headers.cookie.split(';');
             for (let c of cookies) {
                 const [k, v] = c.trim().split('=');
-                if (k === 'portal_token' || k === 'adminToken') {
+                if (k === 'staff_portal_token' || k === 'portal_token' || k === 'adminToken') {
                     token = v;
                     break;
                 }
@@ -36,7 +36,12 @@ module.exports = function (server) {
         if (!token) return next(new Error('Authentication required'));
 
         try {
-            const decoded = jwt.verify(token, process.env.JWT_SECRET);
+            let decoded;
+            try {
+                decoded = jwt.verify(token, process.env.STAFF_JWT_SECRET || process.env.JWT_SECRET);
+            } catch (e) {
+                decoded = jwt.verify(token, process.env.JWT_SECRET);
+            }
             socket.user = decoded;
             next();
         } catch (err) {
