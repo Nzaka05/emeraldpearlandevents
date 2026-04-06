@@ -181,7 +181,7 @@ setInterval(() => {
 // SSO Bridge — stores token server-side, redirects with nonce only
 app.get('/admin/staff-operations-sso', verifyAdminPage, async (req, res) => {
     try {
-        const ssoSecret = process.env.SSO_JWT_SECRET || process.env.JWT_SECRET;
+        const ssoSecret = process.env.SSO_JWT_SECRET || process.env.SYNC_SECRET || process.env.JWT_SECRET;
         const adminId = req.admin.adminId;
         const email = req.admin.email;
 

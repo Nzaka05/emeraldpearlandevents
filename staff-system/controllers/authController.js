@@ -7,7 +7,7 @@ const emailService = require('../services/emailService');
 
 // Send token in cookie
 const sendTokenResponse = (user, statusCode, res) => {
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+    const token = jwt.sign({ id: user._id }, process.env.STAFF_JWT_SECRET, {
         expiresIn: process.env.JWT_EXPIRE
     });
 

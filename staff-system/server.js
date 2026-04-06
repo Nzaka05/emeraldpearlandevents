@@ -453,7 +453,7 @@ app.get('/staff-admin/sso-handoff', async (req, res) => {
     return res.redirect(loginRedirect);
   }
 
-  const ssoSecret = process.env.SSO_JWT_SECRET || process.env.JWT_SECRET;
+  const ssoSecret = process.env.SSO_JWT_SECRET || process.env.SYNC_SECRET || process.env.JWT_SECRET;
   let payload;
   try {
     payload = jwt.verify(token, ssoSecret);
@@ -475,7 +475,7 @@ app.get('/staff-admin/sso-handoff', async (req, res) => {
 
     const sessionToken = jwt.sign(
       { id: user._id },
-      process.env.JWT_SECRET,
+      process.env.STAFF_JWT_SECRET,
       { expiresIn: process.env.JWT_EXPIRE || '30d' }
     );
 
