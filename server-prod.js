@@ -26,7 +26,12 @@ const { verifyAdminPage } = require('./server/middleware/adminAuth');
 const passport = require('./server/config/passport'); // Register Google Strategy
 const { initializeEmailService } = require('./server/services/emailService');
 const { initializeCronJobs, stopCronJobs } = require('./server/services/cronService');
-const { startReconciliationJob } = require('./server/jobs/reconciliationJob');
+let startReconciliationJob = null;
+try {
+    ({ startReconciliationJob } = require('./server/jobs/reconciliationJob'));
+} catch (e) {
+    console.warn('[WARN] reconciliationJob failed to load:', e.message);
+}
 const Analytics = require('./server/models/Analytics');
 
 // ═══════════════════════════════════════════════════════════
@@ -541,9 +546,13 @@ const startServer = async () => {
         console.log('✅ Cron jobs initialized');
 
         // Start sync reconciliation job
-        console.log('[RECONCILIATION] Starting sync reconciliation job...');
-        startReconciliationJob();
-        console.log('✅ Reconciliation job active');
+        if (typeof startReconciliationJob === 'function') {
+            console.log('[RECONCILIATION] Starting sync reconciliation job...');
+            startReconciliationJob();
+            console.log('✅ Reconciliation job active');
+        } else {
+            console.warn('[RECONCILIATION] Skipped: reconciliation job module unavailable in this build');
+        }
 
         // Start listening
         app.listen(PORT, () => {
