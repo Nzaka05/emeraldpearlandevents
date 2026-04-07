@@ -26,6 +26,7 @@ const { verifyAdminPage } = require('./server/middleware/adminAuth');
 const passport = require('./server/config/passport'); // Register Google Strategy
 const { initializeEmailService } = require('./server/services/emailService');
 const { initializeCronJobs, stopCronJobs } = require('./server/services/cronService');
+const { startReconciliationJob } = require('./server/jobs/reconciliationJob');
 const Analytics = require('./server/models/Analytics');
 
 // ═══════════════════════════════════════════════════════════
@@ -361,6 +362,21 @@ app.get('/api/health', (req, res) => {
     });
 });
 
+// Health check alias for external verifiers expecting /health
+app.get('/health', (req, res) => {
+    const mongooseState = mongoose.connection.readyState;
+    const isConnected = mongooseState === 1;
+
+    res.json({
+        success: true,
+        status: 'running',
+        environment: NODE_ENV,
+        mongodb: isConnected ? 'connected' : 'disconnected',
+        timestamp: new Date().toISOString(),
+        uptime: process.uptime()
+    });
+});
+
 // Public gallery endpoint (no auth required — client page reads this)
 app.get('/api/gallery', async (req, res) => {
     try {
@@ -523,6 +539,11 @@ const startServer = async () => {
         console.log('[CRON] Initializing automated tasks...');
         initializeCronJobs();
         console.log('✅ Cron jobs initialized');
+
+        // Start sync reconciliation job
+        console.log('[RECONCILIATION] Starting sync reconciliation job...');
+        startReconciliationJob();
+        console.log('✅ Reconciliation job active');
 
         // Start listening
         app.listen(PORT, () => {
