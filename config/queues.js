@@ -1,11 +1,10 @@
-const { Queue } = require('bullmq');
-
 if (!process.env.REDIS_URL) {
     throw new Error('REDIS_URL is required to initialize BullMQ queues');
 }
 
 const redisUrl = new URL(process.env.REDIS_URL);
 const isTls = redisUrl.protocol === 'rediss:';
+const queueMode = (process.env.QUEUE_MODE || 'inline').toLowerCase();
 
 const connection = {
     host: redisUrl.hostname,
@@ -15,57 +14,75 @@ const connection = {
     tls: isTls ? {} : undefined
 };
 
-const bookingQueue = new Queue('bookingQueue', {
-    connection,
-    defaultJobOptions: {
-        attempts: 3,
-        backoff: {
-            type: 'exponential',
-            delay: 3000
-        },
-        removeOnComplete: false,
-        removeOnFail: false
-    }
-});
+function createNoopQueue(name) {
+    return {
+        name,
+        async add() {
+            return { skipped: true, queue: name, mode: queueMode };
+        }
+    };
+}
 
-const paymentQueue = new Queue('paymentQueue', {
-    connection,
-    defaultJobOptions: {
-        attempts: 5,
-        backoff: {
-            type: 'exponential',
-            delay: 2000
-        },
-        removeOnComplete: false,
-        removeOnFail: false
-    }
-});
+function createBullQueue(Queue, name, defaultJobOptions) {
+    return new Queue(name, {
+        connection,
+        defaultJobOptions
+    });
+}
 
-const notificationQueue = new Queue('notificationQueue', {
-    connection,
-    defaultJobOptions: {
-        attempts: 3,
-        backoff: {
-            type: 'fixed',
-            delay: 5000
-        },
-        removeOnComplete: true,
-        removeOnFail: false
+function buildQueues() {
+    if (queueMode !== 'async') {
+        return {
+            bookingQueue: createNoopQueue('bookingQueue'),
+            paymentQueue: createNoopQueue('paymentQueue'),
+            notificationQueue: createNoopQueue('notificationQueue'),
+            syncQueue: createNoopQueue('syncQueue')
+        };
     }
-});
 
-const syncQueue = new Queue('syncQueue', {
-    connection,
-    defaultJobOptions: {
-        attempts: 3,
-        backoff: {
-            type: 'exponential',
-            delay: 3000
-        },
-        removeOnComplete: false,
-        removeOnFail: false
-    }
-});
+    const { Queue } = require('bullmq');
+
+    return {
+        bookingQueue: createBullQueue(Queue, 'bookingQueue', {
+            attempts: 3,
+            backoff: {
+                type: 'exponential',
+                delay: 3000
+            },
+            removeOnComplete: false,
+            removeOnFail: false
+        }),
+        paymentQueue: createBullQueue(Queue, 'paymentQueue', {
+            attempts: 5,
+            backoff: {
+                type: 'exponential',
+                delay: 2000
+            },
+            removeOnComplete: false,
+            removeOnFail: false
+        }),
+        notificationQueue: createBullQueue(Queue, 'notificationQueue', {
+            attempts: 3,
+            backoff: {
+                type: 'fixed',
+                delay: 5000
+            },
+            removeOnComplete: true,
+            removeOnFail: false
+        }),
+        syncQueue: createBullQueue(Queue, 'syncQueue', {
+            attempts: 3,
+            backoff: {
+                type: 'exponential',
+                delay: 3000
+            },
+            removeOnComplete: false,
+            removeOnFail: false
+        })
+    };
+}
+
+const { bookingQueue, paymentQueue, notificationQueue, syncQueue } = buildQueues();
 
 module.exports = {
     connection,
