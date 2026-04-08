@@ -1,18 +1,23 @@
-if (!process.env.REDIS_URL) {
-    throw new Error('REDIS_URL is required to initialize BullMQ queues');
-}
-
-const redisUrl = new URL(process.env.REDIS_URL);
-const isTls = redisUrl.protocol === 'rediss:';
 const queueMode = (process.env.QUEUE_MODE || 'inline').toLowerCase();
 
-const connection = {
-    host: redisUrl.hostname,
-    port: Number(redisUrl.port || (isTls ? 6380 : 6379)),
-    password: redisUrl.password || undefined,
-    username: redisUrl.username || undefined,
-    tls: isTls ? {} : undefined
-};
+let connection = null;
+
+function buildConnection() {
+    if (!process.env.REDIS_URL) {
+        throw new Error('REDIS_URL is required to initialize BullMQ queues');
+    }
+
+    const redisUrl = new URL(process.env.REDIS_URL);
+    const isTls = redisUrl.protocol === 'rediss:';
+
+    return {
+        host: redisUrl.hostname,
+        port: Number(redisUrl.port || (isTls ? 6380 : 6379)),
+        password: redisUrl.password || undefined,
+        username: redisUrl.username || undefined,
+        tls: isTls ? {} : undefined
+    };
+}
 
 function createNoopQueue(name) {
     return {
@@ -40,6 +45,7 @@ function buildQueues() {
         };
     }
 
+    connection = buildConnection();
     const { Queue } = require('bullmq');
 
     return {
