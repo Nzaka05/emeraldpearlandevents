@@ -1,7 +1,5 @@
 // checkEnv.js
 // Runs synchronously at boot to ensure all expected Environment Variables are present.
-require('dotenv').config();
-
 const criticalVars = [
     'JWT_SECRET',
     'STAFF_JWT_SECRET',
