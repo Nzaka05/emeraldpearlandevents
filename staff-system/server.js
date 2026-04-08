@@ -1,5 +1,5 @@
 require('dotenv').config({ path: require('path').join(__dirname, '../.env') });
-require('./scripts/checkEnv'); // Halt at startup if any required secret is missing
+require('../scripts/checkEnv'); // Halt at startup if any required secret is missing
 
 const express = require('express');
 const http = require('http');
