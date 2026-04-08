@@ -3,9 +3,16 @@
  * All Payment/Transaction model queries — NO business logic
  */
 
-const Payment = require('../../server/models/Payment');
-const Transaction = require('../../server/models/Transaction');
+const Payment = require('../../server/models/ClientPayment');
+let Transaction = null;
+try {
+  Transaction = require('../../server/models/Transaction');
+} catch (e) {
+  Transaction = null;
+}
 const Assignment = require('../../staff-system/models/Assignment');
+
+const transactionFallbackStore = new Map();
 
 class PaymentsRepository {
   /**
@@ -14,8 +21,8 @@ class PaymentsRepository {
   async findAll(filter = {}, page = 1, limit = 20) {
     const skip = (page - 1) * limit;
     const payments = await Payment.find(filter)
-      .populate('staffId', 'name email phone')
-      .populate('eventId', 'title date')
+      .populate('bookingId', 'bookingReference eventType eventDate')
+      .populate('clientId', 'name email phone')
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(parseInt(limit));
@@ -37,26 +44,37 @@ class PaymentsRepository {
    */
   async findById(paymentId) {
     return await Payment.findById(paymentId)
-      .populate('staffId')
-      .populate('eventId');
+      .populate('bookingId')
+      .populate('clientId');
   }
 
   /**
    * Create or update transaction
    */
   async upsertTransaction(transactionData) {
-    return await Transaction.findOneAndUpdate(
-      { transactionId: transactionData.transactionId },
-      transactionData,
-      { upsert: true, new: true }
-    );
+    if (Transaction) {
+      return await Transaction.findOneAndUpdate(
+        { transactionId: transactionData.transactionId },
+        transactionData,
+        { upsert: true, new: true }
+      );
+    }
+
+    transactionFallbackStore.set(transactionData.transactionId, {
+      ...transactionData,
+      updatedAt: new Date()
+    });
+    return transactionFallbackStore.get(transactionData.transactionId);
   }
 
   /**
    * Find transaction by ID
    */
   async findTransaction(transactionId) {
-    return await Transaction.findOne({ transactionId });
+    if (Transaction) {
+      return await Transaction.findOne({ transactionId });
+    }
+    return transactionFallbackStore.get(transactionId) || null;
   }
 
   /**
@@ -66,7 +84,7 @@ class PaymentsRepository {
     return await Payment.findByIdAndUpdate(
       paymentId,
       {
-        payment_status: status,
+        status,
         ...updateData,
         updatedAt: new Date()
       },
@@ -129,10 +147,16 @@ class PaymentsRepository {
    * Find all transactions by type
    */
   async findTransactionsByType(type, filter = {}) {
-    return await Transaction.find({
-      type,
-      ...filter
-    }).sort({ createdAt: -1 });
+    if (Transaction) {
+      return await Transaction.find({
+        type,
+        ...filter
+      }).sort({ createdAt: -1 });
+    }
+
+    return Array.from(transactionFallbackStore.values())
+      .filter(t => t.type === type)
+      .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
   }
 }
 
