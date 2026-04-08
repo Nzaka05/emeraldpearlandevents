@@ -621,10 +621,9 @@ app.use((err, req, res, next) => {
 });
 
 module.exports = { app, server };
-const PORT = process.env.PORT || (process.env.NODE_ENV === 'production' ? null : 3001);
-if (!PORT) {
-  console.error('FATAL: PORT environment variable is required in production');
-  process.exit(1);
+const PORT = process.env.PORT || process.env.PORT_STAFF || 3001;
+if (!process.env.PORT && process.env.NODE_ENV === 'production') {
+  console.warn('[WARN] process.env.PORT not set in production; falling back to PORT_STAFF/3001');
 }
 server.listen(PORT, () => {
     console.log(`Staff System running on port ${PORT}`);
