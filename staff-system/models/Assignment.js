@@ -65,8 +65,7 @@ const assignmentSchema = new mongoose.Schema({
     // Set on the assignment when a payment write is initiated.
     idempotencyKey: {
         type: String,
-        default: null,
-        sparse: true  // allows multiple null values — only non-null must be unique
+        default: null
     },
     createdByAdmin: { type: mongoose.Schema.Types.ObjectId, ref: 'Staff', required: true },
     open_for_applications: {
