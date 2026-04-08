@@ -7,6 +7,8 @@ const AuditLog = require('../models/AuditLog');
 const bcrypt = require('bcrypt');
 const crypto = require('crypto');
 const emailService = require('../services/emailService');
+const { notificationQueue } = require('../../config/queues');
+const queueMode = (process.env.QUEUE_MODE || 'inline').toLowerCase();
 const webpush = require('web-push');
 
 if (process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
@@ -1046,10 +1048,21 @@ exports.confirmPaymentReceipt = async (req, res) => {
         const newStatus = paid === total && total > 0 ? 'Received' : paid > 0 ? 'Partial' : 'Pending';
         await Assignment.findByIdAndUpdate(req.params.id, { payment_status: newStatus });
 
-        // Send receipt email
+        // Receipt email (inline fallback or queue)
         try {
-            const emailService = require('../services/emailService');
-            await emailService.sendPaymentReceiptEmail(req.user, assignment, sp, sp.transaction_id || 'STAFF-CONFIRMED');
+            if (queueMode === 'async') {
+                await notificationQueue.add('email', {
+                    type: 'payment.receipt',
+                    payload: {
+                        staffId: req.user._id.toString(),
+                        assignmentId: assignment._id.toString(),
+                        staffPaymentId: sp._id.toString(),
+                        transactionId: sp.transaction_id || 'STAFF-CONFIRMED'
+                    }
+                });
+            } else {
+                await emailService.sendPaymentReceiptEmail(req.user, assignment, sp, sp.transaction_id || 'STAFF-CONFIRMED');
+            }
         } catch (e) { console.log('Receipt email error:', e.message); }
 
         // Push notification to admin

@@ -14,6 +14,13 @@ const ClientAccount = require('../models/ClientAccount');
 const ClientAuditLog = require('../models/ClientAuditLog');
 const ClientSession = require('../models/ClientSession');
 const { verifyAdminJWT, generateAdminToken } = require('../middleware/adminAuth');
+const { bookingQueue, notificationQueue } = require('../../config/queues');
+const {
+    sendClientAppreciationEmail,
+    sendStaffFeedbackRequestEmail,
+    sendEmail
+} = require('../services/emailService');
+const queueMode = (process.env.QUEUE_MODE || 'inline').toLowerCase();
 
 
 // ═══════════════════════════════════════════════════════════
@@ -346,8 +353,17 @@ router.patch('/bookings/:id', verifyAdminJWT, async (req, res) => {
             });
         }
 
-        // Auto-sync confirmed booking to port 3001 as assignment
         if (updatedBooking.status === 'confirmed') {
+            if (queueMode === 'async') {
+                await bookingQueue.add('confirmed', { bookingId: req.params.id });
+                return res.json({
+                    success: true,
+                    message: 'Booking updated and queued for confirmation workflow',
+                    booking: updatedBooking
+                });
+            }
+
+            // Inline fallback when worker is deferred.
             try {
                 const axios = require('axios');
                 const axiosRetry = require('axios-retry').default || require('axios-retry');
@@ -371,7 +387,9 @@ router.patch('/bookings/:id', verifyAdminJWT, async (req, res) => {
                                     const match = pricing.categories.find(c => c.isActive && eventType.includes(c.name.toLowerCase().split('/')[0].trim().toLowerCase()));
                                     if (match) return match.staffPayRate || 1000;
                                 }
-                            } catch(e) { console.log('Pricing lookup failed:', e.message); }
+                            } catch (e) {
+                                console.log('Pricing lookup failed:', e.message);
+                            }
                             return 1000;
                         })(),
                         usherCount: updatedBooking.usherCount || 0,
@@ -382,7 +400,7 @@ router.patch('/bookings/:id', verifyAdminJWT, async (req, res) => {
                     },
                     { headers: { 'x-sync-secret': syncSecret } }
                 );
-                // Mark sync as successful — reconciliation job won't retry this
+
                 await Booking.findByIdAndUpdate(updatedBooking._id, {
                     syncStatus: 'synced',
                     lastSyncAttempt: new Date(),
@@ -391,14 +409,13 @@ router.patch('/bookings/:id', verifyAdminJWT, async (req, res) => {
                 });
                 console.log('Booking synced to staff portal:', updatedBooking._id);
             } catch (syncErr) {
-                // Record the failure — reconciliation job will retry automatically
                 await Booking.findByIdAndUpdate(updatedBooking._id, {
                     syncStatus: 'pending',
                     lastSyncAttempt: new Date(),
                     $inc: { syncAttempts: 1 },
                     lastSyncError: syncErr.message
                 });
-                console.warn('Staff portal sync failed (will retry via reconciliation job):', syncErr.message);
+                console.warn('Staff portal sync failed (inline mode):', syncErr.message);
             }
         }
 
@@ -546,7 +563,6 @@ router.post('/bookings/:id/payment', verifyAdminJWT, async (req, res) => {
             const subtotal = parseFloat(amount) || 0;
             const vatAmount = Math.round(subtotal * vatRate / 100);
             const totalAmount = subtotal + vatAmount;
-            const emailService = require('../services/emailService');
             
             const proformaHtml = `
                 <p style="color:#334155;">Dear <strong>${booking.customerId?.name || 'Client'}</strong>,</p>
@@ -563,13 +579,24 @@ router.post('/bookings/:id/payment', verifyAdminJWT, async (req, res) => {
                     </table>
                 </div>
                 <p style="color:#64748b;font-size:0.85rem;margin-top:16px;">Booking Reference: <strong>${booking.bookingReference}</strong></p>`;
-            
-            const wrapper = emailService.brandedWrapper || ((title, body) => `<div style="font-family:sans-serif;max-width:600px;margin:0 auto;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;"><div style="background:#0D2B1F;padding:20px;color:white;text-align:center;"><h2>${title}</h2></div><div style="padding:30px;">${body}</div></div>`);
-            await emailService.sendEmail({
-                to: [{ email: booking.customerId?.email, name: booking.customerId?.name }],
-                subject: `Payment Confirmation & Invoice — ${booking.eventType} | Emerald Pearland Events`,
-                htmlContent: wrapper('PAYMENT CONFIRMATION', proformaHtml)
-            });
+
+            if (queueMode === 'async') {
+                await notificationQueue.add('email', {
+                    type: 'server.payment.proforma_email',
+                    payload: {
+                        to: [{ email: booking.customerId?.email, name: booking.customerId?.name }],
+                        subject: `Payment Confirmation & Invoice — ${booking.eventType} | Emerald Pearland Events`,
+                        htmlBody: proformaHtml,
+                        title: 'PAYMENT CONFIRMATION'
+                    }
+                });
+            } else {
+                await sendEmail({
+                    to: [{ email: booking.customerId?.email, name: booking.customerId?.name }],
+                    subject: `Payment Confirmation & Invoice — ${booking.eventType} | Emerald Pearland Events`,
+                    htmlContent: proformaHtml
+                });
+            }
             console.log('Proforma invoice sent to:', booking.customerId?.email);
         } catch (invErr) { 
             console.log('Proforma invoice/sync skip:', invErr.message); 
@@ -595,8 +622,17 @@ router.post('/bookings/:id/send-appreciation', verifyAdminJWT, async (req, res) 
             return res.status(404).json({ success: false, message: 'Booking not found' });
         }
 
-        const emailService = require('../services/emailService');
-        await emailService.sendClientAppreciationEmail(booking, booking.customerId);
+        if (queueMode === 'async') {
+            await notificationQueue.add('email', {
+                type: 'server.booking.appreciation',
+                payload: {
+                    bookingId: booking._id.toString(),
+                    customerId: booking.customerId?._id?.toString() || null
+                }
+            });
+        } else {
+            await sendClientAppreciationEmail(booking, booking.customerId);
+        }
 
         // Optionally record that we sent the email
         booking.adminNotes.push({
@@ -631,7 +667,6 @@ router.post('/bookings/:id/message-staff', verifyAdminJWT, async (req, res) => {
             return res.status(404).json({ success: false, message: 'Booking not found' });
         }
 
-        const emailService = require('../services/emailService');
         let successCount = 0;
         let failCount = 0;
 
@@ -639,7 +674,19 @@ router.post('/bookings/:id/message-staff', verifyAdminJWT, async (req, res) => {
             const staff = await Staff.findById(staffId);
             if (staff && staff.email) {
                 try {
-                    await emailService.sendStaffFeedbackRequestEmail(staff.email, staff.name, booking, customMessage);
+                    if (queueMode === 'async') {
+                        await notificationQueue.add('email', {
+                            type: 'server.staff.feedback_request',
+                            payload: {
+                                bookingId: booking._id.toString(),
+                                staffEmail: staff.email,
+                                staffName: staff.name,
+                                customMessage
+                            }
+                        });
+                    } else {
+                        await sendStaffFeedbackRequestEmail(staff.email, staff.name, booking, customMessage);
+                    }
                     successCount++;
                 } catch (e) {
                     console.error(`Failed sending to staff ${staff.name}:`, e.message);

@@ -621,7 +621,11 @@ app.use((err, req, res, next) => {
 });
 
 module.exports = { app, server };
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || (process.env.NODE_ENV === 'production' ? null : 3001);
+if (!PORT) {
+  console.error('FATAL: PORT environment variable is required in production');
+  process.exit(1);
+}
 server.listen(PORT, () => {
     console.log(`Staff System running on port ${PORT}`);
     console.log(`✅ Phase 8 automation scheduler active`);

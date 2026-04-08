@@ -6,6 +6,9 @@ const Survey     = require('../models/Survey');
 const Assignment = require('../models/Assignment');
 const Staff      = require('../models/Staff');
 const crypto     = require('crypto');
+const emailService = require('../services/emailService');
+const { notificationQueue } = require('../../config/queues');
+const queueMode = (process.env.QUEUE_MODE || 'inline').toLowerCase();
 
 // Default question templates
 const SURVEY_TEMPLATES = {
@@ -171,7 +174,6 @@ exports.createSurveysForAssignment = async (assignment) => {
 
         // Email survey links to each staff member
         try {
-            const emailService = require('../services/emailService');
             const appUrl = process.env.STAFF_APP_URL || 'http://localhost:3001';
             const allSurveys = await Survey.find({ assignment_id: assignment._id, submitted: false })
                 .populate('respondent_id', 'name email').lean();
@@ -188,13 +190,25 @@ exports.createSurveysForAssignment = async (assignment) => {
                     </div>
                     <p style="font-size:12px;color:#888;">Or copy this link: <a href="${surveyUrl}">${surveyUrl}</a></p>
                 `;
-                await emailService.sendEmail({
-                    to: [{ email: survey.respondent_id.email, name: survey.respondent_id.name }],
-                    subject: `Post-Event Survey: ${assignment.title} | Emerald Pearland Events`,
-                    htmlContent: emailService.brandedWrapper
-                        ? emailService.brandedWrapper('POST-EVENT SURVEY', body)
-                        : body
-                });
+                if (queueMode === 'async') {
+                    await notificationQueue.add('email', {
+                        type: 'generic.email',
+                        payload: {
+                            to: [{ email: survey.respondent_id.email, name: survey.respondent_id.name }],
+                            subject: `Post-Event Survey: ${assignment.title} | Emerald Pearland Events`,
+                            htmlContent: body,
+                            templateTitle: 'POST-EVENT SURVEY'
+                        }
+                    });
+                } else {
+                    await emailService.sendEmail({
+                        to: [{ email: survey.respondent_id.email, name: survey.respondent_id.name }],
+                        subject: `Post-Event Survey: ${assignment.title} | Emerald Pearland Events`,
+                        htmlContent: emailService.brandedWrapper
+                            ? emailService.brandedWrapper('POST-EVENT SURVEY', body)
+                            : body
+                    });
+                }
             }
         } catch (emailErr) {
             console.log('[surveyController] Survey email error (non-critical):', emailErr.message);

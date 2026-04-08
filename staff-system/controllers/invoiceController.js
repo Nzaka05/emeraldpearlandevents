@@ -8,6 +8,9 @@ const Assignment    = require('../models/Assignment');
 const AuditLog      = require('../models/AuditLog');
 const path          = require('path');
 const fs            = require('fs');
+const emailService  = require('../services/emailService');
+const { notificationQueue } = require('../../config/queues');
+const queueMode = (process.env.QUEUE_MODE || 'inline').toLowerCase();
 
 /**
  * Helper: Decode basic HTML entities for PDF rendering
@@ -200,16 +203,26 @@ exports.sendInvoiceEmail = async (req, res) => {
             .populate('eventId', 'title date location').lean();
         if (!invoice) return res.status(404).json({ success: false, error: 'Not found' });
 
-        const emailService = require('../services/emailService');
-
-        // Send via dedicated invoice email function if available, else fallback
-        if (emailService.sendClientInvoiceEmail && invoice.eventId) {
-            await emailService.sendClientInvoiceEmail(
-                invoice.clientEmail,
-                invoice.clientName,
-                invoice,
-                invoice.eventId
-            );
+        // Dispatch via queue in async mode, or send inline when worker is deferred.
+        if (invoice.eventId) {
+            if (queueMode === 'async') {
+                await notificationQueue.add('email', {
+                    type: 'client.invoice',
+                    payload: {
+                        clientEmail: invoice.clientEmail,
+                        clientName: invoice.clientName,
+                        invoice,
+                        assignment: invoice.eventId
+                    }
+                });
+            } else {
+                await emailService.sendClientInvoiceEmail(
+                    invoice.clientEmail,
+                    invoice.clientName,
+                    invoice,
+                    invoice.eventId
+                );
+            }
         } else {
             // Inline HTML fallback
             const htmlContent = `
@@ -233,11 +246,23 @@ exports.sendInvoiceEmail = async (req, res) => {
                     <p style="color:#64748b;">Thank you for choosing Emerald Pearland Events!</p>
                 </div>
             </div>`;
-            await emailService.sendEmail({
-                to:          invoice.clientEmail,
-                subject:     `Invoice ${invoice.invoiceNumber} — Emerald Pearland Events`,
-                htmlContent
-            });
+            if (queueMode === 'async') {
+                await notificationQueue.add('email', {
+                    type: 'generic.email',
+                    payload: {
+                        to: [{ email: invoice.clientEmail, name: invoice.clientName }],
+                        subject: `Invoice ${invoice.invoiceNumber} — Emerald Pearland Events`,
+                        htmlContent,
+                        templateTitle: 'CLIENT INVOICE'
+                    }
+                });
+            } else {
+                await emailService.sendEmail({
+                    to: [{ email: invoice.clientEmail, name: invoice.clientName }],
+                    subject: `Invoice ${invoice.invoiceNumber} — Emerald Pearland Events`,
+                    htmlContent
+                });
+            }
         }
 
         await ClientInvoice.findByIdAndUpdate(req.params.id, {

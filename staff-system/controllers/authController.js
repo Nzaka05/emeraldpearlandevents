@@ -4,6 +4,8 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const emailService = require('../services/emailService');
+const { notificationQueue } = require('../../config/queues');
+const queueMode = (process.env.QUEUE_MODE || 'inline').toLowerCase();
 const staffAuthSecret = process.env.STAFF_JWT_SECRET || process.env.JWT_SECRET;
 const STAFF_COOKIE = 'staff_portal_token';
 const LEGACY_COOKIE = 'portal_token';
@@ -265,7 +267,17 @@ exports.forgotPassword = async (req, res) => {
         const baseUrl = process.env.STAFF_APP_URL;
         const resetUrl = `${baseUrl}/portal/auth/reset-password/${resetToken}`;
 
-        await emailService.sendPasswordResetEmail(user, resetUrl);
+        if (queueMode === 'async') {
+            await notificationQueue.add('email', {
+                type: 'password.reset',
+                payload: {
+                    staff: { _id: user._id.toString(), name: user.name, email: user.email },
+                    resetUrl
+                }
+            });
+        } else {
+            await emailService.sendPasswordResetEmail(user, resetUrl);
+        }
 
         await AuditLog.create({
             actionType: 'PASSWORD_RESET_REQUESTED', targetModel: 'Staff', targetId: user._id, performedBy: user._id,
@@ -375,7 +387,17 @@ exports.staffForgotPassword = async (req, res) => {
         const baseUrl = process.env.STAFF_APP_URL;
         const resetUrl = `${baseUrl}/portal/auth/reset-password/${resetToken}`;
 
-        await emailService.sendPasswordResetEmail(user, resetUrl);
+        if (queueMode === 'async') {
+            await notificationQueue.add('email', {
+                type: 'password.reset',
+                payload: {
+                    staff: { _id: user._id.toString(), name: user.name, email: user.email },
+                    resetUrl
+                }
+            });
+        } else {
+            await emailService.sendPasswordResetEmail(user, resetUrl);
+        }
 
         await AuditLog.create({
             actionType: 'PASSWORD_RESET_REQUESTED', targetModel: 'Staff', targetId: user._id, performedBy: user._id,

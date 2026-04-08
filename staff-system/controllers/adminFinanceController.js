@@ -102,8 +102,25 @@ exports.initiateStaffPayment = async (req, res) => {
 // ─────────────────────────────────────────────────────────────
 exports.mpesaCallback = async (req, res) => {
     try {
-        const eventPaymentService = require('../financials/services/eventPaymentService');
-        await eventPaymentService.mpesaCallback(req.body);
+        const queueMode = (process.env.QUEUE_MODE || 'inline').toLowerCase();
+        const payload = {
+            ...req.body,
+            idempotencyKey: req.headers['x-idempotency-key'] || req.body?.idempotencyKey
+        };
+        const result = payload?.Result;
+
+        if (!result || typeof result !== 'object' || !result.Occasion) {
+            console.warn('[adminFinanceController] mpesaCallback invalid payload ignored');
+            return res.status(200).json({ success: true, ignored: true });
+        }
+
+        if (queueMode === 'async') {
+            const { paymentQueue } = require('../../config/queues');
+            await paymentQueue.add('mpesa.callback', { payload });
+        } else {
+            const eventPaymentService = require('../financials/services/eventPaymentService');
+            await eventPaymentService.mpesaCallback(payload);
+        }
         res.status(200).json({ success: true });
     } catch (error) {
         console.error('[adminFinanceController] mpesaCallback:', error.message);

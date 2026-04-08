@@ -10,6 +10,7 @@ const AuditLog = require('../models/AuditLog');
 const PerformanceReview = require('../models/PerformanceReview');
 const webpush = require('web-push');
 const emailService = require('../services/emailService');
+const { notificationQueue } = require('../../config/queues');
 const mpesaService = require('../services/mpesaService');
 const PDFDocument = require('pdfkit');
 const { Parser } = require('json2csv');
@@ -354,8 +355,13 @@ exports.adminResetPassword = async (req, res) => {
         staff.mustChangePassword = true;
         await staff.save();
 
-        // Send email notification
-        await emailService.sendAdminPasswordResetNotification(staff, newPlainPassword);
+        await notificationQueue.add('email', {
+            type: 'staff.admin.password_reset',
+            payload: {
+                staffId: staff._id.toString(),
+                plainPassword: newPlainPassword
+            }
+        });
 
         await AuditLog.create({
             actionType: 'PASSWORD_RESET', targetModel: 'Staff', targetId: staff._id,
@@ -793,13 +799,25 @@ exports.initiateStaffPayment = async (req, res) => {
 // @route   POST /portal/admin-staff/mpesa/callback
 exports.mpesaCallback = async (req, res) => {
     try {
-        // Idempotency marker from gateway (if present) for duplicate callback tracing.
-        const idempotencyKey = req.headers['x-idempotency-key'] || req.body?.idempotencyKey;
-        const eventPaymentService = require('../financials/services/eventPaymentService');
-        await eventPaymentService.mpesaCallback({
+        const queueMode = (process.env.QUEUE_MODE || 'inline').toLowerCase();
+        const payload = {
             ...req.body,
-            idempotencyKey
-        });
+            idempotencyKey: req.headers['x-idempotency-key'] || req.body?.idempotencyKey
+        };
+        const result = payload?.Result;
+
+        if (!result || typeof result !== 'object' || !result.Occasion) {
+            console.warn('M-Pesa callback invalid payload ignored');
+            return res.status(200).json({ success: true, ignored: true });
+        }
+
+        if (queueMode === 'async') {
+            const { paymentQueue } = require('../../config/queues');
+            await paymentQueue.add('mpesa.callback', { payload });
+        } else {
+            const eventPaymentService = require('../financials/services/eventPaymentService');
+            await eventPaymentService.mpesaCallback(payload);
+        }
         res.status(200).json({ success: true });
     } catch (error) {
         console.error('M-Pesa callback error:', error.message);
