@@ -58,10 +58,11 @@ async function scanEvent(assignment) {
     
     const clockedInIds = new Set(attendances.map(a => a.staff_id.toString()));
 
-    // Find missing
-    for (const staffId of assignedIds) {
-        if (!clockedInIds.has(staffId.toString())) {
-            
+    // Find missing staff concurrently
+    await Promise.allSettled(
+        assignedIds.map(async (staffId) => {
+            if (clockedInIds.has(staffId.toString())) return;
+
             // Check if alert already exists
             const existingAlert = await StaffMissingAlert.findOne({
                 event_id: assignment._id,
@@ -69,54 +70,52 @@ async function scanEvent(assignment) {
                 resolved: false
             });
 
-            if (!existingAlert) {
-                // Create alert
-                await StaffMissingAlert.create({
+            if (existingAlert) return;
+
+            // Create alert
+            await StaffMissingAlert.create({
+                event_id: assignment._id,
+                staff_id: staffId,
+                minutes_late: isNaN(diffMins) ? 0 : diffMins,
+                alerted_at: new Date()
+            });
+
+            // Populate staff name for the socket event
+            const Staff = require('../models/Staff');
+            const staffDoc = await Staff.findById(staffId).select('name').lean();
+
+            // Emit alert to Admin room
+            if (global.io) {
+                const payload = {
                     event_id: assignment._id,
                     staff_id: staffId,
+                    staff_name: staffDoc?.name || 'Unknown Staff',
                     minutes_late: isNaN(diffMins) ? 0 : diffMins,
-                    alerted_at: new Date()
-                });
+                    timestamp: new Date()
+                };
 
-                // Populate staff name for the socket event
-                const Staff = require('../models/Staff');
-                const staffDoc = await Staff.findById(staffId).select('name').lean();
-                
-                // Emit alert to Admin room
-                if (global.io) {
-                    const payload = {
-                        event_id: assignment._id,
-                        staff_id: staffId,
-                        staff_name: staffDoc?.name || 'Unknown Staff',
-                        minutes_late: isNaN(diffMins) ? 0 : diffMins,
-                        timestamp: new Date()
-                    };
-                    
-                    global.io.to('Admin').emit('staff_missing_alert', payload);
-                    
-                    // Push to Supervisor feed persistence
-                    // (Assuming supervisor notification service exists, or directly emitting)
-                    const SupervisorNotification = require('../models/SupervisorNotification');
-                    if (assignment.supervisor_id) {
-                        try {
-                            const notif = await SupervisorNotification.create({
-                                event_id: assignment._id,
-                                supervisor_id: assignment.supervisor_id,
-                                type: 'staff_missing',
-                                title: 'Missing Staff Alert',
-                                message: `${staffDoc?.name || 'A staff member'} is ${diffMins} minutes late.`,
-                                payload: payload
-                            });
-                            global.io.to(`Supervisor:${assignment._id}`).emit('team_update', { message: 'Missing staff alert created' });
-                            global.io.to(`Supervisor:${assignment._id}`).emit('notification', notif);
-                        } catch (err) {
-                            console.error('[MissingStaffJob] Failed to auto-create supervisor notif:', err);
-                        }
+                global.io.to('Admin').emit('staff_missing_alert', payload);
+
+                const SupervisorNotification = require('../models/SupervisorNotification');
+                if (assignment.supervisor_id) {
+                    try {
+                        const notif = await SupervisorNotification.create({
+                            event_id: assignment._id,
+                            supervisor_id: assignment.supervisor_id,
+                            type: 'staff_missing',
+                            title: 'Missing Staff Alert',
+                            message: `${staffDoc?.name || 'A staff member'} is ${diffMins} minutes late.`,
+                            payload: payload
+                        });
+                        global.io.to(`Supervisor:${assignment._id}`).emit('team_update', { message: 'Missing staff alert created' });
+                        global.io.to(`Supervisor:${assignment._id}`).emit('notification', notif);
+                    } catch (err) {
+                        console.error('[MissingStaffJob] Failed to auto-create supervisor notif:', err);
                     }
                 }
             }
-        }
-    }
+        })
+    );
 }
 
 async function runMissingStaffCheck() {
@@ -124,10 +123,10 @@ async function runMissingStaffCheck() {
         const liveEvents = await Assignment.find({ lifecycle_state: 'LIVE' })
             .select('date start_time accepted_staff_ids assigned_staff_ids supervisor_id')
             .lean();
-            
-        for (const event of liveEvents) {
-            await scanEvent(event);
-        }
+
+        const results = await Promise.allSettled(liveEvents.map(scanEvent));
+        const failed = results.filter(r => r.status === 'rejected');
+        if (failed.length) console.error(`missingStaffJob: ${failed.length} events failed`, failed.map(r => r.reason?.message));
     } catch (error) {
         console.error('[MissingStaffJob] Error during missing staff check:', error);
     }

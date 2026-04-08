@@ -37,16 +37,18 @@ const initializeCronJobs = () => {
                 followUpEmailSentAt: null
             }).populate('customerId');
 
-            for (const booking of bookingsNeedingFollowUp) {
-                try {
+            const results = await Promise.allSettled(
+                bookingsNeedingFollowUp.map(async (booking) => {
                     const customer = booking.customerId;
                     await sendFollowUpEmail(booking, customer);
                     booking.followUpEmailSentAt = new Date();
                     await booking.save();
                     console.log(`[CRON] Follow-up email sent for booking ${booking.bookingReference}`);
-                } catch (emailError) {
-                    console.error(`[CRON] Failed to send follow-up for ${booking.bookingReference}:`, emailError.message);
-                }
+                })
+            );
+            const failed = results.filter(r => r.status === 'rejected');
+            if (failed.length) {
+                failed.forEach(f => console.error('[CRON] Follow-up email failed:', f.reason?.message));
             }
 
             if (bookingsNeedingFollowUp.length === 0) {
@@ -74,16 +76,18 @@ const initializeCronJobs = () => {
                 reminderEmailSentAt: null
             }).populate('customerId');
 
-            for (const booking of bookingsNeedingReminder) {
-                try {
+            const results = await Promise.allSettled(
+                bookingsNeedingReminder.map(async (booking) => {
                     const customer = booking.customerId;
                     await sendEventReminderEmail(booking, customer);
                     booking.reminderEmailSentAt = new Date();
                     await booking.save();
                     console.log(`[CRON] Event reminder sent for booking ${booking.bookingReference}`);
-                } catch (emailError) {
-                    console.error(`[CRON] Failed to send reminder for ${booking.bookingReference}:`, emailError.message);
-                }
+                })
+            );
+            const failed = results.filter(r => r.status === 'rejected');
+            if (failed.length) {
+                failed.forEach(f => console.error('[CRON] Reminder email failed:', f.reason?.message));
             }
 
             if (bookingsNeedingReminder.length === 0) {
@@ -118,40 +122,46 @@ const initializeCronJobs = () => {
                 ]
             }).populate('customerId').populate('assignedStaff').populate('supervisor');
 
-            for (const booking of bookings) {
-                const customer = booking.customerId;
-                const notified = [];
+            await Promise.allSettled(
+                bookings.map(async (booking) => {
+                    const customer = booking.customerId;
+                    const notified = [];
 
-                // Notify supervisor first
-                if (booking.supervisor && booking.supervisor.email) {
-                    try {
-                        await sendStaffEventReminder(booking.supervisor, booking, customer, 'Supervisor');
-                        notified.push(booking.supervisor.name);
-                        console.log(`[CRON] 48-hr alert sent to supervisor ${booking.supervisor.name}`);
-                    } catch (err) {
-                        console.error(`[CRON] Failed to email supervisor ${booking.supervisor.name}:`, err.message);
+                    // Notify supervisor first
+                    if (booking.supervisor && booking.supervisor.email) {
+                        try {
+                            await sendStaffEventReminder(booking.supervisor, booking, customer, 'Supervisor');
+                            notified.push(booking.supervisor.name);
+                            console.log(`[CRON] 48-hr alert sent to supervisor ${booking.supervisor.name}`);
+                        } catch (err) {
+                            console.error(`[CRON] Failed to email supervisor ${booking.supervisor.name}:`, err.message);
+                        }
                     }
-                }
 
-                // Notify team members
-                for (const staff of (booking.assignedStaff || [])) {
-                    // Skip if same person as supervisor
-                    if (booking.supervisor && staff._id.toString() === booking.supervisor._id.toString()) continue;
-                    if (!staff.email) continue;
-                    try {
-                        await sendStaffEventReminder(staff, booking, customer, 'Team Member');
-                        notified.push(staff.name);
-                        console.log(`[CRON] 48-hr alert sent to ${staff.name}`);
-                    } catch (err) {
-                        console.error(`[CRON] Failed to email ${staff.name}:`, err.message);
-                    }
-                }
+                    // Notify team members concurrently (skip supervisor if already notified)
+                    const teamMembers = (booking.assignedStaff || []).filter(staff => {
+                        if (!staff.email) return false;
+                        if (booking.supervisor && staff._id.toString() === booking.supervisor._id.toString()) return false;
+                        return true;
+                    });
 
-                // Mark as notified so we don't send again
-                booking.staffNotified48hr = true;
-                await booking.save();
-                console.log(`[CRON] Staff 48-hr alerts done for booking ${booking._id} — notified: ${notified.join(', ') || 'none'}`);
-            }
+                    const teamResults = await Promise.allSettled(
+                        teamMembers.map(async (staff) => {
+                            await sendStaffEventReminder(staff, booking, customer, 'Team Member');
+                            notified.push(staff.name);
+                            console.log(`[CRON] 48-hr alert sent to ${staff.name}`);
+                        })
+                    );
+                    teamResults
+                        .filter(r => r.status === 'rejected')
+                        .forEach(f => console.error('[CRON] Staff reminder email failed:', f.reason?.message));
+
+                    // Mark as notified so we don't send again
+                    booking.staffNotified48hr = true;
+                    await booking.save();
+                    console.log(`[CRON] Staff 48-hr alerts done for booking ${booking._id} — notified: ${notified.join(', ') || 'none'}`);
+                })
+            );
 
             if (bookings.length === 0) {
                 console.log('[CRON] No staff 48-hr alerts needed');
@@ -178,38 +188,46 @@ const initializeCronJobs = () => {
                 dual_approval_expires_at: { $lt: now }
             });
 
-            for (const audit of expiredAudits) {
-                audit.approval_status = 'expired';
-                audit.failure_reason = 'Dual approval window expired after 30 minutes';
-                await audit.save();
+            const results = await Promise.allSettled(expiredAudits.map(async (audit) => {
+                try {
+                    audit.approval_status = 'expired';
+                    audit.failure_reason = 'Dual approval window expired after 30 minutes';
+                    await audit.save();
 
-                const AuditLog = require('../../staff-system/models/AuditLog');
-                await AuditLog.create({
-                    actionType: 'dual_approval_expired',
-                    targetModel: 'Staff',
-                    targetId: audit.admin_id,
-                    performedBy: audit.admin_id,
-                    details: { audit_id: audit._id, event_id: audit.event_id, amount: audit.amount }
-                }).catch(err => console.error(err));
+                    const AuditLog = require('../../staff-system/models/AuditLog');
+                    await AuditLog.create({
+                        actionType: 'dual_approval_expired',
+                        targetModel: 'Staff',
+                        targetId: audit.admin_id,
+                        performedBy: audit.admin_id,
+                        details: { audit_id: audit._id, event_id: audit.event_id, amount: audit.amount }
+                    }).catch(err => console.error(err));
 
-                if (global.io) {
-                    global.io.to('Admin').emit('cmd:dual_approval_expired', {
-                        audit_id: audit._id,
-                        event_id: audit.event_id,
-                        amount: audit.amount,
-                        timestamp: new Date().toISOString()
-                    });
-                    
-                    if (audit.first_admin_id) {
-                        global.io.to(`Staff:${audit.first_admin_id}`).emit('cmd:your_approval_expired', {
+                    if (global.io) {
+                        global.io.to('Admin').emit('cmd:dual_approval_expired', {
                             audit_id: audit._id,
                             event_id: audit.event_id,
-                            message: 'Your emergency fund request expired due to lack of secondary approval within 30 minutes.'
+                            amount: audit.amount,
+                            timestamp: new Date().toISOString()
                         });
+
+                        if (audit.first_admin_id) {
+                            global.io.to(`Staff:${audit.first_admin_id}`).emit('cmd:your_approval_expired', {
+                                audit_id: audit._id,
+                                event_id: audit.event_id,
+                                message: 'Your emergency fund request expired due to lack of secondary approval within 30 minutes.'
+                            });
+                        }
                     }
+                    console.log(`[CRON] Expired pending dual approval ${audit._id}`);
+                } catch (auditErr) {
+                    console.error(`[CRON] Failed to expire dual approval ${audit?._id}:`, auditErr);
+                    throw auditErr;
                 }
-                console.log(`[CRON] Expired pending dual approval ${audit._id}`);
-            }
+            }));
+            const failed = results.filter(r => r.status === 'rejected').length;
+            const succeeded = results.length - failed;
+            console.log(`[CRON] Dual approval expiration summary: succeeded=${succeeded}, failed=${failed}`);
         } catch (error) {
             console.error('[CRON] Error in dual approval expiration job:', error);
         }

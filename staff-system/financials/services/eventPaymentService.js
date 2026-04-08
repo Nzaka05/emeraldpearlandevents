@@ -94,6 +94,7 @@ exports.updatePaymentStatus = async (adminId, assignmentId, payment_status, staf
 // @desc    Initiate M-Pesa B2C payment to staff member
 exports.initiateStaffPayment = async (adminId, assignmentId, body) => {
     const { staff_payment_id, amount, payment_method } = body;
+    const idempotencyKey = body.idempotencyKey || `B2C-${assignmentId}-${staff_payment_id}`;
     const assignment = await Assignment.findById(assignmentId);
     if (!assignment) throw new Error('Assignment not found');
 
@@ -158,27 +159,51 @@ exports.initiateStaffPayment = async (adminId, assignmentId, body) => {
     // M-Pesa B2C
     if (!phone) throw new Error('No phone number on record for this staff member. Update their profile first.');
 
-    const result = await mpesaService.b2cPayment({
-        phone,
-        amount: amount || assignment.pay_rate,
-        assignmentId: assignment._id.toString(),
-        staffPaymentId: staff_payment_id,
-        remarks: `Payment for ${assignment.title}`
-    });
-
-    if (result.ResponseCode === '0') {
-        await Assignment.findOneAndUpdate(
-            { _id: assignmentId, 'staff_payments._id': staff_payment_id },
-            { $set: { 'staff_payments.$.status': 'Sent', 'staff_payments.$.sent_at': new Date() } }
-        );
-        await AuditLog.create({
-            actionType: 'PAYMENT_INITIATED', targetModel: 'Assignment', targetId: assignment._id,
-            performedBy: adminId,
-            details: { staffName, amount: amount || assignment.pay_rate, phone }
+    try {
+        const result = await mpesaService.b2cPayment({
+            phone,
+            amount: amount || assignment.pay_rate,
+            assignmentId: assignment._id.toString(),
+            staffPaymentId: staff_payment_id,
+            remarks: `Payment for ${assignment.title}`
         });
-        return { message: `Payment of KSh ${amount || assignment.pay_rate} initiated to ${staffName} (${phone})` };
-    } else {
+
+        if (result.ResponseCode === '0') {
+            await Assignment.findOneAndUpdate(
+                { _id: assignmentId, 'staff_payments._id': staff_payment_id },
+                {
+                    $set: {
+                        'staff_payments.$.status': 'Sent',
+                        'staff_payments.$.sent_at': new Date(),
+                        'staff_payments.$.paymentSyncStatus': 'sent',
+                        // Save idempotency key so retries don't produce duplicate payout intents.
+                        'staff_payments.$.idempotency_key': idempotencyKey
+                    }
+                }
+            );
+            await AuditLog.create({
+                actionType: 'PAYMENT_INITIATED', targetModel: 'Assignment', targetId: assignment._id,
+                performedBy: adminId,
+                details: { staffName, amount: amount || assignment.pay_rate, phone, idempotencyKey }
+            });
+            return { message: `Payment of KSh ${amount || assignment.pay_rate} initiated to ${staffName} (${phone})` };
+        }
+
         throw new Error(result.ResponseDescription || 'M-Pesa request failed');
+    } catch (err) {
+        if (staff_payment_id) {
+            await Assignment.findOneAndUpdate(
+                { _id: assignmentId, 'staff_payments._id': staff_payment_id },
+                {
+                    $set: {
+                        'staff_payments.$.paymentSyncStatus': 'failed',
+                        'staff_payments.$.status': 'Pending',
+                        'staff_payments.$.lastSyncError': err.message
+                    }
+                }
+            );
+        }
+        throw err;
     }
 };
 
@@ -191,6 +216,30 @@ exports.mpesaCallback = async (resultBody) => {
     if (!Occasion) return;
 
     const [assignmentId, staffPaymentId] = Occasion.split('|');
+    const callbackIdempotencyKey = `${TransactionID || 'NO_TX'}:${ResultCode}:${Occasion}`;
+
+    // Idempotency guard: if this transaction is already applied, skip duplicate callback processing.
+    if (TransactionID) {
+        const duplicate = await Assignment.findOne({
+            _id: assignmentId,
+            staff_payments: {
+                $elemMatch: {
+                    _id: staffPaymentId,
+                    transaction_id: TransactionID
+                }
+            }
+        }, {
+            staff_payments: {
+                $elemMatch: {
+                    _id: staffPaymentId,
+                    transaction_id: TransactionID
+                }
+            }
+        }).lean();
+        if (duplicate?.staff_payments?.length) {
+            return duplicate.staff_payments[0];
+        }
+    }
 
     if (Number(ResultCode) === 0) {
         const assignment = await Assignment.findOneAndUpdate(
@@ -198,7 +247,9 @@ exports.mpesaCallback = async (resultBody) => {
             { $set: {
                 'staff_payments.$.status': 'Received',
                 'staff_payments.$.transaction_id': TransactionID,
-                'staff_payments.$.received_at': new Date()
+                'staff_payments.$.received_at': new Date(),
+                'staff_payments.$.paymentSyncStatus': 'synced',
+                'staff_payments.$.callback_idempotency_key': callbackIdempotencyKey
             } },
             { new: true }
         );
@@ -232,7 +283,11 @@ exports.mpesaCallback = async (resultBody) => {
     } else {
         await Assignment.findOneAndUpdate(
             { _id: assignmentId, 'staff_payments._id': staffPaymentId },
-            { $set: { 'staff_payments.$.status': 'Pending' } }
+            { $set: {
+                'staff_payments.$.status': 'Pending',
+                'staff_payments.$.paymentSyncStatus': 'failed',
+                'staff_payments.$.callback_idempotency_key': callbackIdempotencyKey
+            } }
         );
         console.error('M-Pesa B2C failed:', ResultDesc);
     }
