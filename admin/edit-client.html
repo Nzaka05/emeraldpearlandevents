@@ -859,7 +859,7 @@
 
         async function loadClient() {
             try {
-                const res = await fetch(`/api/admin/customers/${clientId}`);
+                const res = await fetch(`/api/v1/admin/customers/${clientId}`);
                 const data = await res.json();
 
                 if (!data.success || !data.customer) {
@@ -923,7 +923,7 @@
                 
                 // Fetch all bookings and filter by matching customer data
                 // The API populates customerId with customer details
-                const res = await fetch(`/api/admin/bookings?limit=500`);
+                const res = await fetch(`/api/v1/admin/bookings?limit=500`);
                 const data = await res.json();
 
                 if (!data.success || !data.bookings) {
@@ -1009,7 +1009,7 @@
             }
 
             try {
-                const res = await fetch(`/api/admin/customers/${clientId}`, {
+                const res = await fetch(`/api/v1/admin/customers/${clientId}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(data)
@@ -1039,7 +1039,7 @@
             }
 
             try {
-                const res = await fetch(`/api/admin/customers/${clientId}`, {
+                const res = await fetch(`/api/v1/admin/customers/${clientId}`, {
                     method: 'DELETE'
                 });
 
@@ -1063,7 +1063,7 @@
 
         async function handleLogout() {
             try {
-                const res = await fetch('/api/admin/logout', { 
+                const res = await fetch('/api/v1/admin/logout', { 
                     method: 'POST',
                     credentials: 'include'
                 });

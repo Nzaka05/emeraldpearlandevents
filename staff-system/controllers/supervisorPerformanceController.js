@@ -1,3 +1,4 @@
+const respond = require('../../utils/respond');
 const performanceService = require('../services/performanceService');
 const EventPerformanceBaseline = require('../models/EventPerformanceBaseline');
 const PerformanceReview = require('../models/PerformanceReview');
@@ -9,16 +10,16 @@ exports.getPendingReviews = async (req, res) => {
         const supervisorId = req.user._id;
 
         const baseline = await EventPerformanceBaseline.findOne({ event_id: eventId });
-        if (!baseline) return res.status(404).json({ success: false, error: 'Event baseline not found or event not completed', timestamp: new Date() });
+        if (!baseline) return respond(res, 404, { success: false, error: 'Event baseline not found or event not completed', timestamp: new Date() });
 
         // Ensure this supervisor was assigned to this event
         if (baseline.supervisor_id && baseline.supervisor_id.toString() !== supervisorId.toString()) {
-            return res.status(403).json({ success: false, error: 'Not authorized to review this event team', timestamp: new Date() });
+            return respond(res, 403, { success: false, error: 'Not authorized to review this event team', timestamp: new Date() });
         }
 
         const windowCheck = await performanceService.checkReviewWindow(eventId);
         if (!windowCheck.isOpen) {
-            return res.json({ success: true, data: { window_open: false, reason: windowCheck.reason }, timestamp: new Date() });
+            return respond(res, 200, { success: true, data: { window_open: false, reason: windowCheck.reason }, timestamp: new Date() });
         }
 
         // Fetch already submitted reviews
@@ -42,7 +43,7 @@ exports.getPendingReviews = async (req, res) => {
         const Staff = mongoose.model('Staff');
         const pendingStaff = await Staff.find({ _id: { $in: pendingIds } }).select('firstname lastname photo_url role').lean();
 
-        res.json({
+        respond(res, 200, {
             success: true,
             data: {
                 window_open: true,
@@ -52,7 +53,7 @@ exports.getPendingReviews = async (req, res) => {
             timestamp: new Date()
         });
     } catch (err) {
-        res.status(500).json({ success: false, error: err.message, timestamp: new Date() });
+        respond(res, 500, { success: false, error: err.message, timestamp: new Date() });
     }
 };
 
@@ -63,11 +64,11 @@ exports.submitBatchReviews = async (req, res) => {
         const reviews = req.body.reviews; // Expected: [{staff_id, punctuality_rating...}, ...]
 
         if (!Array.isArray(reviews)) {
-            return res.status(400).json({ success: false, error: 'Reviews must be an array', timestamp: new Date() });
+            return respond(res, 400, { success: false, error: 'Reviews must be an array', timestamp: new Date() });
         }
 
         const baseline = await EventPerformanceBaseline.findOne({ event_id: eventId });
-        if (!baseline) return res.status(404).json({ success: false, error: 'Event not found or not completed', timestamp: new Date() });
+        if (!baseline) return respond(res, 404, { success: false, error: 'Event not found or not completed', timestamp: new Date() });
 
         // ─ Assignment check (skip for brevity, logic mostly handles via EventPerformanceBaseline)
         const assignment = await Assignment.findOne({ event: eventId }); 
@@ -96,7 +97,7 @@ exports.submitBatchReviews = async (req, res) => {
             }
         }
 
-        res.json({
+        respond(res, 200, {
             success: true,
             data: {
                 submitted,
@@ -106,6 +107,6 @@ exports.submitBatchReviews = async (req, res) => {
             timestamp: new Date()
         });
     } catch (err) {
-        res.status(500).json({ success: false, error: err.message, timestamp: new Date() });
+        respond(res, 500, { success: false, error: err.message, timestamp: new Date() });
     }
 };

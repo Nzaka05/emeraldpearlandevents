@@ -1,3 +1,4 @@
+const respond = require('../../utils/respond');
 const Staff = require('../models/Staff');
 const EventTeam = require('../models/EventTeam');
 const ReplacementRequest = require('../models/ReplacementRequest');
@@ -41,7 +42,7 @@ exports.removeMember = async (req, res) => {
         const team = await EventTeam.findById(req.params.teamId);
 
         if (!team || team.supervisor_id.toString() !== req.user._id.toString()) {
-            return res.status(403).json({ success: false, error: 'Not authorized' });
+            return respond(res, 403, { success: false, error: 'Not authorized' });
         }
 
         // Create replacement request for admin approval
@@ -78,10 +79,10 @@ exports.removeMember = async (req, res) => {
             details: { memberId, reason }
         });
 
-        res.json({ success: true });
+        respond(res, 200, { success: true });
     } catch (error) {
         console.error(error);
-        res.status(500).json({ success: false, error: 'Server Error' });
+        respond(res, 500, { success: false, error: 'Server Error' });
     }
 };
 
@@ -90,7 +91,7 @@ exports.removeMember = async (req, res) => {
 exports.getSuggestedReplacements = async (req, res) => {
     try {
         const team = await EventTeam.findById(req.params.teamId);
-        if (!team) return res.status(404).json({ success: false, error: 'Team not found' });
+        if (!team) return respond(res, 404, { success: false, error: 'Team not found' });
 
         const available = await Staff.find({
             role: 'Staff',
@@ -99,10 +100,10 @@ exports.getSuggestedReplacements = async (req, res) => {
             _id: { $nin: team.member_ids }
         }).select('name email role');
 
-        res.json({ success: true, data: available });
+        respond(res, 200, { success: true, data: available });
     } catch (error) {
         console.error(error);
-        res.status(500).json({ success: false, error: 'Server Error' });
+        respond(res, 500, { success: false, error: 'Server Error' });
     }
 };
 
@@ -111,7 +112,7 @@ exports.getSuggestedReplacements = async (req, res) => {
 exports.updateReadiness = async (req, res) => {
     try {
         const team = await EventTeam.findById(req.params.teamId).populate('event_id');
-        if (!team) return res.status(404).json({ success: false, error: 'Team not found' });
+        if (!team) return respond(res, 404, { success: false, error: 'Team not found' });
 
         // Recalculate based on confirmed members vs assigned
         const assignment = team.event_id;
@@ -121,10 +122,10 @@ exports.updateReadiness = async (req, res) => {
         team.team_readiness = readiness;
         await team.save();
 
-        res.json({ success: true, readiness, label: getReadinessLabel(readiness) });
+        respond(res, 200, { success: true, readiness, label: getReadinessLabel(readiness) });
     } catch (error) {
         console.error(error);
-        res.status(500).json({ success: false, error: 'Server Error' });
+        respond(res, 500, { success: false, error: 'Server Error' });
     }
 };
 
@@ -135,7 +136,7 @@ exports.rateStaff = async (req, res) => {
         const { staff_id, assignment_id, rating, feedback } = req.body;
 
         if (!rating || rating < 1 || rating > 5) {
-            return res.status(400).json({ success: false, error: 'Rating must be between 1 and 5' });
+            return respond(res, 400, { success: false, error: 'Rating must be between 1 and 5' });
         }
 
         const review = await PerformanceReview.create({
@@ -152,10 +153,10 @@ exports.rateStaff = async (req, res) => {
             details: { rating, assignmentId: assignment_id }
         });
 
-        res.json({ success: true, data: review });
+        respond(res, 200, { success: true, data: review });
     } catch (error) {
         console.error(error);
-        res.status(500).json({ success: false, error: 'Server Error' });
+        respond(res, 500, { success: false, error: 'Server Error' });
     }
 };
 
@@ -167,16 +168,16 @@ exports.broadcastMessage = async (req, res) => {
         const team = await EventTeam.findById(req.params.teamId);
 
         if (!team || team.supervisor_id.toString() !== req.user._id.toString()) {
-            return res.status(403).json({ success: false, error: 'Not authorized' });
+            return respond(res, 403, { success: false, error: 'Not authorized' });
         }
 
         const validTypes = ['announcement', 'shift_reminder', 'arrival_confirmation', 'location_update', 'task_instructions'];
         if (!validTypes.includes(message_type)) {
-            return res.status(400).json({ success: false, error: 'Invalid message type' });
+            return respond(res, 400, { success: false, error: 'Invalid message type' });
         }
 
         if (!message_content || !message_content.trim()) {
-            return res.status(400).json({ success: false, error: 'Message content is required' });
+            return respond(res, 400, { success: false, error: 'Message content is required' });
         }
 
         // Persist to database
@@ -215,10 +216,10 @@ exports.broadcastMessage = async (req, res) => {
             reason: `${message_type}: ${message_content.substring(0, 100)}`
         });
 
-        res.json({ success: true, data: comm });
+        respond(res, 200, { success: true, data: comm });
     } catch (error) {
         console.error(error);
-        res.status(500).json({ success: false, error: 'Server Error' });
+        respond(res, 500, { success: false, error: 'Server Error' });
     }
 };
 
@@ -231,10 +232,10 @@ exports.getTeamCommunications = async (req, res) => {
             .sort({ timestamp: -1 })
             .limit(30);
 
-        res.json({ success: true, data: comms });
+        respond(res, 200, { success: true, data: comms });
     } catch (error) {
         console.error(error);
-        res.status(500).json({ success: false, error: 'Server Error' });
+        respond(res, 500, { success: false, error: 'Server Error' });
     }
 };
 
@@ -339,7 +340,7 @@ exports.getProfile = async (req, res) => {
 exports.updateLocation = async (req, res) => {
     try {
         const { lat, lng } = req.body;
-        if (!lat || !lng) return res.status(400).json({ success: false, error: 'Coordinates required' });
+        if (!lat || !lng) return respond(res, 400, { success: false, error: 'Coordinates required' });
         const Staff = require('../models/Staff');
         await Staff.findByIdAndUpdate(req.user._id, {
             last_location: { lat: parseFloat(lat), lng: parseFloat(lng), updatedAt: new Date() }
@@ -354,10 +355,10 @@ exports.updateLocation = async (req, res) => {
                 time: new Date()
             });
         }
-        res.json({ success: true });
+        respond(res, 200, { success: true });
     } catch (error) {
         console.error(error);
-        res.status(500).json({ success: false, error: 'Server Error' });
+        respond(res, 500, { success: false, error: 'Server Error' });
     }
 };
 

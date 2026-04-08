@@ -1,4 +1,5 @@
 /**
+const respond = require('../../utils/respond');
  * adminFinanceController.js
  * Domain: Payments, M-Pesa, Ledger
  * Pattern: Thin controller — delegates all financial logic to eventPaymentService.
@@ -47,14 +48,14 @@ exports.getAllPayments = async (req, res) => {
             .skip(skip)
             .limit(limit);
 
-        res.json({
+        respond(res, 200, {
             success: true,
             data: assignments,
             pagination: { page: parseInt(page), totalPages: Math.ceil(total / limit), total }
         });
     } catch (error) {
         console.error('[adminFinanceController] getAllPayments:', error);
-        res.status(500).json({ success: false, error: 'Server Error' });
+        respond(res, 500, { success: false, error: 'Server Error' });
     }
 };
 
@@ -69,12 +70,12 @@ exports.updatePaymentStatus = async (req, res) => {
             req.user._id, req.params.id,
             req.body.payment_status, req.body.staff_payment_id, req.body.transaction_id
         );
-        res.status(200).json({ success: true, data: assignment });
+        respond(res, 200, { success: true, data: assignment });
     } catch (error) {
         console.error('[adminFinanceController] updatePaymentStatus:', error);
         if (error.message === 'Invalid payment status' || error.message === 'Assignment not found')
-            return res.status(400).json({ success: false, error: error.message });
-        res.status(500).json({ success: false, error: 'Server Error' });
+            return respond(res, 400, { success: false, error: error.message });
+        respond(res, 500, { success: false, error: 'Server Error' });
     }
 };
 
@@ -86,10 +87,10 @@ exports.initiateStaffPayment = async (req, res) => {
     try {
         const eventPaymentService = require('../financials/services/eventPaymentService');
         const result = await eventPaymentService.initiateStaffPayment(req.user._id, req.params.id, req.body);
-        res.json({ success: true, message: result.message });
+        respond(res, 200, { success: true, message: result.message });
     } catch (error) {
         console.error('[adminFinanceController] initiateStaffPayment:', error?.response?.data || error.message);
-        res.status(500).json({
+        respond(res, 500, {
             success: false,
             error: error?.response?.data?.errorMessage || error.message || 'Payment initiation failed'
         });
@@ -111,7 +112,7 @@ exports.mpesaCallback = async (req, res) => {
 
         if (!result || typeof result !== 'object' || !result.Occasion) {
             console.warn('[adminFinanceController] mpesaCallback invalid payload ignored');
-            return res.status(200).json({ success: true, ignored: true });
+            return respond(res, 200, { success: true, ignored: true });
         }
 
         if (queueMode === 'async') {
@@ -121,10 +122,10 @@ exports.mpesaCallback = async (req, res) => {
             const eventPaymentService = require('../financials/services/eventPaymentService');
             await eventPaymentService.mpesaCallback(payload);
         }
-        res.status(200).json({ success: true });
+        respond(res, 200, { success: true });
     } catch (error) {
         console.error('[adminFinanceController] mpesaCallback:', error.message);
-        res.status(200).json({ success: true }); // Always 200 to Safaricom
+        respond(res, 200, { success: true }); // Always 200 to Safaricom
     }
 };
 
@@ -134,7 +135,7 @@ exports.mpesaCallback = async (req, res) => {
 // ─────────────────────────────────────────────────────────────
 exports.mpesaTimeout = async (req, res) => {
     console.warn('[adminFinanceController] M-Pesa B2C timeout:', req.body);
-    res.status(200).json({ success: true });
+    respond(res, 200, { success: true });
 };
 
 // ─────────────────────────────────────────────────────────────
@@ -145,12 +146,12 @@ exports.markPaymentReceived = async (req, res) => {
     try {
         const eventPaymentService = require('../financials/services/eventPaymentService');
         await eventPaymentService.markPaymentReceived(req.user._id, req.params.id, req.params.spid);
-        res.json({ success: true });
+        respond(res, 200, { success: true });
     } catch (error) {
         console.error('[adminFinanceController] markPaymentReceived:', error);
         if (error.message === 'Payment record not found')
-            return res.status(404).json({ success: false, error: error.message });
-        res.status(500).json({ success: false, error: 'Server Error' });
+            return respond(res, 404, { success: false, error: error.message });
+        respond(res, 500, { success: false, error: 'Server Error' });
     }
 };
 
@@ -177,10 +178,10 @@ exports.seedStaffPayments = async (req, res) => {
             await a.save();
             seeded++;
         }
-        res.json({ success: true, seeded });
+        respond(res, 200, { success: true, seeded });
     } catch (e) {
         console.error('[adminFinanceController] seedStaffPayments:', e);
-        res.status(500).json({ success: false, error: e.message });
+        respond(res, 500, { success: false, error: e.message });
     }
 };
 
@@ -192,12 +193,12 @@ exports.generatePaymentReceipt = async (req, res) => {
     try {
         const Assignment = require('../models/Assignment');
         const assignment = await Assignment.findById(req.params.assignmentId).populate('accepted_staff_ids', 'name phone specific_role role');
-        if (!assignment) return res.status(404).json({ success: false, error: 'Assignment not found' });
+        if (!assignment) return respond(res, 404, { success: false, error: 'Assignment not found' });
 
         const payment = assignment.staff_payments.find(
             p => p.staff_id.toString() === req.params.staffId
         );
-        if (!payment) return res.status(404).json({ success: false, error: 'Payment record not found' });
+        if (!payment) return respond(res, 404, { success: false, error: 'Payment record not found' });
 
         const staffMember = assignment.accepted_staff_ids.find(s => s._id.toString() === req.params.staffId);
         const staffName = staffMember ? staffMember.name : payment.staff_name;
@@ -265,6 +266,6 @@ exports.generatePaymentReceipt = async (req, res) => {
         doc.end();
     } catch (error) {
         console.error('[adminFinanceController] generatePaymentReceipt error:', error);
-        res.status(500).json({ success: false, error: 'Failed to generate receipt' });
+        respond(res, 500, { success: false, error: 'Failed to generate receipt' });
     }
 };

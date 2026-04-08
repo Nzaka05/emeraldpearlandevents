@@ -1777,7 +1777,7 @@
 
         async function loadStaffForFeedback() {
             try {
-                const response = await fetch('/api/admin/staff');
+                const response = await fetch('/api/v1/admin/staff');
                 const result = await response.json();
                 if (result.success && result.staff) {
                     allStaffList = result.staff.sort((a, b) => a.name.localeCompare(b.name));
@@ -1808,7 +1808,7 @@
 
         async function loadAdminData() {
             try {
-                const response = await fetch('/api/admin/me');
+                const response = await fetch('/api/v1/admin/me');
                 const result = await response.json();
                 if (result.success) {
                     const name = result.admin.name || 'Admin';
@@ -1823,7 +1823,7 @@
 
         async function loadBookings() {
             try {
-                const response = await fetch('/api/admin/bookings?limit=100');
+                const response = await fetch('/api/v1/admin/bookings?limit=100');
                 if (response.status === 401) { window.location.href = '/admin/login'; return; }
                 const result = await response.json();
                 if (result.success) {
@@ -1974,7 +1974,7 @@
             let successCount = 0;
             for (const id of ids) {
                 try {
-                    const res = await fetch(`/api/admin/bookings/${id}`, {
+                    const res = await fetch(`/api/v1/admin/bookings/${id}`, {
                         method: 'PATCH',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ isPaid: true })
@@ -1998,7 +1998,7 @@
             let successCount = 0;
             for (const id of ids) {
                 try {
-                    const res = await fetch(`/api/admin/bookings/${id}`, { method: 'DELETE' });
+                    const res = await fetch(`/api/v1/admin/bookings/${id}`, { method: 'DELETE' });
                     const result = await res.json();
                     if (result.success) successCount++;
                 } catch (e) { console.error('Bulk delete error', e); }
@@ -2032,7 +2032,7 @@
 
         async function openBookingModal(bookingId) {
             try {
-                const response = await fetch(`/api/admin/bookings/${bookingId}`);
+                const response = await fetch(`/api/v1/admin/bookings/${bookingId}`);
                 const result = await response.json();
                 if (result.success) {
                     currentBooking = result.booking;
@@ -2140,14 +2140,14 @@
 
             try {
                 // Update status
-                const res1 = await fetch(`/api/admin/bookings/${currentBooking._id}`, {
+                const res1 = await fetch(`/api/v1/admin/bookings/${currentBooking._id}`, {
                     method: 'PATCH',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(statusData)
                 });
 
                 // Update payment via separate endpoint to trigger notifications
-                const res2 = await fetch(`/api/admin/bookings/${currentBooking._id}/pay`, {
+                const res2 = await fetch(`/api/v1/admin/bookings/${currentBooking._id}/pay`, {
                     method: 'PATCH',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(paymentData)
@@ -2200,7 +2200,7 @@
             }
 
             try {
-                const res = await fetch(`/api/admin/bookings/${bookingId}/payment`, {
+                const res = await fetch(`/api/v1/admin/bookings/${bookingId}/payment`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ amount, paymentMethod, transactionId, paymentDate: date, notes })
@@ -2232,7 +2232,7 @@
             const teamIds = Array.from(document.getElementById('teamStaffSelect').selectedOptions).map(opt => opt.value);
 
             try {
-                const response = await fetch(`/api/admin/bookings/${currentBooking._id}/assign-staff`, {
+                const response = await fetch(`/api/v1/admin/bookings/${currentBooking._id}/assign-staff`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -2281,7 +2281,7 @@
                     adminNotes: currentBooking.adminNotes
                 };
 
-                fetch(`/api/admin/bookings/${currentBooking._id}`, {
+                fetch(`/api/v1/admin/bookings/${currentBooking._id}`, {
                     method: 'PATCH',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(updatedData)
@@ -2293,7 +2293,7 @@
             if (!confirm('Are you sure you want to delete this booking?')) return;
 
             try {
-                const response = await fetch(`/api/admin/bookings/${bookingId}`, {
+                const response = await fetch(`/api/v1/admin/bookings/${bookingId}`, {
                     method: 'DELETE'
                 });
 
@@ -2314,7 +2314,7 @@
             if (!confirm(`Are you sure you want to send the appreciation email to ${clientName}?`)) return;
 
             try {
-                const response = await fetch(`/api/admin/bookings/${currentBooking._id}/send-appreciation`, {
+                const response = await fetch(`/api/v1/admin/bookings/${currentBooking._id}/send-appreciation`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' }
                 });
@@ -2350,7 +2350,7 @@
             }
 
             try {
-                const response = await fetch(`/api/admin/bookings/${currentBooking._id}/message-staff`, {
+                const response = await fetch(`/api/v1/admin/bookings/${currentBooking._id}/message-staff`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -2400,7 +2400,7 @@
         }
 
         function handleLogout() {
-            fetch('/api/admin/logout', { method: 'POST' })
+            fetch('/api/v1/admin/logout', { method: 'POST' })
                 .then(() => window.location.href = '/admin/login')
                 .catch(error => console.error('Logout error:', error));
         }

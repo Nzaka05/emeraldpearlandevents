@@ -1,3 +1,4 @@
+const respond = require('../../utils/respond');
 const Staff = require('../models/Staff');
 const AuditLog = require('../models/AuditLog');
 const bcrypt = require('bcrypt');
@@ -44,7 +45,7 @@ exports.login = async (req, res) => {
 
         if (!email || !password) {
             if (isApi) {
-                return res.status(400).json({
+                return respond(res, 400, {
                     success: false,
                     error: { code: 'MISSING_FIELDS', message: 'Please provide an email and password', statusCode: 400 },
                     timestamp: new Date().toISOString()
@@ -56,7 +57,7 @@ exports.login = async (req, res) => {
         const user = await Staff.findOne({ email }).select('+password');
         if (!user) {
             if (isApi) {
-                return res.status(401).json({
+                return respond(res, 401, {
                     success: false,
                     error: { code: 'INVALID_CREDENTIALS', message: 'Email or password is incorrect', statusCode: 401 },
                     timestamp: new Date().toISOString()
@@ -71,7 +72,7 @@ exports.login = async (req, res) => {
                 details: { reason: 'Account Suspended', email }, ipAddress: req.ip
             });
             if (isApi) {
-                return res.status(403).json({
+                return respond(res, 403, {
                     success: false,
                     error: { code: 'ACCOUNT_SUSPENDED', message: 'Account suspended. Contact Administrator.', statusCode: 403 },
                     timestamp: new Date().toISOString()
@@ -87,7 +88,7 @@ exports.login = async (req, res) => {
                 details: { reason: 'Invalid Password', email }, ipAddress: req.ip
             });
             if (isApi) {
-                return res.status(401).json({
+                return respond(res, 401, {
                     success: false,
                     error: { code: 'INVALID_CREDENTIALS', message: 'Email or password is incorrect', statusCode: 401 },
                     timestamp: new Date().toISOString()
@@ -105,13 +106,13 @@ exports.login = async (req, res) => {
 
         if (user.mustChangePassword) {
             if (isApi) {
-                return res.status(200).json({ success: true, mustChangePassword: true, redirect: '/portal/auth/change-password' });
+                return respond(res, 200, { success: true, mustChangePassword: true, redirect: '/portal/auth/change-password' });
             }
             return res.redirect('/portal/auth/change-password');
         }
 
         if (isApi) {
-            return res.status(200).json({ success: true, user: { id: user._id, email: user.email, name: user.name, role: user.role } });
+            return respond(res, 200, { success: true, user: { id: user._id, email: user.email, name: user.name, role: user.role } });
         }
 
         if (user.role === 'Admin') {
@@ -125,7 +126,7 @@ exports.login = async (req, res) => {
     } catch (error) {
         console.error(error);
         if (isApiRequest(req)) {
-            return res.status(500).json({
+            return respond(res, 500, {
                 success: false,
                 error: { code: 'SERVER_ERROR', message: 'An internal server error occurred', statusCode: 500 },
                 timestamp: new Date().toISOString()
@@ -194,7 +195,7 @@ exports.logout = (req, res) => {
     // Check if JSON request
     const isApiRequest = req.headers['content-type'] === 'application/json' || req.headers['authorization'];
     if (isApiRequest || req.method === 'POST') {
-        return res.json({ success: true, data: { message: "Logged out successfully" } });
+        return respond(res, 200, { success: true, data: { message: "Logged out successfully" } });
     }
     
     res.redirect('/portal/auth/login');
@@ -214,14 +215,14 @@ exports.refresh = async (req, res) => {
             token = req.cookies[LEGACY_COOKIE];
         }
 
-        if (!token) return res.status(401).json({ success: false, error: 'Not authorized' });
+        if (!token) return respond(res, 401, { success: false, error: 'Not authorized' });
 
         const decoded = jwt.verify(token, staffAuthSecret, { ignoreExpiration: true });
         
         const Staff = require('../models/Staff');
         const user = await Staff.findById(decoded.id);
         if (!user || user.status === 'Suspended') {
-             return res.status(401).json({ success: false, error: 'User unavailable' });
+             return respond(res, 401, { success: false, error: 'User unavailable' });
         }
 
         const newToken = jwt.sign(
@@ -240,10 +241,10 @@ exports.refresh = async (req, res) => {
         res.cookie(STAFF_COOKIE, newToken, refreshOptions);
         res.cookie(LEGACY_COOKIE, newToken, refreshOptions);
 
-        res.json({ success: true, token: newToken });
+        respond(res, 200, { success: true, token: newToken });
     } catch (err) {
         console.error('Refresh token error:', err);
-        res.status(401).json({ success: false, error: 'Invalid token' });
+        respond(res, 401, { success: false, error: 'Invalid token' });
     }
 };
 
@@ -429,10 +430,10 @@ exports.getPortalChoice = async (req, res) => {
 exports.getProfileJson = async (req, res) => {
     try {
         const user = await Staff.findById(req.user._id).select('-password');
-        if (!user) return res.status(404).json({ success: false, error: 'User not found' });
-        res.status(200).json({ success: true, user });
+        if (!user) return respond(res, 404, { success: false, error: 'User not found' });
+        respond(res, 200, { success: true, user });
     } catch (error) {
         console.error(error);
-        res.status(500).json({ success: false, error: 'Server Error' });
+        respond(res, 500, { success: false, error: 'Server Error' });
     }
 };

@@ -1022,8 +1022,8 @@
             try {
                 // Fetch both bookings and standalone CRM customers
                 const [bookingsRes, customersRes] = await Promise.all([
-                    fetch('/api/admin/bookings?limit=100'),
-                    fetch('/api/admin/customers')
+                    fetch('/api/v1/admin/bookings?limit=100'),
+                    fetch('/api/v1/admin/customers')
                 ]);
 
                 const bookingsData = await bookingsRes.json();
@@ -1170,7 +1170,7 @@
             }
 
             try {
-                const response = await fetch('/api/admin/customers', {
+                const response = await fetch('/api/v1/admin/customers', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ name, email, phone, location, notes })
@@ -1203,7 +1203,7 @@
                 const client = allClients.find(c => c.email === email);
                 if (client && client.isStandalone && client.id) {
                     try {
-                        await fetch(`/api/admin/customers/\${client.id}`, { method: 'DELETE' });
+                        await fetch(`/api/v1/admin/customers/\${client.id}`, { method: 'DELETE' });
                     } catch (e) { console.error('Delete failed:', e); }
                 }
                 allClients = allClients.filter(c => c.email !== email);
@@ -1212,7 +1212,7 @@
         }
 
         function handleLogout() {
-            fetch('/api/admin/logout', { method: 'POST' })
+            fetch('/api/v1/admin/logout', { method: 'POST' })
                 .then(() => window.location.href = '/admin/login')
                 .catch(error => console.error('Logout error:', error));
         }

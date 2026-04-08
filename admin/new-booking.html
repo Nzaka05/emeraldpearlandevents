@@ -1538,7 +1538,7 @@ html.dark-mode .breadcrumb a { color: #c9a84c; }
         // Load admin data
         async function loadAdminData() {
             try {
-                const response = await fetch('/api/admin/me');
+                const response = await fetch('/api/v1/admin/me');
                 const result = await response.json();
 
                 if (result.success && result.admin) {
@@ -1558,7 +1558,7 @@ html.dark-mode .breadcrumb a { color: #c9a84c; }
         // Load stats
         async function loadStats() {
             try {
-                const response = await fetch('/api/admin/analytics/overview');
+                const response = await fetch('/api/v1/admin/analytics/overview');
                 const result = await response.json();
 
                 if (result.success && result.stats) {
@@ -1664,7 +1664,7 @@ html.dark-mode .breadcrumb a { color: #c9a84c; }
 
         // Logout handler
         function handleLogout() {
-            fetch('/api/admin/logout', { method: 'POST' })
+            fetch('/api/v1/admin/logout', { method: 'POST' })
                 .then(() => window.location.href = '/admin/login')
                 .catch(err => console.error('Logout error:', err));
         }
@@ -1686,7 +1686,7 @@ html.dark-mode .breadcrumb a { color: #c9a84c; }
 
         async function loadSocialConfig() {
             try {
-                const res = await fetch('/api/admin/settings', { credentials: 'include' });
+                const res = await fetch('/api/v1/admin/settings', { credentials: 'include' });
                 const data = await res.json();
                 if (!data.success) return;
 

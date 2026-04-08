@@ -1160,7 +1160,7 @@
 
         async function loadAdminProfile() {
             try {
-                const response = await fetch('/api/admin/me', { credentials: 'include' });
+                const response = await fetch('/api/v1/admin/me', { credentials: 'include' });
                 const result = await response.json();
 
                 if (result.success && result.admin) {
@@ -1198,7 +1198,7 @@
 
             try {
                 // Update profile with avatar
-                const response = await fetch('/api/admin/me', {
+                const response = await fetch('/api/v1/admin/me', {
                     method: 'PATCH',
                     headers: { 'Content-Type': 'application/json' },
                     credentials: 'include',
@@ -1233,7 +1233,7 @@
 
         async function loadSettings() {
             try {
-                const response = await fetch('/api/admin/settings');
+                const response = await fetch('/api/v1/admin/settings');
                 const result = await response.json();
 
                 if (result.success && result.settings) {
@@ -1290,7 +1290,7 @@
             };
 
             try {
-                const response = await fetch('/api/admin/settings', {
+                const response = await fetch('/api/v1/admin/settings', {
                     method: 'PATCH',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(settings)
@@ -1314,7 +1314,7 @@
         }
 
         function handleLogout() {
-            fetch('/api/admin/logout', { method: 'POST' })
+            fetch('/api/v1/admin/logout', { method: 'POST' })
                 .then(() => window.location.href = '/admin/login')
                 .catch(error => console.error('Logout error:', error));
         }
@@ -1362,7 +1362,7 @@
             }
 
             try {
-                const response = await fetch('/api/admin/change-password', {
+                const response = await fetch('/api/v1/admin/change-password', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ currentPassword, newPassword })

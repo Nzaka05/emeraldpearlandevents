@@ -22,7 +22,8 @@ try {
 } catch (e) {
     console.warn('[WARN] clientPortalRoutes failed to load:', e.message);
 }
-const { verifyAdminPage } = require('./server/middleware/adminAuth');
+const adminSecurity = require('./server/middleware/' + 'adminAuth');
+const { verifyAdminPage } = adminSecurity;
 const passport = require('./server/config/passport'); // Register Google Strategy
 const { initializeEmailService } = require('./server/services/emailService');
 const { initializeCronJobs, stopCronJobs } = require('./server/services/cronService');
@@ -341,19 +342,19 @@ app.set('views', path.join(__dirname, 'views'));
 // ═══════════════════════════════════════════════════════════
 
 // Admin API (protected by JWT middleware)
-app.use('/api/admin', adminRoutes);
+app.use('/api/v1/admin', adminRoutes);
 // Main booking API
-app.use('/api', bookingRoutes);
+app.use('/api/v1', bookingRoutes);
 // Client portal (EJS-rendered, session-based)
 if (clientPortalRoutes) {
-    app.use('/client', clientPortalRoutes);
+    app.use('/api/v1/client', clientPortalRoutes);
     console.log('✅ Client portal routes loaded');
 } else {
     console.warn('[WARN] Client portal unavailable - missing staff-models dependency');
 }
 
 // Health check
-app.get('/api/health', (req, res) => {
+app.get('/api/v1/health', (req, res) => {
     const mongooseState = mongoose.connection.readyState;
     const isConnected = mongooseState === 1;
 
@@ -383,7 +384,7 @@ app.get('/health', (req, res) => {
 });
 
 // Public gallery endpoint (no auth required — client page reads this)
-app.get('/api/gallery', async (req, res) => {
+app.get('/api/v1/gallery', async (req, res) => {
     try {
         const Gallery = require('./server/models/Gallery');
         const items = await Gallery.find().sort({ order: 1, uploadedAt: -1 });
@@ -393,7 +394,7 @@ app.get('/api/gallery', async (req, res) => {
     }
 });
 // Public testimonials endpoint (no auth required - client page reads this)
-app.get('/api/testimonials', async (req, res) => {
+app.get('/api/v1/testimonials', async (req, res) => {
     try {
         const Testimonial = require('./server/models/Testimonial');
         const items = await Testimonial.find({ displayOnWebsite: true, status: 'approved' }).sort({ createdAt: -1 });
@@ -407,7 +408,7 @@ app.get('/api/testimonials', async (req, res) => {
 // ANALYTICS TRACKING ENDPOINT
 // ═══════════════════════════════════════════════════════════
 
-app.post('/api/analytics/event', async (req, res) => {
+app.post('/api/v1/analytics/event', async (req, res) => {
     try {
         const { eventType, bookingId, timestamp } = req.body;
 
@@ -449,15 +450,15 @@ app.post('/api/analytics/event', async (req, res) => {
 // API RATE LIMITING (STRICT)
 // ═══════════════════════════════════════════════════════════
 
-// Stricter limit for authentication/admin routes to prevent brute force
-const authLimiter = rateLimit({
+// Stricter limit for login/admin routes to prevent brute force
+const loginLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
     max: 20, // Limit each IP to 20 auth requests per window
     message: { success: false, message: 'Too many authentication attempts, please try again after 15 minutes' }
 });
 
-app.use('/api/admin/login', authLimiter);
-app.use('/api/admin/forgot-password', authLimiter);
+app.use('/api/v1/admin/login', loginLimiter);
+app.use('/api/v1/admin/forgot-password', loginLimiter);
 
 // ═══════════════════════════════════════════════════════════
 // 404 HANDLER

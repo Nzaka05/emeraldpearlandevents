@@ -1,4 +1,5 @@
 /**
+const respond = require('../../utils/respond');
  * surveyController.js — Phase 11: Post-Event Survey System
  * Staff, Supervisor, and Client survey management
  */
@@ -62,8 +63,8 @@ exports.getSurveyPage = async (req, res) => {
 exports.submitSurvey = async (req, res) => {
     try {
         const survey = await Survey.findOne({ token: req.params.token });
-        if (!survey) return res.status(404).json({ success: false, error: 'Invalid survey' });
-        if (survey.submitted) return res.status(400).json({ success: false, error: 'Already submitted' });
+        if (!survey) return respond(res, 404, { success: false, error: 'Invalid survey' });
+        if (survey.submitted) return respond(res, 400, { success: false, error: 'Already submitted' });
 
         const { responses, overall_rating } = req.body;
         const parsedResponses = typeof responses === 'string' ? JSON.parse(responses) : responses;
@@ -74,9 +75,9 @@ exports.submitSurvey = async (req, res) => {
         survey.submitted_at = new Date();
         await survey.save();
 
-        res.json({ success: true, message: 'Thank you for your feedback!' });
+        respond(res, 200, { success: true, message: 'Thank you for your feedback!' });
     } catch (err) {
-        res.status(500).json({ success: false, error: err.message });
+        respond(res, 500, { success: false, error: err.message });
     }
 };
 

@@ -1,4 +1,5 @@
 /**
+const respond = require('../../utils/respond');
  * plannerController.js — Phase 7: Event Planners Directory
  * CRUD for external event planner / organiser contacts
  */
@@ -61,9 +62,9 @@ exports.createPlanner = async (req, res) => {
             ip_address: req.ip
         });
 
-        res.json({ success: true, planner });
+        respond(res, 200, { success: true, planner });
     } catch (err) {
-        res.status(500).json({ success: false, error: err.message });
+        respond(res, 500, { success: false, error: err.message });
     }
 };
 
@@ -84,11 +85,11 @@ exports.updatePlanner = async (req, res) => {
             { new: true }
         ).lean();
 
-        if (!planner) return res.status(404).json({ success: false, error: 'Planner not found' });
+        if (!planner) return respond(res, 404, { success: false, error: 'Planner not found' });
 
-        res.json({ success: true, planner });
+        respond(res, 200, { success: true, planner });
     } catch (err) {
-        res.status(500).json({ success: false, error: err.message });
+        respond(res, 500, { success: false, error: err.message });
     }
 };
 
@@ -96,7 +97,7 @@ exports.updatePlanner = async (req, res) => {
 exports.deletePlanner = async (req, res) => {
     try {
         const planner = await EventPlanner.findByIdAndDelete(req.params.id);
-        if (!planner) return res.status(404).json({ success: false, error: 'Not found' });
+        if (!planner) return respond(res, 404, { success: false, error: 'Not found' });
 
         await AuditLog.create({
             user_id:   req.user._id,
@@ -106,9 +107,9 @@ exports.deletePlanner = async (req, res) => {
             ip_address: req.ip
         });
 
-        res.json({ success: true });
+        respond(res, 200, { success: true });
     } catch (err) {
-        res.status(500).json({ success: false, error: err.message });
+        respond(res, 500, { success: false, error: err.message });
     }
 };
 
@@ -116,7 +117,7 @@ exports.deletePlanner = async (req, res) => {
 exports.linkPlannerToAssignment = async (req, res) => {
     try {
         const planner = await EventPlanner.findById(req.params.id);
-        if (!planner) return res.status(404).json({ success: false, error: 'Not found' });
+        if (!planner) return respond(res, 404, { success: false, error: 'Not found' });
 
         const assignId = req.params.assignmentId;
         if (!planner.linked_assignments.includes(assignId)) {
@@ -124,8 +125,8 @@ exports.linkPlannerToAssignment = async (req, res) => {
             await planner.save();
         }
 
-        res.json({ success: true });
+        respond(res, 200, { success: true });
     } catch (err) {
-        res.status(500).json({ success: false, error: err.message });
+        respond(res, 500, { success: false, error: err.message });
     }
 };

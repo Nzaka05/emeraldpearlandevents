@@ -191,7 +191,7 @@ const customJs = `
                     data.usherDetails = data.usherCount + " ushers requested";
                 }
 
-                const response = await fetch('/api/book-event', {
+                const response = await fetch('/api/v1/book-event', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(data)

@@ -1,4 +1,5 @@
 /**
+const respond = require('../../utils/respond');
  * adminCommandCenterController.js
  * Controller for the Main Admin Live Event Command Center (Port 3000)
  */
@@ -26,26 +27,26 @@ exports.renderCommandCenter = async (req, res) => {
 exports.getMetrics = async (req, res) => {
     try {
         const metrics = await commandCenterService.getCommandCenterMetrics();
-        res.status(200).json({ success: true, data: metrics, timestamp: new Date() });
+        respond(res, 200, { success: true, data: metrics, timestamp: new Date() });
     } catch (err) {
-        res.status(500).json({ success: false, error: err.message });
+        respond(res, 500, { success: false, error: err.message });
     }
 };
 
 exports.getActiveEvents = async (req, res) => {
     try {
         const events = await commandCenterService.getActiveEventsSummary();
-        res.status(200).json({ success: true, data: events, timestamp: new Date() });
+        respond(res, 200, { success: true, data: events, timestamp: new Date() });
     } catch (err) {
-        res.status(500).json({ success: false, error: err.message });
+        respond(res, 500, { success: false, error: err.message });
     }
 };
 
 exports.getEventDetail = async (req, res) => {
     try {
         const detail = await commandCenterService.getEventDetail(req.params.id);
-        res.status(200).json({ success: true, data: detail, timestamp: new Date() });
+        respond(res, 200, { success: true, data: detail, timestamp: new Date() });
     } catch (err) {
-        res.status(500).json({ success: false, error: err.message });
+        respond(res, 500, { success: false, error: err.message });
     }
 };

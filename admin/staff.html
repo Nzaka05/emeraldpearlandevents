@@ -1073,7 +1073,7 @@
 
                 async function loadAdminData() {
                     try {
-                        const response = await fetch('/api/admin/me');
+                        const response = await fetch('/api/v1/admin/me');
                         const result = await response.json();
                         if (result.success && result.admin) {
                             const initials = result.admin.name.split(' ').map(n => n[0]).join('').toUpperCase();
@@ -1086,7 +1086,7 @@
 
                 async function loadStaff() {
                     try {
-                        const response = await fetch('/api/admin/staff');
+                        const response = await fetch('/api/v1/admin/staff');
                         const result = await response.json();
                         if (result.success) {
                             staffData = result.staff.map(s => ({
@@ -1238,7 +1238,7 @@ function filterStaff() {
                 async function deleteStaff(id) {
                     if (confirm('Delete this staff member permanently?')) {
                         try {
-                            const response = await fetch(`/api/admin/staff/${id}`, { method: 'DELETE' });
+                            const response = await fetch(`/api/v1/admin/staff/${id}`, { method: 'DELETE' });
                             const result = await response.json();
                             if (result.success) {
                                 loadStaff();
@@ -1327,7 +1327,7 @@ function filterStaff() {
                 }
 
                 function handleLogout() {
-                    fetch('/api/admin/logout', { method: 'POST' })
+                    fetch('/api/v1/admin/logout', { method: 'POST' })
                         .then(() => window.location.href = '/admin/login')
                         .catch(error => console.error('Logout error:', error));
                 }

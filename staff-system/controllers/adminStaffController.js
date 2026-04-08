@@ -1,4 +1,5 @@
 /**
+const respond = require('../../utils/respond');
  * adminStaffController.js
  * Domain: Staff Management — CRUD, suspension, location, category settings
  * Pattern: Thin controller — delegates all business logic to staffManagementService.
@@ -12,6 +13,7 @@ const EventTeam = require('../models/EventTeam');
 const AuditLog = require('../models/AuditLog');
 const PerformanceReview = require('../models/PerformanceReview');
 const emailService = require('../services/emailService');
+const { notificationQueue } = require('../../config/queues');
 
 // ─────────────────────────────────────────────────────────────
 // @desc   Staff Management Page (EJS)
@@ -55,10 +57,10 @@ exports.getCategorySettingsPage = async (req, res) => {
 exports.getAllStaff = async (req, res) => {
     try {
         const staff = await Staff.find().select('-password').sort({ createdAt: -1 });
-        res.json({ success: true, data: staff });
+        respond(res, 200, { success: true, data: staff });
     } catch (error) {
         console.error('[adminStaffController] getAllStaff:', error);
-        res.status(500).json({ success: false, error: 'Server Error' });
+        respond(res, 500, { success: false, error: 'Server Error' });
     }
 };
 
@@ -77,7 +79,7 @@ exports.addStaff = async (req, res) => {
         const { emitMetricUpdate } = require('../services/socketService');
         await emitMetricUpdate();
 
-        res.status(201).json({
+        respond(res, 201, {
             success: true,
             data: { _id: user._id, name: user.name, email: user.email, role: user.role },
             message: `Account created. Welcome email sent to ${user.email}.`
@@ -85,8 +87,8 @@ exports.addStaff = async (req, res) => {
     } catch (error) {
         console.error('[adminStaffController] addStaff:', error);
         if (error.message === 'A staff member with this email already exists')
-            return res.status(400).json({ success: false, error: error.message });
-        res.status(500).json({ success: false, error: 'Server Error' });
+            return respond(res, 400, { success: false, error: error.message });
+        respond(res, 500, { success: false, error: 'Server Error' });
     }
 };
 
@@ -111,7 +113,7 @@ exports.editStaff = async (req, res) => {
         await emitMetricUpdate();
 
         if (req.headers['content-type']?.includes('application/json')) {
-            res.json({ success: true, data: updated });
+            respond(res, 200, { success: true, data: updated });
         } else {
             req.flash('success', 'Staff member updated successfully');
             res.redirect('/portal/admin-staff/staff');
@@ -119,8 +121,8 @@ exports.editStaff = async (req, res) => {
     } catch (error) {
         console.error('[adminStaffController] editStaff:', error);
         if (error.message === 'Staff not found')
-            return res.status(404).json({ success: false, error: 'Staff not found' });
-        res.status(500).json({ success: false, error: 'Server Error' });
+            return respond(res, 404, { success: false, error: 'Staff not found' });
+        respond(res, 500, { success: false, error: 'Server Error' });
     }
 };
 
@@ -131,8 +133,8 @@ exports.editStaff = async (req, res) => {
 exports.deleteStaff = async (req, res) => {
     try {
         const staff = await Staff.findById(req.params.id);
-        if (!staff) return res.status(404).json({ success: false, error: 'Staff not found' });
-        if (staff.role === 'Admin') return res.status(403).json({ success: false, error: 'Cannot delete admin accounts' });
+        if (!staff) return respond(res, 404, { success: false, error: 'Staff not found' });
+        if (staff.role === 'Admin') return respond(res, 403, { success: false, error: 'Cannot delete admin accounts' });
 
         const staffId = staff._id;
         await Assignment.updateMany({}, {
@@ -157,10 +159,10 @@ exports.deleteStaff = async (req, res) => {
         const { emitMetricUpdate } = require('../services/socketService');
         await emitMetricUpdate();
 
-        res.json({ success: true, message: 'Staff deleted successfully' });
+        respond(res, 200, { success: true, message: 'Staff deleted successfully' });
     } catch (error) {
         console.error('[adminStaffController] deleteStaff:', error);
-        res.status(500).json({ success: false, error: 'Server Error' });
+        respond(res, 500, { success: false, error: 'Server Error' });
     }
 };
 
@@ -178,14 +180,14 @@ exports.toggleSuspend = async (req, res) => {
         const { emitMetricUpdate } = require('../services/socketService');
         await emitMetricUpdate();
 
-        res.json({ success: true, status: staff.status });
+        respond(res, 200, { success: true, status: staff.status });
     } catch (error) {
         console.error('[adminStaffController] toggleSuspend:', error);
         if (error.message === 'Staff not found')
-            return res.status(404).json({ success: false, error: 'Staff not found' });
+            return respond(res, 404, { success: false, error: 'Staff not found' });
         if (error.message === 'Cannot suspend admin accounts')
-            return res.status(403).json({ success: false, error: 'Cannot suspend admin accounts' });
-        res.status(500).json({ success: false, error: 'Server Error' });
+            return respond(res, 403, { success: false, error: 'Cannot suspend admin accounts' });
+        respond(res, 500, { success: false, error: 'Server Error' });
     }
 };
 
@@ -196,7 +198,7 @@ exports.toggleSuspend = async (req, res) => {
 exports.adminResetPassword = async (req, res) => {
     try {
         const staff = await Staff.findById(req.params.id);
-        if (!staff) return res.status(404).json({ success: false, error: 'Staff not found' });
+        if (!staff) return respond(res, 404, { success: false, error: 'Staff not found' });
 
         const newPlainPassword = crypto.randomBytes(5).toString('hex');
         const salt = await bcrypt.genSalt(10);
@@ -204,17 +206,23 @@ exports.adminResetPassword = async (req, res) => {
         staff.mustChangePassword = true;
         await staff.save();
 
-        await emailService.sendAdminPasswordResetNotification(staff, newPlainPassword);
+        await notificationQueue.add('email', {
+            type: 'staff.admin.password_reset',
+            payload: {
+                staffId: staff._id.toString(),
+                plainPassword: newPlainPassword
+            }
+        });
         await AuditLog.create({
             actionType: 'PASSWORD_RESET', targetModel: 'Staff', targetId: staff._id,
             performedBy: req.user._id,
             details: { reason: 'Admin Manual Reset' }
         });
 
-        res.json({ success: true, message: `Password reset email sent to ${staff.email}. Staff will be forced to change on next login.` });
+        respond(res, 200, { success: true, message: `Password reset email sent to ${staff.email}. Staff will be forced to change on next login.` });
     } catch (error) {
         console.error('[adminStaffController] adminResetPassword:', error);
-        res.status(500).json({ success: false, error: 'Server Error' });
+        respond(res, 500, { success: false, error: 'Server Error' });
     }
 };
 
@@ -228,10 +236,10 @@ exports.getStaffPerformance = async (req, res) => {
             .populate('supervisor_id', 'name')
             .populate('assignment_id', 'title date')
             .sort({ timestamp: -1 });
-        res.json({ success: true, data: reviews });
+        respond(res, 200, { success: true, data: reviews });
     } catch (error) {
         console.error('[adminStaffController] getStaffPerformance:', error);
-        res.status(500).json({ success: false, error: 'Server Error' });
+        respond(res, 500, { success: false, error: 'Server Error' });
     }
 };
 
@@ -243,12 +251,12 @@ exports.updateAdminLocation = async (req, res) => {
     try {
         const staffManagementService = require('../services/staffManagementService');
         await staffManagementService.updateAdminLocation(req.user._id, req.body.lat, req.body.lng);
-        res.json({ success: true });
+        respond(res, 200, { success: true });
     } catch (error) {
         console.error('[adminStaffController] updateAdminLocation:', error);
         if (error.message === 'Coordinates required')
-            return res.status(400).json({ success: false, error: error.message });
-        res.status(500).json({ success: false, error: 'Server Error' });
+            return respond(res, 400, { success: false, error: error.message });
+        respond(res, 500, { success: false, error: 'Server Error' });
     }
 };
 
@@ -260,12 +268,12 @@ exports.assignSupervisor = async (req, res) => {
     try {
         const staffManagementService = require('../services/staffManagementService');
         const updated = await staffManagementService.assignSupervisor(req.user._id, req.params.id, req.body.supervisorId);
-        res.json({ success: true, data: updated });
+        respond(res, 200, { success: true, data: updated });
     } catch (error) {
         console.error('[adminStaffController] assignSupervisor:', error);
         if (error.message === 'Supervisor not found' || error.message === 'Staff not found')
-            return res.status(404).json({ success: false, error: error.message });
-        res.status(500).json({ success: false, error: 'Server Error' });
+            return respond(res, 404, { success: false, error: error.message });
+        respond(res, 500, { success: false, error: 'Server Error' });
     }
 };
 
@@ -277,10 +285,10 @@ exports.updateCategorySettings = async (req, res) => {
     try {
         const staffManagementService = require('../services/staffManagementService');
         const updated = await staffManagementService.updateCategorySettings(req.user, req.body, req.ip);
-        res.json({ success: true, setting: updated });
+        respond(res, 200, { success: true, setting: updated });
     } catch (err) {
         console.error('[adminStaffController] updateCategorySettings:', err);
-        res.status(500).json({ success: false, error: err.message });
+        respond(res, 500, { success: false, error: err.message });
     }
 };
 
@@ -292,11 +300,11 @@ exports.getStaffCard = async (req, res) => {
     try {
         const staffManagementService = require('../services/staffManagementService');
         const cardData = await staffManagementService.getStaffCard(req.params.id);
-        res.json({ success: true, staff: cardData });
+        respond(res, 200, { success: true, staff: cardData });
     } catch (err) {
         console.error('[adminStaffController] getStaffCard:', err);
         if (err.message === 'Staff not found')
-            return res.status(404).json({ success: false, error: err.message });
-        res.status(500).json({ success: false, error: err.message });
+            return respond(res, 404, { success: false, error: err.message });
+        respond(res, 500, { success: false, error: err.message });
     }
 };

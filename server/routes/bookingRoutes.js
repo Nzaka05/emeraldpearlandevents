@@ -5,7 +5,8 @@ const Booking = require('../models/Booking');
 const Customer = require('../models/Customer');
 const AdminNotification = require('../models/AdminNotification');
 const Gallery = require('../models/Gallery');
-const { initializeEmailService, sendBusinessBookingNotification, sendClientBookingConfirmation, sendFollowUpEmail } = require('../services/emailService');
+const { initializeEmailService } = require('../services/emailService');
+const { notificationQueue } = require('../../config/queues');
 const { sendPushNotificationToAdmins } = require('../services/notificationService');
 const { normalizePhone, normalizeEmail } = require('../utils/normalization');
 
@@ -386,26 +387,24 @@ router.post('/book-event', bookingLimiter, bookingValidationRules, handleBooking
         // ───────────────────────────────────────────────────────────
         const emailPromises = [];
 
-        // Email 1: To business admin
         emailPromises.push(
-            sendBusinessBookingNotification(booking, customer)
-                .then(() => console.log(`[BOOKING] ✅ Admin notification sent for ${booking.bookingReference}`))
-                .catch(err => console.error(`[BOOKING] ❌ Admin notification FAILED for ${booking.bookingReference}:`, err.message))
+            notificationQueue.add('email', {
+                type: 'server.booking.business_notification',
+                payload: {
+                    bookingId: booking._id.toString(),
+                    customerId: customer._id.toString()
+                }
+            })
         );
 
-        // Email 2: To client — immediate thank-you
         emailPromises.push(
-            sendClientBookingConfirmation(booking, customer)
-                .then(async () => {
-                    console.log(`[BOOKING] ✅ Client confirmation sent for ${booking.bookingReference}`);
-                    try {
-                        booking.emailSentAt = new Date();
-                        await booking.save();
-                    } catch (saveErr) {
-                        console.error('[BOOKING] Failed to update emailSentAt:', saveErr.message);
-                    }
-                })
-                .catch(err => console.error(`[BOOKING] ❌ Client confirmation FAILED for ${booking.bookingReference}:`, err.message))
+            notificationQueue.add('email', {
+                type: 'server.booking.client_confirmation',
+                payload: {
+                    bookingId: booking._id.toString(),
+                    customerId: customer._id.toString()
+                }
+            })
         );
 
         // Wait for both emails to settle (success or fail), but don't block the response
@@ -413,14 +412,18 @@ router.post('/book-event', bookingLimiter, bookingValidationRules, handleBooking
         await Promise.allSettled(emailPromises);
 
         // Email 3: Delayed follow-up to client (~5 minutes later)
-        const bookingSnapshot = { ...booking.toObject() };
-        const customerSnapshot = { ...customer.toObject() };
         setTimeout(async () => {
             try {
-                await sendFollowUpEmail(bookingSnapshot, customerSnapshot);
-                console.log(`[BOOKING] ✅ Follow-up email sent for ${bookingSnapshot.bookingReference}`);
+                await notificationQueue.add('email', {
+                    type: 'server.booking.follow_up',
+                    payload: {
+                        bookingId: booking._id.toString(),
+                        customerId: customer._id.toString()
+                    }
+                });
+                console.log(`[BOOKING] ✅ Follow-up email queued for ${booking.bookingReference}`);
             } catch (followUpError) {
-                console.error(`[BOOKING] ❌ Follow-up email FAILED for ${bookingSnapshot.bookingReference}:`, followUpError.message);
+                console.error(`[BOOKING] ❌ Follow-up email queue FAILED for ${booking.bookingReference}:`, followUpError.message);
             }
         }, 5 * 60 * 1000);
 

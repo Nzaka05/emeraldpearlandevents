@@ -1,4 +1,5 @@
 /**
+const respond = require('../../utils/respond');
  * commandCenterController.js
  * Controller for the Supervisor Command Center (Port 3001)
  */
@@ -49,12 +50,12 @@ exports.getEventDetail = async (req, res) => {
             const isSupervisor = String(detail.supervisor?._id) === String(req.user._id);
             const isOnRoster = detail.staffRoster.some(s => String(s.id) === String(req.user._id));
             if (!isSupervisor && !isOnRoster) {
-                return res.status(403).json({ success: false, error: 'Unauthorized' });
+                return respond(res, 403, { success: false, error: 'Unauthorized' });
             }
         }
 
-        res.status(200).json({ success: true, data: detail, timestamp: new Date() });
+        respond(res, 200, { success: true, data: detail, timestamp: new Date() });
     } catch (err) {
-        res.status(500).json({ success: false, error: err.message });
+        respond(res, 500, { success: false, error: err.message });
     }
 };

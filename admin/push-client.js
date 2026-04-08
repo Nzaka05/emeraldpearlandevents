@@ -66,7 +66,7 @@ async function initPushNotifications() {
         }
 
         // Get VAPID public key from backend
-        const res = await fetch('/api/admin/vapid-public-key', {
+        const res = await fetch('/api/v1/admin/vapid-public-key', {
             credentials: 'same-origin'
         });
         const data = await res.json();
@@ -82,7 +82,7 @@ async function initPushNotifications() {
         });
 
         // Send subscription to backend
-        await fetch('/api/admin/push-subscribe', {
+        await fetch('/api/v1/admin/push-subscribe', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'same-origin',

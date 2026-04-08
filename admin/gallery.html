@@ -652,7 +652,7 @@
         const grid = document.getElementById('imageGrid');
         grid.innerHTML = '<div class="empty-state"><div class="pearl-spinner" style="margin:0 auto;width:24px;height:24px;border-width:3px;"></div></div>';
         try {
-            const res = await fetch('/api/admin/gallery');
+            const res = await fetch('/api/v1/admin/gallery');
             const data = await res.json();
             if (!data.success) throw new Error(data.message || 'Load failed');
             allImages = data.gallery || [];
@@ -746,7 +746,7 @@
         showProgress(10, 'Uploading…');
 
         try {
-            const res = await fetch('/api/admin/gallery/upload', {
+            const res = await fetch('/api/v1/admin/gallery/upload', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ url: pendingImageData, caption, eventType })
@@ -805,7 +805,7 @@
         const filename  = document.getElementById('fileInput').files[0]?.name || '';
 
         try {
-            const res = await fetch('/api/admin/gallery/generate-captions', {
+            const res = await fetch('/api/v1/admin/gallery/generate-captions', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ eventType, filename })
@@ -842,7 +842,7 @@
     async function deleteImage(id) {
         if (!confirm('Delete this image? This cannot be undone.')) return;
         try {
-            const res = await fetch(`/api/admin/gallery/${id}`, { method: 'DELETE' });
+            const res = await fetch(`/api/v1/admin/gallery/${id}`, { method: 'DELETE' });
             const data = await res.json();
             if (!data.success) throw new Error(data.message || 'Delete failed');
             toast('Image deleted.', 'success');
@@ -882,7 +882,7 @@
         const caption = document.getElementById(`edit-caption-${id}`).value.trim();
         const eventType = document.getElementById(`edit-type-${id}`).value;
         try {
-            const res = await fetch(`/api/admin/gallery/${id}`, {
+            const res = await fetch(`/api/v1/admin/gallery/${id}`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ caption, eventType })

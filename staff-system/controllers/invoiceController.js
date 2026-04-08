@@ -1,4 +1,5 @@
 /**
+const respond = require('../../utils/respond');
  * invoiceController.js — Phase 6: Client Invoice System
  * Generates PDF invoices, sends via email, manages invoice records
  * FIXED: All field names now match ClientInvoice schema (camelCase)
@@ -134,11 +135,11 @@ exports.generateInvoice = async (req, res) => {
             details:     { invoiceNumber: invoice.invoiceNumber, clientName: client_name }
         });
 
-        res.json({ success: true, invoice, invoiceId: invoice._id });
+        respond(res, 200, { success: true, invoice, invoiceId: invoice._id });
 
     } catch (err) {
         console.error('[invoiceController] generateInvoice error:', err);
-        res.status(500).json({ success: false, error: err.message });
+        respond(res, 500, { success: false, error: err.message });
     }
 };
 
@@ -189,10 +190,10 @@ exports.updateInvoiceStatus = async (req, res) => {
             { invoiceStatus: status, updatedAt: new Date() },
             { new: true }
         ).lean();
-        if (!invoice) return res.status(404).json({ success: false, error: 'Not found' });
-        res.json({ success: true, invoice });
+        if (!invoice) return respond(res, 404, { success: false, error: 'Not found' });
+        respond(res, 200, { success: true, invoice });
     } catch (err) {
-        res.status(500).json({ success: false, error: err.message });
+        respond(res, 500, { success: false, error: err.message });
     }
 };
 
@@ -201,7 +202,7 @@ exports.sendInvoiceEmail = async (req, res) => {
     try {
         const invoice = await ClientInvoice.findById(req.params.id)
             .populate('eventId', 'title date location').lean();
-        if (!invoice) return res.status(404).json({ success: false, error: 'Not found' });
+        if (!invoice) return respond(res, 404, { success: false, error: 'Not found' });
 
         // Dispatch via queue in async mode, or send inline when worker is deferred.
         if (invoice.eventId) {
@@ -270,11 +271,11 @@ exports.sendInvoiceEmail = async (req, res) => {
             invoiceEmailSentAt:  new Date()
         });
 
-        res.json({ success: true, message: `Invoice sent to ${invoice.clientEmail}` });
+        respond(res, 200, { success: true, message: `Invoice sent to ${invoice.clientEmail}` });
 
     } catch (err) {
         console.error('[invoiceController] sendInvoiceEmail error:', err);
-        res.status(500).json({ success: false, error: err.message });
+        respond(res, 500, { success: false, error: err.message });
     }
 };
 
@@ -282,10 +283,10 @@ exports.sendInvoiceEmail = async (req, res) => {
 exports.deleteInvoice = async (req, res) => {
     try {
         const invoice = await ClientInvoice.findByIdAndDelete(req.params.id);
-        if (!invoice) return res.status(404).json({ success: false, error: 'Not found' });
-        res.json({ success: true });
+        if (!invoice) return respond(res, 404, { success: false, error: 'Not found' });
+        respond(res, 200, { success: true });
     } catch (err) {
-        res.status(500).json({ success: false, error: err.message });
+        respond(res, 500, { success: false, error: err.message });
     }
 };
 
@@ -293,7 +294,7 @@ exports.deleteInvoice = async (req, res) => {
 exports.updateInvoice = async (req, res) => {
     try {
         const invoice = await ClientInvoice.findById(req.params.id);
-        if (!invoice) return res.status(404).json({ success: false, error: 'Not found' });
+        if (!invoice) return respond(res, 404, { success: false, error: 'Not found' });
 
         const {
             client_name, client_email, event_name,
@@ -371,11 +372,11 @@ exports.updateInvoice = async (req, res) => {
             details:     { invoiceNumber: invoice.invoiceNumber, totalAmount }
         });
 
-        res.json({ success: true, invoice: invoice.toObject() });
+        respond(res, 200, { success: true, invoice: invoice.toObject() });
 
     } catch (err) {
         console.error('[invoiceController] updateInvoice error:', err);
-        res.status(500).json({ success: false, error: err.message });
+        respond(res, 500, { success: false, error: err.message });
     }
 };
 

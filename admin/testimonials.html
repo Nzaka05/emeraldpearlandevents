@@ -803,7 +803,7 @@
     }
     async function loadTestimonials() {
         try {
-            const res = await fetch('/api/admin/testimonials');
+            const res = await fetch('/api/v1/admin/testimonials');
             const data = await res.json();
             if (data.success) { testimonials = data.testimonials; renderTestimonials(); }
         } catch (err) { console.error(err); }
@@ -834,21 +834,21 @@
     }
     function filterTestimonials(status) { currentFilter = status; renderTestimonials(); }
     async function approveTestimonial(id) {
-        await fetch('/api/admin/testimonials/' + id, { method: 'PATCH', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ status: 'approved' }) });
+        await fetch('/api/v1/admin/testimonials/' + id, { method: 'PATCH', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ status: 'approved' }) });
         loadTestimonials();
     }
     async function toggleDisplay(id, current) {
-        await fetch('/api/admin/testimonials/' + id, { method: 'PATCH', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ displayOnWebsite: !current, status: 'approved' }) });
+        await fetch('/api/v1/admin/testimonials/' + id, { method: 'PATCH', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ displayOnWebsite: !current, status: 'approved' }) });
         loadTestimonials();
     }
     async function deleteTestimonial(id) {
         if (!confirm('Delete this testimonial?')) return;
-        await fetch('/api/admin/testimonials/' + id, { method: 'DELETE' });
+        await fetch('/api/v1/admin/testimonials/' + id, { method: 'DELETE' });
         loadTestimonials();
     }
     async function saveTestimonial() {
         const data = { name: document.getElementById('clientName').value, role: document.getElementById('clientRole').value, text: document.getElementById('testimonialText').value, rating: parseInt(document.getElementById('testimonialRating').value) || 5, eventType: document.getElementById('eventType').value, status: 'approved', displayOnWebsite: true };
-        await fetch('/api/admin/testimonials', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(data) });
+        await fetch('/api/v1/admin/testimonials', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(data) });
         loadTestimonials();
         document.getElementById('testimonialModal').classList.remove('show');
     }

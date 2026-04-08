@@ -1,3 +1,4 @@
+const respond = require('../../utils/respond');
 const ClientETR = require('../models/ClientETR');
 const Assignment = require('../../staff-system/models/Assignment');
 const etrService = require('../services/etrService');
@@ -49,10 +50,10 @@ exports.viewETR = async (req, res) => {
 exports.generateETRManually = async (req, res) => {
     try {
         const etr = await etrService.generateETR(req.params.eventId, (req.user || req.admin)._id);
-        res.json({ success: true, etr });
+        respond(res, 200, { success: true, etr });
     } catch (err) {
         console.error('generateETRManually error:', err);
-        res.status(500).json({ success: false, error: err.message });
+        respond(res, 500, { success: false, error: err.message });
     }
 };
 
@@ -60,13 +61,13 @@ exports.resendETR = async (req, res) => {
     try {
         const success = await etrService.resendETR(req.params.eventId, (req.user || req.admin)._id);
         if (success) {
-            res.json({ success: true, message: 'ETR resent successfully' });
+            respond(res, 200, { success: true, message: 'ETR resent successfully' });
         } else {
-            res.status(400).json({ success: false, error: 'Failed to send email' });
+            respond(res, 400, { success: false, error: 'Failed to send email' });
         }
     } catch (err) {
         console.error('resendETR error:', err);
-        res.status(500).json({ success: false, error: err.message });
+        respond(res, 500, { success: false, error: err.message });
     }
 };
 

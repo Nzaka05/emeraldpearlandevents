@@ -1,11 +1,49 @@
+/*
+const respond = require('../../utils/respond');
+CLIENT PORTAL <-> STAFF SYSTEM DATA CONTRACTS
+
+1) Event Health Response (GET /internal/client-portal/event-health/:eventId)
+{
+    success: boolean,
+    data: {
+        eventId: string,
+        title: string,
+        status: string,
+        progress: string,
+        risk_level: 'LOW' | 'MEDIUM' | 'HIGH'
+    }
+}
+
+2) Client Invoices Response (GET /internal/client-portal/invoices)
+{
+    success: boolean,
+    data: {
+        invoices: Array<{
+            _id: string,
+            ref: string,
+            description: string,
+            date: string | Date,
+            totalAmount: number,
+            amountPaid: number,
+            outstanding: number,
+            status: string,
+            createdAt: string | Date
+        }>
+    }
+}
+
+3) Single Invoice Response (GET /internal/client-portal/invoices/:invoiceId)
+{
+    success: boolean,
+    data: {
+        invoice: object
+    }
+}
+*/
+
 const clientAuthService = require('../services/clientAuthService');
 const ClientSession = require('../models/ClientSession');
-
-// staff-models loaded lazily — not available in all deployments
-let Assignment = null;
-let ClientInvoice = null;
-try { Assignment = require('../../staff-system/models/Assignment'); } catch(e) { console.warn('[ClientPortalController] Assignment model unavailable'); }
-try { ClientInvoice = require('../../staff-system/models/ClientInvoice'); } catch(e) { console.warn('[ClientPortalController] ClientInvoice model unavailable'); }
+const staffSystemGateway = require('../services/staffSystemGateway');
 
 // ── BOOKING STATUS → TIMELINE STAGE MAP ──────────────────────────────────────
 // Booking.status values:  new | contacted | confirmed | completed | cancelled
@@ -95,15 +133,15 @@ exports.apiLogin = async (req, res) => {
             maxAge: 15 * 60 * 1000
         });
 
-        res.json({ success: true, data: result, timestamp: new Date() });
+        respond(res, 200, { success: true, data: result, timestamp: new Date() });
     } catch (e) {
         if (e.message.startsWith('423:')) {
-            return res.status(423).json({ success: false, data: { message: e.message.substring(4) }, timestamp: new Date() });
+            return respond(res, 423, { success: false, data: { message: e.message.substring(4) }, timestamp: new Date() });
         }
         if (e.message.startsWith('403:')) {
-            return res.status(403).json({ success: false, data: { message: e.message.substring(4) }, timestamp: new Date() });
+            return respond(res, 403, { success: false, data: { message: e.message.substring(4) }, timestamp: new Date() });
         }
-        res.status(401).json({ success: false, data: { message: e.message }, timestamp: new Date() });
+        respond(res, 401, { success: false, data: { message: e.message }, timestamp: new Date() });
     }
 };
 
@@ -111,7 +149,7 @@ exports.apiRegister = async (req, res) => {
     try {
         const { name, email, phone, password } = req.body;
         if (!name || !email || !phone || !password) {
-            return res.status(400).json({ success: false, data: { message: 'All fields are required' } });
+            return respond(res, 400, { success: false, data: { message: 'All fields are required' } });
         }
 
         const result = await clientAuthService.registerNewClient(name, email, phone, password, req.ip, req.headers['user-agent']);
@@ -125,9 +163,9 @@ exports.apiRegister = async (req, res) => {
             maxAge: 15 * 60 * 1000
         });
 
-        res.json({ success: true, data: { ...result, ...loginResult }, timestamp: new Date() });
+        respond(res, 200, { success: true, data: { ...result, ...loginResult }, timestamp: new Date() });
     } catch (e) {
-        res.status(400).json({ success: false, data: { message: e.message }, timestamp: new Date() });
+        respond(res, 400, { success: false, data: { message: e.message }, timestamp: new Date() });
     }
 };
 
@@ -154,9 +192,9 @@ exports.apiLogout = async (req, res) => {
         if (req.body.sessionId) {
             await clientAuthService.logoutClient(req.client.client_id, req.body.sessionId);
         }
-        res.json({ success: true, data: { message: 'Logged out' }, timestamp: new Date() });
+        respond(res, 200, { success: true, data: { message: 'Logged out' }, timestamp: new Date() });
     } catch (e) {
-        res.status(500).json({ success: false, data: { message: e.message }, timestamp: new Date() });
+        respond(res, 500, { success: false, data: { message: e.message }, timestamp: new Date() });
     }
 };
 
@@ -164,16 +202,16 @@ exports.apiLogoutAllDevices = async (req, res) => {
     try {
         const count = await clientAuthService.logoutAllDevices(req.client.client_id);
         res.clearCookie('client_token');
-        res.json({ success: true, data: { revoked: count }, timestamp: new Date() });
+        respond(res, 200, { success: true, data: { revoked: count }, timestamp: new Date() });
     } catch (e) {
-        res.status(500).json({ success: false, data: { message: e.message }, timestamp: new Date() });
+        respond(res, 500, { success: false, data: { message: e.message }, timestamp: new Date() });
     }
 };
 
 exports.apiRefreshToken = async (req, res) => {
     try {
         const { refreshToken } = req.body;
-        if (!refreshToken) return res.status(400).json({ success: false, data: { message: 'Refresh token required' }, timestamp: new Date() });
+        if (!refreshToken) return respond(res, 400, { success: false, data: { message: 'Refresh token required' }, timestamp: new Date() });
         
         const newAccessToken = await clientAuthService.refreshToken(refreshToken, req.ip, req.headers['user-agent']);
         
@@ -184,9 +222,9 @@ exports.apiRefreshToken = async (req, res) => {
             maxAge: 15 * 60 * 1000
         });
 
-        res.json({ success: true, data: { accessToken: newAccessToken }, timestamp: new Date() });
+        respond(res, 200, { success: true, data: { accessToken: newAccessToken }, timestamp: new Date() });
     } catch (e) {
-        res.status(401).json({ success: false, data: { message: e.message }, timestamp: new Date() });
+        respond(res, 401, { success: false, data: { message: e.message }, timestamp: new Date() });
     }
 };
 
@@ -248,7 +286,7 @@ exports.apiGetDashboard = async (req, res) => {
             console.warn('[Dashboard] Could not load paymentMethods:', pmErr.message);
         }
 
-        res.json({
+        respond(res, 200, {
             success: true,
             data: {
                 active,
@@ -266,7 +304,7 @@ exports.apiGetDashboard = async (req, res) => {
 
     } catch (e) {
         console.error('[apiGetDashboard]', e);
-        res.status(500).json({ success: false, data: { message: e.message }, timestamp: new Date() });
+        respond(res, 500, { success: false, data: { message: e.message }, timestamp: new Date() });
     }
 };
 
@@ -280,9 +318,9 @@ exports.apiGetEvents = async (req, res) => {
             .select('eventType eventDate location status estimatedTotal amountPaid bookingReference')
             .lean();
         const events = rawBookings.map(bookingToEvent);
-        res.json({ success: true, data: { events }, timestamp: new Date() });
+        respond(res, 200, { success: true, data: { events }, timestamp: new Date() });
     } catch (e) {
-        res.status(500).json({ success: false, data: { message: e.message }, timestamp: new Date() });
+        respond(res, 500, { success: false, data: { message: e.message }, timestamp: new Date() });
     }
 };
 
@@ -294,19 +332,23 @@ exports.apiGetEventDetail = async (req, res) => {
             _id: req.params.eventId,
             customerId: req.client.client_id
         }).lean();
-        if (!booking) return res.status(404).json({ success: false, data: { message: 'Not found' }, timestamp: new Date() });
-        res.json({ success: true, data: { event: bookingToEvent(booking) }, timestamp: new Date() });
+        if (!booking) return respond(res, 404, { success: false, data: { message: 'Not found' }, timestamp: new Date() });
+        respond(res, 200, { success: true, data: { event: bookingToEvent(booking) }, timestamp: new Date() });
     } catch (e) {
-        res.status(500).json({ success: false, data: { message: e.message }, timestamp: new Date() });
+        respond(res, 500, { success: false, data: { message: e.message }, timestamp: new Date() });
     }
 };
 
 exports.apiGetInvoices = async (req, res) => {
     try {
-        // ClientInvoice may not exist yet — fall back to deriving from Bookings
-        if (ClientInvoice) {
-            const invoices = await ClientInvoice.find({ client_id: req.client.client_id }).sort({ createdAt: -1 });
-            return res.json({ success: true, data: { invoices }, timestamp: new Date() });
+        // Primary path: query staff system through internal API boundary.
+        try {
+            const remote = await staffSystemGateway.getClientInvoices(req.client.client_id.toString());
+            if (remote && remote.success && remote.data && Array.isArray(remote.data.invoices)) {
+                return respond(res, 200, { success: true, data: { invoices: remote.data.invoices }, timestamp: new Date() });
+            }
+        } catch (remoteErr) {
+            console.warn('[apiGetInvoices] staff-system unavailable, using booking fallback:', remoteErr.message);
         }
 
         // Fallback: synthesise invoice-like objects from Bookings
@@ -327,57 +369,96 @@ exports.apiGetInvoices = async (req, res) => {
             createdAt:    b.createdAt,
         }));
 
-        res.json({ success: true, data: { invoices }, timestamp: new Date() });
+        respond(res, 200, { success: true, data: { invoices }, timestamp: new Date() });
     } catch (e) {
-        res.status(500).json({ success: false, data: { message: e.message }, timestamp: new Date() });
+        respond(res, 500, { success: false, data: { message: e.message }, timestamp: new Date() });
     }
 };
 
 exports.apiGetInvoiceDetail = async (req, res) => {
     try {
-        if (ClientInvoice) {
-            const invoice = await ClientInvoice.findById(req.params.invoiceId);
-            if (!invoice) return res.status(404).json({ success: false, data: { message: 'Not found' }, timestamp: new Date() });
-            return res.json({ success: true, data: { invoice }, timestamp: new Date() });
+        // Primary path: query staff system through internal API boundary.
+        try {
+            const remote = await staffSystemGateway.getClientInvoiceById(
+                req.client.client_id.toString(),
+                req.params.invoiceId
+            );
+            if (remote && remote.success && remote.data && remote.data.invoice) {
+                return respond(res, 200, { success: true, data: { invoice: remote.data.invoice }, timestamp: new Date() });
+            }
+        } catch (remoteErr) {
+            console.warn('[apiGetInvoiceDetail] staff-system unavailable, using booking fallback:', remoteErr.message);
         }
+
         // Fallback to Booking
         const Booking = require('../models/Booking');
         const booking = await Booking.findOne({ _id: req.params.invoiceId, customerId: req.client.client_id }).lean();
-        if (!booking) return res.status(404).json({ success: false, data: { message: 'Not found' }, timestamp: new Date() });
-        res.json({ success: true, data: { invoice: booking }, timestamp: new Date() });
+        if (!booking) return respond(res, 404, { success: false, data: { message: 'Not found' }, timestamp: new Date() });
+        respond(res, 200, { success: true, data: { invoice: booking }, timestamp: new Date() });
     } catch (e) {
-        res.status(500).json({ success: false, data: { message: e.message }, timestamp: new Date() });
+        respond(res, 500, { success: false, data: { message: e.message }, timestamp: new Date() });
     }
 };
 
 exports.apiGetEtr = async (req, res) => {
-    res.json({ success: true, data: { message: 'ETR Data' }, timestamp: new Date() });
+    respond(res, 200, { success: true, data: { message: 'ETR Data' }, timestamp: new Date() });
+};
+
+exports.apiGetEventHealth = async (req, res) => {
+    try {
+        if (!/^[a-f\d]{24}$/i.test(req.params.eventId)) {
+            return respond(res, 400, { success: false, error: 'Invalid ID' });
+        }
+
+        const remote = await staffSystemGateway.getEventHealth(
+            req.params.eventId,
+            req.client.client_id.toString()
+        );
+
+        if (!remote || !remote.success || !remote.data) {
+            return respond(res, 503, { success: false, error: 'Event health service unavailable' });
+        }
+
+        return respond(res, 200, { success: true, data: remote.data });
+    } catch (e) {
+        const status = e.response && e.response.status ? e.response.status : 503;
+        const message = e.response && e.response.data && e.response.data.error
+            ? e.response.data.error
+            : 'Event health service unavailable';
+
+        if (status >= 400 && status < 500) {
+            return respond(res, status, { success: false, error: message });
+        }
+
+        console.error('[Client] event-health error:', e.message);
+        return respond(res, 503, { success: false, error: 'Event health service unavailable' });
+    }
 };
 
 exports.apiGetSessions = async (req, res) => {
     try {
         const sessions = await ClientSession.find({ client_id: req.client.client_id, is_active: true }).select('-refresh_token_hash');
-        res.json({ success: true, data: { sessions }, timestamp: new Date() });
+        respond(res, 200, { success: true, data: { sessions }, timestamp: new Date() });
     } catch (e) {
-        res.status(500).json({ success: false, data: { message: e.message }, timestamp: new Date() });
+        respond(res, 500, { success: false, data: { message: e.message }, timestamp: new Date() });
     }
 };
 
 exports.apiDeleteSession = async (req, res) => {
     try {
         await clientAuthService.logoutClient(req.client.client_id, req.params.sessionId);
-        res.json({ success: true, data: { message: 'Session revoked' }, timestamp: new Date() });
+        respond(res, 200, { success: true, data: { message: 'Session revoked' }, timestamp: new Date() });
     } catch (e) {
-        res.status(500).json({ success: false, data: { message: e.message }, timestamp: new Date() });
+        respond(res, 500, { success: false, data: { message: e.message }, timestamp: new Date() });
     }
 };
 
 exports.apiPasswordResetRequest = async (req, res) => {
     try {
         await clientAuthService.requestPasswordReset(req.body.email, req.ip);
-        res.json({ success: true, data: { message: 'If email exists, reset link sent' }, timestamp: new Date() });
+        respond(res, 200, { success: true, data: { message: 'If email exists, reset link sent' }, timestamp: new Date() });
     } catch (e) {
-        res.status(500).json({ success: false, data: { message: e.message }, timestamp: new Date() });
+        respond(res, 500, { success: false, data: { message: e.message }, timestamp: new Date() });
     }
 };
 
@@ -385,8 +466,8 @@ exports.apiPasswordResetConfirm = async (req, res) => {
     try {
         const { token, newPassword } = req.body;
         await clientAuthService.resetPassword(token, newPassword);
-        res.json({ success: true, data: { message: 'Password reset successful' }, timestamp: new Date() });
+        respond(res, 200, { success: true, data: { message: 'Password reset successful' }, timestamp: new Date() });
     } catch (e) {
-        res.status(400).json({ success: false, data: { message: e.message }, timestamp: new Date() });
+        respond(res, 400, { success: false, data: { message: e.message }, timestamp: new Date() });
     }
 };

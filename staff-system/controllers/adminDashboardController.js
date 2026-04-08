@@ -1,4 +1,5 @@
 /**
+const respond = require('../../utils/respond');
  * adminDashboardController.js
  * Domain: Dashboard, Analytics, Audit Logs, Leaderboard, Security
  * Pattern: Thin controller — delegates all data work to adminViewService.
@@ -58,10 +59,10 @@ exports.getAuditLogs = async (req, res) => {
             .populate('performedBy', 'name role')
             .sort({ timestamp: -1 })
             .limit(100);
-        res.json({ success: true, data: logs });
+        respond(res, 200, { success: true, data: logs });
     } catch (error) {
         console.error('[adminDashboardController] getAuditLogs:', error);
-        res.status(500).json({ success: false, error: 'Server Error' });
+        respond(res, 500, { success: false, error: 'Server Error' });
     }
 };
 

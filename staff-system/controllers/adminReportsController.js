@@ -1,4 +1,5 @@
 /**
+const respond = require('../../utils/respond');
  * adminReportsController.js
  * Domain: Reports, PDF/CSV Exports
  * Pattern: Thin controller — delegates all generation logic to pdfReportService.
@@ -29,7 +30,7 @@ exports.exportReport = async (req, res) => {
         await pdfReportService.exportReport(req.params.id, req.query.format || 'csv', res);
     } catch (error) {
         console.error('[adminReportsController] exportReport:', error);
-        res.status(500).json({ success: false, error: 'Server Error' });
+        respond(res, 500, { success: false, error: 'Server Error' });
     }
 };
 
@@ -43,7 +44,7 @@ exports.exportPayments = async (req, res) => {
         await pdfReportService.exportPayments(res);
     } catch (error) {
         console.error('[adminReportsController] exportPayments:', error);
-        res.status(500).json({ success: false, error: 'Server Error' });
+        respond(res, 500, { success: false, error: 'Server Error' });
     }
 };
 
@@ -57,6 +58,6 @@ exports.generatePaymentReceipt = async (req, res) => {
         await pdfReportService.generatePaymentReceipt(req.params.assignmentId, req.params.staffId, res);
     } catch (err) {
         console.error('[adminReportsController] generatePaymentReceipt:', err);
-        res.status(500).json({ success: false, error: 'Failed to generate receipt' });
+        respond(res, 500, { success: false, error: 'Failed to generate receipt' });
     }
 };

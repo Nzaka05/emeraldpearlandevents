@@ -1,4 +1,5 @@
 /**
+const respond = require('../../utils/respond');
  * adminEventsController.js
  * Domain: Events, Assignments, Teams, Attendance
  * Pattern: Thin controller — delegates all business logic to eventAssignmentService / eventTeamService.
@@ -59,12 +60,12 @@ exports.createTeam = async (req, res) => {
     try {
         const eventTeamService = require('../services/eventTeamService');
         const team = await eventTeamService.createTeam(req.body.event_id, req.body.supervisor_id, req.body.member_ids);
-        res.status(201).json({ success: true, data: team });
+        respond(res, 201, { success: true, data: team });
     } catch (error) {
         console.error('[adminEventsController] createTeam:', error);
         if (error.message === 'A team already exists for this event!')
-            return res.status(400).json({ success: false, error: error.message });
-        res.status(500).json({ success: false, error: 'Server Error' });
+            return respond(res, 400, { success: false, error: error.message });
+        respond(res, 500, { success: false, error: 'Server Error' });
     }
 };
 
@@ -76,10 +77,10 @@ exports.getTeamCreateData = async (req, res) => {
     try {
         const adminViewService = require('../services/adminViewService');
         const data = await adminViewService.getTeamCreateData();
-        res.json({ success: true, ...data });
+        respond(res, 200, { success: true, ...data });
     } catch (error) {
         console.error('[adminEventsController] getTeamCreateData:', error);
-        res.status(500).json({ success: false, error: 'Server error' });
+        respond(res, 500, { success: false, error: 'Server error' });
     }
 };
 
@@ -94,7 +95,7 @@ exports.createAssignment = async (req, res) => {
         res.redirect('/portal/admin-staff/events');
     } catch (error) {
         console.error('[adminEventsController] createAssignment:', error);
-        res.status(500).json({ success: false, error: 'Server Error' });
+        respond(res, 500, { success: false, error: 'Server Error' });
     }
 };
 
@@ -107,7 +108,7 @@ exports.updateAssignment = async (req, res) => {
         const eventAssignmentService = require('../services/eventAssignmentService');
         const assignment = await eventAssignmentService.updateAssignment(req.user._id, req.params.id, req.body);
         if (req.headers['content-type']?.includes('application/json')) {
-            res.json({ success: true, data: assignment });
+            respond(res, 200, { success: true, data: assignment });
         } else {
             req.flash('success', 'Event updated successfully');
             res.redirect('/portal/admin-staff/events');
@@ -115,8 +116,8 @@ exports.updateAssignment = async (req, res) => {
     } catch (error) {
         console.error('[adminEventsController] updateAssignment:', error);
         if (error.message === 'Assignment not found')
-            return res.status(404).json({ success: false, error: 'Assignment not found' });
-        res.status(500).json({ success: false, error: 'Server Error' });
+            return respond(res, 404, { success: false, error: 'Assignment not found' });
+        respond(res, 500, { success: false, error: 'Server Error' });
     }
 };
 
@@ -128,12 +129,12 @@ exports.deleteAssignment = async (req, res) => {
     try {
         const eventAssignmentService = require('../services/eventAssignmentService');
         await eventAssignmentService.deleteAssignment(req.user._id, req.params.id);
-        res.json({ success: true, message: 'Event deleted successfully' });
+        respond(res, 200, { success: true, message: 'Event deleted successfully' });
     } catch (error) {
         console.error('[adminEventsController] deleteAssignment:', error);
         if (error.message === 'Assignment not found')
-            return res.status(404).json({ success: false, error: 'Assignment not found' });
-        res.status(500).json({ success: false, error: 'Server Error' });
+            return respond(res, 404, { success: false, error: 'Assignment not found' });
+        respond(res, 500, { success: false, error: 'Server Error' });
     }
 };
 
@@ -146,11 +147,11 @@ exports.getSingleAssignment = async (req, res) => {
         const assignment = await Assignment.findById(req.params.id)
             .populate('accepted_staff_ids', 'name email phone')
             .populate('applicant_ids', 'name email');
-        if (!assignment) return res.status(404).json({ success: false });
-        res.json({ success: true, data: assignment.toObject() });
+        if (!assignment) return respond(res, 404, { success: false });
+        respond(res, 200, { success: true, data: assignment.toObject() });
     } catch (err) {
         console.error('[adminEventsController] getSingleAssignment:', err);
-        res.status(500).json({ success: false });
+        respond(res, 500, { success: false });
     }
 };
 
@@ -162,7 +163,7 @@ exports.getEventReport = async (req, res) => {
     try {
         const eventAssignmentService = require('../services/eventAssignmentService');
         const report = await eventAssignmentService.buildEventReport(req.params.id);
-        if (!report) return res.status(404).json({ success: false, error: 'Assignment not found' });
+        if (!report) return respond(res, 404, { success: false, error: 'Assignment not found' });
 
         const assignment = await Assignment.findById(req.params.id)
             .populate('assigned_staff_ids', 'name role status availability_status photo_url')
@@ -170,10 +171,10 @@ exports.getEventReport = async (req, res) => {
             .populate('declined_staff_ids', 'name role status photo_url')
             .populate('applicant_ids', 'name email role specific_role photo_url');
 
-        res.json({ success: true, data: { ...report, assignment } });
+        respond(res, 200, { success: true, data: { ...report, assignment } });
     } catch (error) {
         console.error('[adminEventsController] getEventReport:', error);
-        res.status(500).json({ success: false, error: 'Server Error' });
+        respond(res, 500, { success: false, error: 'Server Error' });
     }
 };
 
@@ -185,10 +186,10 @@ exports.handleApplicant = async (req, res) => {
     try {
         const eventAssignmentService = require('../services/eventAssignmentService');
         await eventAssignmentService.handleApplicant(req.params.id, req.params.staffId, req.body.action);
-        res.json({ success: true, action: req.body.action });
+        respond(res, 200, { success: true, action: req.body.action });
     } catch (err) {
         console.error('[adminEventsController] handleApplicant:', err);
-        res.status(500).json({ success: false, error: err.message || 'Server Error' });
+        respond(res, 500, { success: false, error: err.message || 'Server Error' });
     }
 };
 
@@ -200,10 +201,10 @@ exports.assignEventSupervisor = async (req, res) => {
     try {
         const eventTeamService = require('../services/eventTeamService');
         const result = await eventTeamService.assignEventSupervisor(req.user._id, req.user.name, req.params.id, req.body.supervisor_id);
-        res.json({ success: true, assignment: result.assignment, team: result.team });
+        respond(res, 200, { success: true, assignment: result.assignment, team: result.team });
     } catch (err) {
         console.error('[adminEventsController] assignEventSupervisor:', err);
-        res.status(500).json({ success: false, message: err.message });
+        respond(res, 500, { success: false, message: err.message });
     }
 };
 
@@ -215,10 +216,10 @@ exports.assignStaffToEvent = async (req, res) => {
     try {
         const eventAssignmentService = require('../services/eventAssignmentService');
         const assignment = await eventAssignmentService.assignStaffToEvent(req.params.id, req.body.staff_ids);
-        res.json({ success: true, assignment });
+        respond(res, 200, { success: true, assignment });
     } catch (err) {
         console.error('[adminEventsController] assignStaffToEvent:', err);
-        res.status(500).json({ success: false, message: err.message });
+        respond(res, 500, { success: false, message: err.message });
     }
 };
 
@@ -230,10 +231,10 @@ exports.toggleApplications = async (req, res) => {
     try {
         const eventAssignmentService = require('../services/eventAssignmentService');
         const open = await eventAssignmentService.toggleApplications(req.params.id);
-        res.json({ success: true, open });
+        respond(res, 200, { success: true, open });
     } catch (err) {
         console.error('[adminEventsController] toggleApplications:', err);
-        res.status(500).json({ success: false, message: err.message });
+        respond(res, 500, { success: false, message: err.message });
     }
 };
 
@@ -245,10 +246,10 @@ exports.approveReplacement = async (req, res) => {
     try {
         const eventTeamService = require('../services/eventTeamService');
         await eventTeamService.approveReplacement(req.user._id, req.params.id);
-        res.json({ success: true, message: 'Replacement Request Approved' });
+        respond(res, 200, { success: true, message: 'Replacement Request Approved' });
     } catch (error) {
         console.error('[adminEventsController] approveReplacement:', error);
-        res.status(500).json({ success: false, error: 'Server Error' });
+        respond(res, 500, { success: false, error: 'Server Error' });
     }
 };
 
@@ -260,10 +261,10 @@ exports.rejectReplacement = async (req, res) => {
     try {
         const eventTeamService = require('../services/eventTeamService');
         await eventTeamService.rejectReplacement(req.params.id);
-        res.json({ success: true, message: 'Replacement Request Rejected' });
+        respond(res, 200, { success: true, message: 'Replacement Request Rejected' });
     } catch (error) {
         console.error('[adminEventsController] rejectReplacement:', error);
-        res.status(500).json({ success: false, error: 'Server Error' });
+        respond(res, 500, { success: false, error: 'Server Error' });
     }
 };
 
@@ -276,11 +277,11 @@ exports.checkDisbandEligibility = async (req, res) => {
         const eventTeamService = require('../services/eventTeamService');
         const result = await eventTeamService.checkDisbandEligibility(req.params.teamId);
         if (!result.canDisband)
-            return res.json({ success: true, canDisband: false, reason: result.reason, unpaidStaff: result.unpaidStaff || [] });
-        res.json({ success: true, canDisband: true });
+            return respond(res, 200, { success: true, canDisband: false, reason: result.reason, unpaidStaff: result.unpaidStaff || [] });
+        respond(res, 200, { success: true, canDisband: true });
     } catch (err) {
         console.error('[adminEventsController] checkDisbandEligibility:', err);
-        res.status(500).json({ success: false, message: 'Server error' });
+        respond(res, 500, { success: false, message: 'Server error' });
     }
 };
 
@@ -292,12 +293,12 @@ exports.disbandTeam = async (req, res) => {
     try {
         const eventTeamService = require('../services/eventTeamService');
         await eventTeamService.disbandTeam(req.params.teamId);
-        res.json({ success: true, message: 'Team disbanded successfully.' });
+        respond(res, 200, { success: true, message: 'Team disbanded successfully.' });
     } catch (err) {
         console.error('[adminEventsController] disbandTeam:', err);
         if (err.message?.includes('Cannot disband team'))
-            return res.status(400).json({ success: false, message: err.message });
-        res.status(500).json({ success: false, message: 'Server error' });
+            return respond(res, 400, { success: false, message: err.message });
+        respond(res, 500, { success: false, message: 'Server error' });
     }
 };
 
@@ -324,12 +325,12 @@ exports.getEventPrediction = async (req, res) => {
             generatedAt: new Date()
         });
 
-        res.json({ success: true, prediction });
+        respond(res, 200, { success: true, prediction });
     } catch (error) {
         console.error('[adminEventsController] getEventPrediction:', error);
         if (error.message === 'Assignment not found')
-            return res.status(404).json({ success: false, error: 'Assignment not found' });
-        res.status(500).json({
+            return respond(res, 404, { success: false, error: 'Assignment not found' });
+        respond(res, 500, {
             success: false,
             error: {
                 code: "INTERNAL_ERROR",
@@ -352,7 +353,7 @@ exports.getEventPrediction = async (req, res) => {
 // ─────────────────────────────────────────────────────────────
 exports.verifyBiometric = async (req, res) => {
     // This legacy endpoint is deprecated. Real biometric verification uses WebAuthn.
-    return res.status(410).json({
+    return respond(res, 410, {
         success: false,
         error: 'This endpoint is deprecated. Use /portal/admin-staff/webauthn/authenticate/options and /verify for cryptographic biometric verification.',
         migration: 'webauthn'
@@ -369,14 +370,14 @@ exports.requestEmergencyOtp = async (req, res) => {
         const { event_id, device_id } = req.body;
 
         if (!event_id || !device_id) {
-            return res.status(400).json({ success: false, error: 'event_id and device_id are required' });
+            return respond(res, 400, { success: false, error: 'event_id and device_id are required' });
         }
 
         const result = await requestOtp(req.user._id, event_id, device_id, req.user.email);
-        res.json(result);
+        respond(res, 200, result);
     } catch (error) {
         console.error('[adminEventsController] requestEmergencyOtp:', error);
-        res.status(500).json({ success: false, error: 'Server Error' });
+        respond(res, 500, { success: false, error: 'Server Error' });
     }
 };
 
@@ -393,7 +394,7 @@ exports.sendEmergencyFund = async (req, res) => {
         } = req.body;
 
         if (!event_id || !amount || !phone) {
-            return res.status(400).json({ success: false, error: 'event_id, amount, and phone are required' });
+            return respond(res, 400, { success: false, error: 'event_id, amount, and phone are required' });
         }
 
         const result = await processEmergencyFund({
@@ -413,7 +414,7 @@ exports.sendEmergencyFund = async (req, res) => {
         res.status(result.statusCode || (result.success ? 200 : 400)).json(result);
     } catch (error) {
         console.error('[adminEventsController] sendEmergencyFund:', error);
-        res.status(500).json({ success: false, error: 'Server Error' });
+        respond(res, 500, { success: false, error: 'Server Error' });
     }
 };
 
@@ -427,17 +428,17 @@ exports.unlockPayout = async (req, res) => {
         const { event_id, reason } = req.body;
 
         if (!event_id) {
-            return res.status(400).json({ success: false, error: 'event_id is required' });
+            return respond(res, 400, { success: false, error: 'event_id is required' });
         }
         if (!reason) {
-            return res.status(400).json({ success: false, error: 'reason is required for unlock' });
+            return respond(res, 400, { success: false, error: 'reason is required for unlock' });
         }
 
         const result = await unlockPayout(event_id, req.user._id, reason);
         res.status(result.statusCode || (result.success ? 200 : 400)).json(result);
     } catch (error) {
         console.error('[adminEventsController] unlockPayout:', error);
-        res.status(500).json({ success: false, error: 'Server Error' });
+        respond(res, 500, { success: false, error: 'Server Error' });
     }
 };
 
@@ -462,11 +463,11 @@ exports.getSingleETR = async (req, res) => {
   try {
     const ClientETR = require('../models/ClientETR');
     const etr = await ClientETR.findOne({ event_id: req.params.eventId }).sort({ version: -1 }).populate('event_id').lean();
-    if (!etr) return res.status(404).json({ success: false, error: 'ETR not found for this event' });
+    if (!etr) return respond(res, 404, { success: false, error: 'ETR not found for this event' });
     res.render('admin/etr-view', { user: req.user, etr, _page: 'etr' });
   } catch (err) {
     console.error('[ETR] getSingleETR:', err.message);
-    res.status(500).json({ success: false, error: err.message });
+    respond(res, 500, { success: false, error: err.message });
   }
 };
 
@@ -478,7 +479,7 @@ exports.generateETR = async (req, res) => {
 
     const eventId = req.params.eventId;
     const assignment = await Assignment.findById(eventId).lean();
-    if (!assignment) return res.status(404).json({ success: false, error: 'Assignment not found' });
+    if (!assignment) return respond(res, 404, { success: false, error: 'Assignment not found' });
 
     // Check for existing ETR
     const prevEtr = await ClientETR.findOne({ event_id: eventId }).sort({ version: -1 });
@@ -595,10 +596,10 @@ exports.generateETR = async (req, res) => {
       delivery_status: 'pending'
     });
 
-    res.json({ success: true, message: 'ETR Generated', data: { etrNumber, id: newEtr._id } });
+    respond(res, 200, { success: true, message: 'ETR Generated', data: { etrNumber, id: newEtr._id } });
   } catch (err) {
     console.error('[ETR] generateETR:', err);
-    res.status(500).json({ success: false, error: err.message });
+    respond(res, 500, { success: false, error: err.message });
   }
 };
 
@@ -606,14 +607,14 @@ exports.resendETR = async (req, res) => {
   try {
     const ClientETR = require('../models/ClientETR');
     const etr = await ClientETR.findOne({ event_id: req.params.eventId }).sort({ version: -1 });
-    if (!etr) return res.status(404).json({ success: false, error: 'No ETR found. Generate one first.' });
+    if (!etr) return respond(res, 404, { success: false, error: 'No ETR found. Generate one first.' });
     etr.delivery_status = 'sent';
     etr.sent_at = new Date();
     await etr.save();
-    res.json({ success: true, message: 'ETR marked as sent' });
+    respond(res, 200, { success: true, message: 'ETR marked as sent' });
   } catch (err) {
     console.error('[ETR] resendETR:', err.message);
-    res.status(500).json({ success: false, error: err.message });
+    respond(res, 500, { success: false, error: err.message });
   }
 };
 
@@ -621,13 +622,13 @@ exports.downloadETR = async (req, res) => {
   try {
     const ClientETR = require('../models/ClientETR');
     const etr = await ClientETR.findOne({ event_id: req.params.eventId }).sort({ version: -1 }).populate('event_id').lean();
-    if (!etr) return res.status(404).json({ success: false, error: 'No ETR found. Generate one first.' });
+    if (!etr) return respond(res, 404, { success: false, error: 'No ETR found. Generate one first.' });
     if (etr.pdf_url) return res.redirect(etr.pdf_url);
     // No PDF available — render the ETR view page so the user can print it (Ctrl+P → Save as PDF)
     res.render('admin/etr-view', { user: req.user, etr, _page: 'etr' });
   } catch (err) {
     console.error('[ETR] downloadETR:', err.message);
-    res.status(500).json({ success: false, error: err.message });
+    respond(res, 500, { success: false, error: err.message });
   }
 };
 
@@ -664,10 +665,10 @@ async function logWebAuthnEvent(type, adminId, details, req) {
 exports.webauthnRegisterOptions = async (req, res) => {
     try {
         const options = await webAuthnService.generateRegistrationOptions(req.user._id);
-        res.json({ success: true, options });
+        respond(res, 200, { success: true, options });
     } catch (error) {
         console.error('[WebAuthn] registerOptions:', error);
-        res.status(500).json({ success: false, error: error.message });
+        respond(res, 500, { success: false, error: error.message });
     }
 };
 
@@ -676,22 +677,22 @@ exports.webauthnRegisterVerify = async (req, res) => {
     try {
         const { registrationResponse, device_name } = req.body;
         if (!registrationResponse) {
-            return res.status(400).json({ success: false, error: 'registrationResponse is required' });
+            return respond(res, 400, { success: false, error: 'registrationResponse is required' });
         }
 
         const result = await webAuthnService.verifyRegistration(req.user._id, registrationResponse, device_name || 'Unnamed Device');
 
         if (result.success) {
             await logWebAuthnEvent('webauthn_registration_success', req.user._id, { device_name: device_name || 'Unnamed Device' }, req);
-            return res.json({ success: true, message: 'Biometric device registered successfully' });
+            return respond(res, 200, { success: true, message: 'Biometric device registered successfully' });
         }
 
         await logWebAuthnEvent('webauthn_registration_failure', req.user._id, { reason: result.message }, req);
-        return res.status(400).json({ success: false, error: result.message });
+        return respond(res, 400, { success: false, error: result.message });
     } catch (error) {
         await logWebAuthnEvent('webauthn_registration_failure', req.user._id, { reason: error.message }, req);
         console.error('[WebAuthn] registerVerify:', error);
-        res.status(500).json({ success: false, error: error.message });
+        respond(res, 500, { success: false, error: error.message });
     }
 };
 
@@ -699,10 +700,10 @@ exports.webauthnRegisterVerify = async (req, res) => {
 exports.webauthnAuthOptions = async (req, res) => {
     try {
         const options = await webAuthnService.generateAuthenticationOptions(req.user._id);
-        res.json({ success: true, options });
+        respond(res, 200, { success: true, options });
     } catch (error) {
         console.error('[WebAuthn] authOptions:', error);
-        res.status(400).json({ success: false, error: error.message });
+        respond(res, 400, { success: false, error: error.message });
     }
 };
 
@@ -711,7 +712,7 @@ exports.webauthnAuthVerify = async (req, res) => {
     try {
         const { authenticationResponse } = req.body;
         if (!authenticationResponse) {
-            return res.status(400).json({ success: false, error: 'authenticationResponse is required' });
+            return respond(res, 400, { success: false, error: 'authenticationResponse is required' });
         }
 
         const result = await webAuthnService.verifyAuthentication(req.user._id, authenticationResponse);
@@ -730,15 +731,15 @@ exports.webauthnAuthVerify = async (req, res) => {
             });
 
             await logWebAuthnEvent('webauthn_authentication_success', req.user._id, { credential_id: authenticationResponse.id }, req);
-            return res.json({ success: true, message: 'Biometric authentication verified', expiresAt: session.expiresAt });
+            return respond(res, 200, { success: true, message: 'Biometric authentication verified', expiresAt: session.expiresAt });
         }
 
         await logWebAuthnEvent('webauthn_authentication_failure', req.user._id, { reason: result.message }, req);
-        return res.status(403).json({ success: false, error: result.message });
+        return respond(res, 403, { success: false, error: result.message });
     } catch (error) {
         await logWebAuthnEvent('webauthn_authentication_failure', req.user._id, { reason: error.message }, req);
         console.error('[WebAuthn] authVerify:', error);
-        res.status(500).json({ success: false, error: error.message });
+        respond(res, 500, { success: false, error: error.message });
     }
 };
 
@@ -748,9 +749,9 @@ exports.webauthnGetCredentials = async (req, res) => {
         const credentials = await AdminWebAuthnCredential.find({ admin_id: req.user._id })
             .select('credential_id device_name registered_at last_used')
             .sort({ registered_at: -1 });
-        res.json({ success: true, data: { credentials, hasCredentials: credentials.length > 0 } });
+        respond(res, 200, { success: true, data: { credentials, hasCredentials: credentials.length > 0 } });
     } catch (error) {
-        res.status(500).json({ success: false, error: 'Server Error' });
+        respond(res, 500, { success: false, error: 'Server Error' });
     }
 };
 
@@ -762,12 +763,12 @@ exports.webauthnDeleteCredential = async (req, res) => {
             admin_id: req.user._id
         });
         if (!result) {
-            return res.status(404).json({ success: false, error: 'Credential not found' });
+            return respond(res, 404, { success: false, error: 'Credential not found' });
         }
         await logWebAuthnEvent('webauthn_credential_removed', req.user._id, { device_name: result.device_name }, req);
-        res.json({ success: true, message: 'Device removed' });
+        respond(res, 200, { success: true, message: 'Device removed' });
     } catch (error) {
-        res.status(500).json({ success: false, error: 'Server Error' });
+        respond(res, 500, { success: false, error: 'Server Error' });
     }
 };
 
@@ -805,10 +806,10 @@ exports.getPendingApprovals = async (req, res) => {
             });
         }
 
-        res.json({ success: true, data: enriched });
+        respond(res, 200, { success: true, data: enriched });
     } catch (error) {
         console.error('[DualApproval] getPending:', error);
-        res.status(500).json({ success: false, error: 'Server Error' });
+        respond(res, 500, { success: false, error: 'Server Error' });
     }
 };
 
@@ -816,30 +817,30 @@ exports.getPendingApprovals = async (req, res) => {
 exports.approveDualApproval = async (req, res) => {
     try {
         const { audit_id, lat, lng } = req.body;
-        if (!audit_id) return res.status(400).json({ success: false, error: 'audit_id required' });
+        if (!audit_id) return respond(res, 400, { success: false, error: 'audit_id required' });
 
         const audit = await EmergencyFundAudit.findById(audit_id);
-        if (!audit) return res.status(404).json({ success: false, error: 'Approval record not found' });
+        if (!audit) return respond(res, 404, { success: false, error: 'Approval record not found' });
 
         if (!audit.dual_approval_required) {
-            return res.status(400).json({ success: false, error: 'This record does not require dual approval' });
+            return respond(res, 400, { success: false, error: 'This record does not require dual approval' });
         }
         if (audit.dual_approval_completed) {
-            return res.status(400).json({ success: false, error: 'Dual approval already completed' });
+            return respond(res, 400, { success: false, error: 'Dual approval already completed' });
         }
         if (audit.approval_status === 'expired') {
-            return res.status(400).json({ success: false, error: 'Approval window has expired' });
+            return respond(res, 400, { success: false, error: 'Approval window has expired' });
         }
         if (audit.dual_approval_expires_at && new Date() > new Date(audit.dual_approval_expires_at)) {
             audit.approval_status = 'expired';
             audit.failure_reason = 'Dual approval window expired';
             await audit.save();
-            return res.status(400).json({ success: false, error: 'Approval window has expired' });
+            return respond(res, 400, { success: false, error: 'Approval window has expired' });
         }
 
         // CRITICAL: first admin cannot approve their own request
         if (audit.first_admin_id?.toString() === req.user._id.toString()) {
-            return res.status(403).json({ success: false, error: 'You cannot approve your own emergency fund request' });
+            return respond(res, 403, { success: false, error: 'You cannot approve your own emergency fund request' });
         }
 
         // Second admin must have a valid WebAuthn BiometricSession
@@ -851,7 +852,7 @@ exports.approveDualApproval = async (req, res) => {
             verification_method: 'webauthn'
         });
         if (!bioSession) {
-            return res.status(403).json({ success: false, error: 'WebAuthn biometric verification required before approving. Please authenticate first.' });
+            return respond(res, 403, { success: false, error: 'WebAuthn biometric verification required before approving. Please authenticate first.' });
         }
 
         audit.second_admin_id = req.user._id;
@@ -889,10 +890,10 @@ exports.approveDualApproval = async (req, res) => {
         const assignment = await Assignment.findById(audit.event_id);
         const payoutResult = await executePayout(audit, assignment, req.user._id);
 
-        res.json({ success: true, message: 'Dual approval completed — payout triggered', payoutResult });
+        respond(res, 200, { success: true, message: 'Dual approval completed — payout triggered', payoutResult });
     } catch (error) {
         console.error('[DualApproval] approve:', error);
-        res.status(500).json({ success: false, error: 'Server Error' });
+        respond(res, 500, { success: false, error: 'Server Error' });
     }
 };
 
@@ -900,14 +901,14 @@ exports.approveDualApproval = async (req, res) => {
 exports.rejectDualApproval = async (req, res) => {
     try {
         const { audit_id, reason } = req.body;
-        if (!audit_id) return res.status(400).json({ success: false, error: 'audit_id required' });
-        if (!reason) return res.status(400).json({ success: false, error: 'reason required' });
+        if (!audit_id) return respond(res, 400, { success: false, error: 'audit_id required' });
+        if (!reason) return respond(res, 400, { success: false, error: 'reason required' });
 
         const audit = await EmergencyFundAudit.findById(audit_id);
-        if (!audit) return res.status(404).json({ success: false, error: 'Approval record not found' });
+        if (!audit) return respond(res, 404, { success: false, error: 'Approval record not found' });
 
         if (audit.first_admin_id?.toString() === req.user._id.toString()) {
-            return res.status(403).json({ success: false, error: 'You cannot reject your own request' });
+            return respond(res, 403, { success: false, error: 'You cannot reject your own request' });
         }
 
         audit.approval_status = 'rejected';
@@ -938,10 +939,10 @@ exports.rejectDualApproval = async (req, res) => {
             });
         }
 
-        res.json({ success: true, message: 'Request rejected' });
+        respond(res, 200, { success: true, message: 'Request rejected' });
     } catch (error) {
         console.error('[DualApproval] reject:', error);
-        res.status(500).json({ success: false, error: 'Server Error' });
+        respond(res, 500, { success: false, error: 'Server Error' });
     }
 };
 

@@ -976,7 +976,7 @@
         }
 
         function handleLogout() {
-            fetch('/api/admin/logout', { method: 'POST' })
+            fetch('/api/v1/admin/logout', { method: 'POST' })
                 .then(() => window.location.href = '/admin/login')
                 .catch(error => console.error('Logout error:', error));
         }

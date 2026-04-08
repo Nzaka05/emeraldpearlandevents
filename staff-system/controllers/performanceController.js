@@ -1,3 +1,4 @@
+const respond = require('../../utils/respond');
 const performanceService = require('../services/performanceService');
 const StaffPerformanceProfile = require('../models/StaffPerformanceProfile');
 const EventPerformanceBaseline = require('../models/EventPerformanceBaseline');
@@ -81,7 +82,7 @@ exports.getDashboardData = async (req, res) => {
         if (mostImproved) await mostImproved.populate('staff_id', 'firstname lastname');
         if (mostDeclined) await mostDeclined.populate('staff_id', 'firstname lastname');
 
-        res.json({
+        respond(res, 200, {
             success: true,
             data: {
                 platform_average: activeStaffCount > 0 ? (totalScore / activeStaffCount).toFixed(2) : 0,
@@ -99,16 +100,16 @@ exports.getDashboardData = async (req, res) => {
         });
     } catch (err) {
         console.error('Error fetching dashboard data:', err);
-        res.status(500).json({ success: false, error: err.message, timestamp: new Date() });
+        respond(res, 500, { success: false, error: err.message, timestamp: new Date() });
     }
 };
 
 exports.getStaffProfile = async (req, res) => {
     try {
         const data = await performanceService.getStaffProfile(req.params.id);
-        res.json({ success: true, data, timestamp: new Date() });
+        respond(res, 200, { success: true, data, timestamp: new Date() });
     } catch (err) {
-        res.status(500).json({
+        respond(res, 500, {
             success: false,
             error: {
                 code: "INTERNAL_ERROR",
@@ -124,21 +125,21 @@ exports.getStaffProfile = async (req, res) => {
 exports.getSupervisors = async (req, res) => {
     try {
         const top = await performanceService.getBestSupervisors(req.query.eventType);
-        res.json({ success: true, data: top, timestamp: new Date() });
+        respond(res, 200, { success: true, data: top, timestamp: new Date() });
     } catch (err) {
-        res.status(500).json({ success: false, error: err.message, timestamp: new Date() });
+        respond(res, 500, { success: false, error: err.message, timestamp: new Date() });
     }
 };
 
 exports.flagStaff = async (req, res) => {
     try {
         const { reason } = req.body;
-        if (!reason) return res.status(400).json({ success: false, error: 'Reason required', timestamp: new Date() });
+        if (!reason) return respond(res, 400, { success: false, error: 'Reason required', timestamp: new Date() });
 
         const profile = await performanceService.flagStaffDisciplinary(req.params.staffId, reason, req.user._id);
-        res.json({ success: true, data: profile, timestamp: new Date() });
+        respond(res, 200, { success: true, data: profile, timestamp: new Date() });
     } catch (err) {
-        res.status(500).json({
+        respond(res, 500, {
             success: false,
             error: {
                 code: "INTERNAL_ERROR",
@@ -156,10 +157,10 @@ exports.reopenReviewWindow = async (req, res) => {
         const { eventId } = req.params;
         const { reason } = req.body;
 
-        if (!reason) return res.status(400).json({ success: false, error: 'Reason required to reopen review window', timestamp: new Date() });
+        if (!reason) return respond(res, 400, { success: false, error: 'Reason required to reopen review window', timestamp: new Date() });
 
         const baseline = await EventPerformanceBaseline.findOne({ event_id: eventId });
-        if (!baseline) return res.status(404).json({ success: false, error: 'Event baseline not found', timestamp: new Date() });
+        if (!baseline) return respond(res, 404, { success: false, error: 'Event baseline not found', timestamp: new Date() });
 
         // Extend by 24 hours
         let currentEnd = baseline.review_window_extended_until || new Date(baseline.snapshot_taken_at.getTime() + (48 * 60 * 60 * 1000));
@@ -176,8 +177,8 @@ exports.reopenReviewWindow = async (req, res) => {
             details: { reason, extended_until: newEnd, event_id: eventId }
         });
 
-        res.json({ success: true, data: { extended_until: newEnd }, timestamp: new Date() });
+        respond(res, 200, { success: true, data: { extended_until: newEnd }, timestamp: new Date() });
     } catch (err) {
-        res.status(500).json({ success: false, error: err.message, timestamp: new Date() });
+        respond(res, 500, { success: false, error: err.message, timestamp: new Date() });
     }
 };

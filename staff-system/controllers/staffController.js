@@ -1,3 +1,4 @@
+const respond = require('../../utils/respond');
 const Staff = require('../models/Staff');
 const Assignment = require('../models/Assignment');
 const Attendance = require('../models/Attendance');
@@ -99,7 +100,7 @@ exports.updateAvailability = async (req, res) => {
         const { status } = req.body;
         const validStatuses = ['Available', 'Busy', 'Not Available', 'On Leave'];
         if (!validStatuses.includes(status)) {
-            return res.status(400).json({ success: false, error: 'Invalid status' });
+            return respond(res, 400, { success: false, error: 'Invalid status' });
         }
 
         const user = await Staff.findByIdAndUpdate(
@@ -115,10 +116,10 @@ exports.updateAvailability = async (req, res) => {
             global.io.to('Admin').emit('metricUpdate', { availableStaff: availableCount, busyStaff: busyCount });
         }
 
-        res.json({ success: true, status: user.availability_status });
+        respond(res, 200, { success: true, status: user.availability_status });
     } catch (error) {
         console.error(error);
-        res.status(500).json({ success: false, error: 'Server Error' });
+        respond(res, 500, { success: false, error: 'Server Error' });
     }
 };
 
@@ -129,7 +130,7 @@ exports.respondToAssignment = async (req, res) => {
         const { response } = req.body;
         const assignment = await Assignment.findById(req.params.id);
 
-        if (!assignment) return res.status(404).json({ success: false, error: 'Assignment not found' });
+        if (!assignment) return respond(res, 404, { success: false, error: 'Assignment not found' });
 
         if (response === 'apply') {
             if (!assignment.applicant_ids) assignment.applicant_ids = [];
@@ -137,7 +138,7 @@ exports.respondToAssignment = async (req, res) => {
                 assignment.applicant_ids.push(req.user._id);
                 await assignment.save();
             }
-            return res.json({ success: true, message: 'Application submitted' });
+            return respond(res, 200, { success: true, message: 'Application submitted' });
         }
 
         if (response === 'accept') {
@@ -239,10 +240,10 @@ exports.respondToAssignment = async (req, res) => {
             details: { assignmentTitle: assignment.title }
         });
 
-        res.json({ success: true });
+        respond(res, 200, { success: true });
     } catch (error) {
         console.error(error);
-        res.status(500).json({ success: false, error: 'Server Error' });
+        respond(res, 500, { success: false, error: 'Server Error' });
     }
 };
 
@@ -262,7 +263,7 @@ exports.clockInOut = async (req, res) => {
             });
 
             if (existing && existing.clock_in) {
-                return res.json({ success: false, error: 'Already clocked in for this assignment today' });
+                return respond(res, 200, { success: false, error: 'Already clocked in for this assignment today' });
             }
 
             const assignment = await Assignment.findById(assignment_id);
@@ -299,7 +300,7 @@ exports.clockInOut = async (req, res) => {
                 global.io.emit('teamAttendanceUpdate', { assignment_id });
             }
 
-            return res.json({ success: true, data: attendance });
+            return respond(res, 200, { success: true, data: attendance });
         }
 
         if (action === 'out') {
@@ -311,7 +312,7 @@ exports.clockInOut = async (req, res) => {
             });
 
             if (!attendance) {
-                return res.json({ success: false, error: 'No active clock-in found for today' });
+                return respond(res, 200, { success: false, error: 'No active clock-in found for today' });
             }
 
             attendance.clock_out = new Date();
@@ -333,13 +334,13 @@ exports.clockInOut = async (req, res) => {
                 });
             }
 
-            return res.json({ success: true, data: attendance });
+            return respond(res, 200, { success: true, data: attendance });
         }
 
-        res.status(400).json({ success: false, error: 'Invalid action' });
+        respond(res, 400, { success: false, error: 'Invalid action' });
     } catch (error) {
         console.error(error);
-        res.status(500).json({ success: false, error: 'Server Error' });
+        respond(res, 500, { success: false, error: 'Server Error' });
     }
 };
 
@@ -352,10 +353,10 @@ exports.getAttendanceHistory = async (req, res) => {
             .sort({ date: -1 })
             .limit(50);
 
-        res.json({ success: true, data: records });
+        respond(res, 200, { success: true, data: records });
     } catch (error) {
         console.error(error);
-        res.status(500).json({ success: false, error: 'Server Error' });
+        respond(res, 500, { success: false, error: 'Server Error' });
     }
 };
 
@@ -434,10 +435,10 @@ exports.getNotifications = async (req, res) => {
         // Sort all by timestamp descending
         notifications.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
 
-        res.json({ success: true, data: notifications.slice(0, 20) });
+        respond(res, 200, { success: true, data: notifications.slice(0, 20) });
     } catch (error) {
         console.error(error);
-        res.status(500).json({ success: false, error: 'Server Error' });
+        respond(res, 500, { success: false, error: 'Server Error' });
     }
 };
 
@@ -446,12 +447,12 @@ exports.getNotifications = async (req, res) => {
 exports.downloadPaymentReceipt = async (req, res) => {
     try {
         const assignment = await Assignment.findById(req.params.assignmentId);
-        if (!assignment) return res.status(404).json({ success: false, error: 'Assignment not found' });
+        if (!assignment) return respond(res, 404, { success: false, error: 'Assignment not found' });
 
         const payment = assignment.staff_payments.find(
             p => p.staff_id.toString() === req.user._id.toString()
         );
-        if (!payment) return res.status(404).json({ success: false, error: 'Payment record not found' });
+        if (!payment) return respond(res, 404, { success: false, error: 'Payment record not found' });
 
         const PDFDocument = require('pdfkit');
         const path = require('path');
@@ -576,7 +577,7 @@ exports.downloadPaymentReceipt = async (req, res) => {
         doc.end();
     } catch (error) {
         console.error(error);
-        res.status(500).json({ success: false, error: 'Failed to generate receipt' });
+        respond(res, 500, { success: false, error: 'Failed to generate receipt' });
     }
 };
 
@@ -588,10 +589,10 @@ exports.getPaymentHistory = async (req, res) => {
             accepted_staff_ids: req.user._id
         }).select('title date pay_rate payment_status location payment_confirmed_at').sort({ date: -1 });
 
-        res.json({ success: true, data: assignments });
+        respond(res, 200, { success: true, data: assignments });
     } catch (error) {
         console.error(error);
-        res.status(500).json({ success: false, error: 'Server Error' });
+        respond(res, 500, { success: false, error: 'Server Error' });
     }
 };
 
@@ -601,10 +602,10 @@ exports.subscribePush = async (req, res) => {
     try {
         const { subscription } = req.body;
         await Staff.findByIdAndUpdate(req.user._id, { pushSubscription: subscription });
-        res.json({ success: true });
+        respond(res, 200, { success: true });
     } catch (error) {
         console.error(error);
-        res.status(500).json({ success: false, error: 'Server Error' });
+        respond(res, 500, { success: false, error: 'Server Error' });
     }
 };
 
@@ -654,10 +655,10 @@ exports.updateProfile = async (req, res) => {
             console.log('Port 3000 sync skipped (may be offline):', syncErr.message);
         }
 
-        res.json({ success: true, data: updated });
+        respond(res, 200, { success: true, data: updated });
     } catch (error) {
         console.error(error);
-        res.status(500).json({ success: false, error: 'Server Error' });
+        respond(res, 500, { success: false, error: 'Server Error' });
     }
 };
 
@@ -668,11 +669,11 @@ exports.changeOwnPassword = async (req, res) => {
         const { current_password, new_password, confirm_new_password } = req.body;
 
         if (new_password !== confirm_new_password) {
-            return res.status(400).json({ success: false, error: 'New passwords do not match' });
+            return respond(res, 400, { success: false, error: 'New passwords do not match' });
         }
 
         if (new_password.length < 8) {
-            return res.status(400).json({ success: false, error: 'New password must be at least 8 characters' });
+            return respond(res, 400, { success: false, error: 'New password must be at least 8 characters' });
         }
 
         // Get the user with password
@@ -681,7 +682,7 @@ exports.changeOwnPassword = async (req, res) => {
         // Check current password
         const isMatch = await bcrypt.compare(current_password, user.password);
         if (!isMatch) {
-            return res.status(400).json({ success: false, error: 'Current password is incorrect' });
+            return respond(res, 400, { success: false, error: 'Current password is incorrect' });
         }
 
         // Hash new password
@@ -699,10 +700,10 @@ exports.changeOwnPassword = async (req, res) => {
             details: { reason: 'Staff changed own password' }
         });
 
-        res.json({ success: true, message: 'Password changed successfully' });
+        respond(res, 200, { success: true, message: 'Password changed successfully' });
     } catch (error) {
         console.error(error);
-        res.status(500).json({ success: false, error: 'Server Error' });
+        respond(res, 500, { success: false, error: 'Server Error' });
     }
 };
 
@@ -785,13 +786,13 @@ exports.sendTeamMessage = async (req, res) => {
     try {
         const { message } = req.body;
         if (!message || !message.trim()) {
-            return res.status(400).json({ success: false, error: 'Message cannot be empty' });
+            return respond(res, 400, { success: false, error: 'Message cannot be empty' });
         }
 
         // Find the team this staff member belongs to
         const team = await EventTeam.findOne({ member_ids: req.user._id });
         if (!team) {
-            return res.status(404).json({ success: false, error: 'You are not in a team' });
+            return respond(res, 404, { success: false, error: 'You are not in a team' });
         }
 
         const comm = await EventTeamCommunication.create({
@@ -818,10 +819,10 @@ exports.sendTeamMessage = async (req, res) => {
             });
         }
 
-        res.json({ success: true, message: comm });
+        respond(res, 200, { success: true, message: comm });
     } catch (error) {
         console.error(error);
-        res.status(500).json({ success: false, error: 'Server Error' });
+        respond(res, 500, { success: false, error: 'Server Error' });
     }
 };
 
@@ -829,10 +830,10 @@ exports.sendTeamMessage = async (req, res) => {
 // @route   POST /portal/staff/team/message/upload
 exports.sendTeamMediaMessage = async (req, res) => {
     try {
-        if (!req.file) return res.status(400).json({ success: false, error: 'No file uploaded' });
+        if (!req.file) return respond(res, 400, { success: false, error: 'No file uploaded' });
 
         const team = await EventTeam.findOne({ member_ids: req.user._id });
-        if (!team) return res.status(404).json({ success: false, error: 'Not in a team' });
+        if (!team) return respond(res, 404, { success: false, error: 'Not in a team' });
 
         const fileUrl = `/uploads/chat/${req.file.filename}`;
         const isVideo = /mp4|mov|webm/.test(req.file.originalname.toLowerCase());
@@ -858,10 +859,10 @@ exports.sendTeamMediaMessage = async (req, res) => {
             });
         }
 
-        res.json({ success: true, url: fileUrl });
+        respond(res, 200, { success: true, url: fileUrl });
     } catch (error) {
         console.error(error);
-        res.status(500).json({ success: false, error: 'Server Error' });
+        respond(res, 500, { success: false, error: 'Server Error' });
     }
 };
 
@@ -950,14 +951,14 @@ exports.getProfilePage = async (req, res) => {
 exports.updateLocation = async (req, res) => {
     try {
         const { lat, lng } = req.body;
-        if (!lat || !lng) return res.status(400).json({ success: false, error: 'Coordinates required' });
+        if (!lat || !lng) return respond(res, 400, { success: false, error: 'Coordinates required' });
         await Staff.findByIdAndUpdate(req.user._id, {
             last_location: { lat: parseFloat(lat), lng: parseFloat(lng), updatedAt: new Date() }
         });
-        res.json({ success: true });
+        respond(res, 200, { success: true });
     } catch (error) {
         console.error(error);
-        res.status(500).json({ success: false, error: 'Server Error' });
+        respond(res, 500, { success: false, error: 'Server Error' });
     }
 };
 
@@ -1031,11 +1032,11 @@ exports.confirmPaymentReceipt = async (req, res) => {
             _id: req.params.id,
             accepted_staff_ids: req.user._id
         });
-        if (!assignment) return res.status(404).json({ success: false, error: 'Assignment not found' });
+        if (!assignment) return respond(res, 404, { success: false, error: 'Assignment not found' });
 
         const sp = assignment.staff_payments.find(p => p.staff_id.toString() === req.user._id.toString());
-        if (!sp) return res.status(404).json({ success: false, error: 'Payment record not found' });
-        if (sp.status === 'Received') return res.json({ success: true, message: 'Already confirmed' });
+        if (!sp) return respond(res, 404, { success: false, error: 'Payment record not found' });
+        if (sp.status === 'Received') return respond(res, 200, { success: true, message: 'Already confirmed' });
 
         sp.status = 'Received';
         sp.received_at = new Date();
@@ -1074,10 +1075,10 @@ exports.confirmPaymentReceipt = async (req, res) => {
             });
         }
 
-        res.json({ success: true });
+        respond(res, 200, { success: true });
     } catch (error) {
         console.error(error);
-        res.status(500).json({ success: false, error: 'Server Error' });
+        respond(res, 500, { success: false, error: 'Server Error' });
     }
 };
 
@@ -1086,13 +1087,13 @@ exports.confirmPaymentReceipt = async (req, res) => {
 exports.disputePayment = async (req, res) => {
     try {
         const { reason } = req.body;
-        if (!reason) return res.status(400).json({ success: false, error: 'Reason required' });
+        if (!reason) return respond(res, 400, { success: false, error: 'Reason required' });
 
         const assignment = await Assignment.findOne({
             _id: req.params.id,
             accepted_staff_ids: req.user._id
         });
-        if (!assignment) return res.status(404).json({ success: false, error: 'Assignment not found' });
+        if (!assignment) return respond(res, 404, { success: false, error: 'Assignment not found' });
 
         const sp = assignment.staff_payments.find(p => p.staff_id.toString() === req.user._id.toString());
         if (sp) {
@@ -1114,10 +1115,10 @@ exports.disputePayment = async (req, res) => {
             });
         }
 
-        res.json({ success: true });
+        respond(res, 200, { success: true });
     } catch (error) {
         console.error(error);
-        res.status(500).json({ success: false, error: 'Server Error' });
+        respond(res, 500, { success: false, error: 'Server Error' });
     }
 };
 
@@ -1126,14 +1127,14 @@ exports.disputePayment = async (req, res) => {
 exports.uploadProfilePhoto = async (req, res) => {
     try {
         if (!req.file) {
-            return res.status(400).json({ success: false, error: 'No photo uploaded' });
+            return respond(res, 400, { success: false, error: 'No photo uploaded' });
         }
         const photo_url = `/uploads/staff/${req.file.filename}`;
         await Staff.findByIdAndUpdate(req.user.id, { photo_url });
-        res.json({ success: true, photo_url });
+        respond(res, 200, { success: true, photo_url });
     } catch (err) {
         console.error('Photo upload error:', err.message);
-        res.status(500).json({ success: false, error: err.message });
+        respond(res, 500, { success: false, error: err.message });
     }
 };
 

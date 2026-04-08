@@ -1,4 +1,5 @@
 /**
+const respond = require('../../utils/respond');
  * liveController.js — Phase 12: Live Event Command Center
  * Handles real-time admin ↔ supervisor comms, emergency flags, live ops board
  */
@@ -105,7 +106,7 @@ exports.sendAdminMessage = async (req, res) => {
             : null;
 
         if (!content && !attachment_url) {
-            return res.status(400).json({ success: false, error: 'Empty message' });
+            return respond(res, 400, { success: false, error: 'Empty message' });
         }
 
         const msg = await LiveMessage.create({
@@ -130,10 +131,10 @@ exports.sendAdminMessage = async (req, res) => {
             global.io.to('Admin').emit('adminLiveMessage', populated);
         }
 
-        res.json({ success: true, message: populated });
+        respond(res, 200, { success: true, message: populated });
     } catch (err) {
         console.error('[liveController] sendAdminMessage error:', err);
-        res.status(500).json({ success: false, error: err.message });
+        respond(res, 500, { success: false, error: err.message });
     }
 };
 
@@ -170,10 +171,10 @@ exports.flagEmergency = async (req, res) => {
             global.io.to('Supervisors').emit('adminLiveMessage', populated);
         }
 
-        res.json({ success: true, message: populated });
+        respond(res, 200, { success: true, message: populated });
     } catch (err) {
         console.error('[liveController] flagEmergency error:', err);
-        res.status(500).json({ success: false, error: err.message });
+        respond(res, 500, { success: false, error: err.message });
     }
 };
 
@@ -185,15 +186,15 @@ exports.ackEmergency = async (req, res) => {
             emergency_acked_by: req.user._id
         }, { new: true }).lean();
 
-        if (!msg) return res.status(404).json({ success: false, error: 'Not found' });
+        if (!msg) return respond(res, 404, { success: false, error: 'Not found' });
 
         if (global.io) {
             global.io.to('Admin').emit('emergencyAcknowledged', { id: msg._id, acked_by: req.user.name });
         }
 
-        res.json({ success: true });
+        respond(res, 200, { success: true });
     } catch (err) {
-        res.status(500).json({ success: false, error: err.message });
+        respond(res, 500, { success: false, error: err.message });
     }
 };
 
@@ -207,7 +208,7 @@ exports.sendSupervisorMessage = async (req, res) => {
             : null;
 
         if (!content && !attachment_url) {
-            return res.status(400).json({ success: false, error: 'Empty message' });
+            return respond(res, 400, { success: false, error: 'Empty message' });
         }
 
         const msg = await LiveMessage.create({
@@ -228,9 +229,9 @@ exports.sendSupervisorMessage = async (req, res) => {
             global.io.to(`Supervisor_${req.user._id}`).emit('adminLiveMessage', populated);
         }
 
-        res.json({ success: true, message: populated });
+        respond(res, 200, { success: true, message: populated });
     } catch (err) {
-        res.status(500).json({ success: false, error: err.message });
+        respond(res, 500, { success: false, error: err.message });
     }
 };
 
@@ -243,8 +244,8 @@ exports.getRecentMessages = async (req, res) => {
             .sort({ timestamp: 1 })
             .limit(50)
             .lean();
-        res.json({ success: true, messages });
+        respond(res, 200, { success: true, messages });
     } catch (err) {
-        res.status(500).json({ success: false, error: err.message });
+        respond(res, 500, { success: false, error: err.message });
     }
 };

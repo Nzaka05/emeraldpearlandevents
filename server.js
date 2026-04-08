@@ -564,23 +564,23 @@ function escapeHtml(text) {
 // ═══════════════════════════════════════════════════════════
 
 // ── HEALTH CHECK ──
-app.get('/api/health', (req, res) => {
+app.get('/api/v1/health', (req, res) => {
     res.json({ status: 'Server is running', timestamp: new Date() });
 });
 
-// ── BOOKING ROUTES (handles /api/book-event, saves to MongoDB) ──
-app.use('/api', bookingRoutes);
+// ── BOOKING ROUTES (handles /api/v1/book-event, saves to MongoDB) ──
+app.use('/api/v1', bookingRoutes);
 
-// ── ADMIN ROUTES (handles /api/admin/login, /api/admin/change-password, etc) ──
-app.use('/api/admin', adminLimiter, adminRoutes);
+// ── ADMIN ROUTES (handles /api/v1/admin/login, /api/v1/admin/change-password, etc) ──
+app.use('/api/v1/admin', adminLimiter, adminRoutes);
 app.use('/admin/command-center', adminCommandCenterRoutes);
 
 // ── CLIENT PORTAL ROUTES ──
 const clientPortalRoutes = require('./server/routes/clientPortalRoutes');
-app.use('/client', clientPortalRoutes);
+app.use('/api/v1/client', clientPortalRoutes);
 
 // ── ANALYTICS TRACKING ENDPOINT ──
-app.post('/api/analytics/event', async (req, res) => {
+app.post('/api/v1/analytics/event', async (req, res) => {
     try {
         const { eventType, parameter, timestamp } = req.body;
 

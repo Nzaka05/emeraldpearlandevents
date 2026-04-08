@@ -1,0 +1,11 @@
+<%-- 
+  PATCH: Insert this block in dashboard.ejs
+  LOCATION: Paste immediately after the closing </div> of id="payment-progress-section"
+  (the amber-bordered payment progress card), before the timeline section.
+-%>
+
+<!-- Payment Methods (live from admin PricingSettings) -->
+<div id="payment-methods-section" class="hidden bg-white rounded-xl shadow-sm border border-gray-100 p-5 mb-8">
+    <p class="text-sm font-semibold text-gray-800 mb-3">How to pay</p>
+    <div id="payment-methods-list" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
+</div>

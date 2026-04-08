@@ -748,7 +748,7 @@
                 // when the page is served by the node server this will resolve
                 // to http://localhost:3000/api/admin/login; if you're opening the
                 // file directly this won't work – make sure to use the server URL
-                const response = await fetch('/api/admin/login', {
+                const response = await fetch('/api/v1/admin/login', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'

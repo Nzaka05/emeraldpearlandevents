@@ -14,13 +14,6 @@ const ClientAccount = require('../models/ClientAccount');
 const ClientAuditLog = require('../models/ClientAuditLog');
 const ClientSession = require('../models/ClientSession');
 const { verifyAdminJWT, generateAdminToken } = require('../middleware/adminAuth');
-const { bookingQueue, notificationQueue } = require('../../config/queues');
-const {
-    sendClientAppreciationEmail,
-    sendStaffFeedbackRequestEmail,
-    sendEmail
-} = require('../services/emailService');
-const queueMode = (process.env.QUEUE_MODE || 'inline').toLowerCase();
 
 
 // ═══════════════════════════════════════════════════════════
@@ -31,7 +24,7 @@ const queueMode = (process.env.QUEUE_MODE || 'inline').toLowerCase();
 // PUSH NOTIFICATION ROUTES
 // ═══════════════════════════════════════════════════════════
 
-// GET /api/admin/vapid-public-key
+// GET /api/v1/admin/vapid-public-key
 router.get('/vapid-public-key', verifyAdminJWT, (req, res) => {
     res.json({
         success: true,
@@ -39,7 +32,7 @@ router.get('/vapid-public-key', verifyAdminJWT, (req, res) => {
     });
 });
 
-// POST /api/admin/push-subscribe
+// POST /api/v1/admin/push-subscribe
 router.post('/push-subscribe', verifyAdminJWT, async (req, res) => {
     try {
         const { subscription } = req.body;
@@ -68,7 +61,7 @@ router.post('/push-subscribe', verifyAdminJWT, async (req, res) => {
     }
 });
 
-// POST /api/admin/login
+// POST /api/v1/admin/login
 router.post('/login', async (req, res) => {
     try {
         const { email, password } = req.body;
@@ -149,7 +142,7 @@ router.post('/login', async (req, res) => {
     }
 });
 
-// POST /api/admin/logout
+// POST /api/v1/admin/logout
 router.post('/logout', (req, res) => {
     res.clearCookie('adminToken');
     res.clearCookie('portal_token');
@@ -159,7 +152,7 @@ router.post('/logout', (req, res) => {
     });
 });
 
-// GET /api/admin/me (protected)
+// GET /api/v1/admin/me (protected)
 router.get('/me', verifyAdminJWT, async (req, res) => {
     try {
         const admin = await Admin.findById(req.admin.adminId).select('-passwordHash');
@@ -175,7 +168,7 @@ router.get('/me', verifyAdminJWT, async (req, res) => {
     }
 });
 
-// PATCH /api/admin/me - Update admin profile
+// PATCH /api/v1/admin/me - Update admin profile
 router.patch('/me', verifyAdminJWT, async (req, res) => {
     try {
         const { name, avatar } = req.body;
@@ -217,536 +210,21 @@ router.patch('/me', verifyAdminJWT, async (req, res) => {
 // ═══════════════════════════════════════════════════════════
 // BOOKINGS ROUTES (PROTECTED)
 // ═══════════════════════════════════════════════════════════
-
-// GET /api/admin/bookings
-router.get('/bookings', verifyAdminJWT, async (req, res) => {
-    try {
-        const { status, eventType, search, clientEmail, clientPhone, page = 1, limit = 20 } = req.query;
-        const query = {};
-
-        if (status) query.status = status;
-        if (eventType) query.eventType = eventType;
-        
-        // Search by client email
-        if (clientEmail) {
-            query.customerEmail = { $regex: clientEmail, $options: 'i' };
-        }
-        
-        // Search by client phone
-        if (clientPhone) {
-            query.customerPhone = { $regex: clientPhone.replace(/\s|-/g, ''), $options: 'i' };
-        }
-        
-        if (search) {
-            query.$or = [
-                { 'customerId.name': { $regex: search, $options: 'i' } },
-                { location: { $regex: search, $options: 'i' } },
-                { bookingReference: { $regex: search, $options: 'i' } }
-            ];
-        }
-
-        const skip = (page - 1) * limit;
-        const bookings = await Booking.find(query)
-            .populate('customerId')
-            .populate('assignedStaff')
-            .sort({ createdAt: -1 })
-            .skip(skip)
-            .limit(parseInt(limit));
-
-        const total = await Booking.countDocuments(query);
-
-        res.json({
-            success: true,
-            bookings,
-            pagination: {
-                total,
-                pages: Math.ceil(total / limit),
-                currentPage: parseInt(page)
-            }
-        });
-    } catch (error) {
-        console.error('Error fetching bookings:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error fetching bookings'
-        });
-    }
-});
-
-// GET /api/admin/bookings/:id
-router.get('/bookings/:id', verifyAdminJWT, async (req, res) => {
-    try {
-        const booking = await Booking.findById(req.params.id)
-            .populate('customerId')
-            .populate('assignedStaff')
-            .populate('adminNotes.addedBy', 'name');
-
-        if (!booking) {
-            return res.status(404).json({
-                success: false,
-                message: 'Booking not found'
-            });
-        }
-
-        res.json({
-            success: true,
-            booking
-        });
-    } catch (error) {
-        res.status(500).json({
-            success: false,
-            message: 'Error fetching booking'
-        });
-    }
-});
-
-// PATCH /api/admin/bookings/:id
-router.patch('/bookings/:id', verifyAdminJWT, async (req, res) => {
-    try {
-        const { status, isPaid, notes, assignedStaff } = req.body;
-        let responseAssignedStaff = undefined;
-        const booking = await Booking.findById(req.params.id);
-
-        if (!booking) {
-            return res.status(404).json({
-                success: false,
-                message: 'Booking not found'
-            });
-        }
-
-        const updatePayload = {};
-        if (status) updatePayload.status = status;
-        if (isPaid !== undefined) updatePayload.isPaid = isPaid;
-
-        if (Array.isArray(assignedStaff)) {
-            responseAssignedStaff = assignedStaff;
-            const validObjectIds = assignedStaff
-                .filter(item => typeof item === 'string' && /^[a-fA-F0-9]{24}$/.test(item));
-            if (validObjectIds.length > 0) {
-                updatePayload.assignedStaff = validObjectIds;
-            }
-        }
-
-        if (typeof notes === 'string' && notes.trim()) {
-            updatePayload.notes = notes;
-            updatePayload.$push = {
-                adminNotes: {
-                    note: notes,
-                    addedBy: req.admin.adminId
-                }
-            };
-        }
-
-        const updatedBooking = await Booking.findByIdAndUpdate(
-            req.params.id,
-            updatePayload,
-            {
-                new: true,
-                runValidators: true
-            }
-        );
-
-        if (!updatedBooking) {
-            return res.status(404).json({
-                success: false,
-                message: 'Booking not found'
-            });
-        }
-
-        if (updatedBooking.status === 'confirmed') {
-            if (queueMode === 'async') {
-                await bookingQueue.add('confirmed', { bookingId: req.params.id });
-                return res.json({
-                    success: true,
-                    message: 'Booking updated and queued for confirmation workflow',
-                    booking: updatedBooking
-                });
-            }
-
-            // Inline fallback when worker is deferred.
-            try {
-                const axios = require('axios');
-                const axiosRetry = require('axios-retry').default || require('axios-retry');
-                axiosRetry(axios, { retries: 3, retryDelay: axiosRetry.exponentialDelay });
-                const syncSecret = process.env.SYNC_SECRET;
-                await axios.post(
-                    `${process.env.STAFF_SYSTEM_BASE_URL || 'http://localhost:3001'}/internal/sync-booking`,
-                    {
-                        title: updatedBooking.eventType || 'Event',
-                        description: updatedBooking.notes || 'Synced from client booking',
-                        location: updatedBooking.location || 'TBD',
-                        date: updatedBooking.eventDate,
-                        start_time: '09:00',
-                        end_time: '17:00',
-                        pay_rate: await (async () => {
-                            try {
-                                const PricingSettings = require('../models/PricingSettings');
-                                const pricing = await PricingSettings.findOne().lean();
-                                if (pricing && pricing.categories) {
-                                    const eventType = (updatedBooking.eventType || '').toLowerCase();
-                                    const match = pricing.categories.find(c => c.isActive && eventType.includes(c.name.toLowerCase().split('/')[0].trim().toLowerCase()));
-                                    if (match) return match.staffPayRate || 1000;
-                                }
-                            } catch (e) {
-                                console.log('Pricing lookup failed:', e.message);
-                            }
-                            return 1000;
-                        })(),
-                        usherCount: updatedBooking.usherCount || 0,
-                        required_staff_count: updatedBooking.selectedServices?.reduce((sum, s) => sum + (s.quantity || 0), 0) || updatedBooking.usherCount || 1,
-                        booking_ref: updatedBooking._id.toString(),
-                        client_name: updatedBooking.customerId?.name || '',
-                        client_email: updatedBooking.customerId?.email || ''
-                    },
-                    { headers: { 'x-sync-secret': syncSecret } }
-                );
-
-                await Booking.findByIdAndUpdate(updatedBooking._id, {
-                    syncStatus: 'synced',
-                    lastSyncAttempt: new Date(),
-                    $inc: { syncAttempts: 1 },
-                    $unset: { lastSyncError: 1 }
-                });
-                console.log('Booking synced to staff portal:', updatedBooking._id);
-            } catch (syncErr) {
-                await Booking.findByIdAndUpdate(updatedBooking._id, {
-                    syncStatus: 'pending',
-                    lastSyncAttempt: new Date(),
-                    $inc: { syncAttempts: 1 },
-                    lastSyncError: syncErr.message
-                });
-                console.warn('Staff portal sync failed (inline mode):', syncErr.message);
-            }
-        }
-
-        // Create notification
-        await AdminNotification.create({
-            type: 'system',
-            message: `Booking ${updatedBooking.bookingReference} updated`,
-            bookingRef: updatedBooking._id
-        });
-
-        const bookingResponse = updatedBooking.toObject();
-        if (responseAssignedStaff) {
-            bookingResponse.assignedStaff = responseAssignedStaff;
-        }
-
-        res.json({
-            success: true,
-            message: 'Booking updated',
-            booking: bookingResponse
-        });
-    } catch (error) {
-        console.error('Error updating booking:', {
-            name: error.name,
-            message: error.message,
-            errors: error.errors,
-            stack: error.stack
-        });
-        res.status(500).json({
-            success: false,
-            message: 'Error updating booking'
-        });
-    }
-});
-
-// PATCH /api/admin/bookings/:id/pay
-router.patch('/bookings/:id/pay', verifyAdminJWT, async (req, res) => {
-    try {
-        const { amountPaid, isPaid } = req.body;
-        const booking = await Booking.findById(req.params.id);
-
-        if (!booking) {
-            return res.status(404).json({
-                success: false,
-                message: 'Booking not found'
-            });
-        }
-
-        if (amountPaid !== undefined) {
-            booking.amountPaid = Number(amountPaid);
-        }
-        if (isPaid !== undefined) {
-            booking.isPaid = isPaid;
-        }
-
-        await booking.save();
-
-        // Rich notification with customer name when marking as paid
-        if (isPaid) {
-            const customer = await Customer.findById(booking.customerId);
-            await AdminNotification.create({
-                type: 'payment_received',
-                title: 'Payment Received',
-                message: `Payment of KES ${booking.amountPaid?.toLocaleString() || 0} received from ${customer?.name || 'client'} for booking ${booking.bookingReference}`,
-                bookingRef: booking._id,
-                icon: 'money-bill',
-                isRead: false
-            });
-        } else {
-            await AdminNotification.create({
-                type: 'payment_received',
-                message: `Payment updated for booking ${booking.bookingReference}`,
-                bookingRef: booking._id,
-                icon: 'money-bill'
-            });
-        }
-
-        res.json({
-            success: true,
-            message: 'Payment details updated successfully',
-            booking
-        });
-    } catch (error) {
-        console.error('Error processing payment:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error processing payment'
-        });
-    }
-});
-
-
-// POST /api/admin/bookings/:id/payment
-router.post('/bookings/:id/payment', verifyAdminJWT, async (req, res) => {
-    try {
-        const { amount, paymentMethod, transactionId, paymentDate, notes } = req.body;
-        const booking = await Booking.findById(req.params.id).populate('customerId');
-
-        if (!booking) {
-            return res.status(404).json({ success: false, message: 'Booking not found' });
-        }
-
-        const ClientPayment = require('../models/ClientPayment');
-
-        // Create the payment record
-        const payment = await ClientPayment.create({
-            bookingId: booking._id,
-            clientId: booking.customerId ? booking.customerId._id : null,
-            clientName: booking.customerId ? booking.customerId.name : '',
-            clientEmail: booking.customerId ? booking.customerId.email : '',
-            amount: Number(amount),
-            paymentMethod: paymentMethod || 'MPesa',
-            transactionId: transactionId || '',
-            paymentDate: paymentDate ? new Date(paymentDate) : new Date(),
-            notes: notes || '',
-            recordedBy: req.admin.adminId
-        });
-
-        // Update the booking's amountPaid
-        booking.amountPaid = (booking.amountPaid || 0) + Number(amount);
-        booking.isPaid = true; // Mark as paid
-        await booking.save();
-
-        await AdminNotification.create({
-            type: 'payment_received',
-            message: `Payment of KES ${amount} recorded for booking ${booking.bookingReference}`,
-            bookingRef: booking._id,
-            icon: 'money-bill'
-        });
-
-        // SYNC PAYMENT & PROFORMA INVOICE
-        try {
-            const axios = require('axios');
-            const syncSecret = process.env.SYNC_SECRET;
-            // Sync payment amount to staff portal
-            await axios.post(
-                `${process.env.STAFF_SYSTEM_BASE_URL || 'http://localhost:3001'}/internal/sync-payment`,
-                { booking_ref: booking._id.toString(), clientPaymentAmount: amount, paymentMethod, transactionId },
-                { headers: { 'x-sync-secret': syncSecret } }
-            );
-
-            // Send proforma invoice email directly from main portal
-            const PricingSettings = require('../models/PricingSettings');
-            const pricing = await PricingSettings.findOne().lean();
-            const vatRate = pricing?.vatRate || 16;
-            const subtotal = parseFloat(amount) || 0;
-            const vatAmount = Math.round(subtotal * vatRate / 100);
-            const totalAmount = subtotal + vatAmount;
-            
-            const proformaHtml = `
-                <p style="color:#334155;">Dear <strong>${booking.customerId?.name || 'Client'}</strong>,</p>
-                <p style="color:#334155;margin-bottom:20px;">Thank you for your payment. Please find your invoice details below.</p>
-                <div style="background:#f8fafc;border-radius:8px;padding:20px;border-left:4px solid #C9A84C;">
-                    <table style="width:100%;border-collapse:collapse;">
-                        <tr><td style="padding:6px 0;color:#64748b;">Event</td><td style="padding:6px 0;font-weight:700;color:#0D2B1F;text-align:right;">${booking.eventType}</td></tr>
-                        <tr><td style="padding:6px 0;color:#64748b;">Event Date</td><td style="padding:6px 0;text-align:right;">${booking.eventDate ? new Date(booking.eventDate).toLocaleDateString('en-KE') : 'TBD'}</td></tr>
-                        <tr><td style="padding:6px 0;color:#64748b;">Payment Method</td><td style="padding:6px 0;text-align:right;">${paymentMethod}</td></tr>
-                        <tr><td style="padding:6px 0;color:#64748b;">Transaction ID</td><td style="padding:6px 0;text-align:right;">${transactionId || 'N/A'}</td></tr>
-                        <tr><td style="padding:6px 0;color:#64748b;">Amount Paid</td><td style="padding:6px 0;text-align:right;">KSh ${subtotal.toLocaleString()}</td></tr>
-                        <tr><td style="padding:6px 0;color:#64748b;">VAT (${vatRate}%)</td><td style="padding:6px 0;text-align:right;">KSh ${vatAmount.toLocaleString()}</td></tr>
-                        <tr style="border-top:2px solid #e2e8f0;"><td style="padding:10px 0;font-weight:900;color:#0D2B1F;">TOTAL</td><td style="padding:10px 0;font-weight:900;color:#059669;text-align:right;">KSh ${totalAmount.toLocaleString()}</td></tr>
-                    </table>
-                </div>
-                <p style="color:#64748b;font-size:0.85rem;margin-top:16px;">Booking Reference: <strong>${booking.bookingReference}</strong></p>`;
-
-            if (queueMode === 'async') {
-                await notificationQueue.add('email', {
-                    type: 'server.payment.proforma_email',
-                    payload: {
-                        to: [{ email: booking.customerId?.email, name: booking.customerId?.name }],
-                        subject: `Payment Confirmation & Invoice — ${booking.eventType} | Emerald Pearland Events`,
-                        htmlBody: proformaHtml,
-                        title: 'PAYMENT CONFIRMATION'
-                    }
-                });
-            } else {
-                await sendEmail({
-                    to: [{ email: booking.customerId?.email, name: booking.customerId?.name }],
-                    subject: `Payment Confirmation & Invoice — ${booking.eventType} | Emerald Pearland Events`,
-                    htmlContent: proformaHtml
-                });
-            }
-            console.log('Proforma invoice sent to:', booking.customerId?.email);
-        } catch (invErr) { 
-            console.log('Proforma invoice/sync skip:', invErr.message); 
-        }
-
-        res.json({
-            success: true,
-            message: 'Payment recorded successfully',
-            payment,
-            booking
-        });
-    } catch (error) {
-        console.error('Error recording payment:', error);
-        res.status(500).json({ success: false, message: 'Error recording payment' });
-    }
-});
-
-// POST /api/admin/bookings/:id/send-appreciation
-router.post('/bookings/:id/send-appreciation', verifyAdminJWT, async (req, res) => {
-    try {
-        const booking = await Booking.findById(req.params.id).populate('customerId');
-        if (!booking) {
-            return res.status(404).json({ success: false, message: 'Booking not found' });
-        }
-
-        if (queueMode === 'async') {
-            await notificationQueue.add('email', {
-                type: 'server.booking.appreciation',
-                payload: {
-                    bookingId: booking._id.toString(),
-                    customerId: booking.customerId?._id?.toString() || null
-                }
-            });
-        } else {
-            await sendClientAppreciationEmail(booking, booking.customerId);
-        }
-
-        // Optionally record that we sent the email
-        booking.adminNotes.push({
-            note: 'Sent Client Appreciation & Feedback Email',
-            addedBy: req.admin.adminId
-        });
-        await booking.save();
-
-        await AdminNotification.create({
-            type: 'system',
-            message: `Sent appreciation email to ${booking.customerId.name} for ${booking.bookingReference}`,
-            bookingRef: booking._id,
-        });
-
-        res.json({ success: true, message: 'Appreciation email sent successfully!' });
-    } catch (error) {
-        console.error('Error sending appreciation email:', error);
-        res.status(500).json({ success: false, message: 'Failed to send appreciation email. Ensure SMTP is configured.' });
-    }
-});
-
-// POST /api/admin/bookings/:id/message-staff
-router.post('/bookings/:id/message-staff', verifyAdminJWT, async (req, res) => {
-    try {
-        const { customMessage, staffIds } = req.body;
-        if (!customMessage || !staffIds || !staffIds.length) {
-            return res.status(400).json({ success: false, message: 'Message and selected staff are required.' });
-        }
-
-        const booking = await Booking.findById(req.params.id);
-        if (!booking) {
-            return res.status(404).json({ success: false, message: 'Booking not found' });
-        }
-
-        let successCount = 0;
-        let failCount = 0;
-
-        for (const staffId of staffIds) {
-            const staff = await Staff.findById(staffId);
-            if (staff && staff.email) {
-                try {
-                    if (queueMode === 'async') {
-                        await notificationQueue.add('email', {
-                            type: 'server.staff.feedback_request',
-                            payload: {
-                                bookingId: booking._id.toString(),
-                                staffEmail: staff.email,
-                                staffName: staff.name,
-                                customMessage
-                            }
-                        });
-                    } else {
-                        await sendStaffFeedbackRequestEmail(staff.email, staff.name, booking, customMessage);
-                    }
-                    successCount++;
-                } catch (e) {
-                    console.error(`Failed sending to staff ${staff.name}:`, e.message);
-                    failCount++;
-                }
-            } else {
-                failCount++;
-            }
-        }
-
-        booking.adminNotes.push({
-            note: `Sent staff feedback request to ${staffIds.length} members. (Success: ${successCount}, Fail: ${failCount})`,
-            addedBy: req.admin.adminId
-        });
-        await booking.save();
-
-        if (successCount === 0) {
-            return res.status(400).json({ success: false, message: 'Failed to send emails. Selected staff might not have valid email addresses.' });
-        }
-
-        res.json({
-            success: true,
-            message: `Sent successfully to ${successCount} staff member(s). ${failCount > 0 ? `Failed for ${failCount}.` : ''}`
-        });
-
-    } catch (error) {
-        console.error('Error messaging staff:', error);
-        res.status(500).json({ success: false, message: 'Server error processing staff messages.' });
-    }
-});
-
-// DELETE /api/admin/bookings/:id
-router.delete('/bookings/:id', verifyAdminJWT, async (req, res) => {
-    try {
-        const booking = await Booking.findByIdAndDelete(req.params.id);
-
-        if (!booking) {
-            return res.status(404).json({
-                success: false,
-                message: 'Booking not found'
-            });
-        }
-
-        res.json({
-            success: true,
-            message: 'Booking deleted successfully'
-        });
-    } catch (error) {
-        res.status(500).json({
-            success: false,
-            message: 'Error deleting booking'
-        });
-    }
-});
+// Extracted to modules/bookings/ - see bookings.routes.js
+router.use('/bookings', require('../../modules/bookings/bookings.routes'));
 
 // ═══════════════════════════════════════════════════════════
-// ANALYTICS ROUTES (PROTECTED)
+    // PAYMENTS ROUTES
+    // ═══════════════════════════════════════════════════════════
+    // Extracted to modules/payments/ - see payments.routes.js
+    // Note: M-Pesa callbacks are PUBLIC (POST /api/v1/admin/payments/mpesa/callback)
+    router.use('/payments', require('../../modules/payments/payments.routes'));
+
+    // ═══════════════════════════════════════════════════════════
+    // ANALYTICS ROUTES (PROTECTED)
 // ═══════════════════════════════════════════════════════════
 
-// GET /api/admin/analytics/overview
+// GET /api/v1/admin/analytics/overview
 router.get('/analytics/overview', verifyAdminJWT, async (req, res) => {
     try {
         const now = new Date();
@@ -864,7 +342,7 @@ router.get('/analytics/overview', verifyAdminJWT, async (req, res) => {
     }
 });
 
-// GET /api/admin/notifications
+// GET /api/v1/admin/notifications
 router.get('/notifications', verifyAdminJWT, async (req, res) => {
     try {
         const { unreadOnly = false } = req.query;
@@ -890,7 +368,7 @@ router.get('/notifications', verifyAdminJWT, async (req, res) => {
     }
 });
 
-// PATCH /api/admin/notifications/:id/read
+// PATCH /api/v1/admin/notifications/:id/read
 router.patch('/notifications/:id/read', verifyAdminJWT, async (req, res) => {
     try {
         const notification = await AdminNotification.findByIdAndUpdate(
@@ -911,7 +389,7 @@ router.patch('/notifications/:id/read', verifyAdminJWT, async (req, res) => {
     }
 });
 
-// DELETE /api/admin/notifications/:id
+// DELETE /api/v1/admin/notifications/:id
 router.delete('/notifications/:id', verifyAdminJWT, async (req, res) => {
     try {
         const notification = await AdminNotification.findByIdAndDelete(req.params.id);
@@ -935,7 +413,7 @@ router.delete('/notifications/:id', verifyAdminJWT, async (req, res) => {
     }
 });
 
-// GET /api/admin/staff
+// GET /api/v1/admin/staff
 router.get('/staff', verifyAdminJWT, async (req, res) => {
     try {
         const { category } = req.query;
@@ -957,7 +435,7 @@ router.get('/staff', verifyAdminJWT, async (req, res) => {
     }
 });
 
-// POST /api/admin/staff
+// POST /api/v1/admin/staff
 router.post('/staff', verifyAdminJWT, async (req, res) => {
     try {
         const { name, category, email, phone, whatsapp, bio, photo } = req.body;
@@ -995,7 +473,7 @@ router.post('/staff', verifyAdminJWT, async (req, res) => {
     }
 });
 
-// DELETE /api/admin/staff/:id
+// DELETE /api/v1/admin/staff/:id
 router.delete('/staff/:id', verifyAdminJWT, async (req, res) => {
     try {
         const staff = await Staff.findByIdAndDelete(req.params.id);
@@ -1025,7 +503,7 @@ router.delete('/staff/:id', verifyAdminJWT, async (req, res) => {
 
 // ── PUBLIC (no auth) endpoints for homepage ──────────────────────────────────
 
-// GET /api/admin/public/gallery
+// GET /api/v1/admin/public/gallery
 router.get('/public/gallery', async (req, res) => {
     try {
         const gallery = await Gallery.find()
@@ -1038,7 +516,7 @@ router.get('/public/gallery', async (req, res) => {
     }
 });
 
-// GET /api/admin/public/testimonials
+// GET /api/v1/admin/public/testimonials
 router.get('/public/testimonials', async (req, res) => {
     try {
         const Testimonial = require('../models/Testimonial');
@@ -1054,7 +532,7 @@ router.get('/public/testimonials', async (req, res) => {
     }
 });
 
-// GET /api/admin/gallery
+// GET /api/v1/admin/gallery
 router.get('/gallery', verifyAdminJWT, async (req, res) => {
     try {
         const gallery = await Gallery.find()
@@ -1072,7 +550,7 @@ router.get('/gallery', verifyAdminJWT, async (req, res) => {
     }
 });
 
-// GET /api/admin/testimonials
+// GET /api/v1/admin/testimonials
 router.get('/testimonials', verifyAdminJWT, async (req, res) => {
     try {
         const { status } = req.query;
@@ -1093,7 +571,7 @@ router.get('/testimonials', verifyAdminJWT, async (req, res) => {
     }
 });
 
-// POST /api/admin/testimonials
+// POST /api/v1/admin/testimonials
 router.post('/testimonials', verifyAdminJWT, async (req, res) => {
     try {
         const { name, role, text, rating, eventType, status, displayOnWebsite } = req.body;
@@ -1108,7 +586,7 @@ router.post('/testimonials', verifyAdminJWT, async (req, res) => {
     }
 });
 
-// PATCH /api/admin/testimonials/:id
+// PATCH /api/v1/admin/testimonials/:id
 router.patch('/testimonials/:id', verifyAdminJWT, async (req, res) => {
     try {
         const testimonial = await Testimonial.findByIdAndUpdate(
@@ -1120,7 +598,7 @@ router.patch('/testimonials/:id', verifyAdminJWT, async (req, res) => {
     }
 });
 
-// DELETE /api/admin/testimonials/:id
+// DELETE /api/v1/admin/testimonials/:id
 router.delete('/testimonials/:id', verifyAdminJWT, async (req, res) => {
     try {
         await Testimonial.findByIdAndDelete(req.params.id);
@@ -1130,7 +608,7 @@ router.delete('/testimonials/:id', verifyAdminJWT, async (req, res) => {
     }
 });
 
-// GET /api/admin/settings
+// GET /api/v1/admin/settings
 router.get('/settings', verifyAdminJWT, async (req, res) => {
     try {
         let settings = await AdminSettings.findOne();
@@ -1150,7 +628,7 @@ router.get('/settings', verifyAdminJWT, async (req, res) => {
     }
 });
 
-// PATCH /api/admin/settings
+// PATCH /api/v1/admin/settings
 router.patch('/settings', verifyAdminJWT, async (req, res) => {
     try {
         const { businessName, businessPhone, businessEmail, businessAddress, notifyOnNewBooking, notifyOnWhatsApp, darkMode, instagramHandle, instagramUrl, facebookUrl, beholdfeedId, profileImage } = req.body;
@@ -1192,7 +670,7 @@ router.patch('/settings', verifyAdminJWT, async (req, res) => {
 // ------------------------------------------------------
 // PRICING & RATES ROUTES
 // ------------------------------------------------------
-// GET /api/admin/pricing
+// GET /api/v1/admin/pricing
 router.get('/pricing', verifyAdminJWT, async (req, res) => {
     try {
         const PricingSettings = require('../models/PricingSettings');
@@ -1203,7 +681,7 @@ router.get('/pricing', verifyAdminJWT, async (req, res) => {
         res.status(500).json({ success: false, error: 'Error fetching pricing' });
     }
 });
-// PUT /api/admin/pricing
+// PUT /api/v1/admin/pricing
 router.put('/pricing', verifyAdminJWT, async (req, res) => {
     try {
         const PricingSettings = require('../models/PricingSettings');
@@ -1238,7 +716,7 @@ router.put('/pricing', verifyAdminJWT, async (req, res) => {
 // ADMIN PROFILE ROUTES
 // ═══════════════════════════════════════════════════════════
 
-// GET /api/admin/profile
+// GET /api/v1/admin/profile
 router.get('/profile', verifyAdminJWT, async (req, res) => {
     try {
         const admin = await Admin.findById(req.admin.adminId).select('-passwordHash');
@@ -1251,7 +729,7 @@ router.get('/profile', verifyAdminJWT, async (req, res) => {
     }
 });
 
-// PATCH /api/admin/profile
+// PATCH /api/v1/admin/profile
 router.patch('/profile', verifyAdminJWT, async (req, res) => {
     try {
         const { name, email, avatar } = req.body;
@@ -1288,7 +766,7 @@ router.patch('/profile', verifyAdminJWT, async (req, res) => {
 // CHANGE PASSWORD (PROTECTED)
 // ═══════════════════════════════════════════════════════════
 
-// POST /api/admin/change-password
+// POST /api/v1/admin/change-password
 router.post('/change-password', verifyAdminJWT, async (req, res) => {
     try {
         console.log('🔐 Change password request received');
@@ -1363,7 +841,7 @@ router.post('/change-password', verifyAdminJWT, async (req, res) => {
 // GALLERY ROUTES
 // ═══════════════════════════════════════════════════════════
 
-// GET /api/admin/gallery
+// GET /api/v1/admin/gallery
 router.get('/gallery', verifyAdminJWT, async (req, res) => {
     try {
         const items = await Gallery.find().sort({ order: 1, uploadedAt: -1 });
@@ -1375,7 +853,7 @@ router.get('/gallery', verifyAdminJWT, async (req, res) => {
     }
 });
 
-// POST /api/admin/gallery/upload
+// POST /api/v1/admin/gallery/upload
 router.post('/gallery/upload', verifyAdminJWT, async (req, res) => {
     try {
         const { filename, url, eventType, caption } = req.body;
@@ -1406,7 +884,7 @@ router.post('/gallery/upload', verifyAdminJWT, async (req, res) => {
     }
 });
 
-// DELETE /api/admin/gallery/:id
+// DELETE /api/v1/admin/gallery/:id
 router.delete('/gallery/:id', verifyAdminJWT, async (req, res) => {
     try {
         const item = await Gallery.findByIdAndDelete(req.params.id);
@@ -1417,7 +895,7 @@ router.delete('/gallery/:id', verifyAdminJWT, async (req, res) => {
     }
 });
 
-// PATCH /api/admin/gallery/:id  (reorder / update caption)
+// PATCH /api/v1/admin/gallery/:id  (reorder / update caption)
 router.patch('/gallery/:id', verifyAdminJWT, async (req, res) => {
     try {
         const { order, caption, eventType } = req.body;
@@ -1437,7 +915,7 @@ router.patch('/gallery/:id', verifyAdminJWT, async (req, res) => {
 // GALLERY — AI CAPTION GENERATION (PEARL)
 // ═══════════════════════════════════════════════════════════
 
-// POST /api/admin/gallery/generate-captions
+// POST /api/v1/admin/gallery/generate-captions
 // Body: { eventType: string, filename: string }
 // Returns: { success: true, captions: string[] }  (always 5 options)
 router.post('/gallery/generate-captions', verifyAdminJWT, async (req, res) => {
@@ -1497,7 +975,7 @@ Where memories are made and moments become magic`;
 // STAFF UPDATE (PATCH)
 // ═══════════════════════════════════════════════════════════
 
-// PATCH /api/admin/staff/:id  (update staff details including whatsapp)
+// PATCH /api/v1/admin/staff/:id  (update staff details including whatsapp)
 router.patch('/staff/:id', verifyAdminJWT, async (req, res) => {
     try {
         const { name, category, email, phone, whatsapp, notes, isAvailable, hourlyRate, photo } = req.body;
@@ -1529,7 +1007,7 @@ router.patch('/staff/:id', verifyAdminJWT, async (req, res) => {
 // BOOKING — Staff Assignment
 // ═══════════════════════════════════════════════════════════
 
-// POST /api/admin/bookings/:id/assign-staff
+// POST /api/v1/admin/bookings/:id/assign-staff
 router.post('/bookings/:id/assign-staff', verifyAdminJWT, async (req, res) => {
     try {
         const { supervisorId, staffIds } = req.body;
@@ -1571,7 +1049,7 @@ router.post('/bookings/:id/assign-staff', verifyAdminJWT, async (req, res) => {
 // CUSTOMER CRM
 // ═══════════════════════════════════════════════════════════
 
-// GET /api/admin/customers
+// GET /api/v1/admin/customers
 router.get('/customers', verifyAdminJWT, async (req, res) => {
     try {
         const customers = await Customer.find().sort({ createdAt: -1 });
@@ -1581,7 +1059,7 @@ router.get('/customers', verifyAdminJWT, async (req, res) => {
     }
 });
 
-// POST /api/admin/customers
+// POST /api/v1/admin/customers
 router.post('/customers', verifyAdminJWT, async (req, res) => {
     try {
         const { name, email, phone, location, tags, notes } = req.body;
@@ -1603,7 +1081,7 @@ router.post('/customers', verifyAdminJWT, async (req, res) => {
     }
 });
 
-// GET /api/admin/customers/:id - Get single customer
+// GET /api/v1/admin/customers/:id - Get single customer
 router.get('/customers/:id', verifyAdminJWT, async (req, res) => {
     try {
         const customer = await Customer.findById(req.params.id);
@@ -1616,7 +1094,7 @@ router.get('/customers/:id', verifyAdminJWT, async (req, res) => {
     }
 });
 
-// PUT /api/admin/customers/:id - Update customer
+// PUT /api/v1/admin/customers/:id - Update customer
 router.put('/customers/:id', verifyAdminJWT, async (req, res) => {
     try {
         const { name, email, phone, location, notes, isVIP, status, howTheyFoundUs } = req.body;
@@ -1651,7 +1129,7 @@ router.put('/customers/:id', verifyAdminJWT, async (req, res) => {
     }
 });
 
-// DELETE /api/admin/customers/:id
+// DELETE /api/v1/admin/customers/:id
 router.delete('/customers/:id', verifyAdminJWT, async (req, res) => {
     try {
         await Customer.findByIdAndDelete(req.params.id);
@@ -1666,7 +1144,7 @@ router.delete('/customers/:id', verifyAdminJWT, async (req, res) => {
 // CLIENT PORTAL MANAGEMENT ROUTES (PROTECTED)
 // ═══════════════════════════════════════════════════════════
 
-// GET /api/admin/clients
+// GET /api/v1/admin/clients
 router.get('/clients', verifyAdminJWT, async (req, res) => {
     try {
         const { search = '', page = 1, limit = 20 } = req.query;
@@ -1683,7 +1161,7 @@ router.get('/clients', verifyAdminJWT, async (req, res) => {
     }
 });
 
-// GET /api/admin/clients/:clientId
+// GET /api/v1/admin/clients/:clientId
 router.get('/clients/:clientId', verifyAdminJWT, async (req, res) => {
     try {
         const client = await ClientAccount.findById(req.params.clientId).populate('client_id');
@@ -1694,7 +1172,7 @@ router.get('/clients/:clientId', verifyAdminJWT, async (req, res) => {
     }
 });
 
-// POST /api/admin/clients/:clientId/toggle
+// POST /api/v1/admin/clients/:clientId/toggle
 router.post('/clients/:clientId/toggle', verifyAdminJWT, async (req, res) => {
     try {
         const client = await ClientAccount.findById(req.params.clientId);
@@ -1707,7 +1185,7 @@ router.post('/clients/:clientId/toggle', verifyAdminJWT, async (req, res) => {
     }
 });
 
-// GET /api/admin/clients/:clientId/audit
+// GET /api/v1/admin/clients/:clientId/audit
 router.get('/clients/:clientId/audit', verifyAdminJWT, async (req, res) => {
     try {
         const logs = await ClientAuditLog.find({ client_id: req.params.clientId }).sort({ timestamp: -1 }).limit(50);
@@ -1717,7 +1195,7 @@ router.get('/clients/:clientId/audit', verifyAdminJWT, async (req, res) => {
     }
 });
 
-// GET /api/admin/clients/:clientId/sessions
+// GET /api/v1/admin/clients/:clientId/sessions
 router.get('/clients/:clientId/sessions', verifyAdminJWT, async (req, res) => {
     try {
         const sessions = await ClientSession.find({ client_id: req.params.clientId }).select('-refresh_token_hash').sort({ last_active: -1 });
@@ -1728,6 +1206,7 @@ router.get('/clients/:clientId/sessions', verifyAdminJWT, async (req, res) => {
 });
 
 module.exports = router;
+
 
 
 
