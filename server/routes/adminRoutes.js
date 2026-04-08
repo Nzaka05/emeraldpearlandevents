@@ -382,9 +382,23 @@ router.patch('/bookings/:id', verifyAdminJWT, async (req, res) => {
                     },
                     { headers: { 'x-sync-secret': syncSecret } }
                 );
-                console.log('Booking synced to port 3001:', updatedBooking._id);
+                // Mark sync as successful — reconciliation job won't retry this
+                await Booking.findByIdAndUpdate(updatedBooking._id, {
+                    syncStatus: 'synced',
+                    lastSyncAttempt: new Date(),
+                    $inc: { syncAttempts: 1 },
+                    $unset: { lastSyncError: 1 }
+                });
+                console.log('Booking synced to staff portal:', updatedBooking._id);
             } catch (syncErr) {
-                console.log('Port 3001 sync skipped:', syncErr.message);
+                // Record the failure — reconciliation job will retry automatically
+                await Booking.findByIdAndUpdate(updatedBooking._id, {
+                    syncStatus: 'pending',
+                    lastSyncAttempt: new Date(),
+                    $inc: { syncAttempts: 1 },
+                    lastSyncError: syncErr.message
+                });
+                console.warn('Staff portal sync failed (will retry via reconciliation job):', syncErr.message);
             }
         }
 
@@ -441,12 +455,25 @@ router.patch('/bookings/:id/pay', verifyAdminJWT, async (req, res) => {
 
         await booking.save();
 
-        await AdminNotification.create({
-            type: 'payment_received',
-            message: `Payment updated for booking ${booking.bookingReference}`,
-            bookingRef: booking._id,
-            icon: 'money-bill'
-        });
+        // Rich notification with customer name when marking as paid
+        if (isPaid) {
+            const customer = await Customer.findById(booking.customerId);
+            await AdminNotification.create({
+                type: 'payment_received',
+                title: 'Payment Received',
+                message: `Payment of KES ${booking.amountPaid?.toLocaleString() || 0} received from ${customer?.name || 'client'} for booking ${booking.bookingReference}`,
+                bookingRef: booking._id,
+                icon: 'money-bill',
+                isRead: false
+            });
+        } else {
+            await AdminNotification.create({
+                type: 'payment_received',
+                message: `Payment updated for booking ${booking.bookingReference}`,
+                bookingRef: booking._id,
+                icon: 'money-bill'
+            });
+        }
 
         res.json({
             success: true,
@@ -1490,40 +1517,6 @@ router.post('/bookings/:id/assign-staff', verifyAdminJWT, async (req, res) => {
     } catch (error) {
         console.error('Error assigning staff:', error);
         res.status(500).json({ success: false, message: 'Error assigning staff: ' + error.message });
-    }
-});
-
-// ═══════════════════════════════════════════════════════════
-// BOOKING — Payment Update (fix for 404)
-// ═══════════════════════════════════════════════════════════
-
-// PATCH /api/admin/bookings/:id/pay
-router.patch('/bookings/:id/pay', verifyAdminJWT, async (req, res) => {
-    try {
-        const { isPaid, amountPaid } = req.body;
-        const booking = await Booking.findById(req.params.id);
-        if (!booking) return res.status(404).json({ success: false, message: 'Booking not found' });
-
-        booking.isPaid = isPaid;
-        booking.amountPaid = amountPaid || 0;
-        await booking.save();
-
-        // Create notification if marking as paid
-        if (isPaid) {
-            const customer = await Customer.findById(booking.customerId);
-            const AdminNotification = require('../models/AdminNotification');
-            await AdminNotification.create({
-                type: 'payment',
-                title: 'Payment Received',
-                message: `Payment of KES ${amountPaid?.toLocaleString() || 0} received from ${customer?.name || 'client'} for booking #${booking._id.toString().slice(-6).toUpperCase()}`,
-                isRead: false
-            });
-        }
-
-        res.json({ success: true, message: 'Payment status updated', booking });
-    } catch (error) {
-        console.error('Error updating payment:', error);
-        res.status(500).json({ success: false, message: 'Error updating payment: ' + error.message });
     }
 });
 

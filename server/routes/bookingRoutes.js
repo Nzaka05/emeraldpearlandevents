@@ -28,7 +28,7 @@ function sendSyncWebhook(endpoint, payload) {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-Internal-Secret': process.env.JWT_SECRET || 'fallback_secret_key',
+                'X-Internal-Secret': process.env.SYNC_SECRET,
                 'Content-Length': Buffer.byteLength(data)
             }
         };

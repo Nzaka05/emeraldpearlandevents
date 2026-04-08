@@ -646,7 +646,7 @@ exports.updateProfile = async (req, res) => {
                 name: updated.name,
                 phone: updated.phone
             }, {
-                headers: { 'x-sync-secret': process.env.JWT_SECRET || 'fallback_secret_key' }
+                headers: { 'x-sync-secret': process.env.SYNC_SECRET }
             });
         } catch (syncErr) {
             console.log('Port 3000 sync skipped (may be offline):', syncErr.message);

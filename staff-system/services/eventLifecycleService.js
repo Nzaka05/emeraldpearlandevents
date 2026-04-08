@@ -37,7 +37,7 @@ const axios = require('axios');
 const sendWebhook = async (endpoint, payload) => {
     try {
         const url = process.env.MAIN_PORTAL_URL || 'http://localhost:3000';
-        const secret = process.env.JWT_SECRET || 'fallback_secret_key';
+        const secret = process.env.SYNC_SECRET;
         await axios.post(`${url}/internal/webhook/${endpoint}`, payload, {
             headers: { 'X-Internal-Secret': secret }
         });

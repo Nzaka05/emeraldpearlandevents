@@ -152,7 +152,7 @@ exports.updateAssignment = async (admin_id, assignment_id, updateData) => {
                 await axios.post(
                     `${process.env.MAIN_PORTAL_URL || 'http://localhost:3000'}/internal/sync-event-complete`,
                     { booking_ref: assignment.booking_ref, status: 'Completed' },
-                    { headers: { 'x-sync-secret': process.env.JWT_SECRET || 'fallback_secret_key' } }
+                    { headers: { 'x-sync-secret': process.env.SYNC_SECRET } }
                 );
             } catch(syncErr) { console.log('Port 3000 sync skipped:', syncErr.message); }
         }

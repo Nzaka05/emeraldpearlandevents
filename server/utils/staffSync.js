@@ -4,7 +4,7 @@ const http = require('http');
 async function syncStaffToOperations(action, staffData) {
   const baseUrl = process.env.STAFF_SYSTEM_BASE_URL || 
     'http://localhost:3001';
-  const syncSecret = process.env.JWT_SECRET || 'fallback_secret_key';
+  const syncSecret = process.env.SYNC_SECRET;
   
   const payload = JSON.stringify({
     action,

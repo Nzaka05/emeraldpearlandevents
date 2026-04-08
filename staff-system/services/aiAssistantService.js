@@ -206,7 +206,7 @@ async function pearlUpdateBooking(bookingId, updates) {
         if (payload.status === 'confirmed') {
             try {
                 const http = require("http");
-                const syncSecret = process.env.JWT_SECRET || 'fallback_secret_key';
+                const syncSecret = process.env.SYNC_SECRET;
                 const postData = JSON.stringify({
                     title: booking.eventType || 'Event',
                     description: booking.notes || 'Confirmed via PEARL',

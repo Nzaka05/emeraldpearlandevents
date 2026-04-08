@@ -793,8 +793,13 @@ exports.initiateStaffPayment = async (req, res) => {
 // @route   POST /portal/admin-staff/mpesa/callback
 exports.mpesaCallback = async (req, res) => {
     try {
+        // Idempotency marker from gateway (if present) for duplicate callback tracing.
+        const idempotencyKey = req.headers['x-idempotency-key'] || req.body?.idempotencyKey;
         const eventPaymentService = require('../financials/services/eventPaymentService');
-        await eventPaymentService.mpesaCallback(req.body);
+        await eventPaymentService.mpesaCallback({
+            ...req.body,
+            idempotencyKey
+        });
         res.status(200).json({ success: true });
     } catch (error) {
         console.error('M-Pesa callback error:', error.message);

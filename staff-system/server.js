@@ -1,5 +1,5 @@
 require('dotenv').config({ path: require('path').join(__dirname, '../.env') });
-// require('../scripts/checkEnv'); // disabled for standalone deployment // Halt dynamically before server boots if environment is mismatched
+require('./scripts/checkEnv'); // Halt at startup if any required secret is missing
 
 const express = require('express');
 const http = require('http');
@@ -40,12 +40,14 @@ const LEGACY_COOKIE = 'portal_token';
 
 const app = express();
 app.set('trust proxy', 1);
-app.set('trust proxy', 1);
 const server = http.createServer(app);
 
 // Connect to MongoDB
-const mongoUri = process.env.MONGO_URI || process.env.MONGO_URI ||
-    'mongodb+srv://admin:Galaxyimpact.@cluster0.wa8samz.mongodb.net/emerald?retryWrites=true&w=majority';
+const mongoUri = process.env.MONGO_URI;
+if (!mongoUri) {
+    console.error('FATAL: MONGO_URI environment variable is not set');
+    process.exit(1);
+}
 
 console.log('🔌 Connecting to MongoDB...');
 mongoose.connect(mongoUri, {
@@ -78,7 +80,7 @@ const _allowedOrigins = (process.env.ALLOWED_ORIGINS || '').split(',').map(o => 
 app.use(cors({
     origin: (origin, callback) => {
         // Allow if no origin, or if origin is in the allowlist, or if origin is the string 'null' (same-origin requests)
-        if (!origin || origin === 'null' || _allowedOrigins.includes(origin)) return callback(null, true);
+        if (!origin || _allowedOrigins.includes(origin)) return callback(null, true);
         callback(new Error(`CORS: origin '${origin}' not permitted`));
     },
     credentials: true,
@@ -185,7 +187,7 @@ app.use('/portal/auth/reset-password', authLimiter);
 app.post('/internal/sync-booking', async (req, res) => {
   try {
     const syncSecret = process.env.SYNC_SECRET;
-    if (req.headers['x-internal-secret'] !== syncSecret) {
+    if (req.headers['x-sync-secret'] !== syncSecret) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
     const Assignment = require('./models/Assignment');
@@ -285,7 +287,7 @@ app.post('/internal/sync-booking', async (req, res) => {
   app.post('/internal/sync-event-complete', async (req, res) => {
     try {
       const syncSecret = process.env.SYNC_SECRET;
-      if (req.headers['x-internal-secret'] !== syncSecret) {
+      if (req.headers['x-sync-secret'] !== syncSecret) {
         return res.status(401).json({ error: 'Unauthorized' });
       }
       const { booking_ref, status } = req.body;
@@ -309,7 +311,7 @@ app.post('/internal/sync-booking', async (req, res) => {
 // Staff sync endpoint from port 3000
 app.post('/internal/sync-staff', async (req, res) => {
   const syncSecret = process.env.SYNC_SECRET;
-  const authHeader = req.headers['x-internal-secret'];
+  const authHeader = req.headers['x-sync-secret'];
   
   if (authHeader !== syncSecret) {
     return res.status(401).json({ error: 'Unauthorized' });
@@ -365,7 +367,7 @@ app.post('/internal/sync-staff', async (req, res) => {
 app.post('/internal/sync-payment', async (req, res) => {
     try {
     const syncSecret = process.env.SYNC_SECRET;
-        if (req.headers['x-internal-secret'] !== syncSecret) return res.status(401).json({ error: 'Unauthorized' });
+        if (req.headers['x-sync-secret'] !== syncSecret) return res.status(401).json({ error: 'Unauthorized' });
         const { booking_ref, clientPaymentAmount, paymentMethod, transactionId } = req.body;
         const Assignment = require('./models/Assignment');
         const assignment = await Assignment.findOne({ booking_ref });
@@ -387,7 +389,7 @@ app.post('/internal/sync-payment', async (req, res) => {
 app.post('/internal/sync-pricing', async (req, res) => {
     try {
     const syncSecret = process.env.SYNC_SECRET;
-        if (req.headers['x-internal-secret'] !== syncSecret) return res.status(401).json({ error: 'Unauthorized' });
+        if (req.headers['x-sync-secret'] !== syncSecret) return res.status(401).json({ error: 'Unauthorized' });
         const PricingSettings = require('./models/PricingSettings');
         const { categories, vatRate, globalSupervisorRate, paymentMethods } = req.body;
         let pricing = await PricingSettings.findOne();
@@ -627,6 +629,15 @@ server.listen(PORT, () => {
     
     // Start Missing Staff recovery check & interval loop
     require('./jobs/missingStaffJob').startJob();
+});
+
+// Graceful shutdown
+process.on('SIGINT', () => {
+    console.log('\n[SHUTDOWN] Stopping staff server gracefully...');
+    server.close(() => {
+        mongoose.connection.close();
+        process.exit(0);
+    });
 });
 
 

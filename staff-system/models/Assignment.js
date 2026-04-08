@@ -51,6 +51,23 @@ const assignmentSchema = new mongoose.Schema({
     }],
     payment_confirmed_at: { type: Date }, // When staff confirms payment received
     payment_disputed_reason: { type: String }, // Reason for dispute if payment is disputed
+    // ── Phase 1: Payment sync status tracking ─────────────────────────────────
+    // Tracks whether M-Pesa payment data for this assignment has been synced
+    // from the booking system. The reconciliation cron retries 'failed'/'pending'.
+    paymentSyncStatus: {
+        type: String,
+        enum: ['pending', 'synced', 'failed'],
+        default: 'pending'
+    },
+    // ── Phase 1: M-Pesa idempotency key ───────────────────────────────────────
+    // Deduplicates M-Pesa callbacks that arrive late or are retried by Safaricom.
+    // Format: mpesa-{checkoutRequestId}-{amount}
+    // Set on the assignment when a payment write is initiated.
+    idempotencyKey: {
+        type: String,
+        default: null,
+        sparse: true  // allows multiple null values — only non-null must be unique
+    },
     createdByAdmin: { type: mongoose.Schema.Types.ObjectId, ref: 'Staff', required: true },
     open_for_applications: {
         type: Boolean,
@@ -64,5 +81,7 @@ assignmentSchema.index({ gps_location: '2d' }); // 2d for {lat, lng} legacy pair
 assignmentSchema.index({ supervisor_id: 1, payment_status: 1 });
 assignmentSchema.index({ status: 1, date: 1 });
 assignmentSchema.index({ 'staff_payments.staff_id': 1, 'staff_payments.status': 1 }); // Compound for staff payments
+assignmentSchema.index({ idempotencyKey: 1 }, { unique: true, sparse: true }); // Phase 1: dedup M-Pesa writes
+assignmentSchema.index({ paymentSyncStatus: 1 }); // Phase 1: reconciliation queries
 
 module.exports = mongoose.models.Assignment || mongoose.model('Assignment', assignmentSchema);

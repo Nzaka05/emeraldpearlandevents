@@ -94,6 +94,15 @@ const BookingSchema = new mongoose.Schema({
         type: Number,
         default: 0
     },
+    // Idempotency metadata for payment/callback dedupe safety.
+    paymentIdempotencyKey: {
+        type: String,
+        default: null
+    },
+    lastMpesaTransactionId: {
+        type: String,
+        default: null
+    },
     status: {
         type: String,
         enum: ['new', 'contacted', 'confirmed', 'completed', 'cancelled'],
@@ -128,6 +137,26 @@ const BookingSchema = new mongoose.Schema({
         type: Date,
         default: null
     },
+    // ── Phase 1: Sync status tracking ─────────────────────────────────────────
+    // Tracks whether this booking has been successfully synced to the staff portal.
+    // The reconciliation cron queries for 'pending'/'failed' records and retries.
+    syncStatus: {
+        type: String,
+        enum: ['pending', 'synced', 'failed'],
+        default: 'pending'
+    },
+    syncAttempts: {
+        type: Number,
+        default: 0
+    },
+    lastSyncAttempt: {
+        type: Date,
+        default: null
+    },
+    lastSyncError: {
+        type: String,
+        default: null
+    },
     createdAt: {
         type: Date,
         default: Date.now
@@ -152,17 +181,16 @@ BookingSchema.index({ customerId: 1 });
 BookingSchema.index({ eventDate: 1 });
 BookingSchema.index({ status: 1 });
 BookingSchema.index({ createdAt: 1 });
+// ── Phase 1 & 4: Compound indexes for real query patterns ─────────────────────
+BookingSchema.index({ status: 1, eventDate: -1 });
+BookingSchema.index({ syncStatus: 1, lastSyncAttempt: 1 }); // for reconciliation cron
+BookingSchema.index({ createdAt: -1 });                      // for dashboard sort
+BookingSchema.index({ paymentIdempotencyKey: 1 });            // payment dedupe lookups
 
-// Populate customer by default
-BookingSchema.pre(/^find/, function (next) {
-    if (this.options._recursed) {
-        return next();
-    }
-    this.populate({
-        path: 'customerId',
-        select: 'name email phone'
-    });
-    next();
-});
+// ── Phase 4: Removed global auto-populate ────────────────────────────────────
+// The previous pre(/^find/) hook populated 'customerId' on EVERY query, including
+// dashboard lists and cron scans that don't need it. Use explicit .populate()
+// only where the customer data is actually required.
+// Example: Booking.findById(id).populate('customerId', 'name email phone')
 
 module.exports = mongoose.model('Booking', BookingSchema);
