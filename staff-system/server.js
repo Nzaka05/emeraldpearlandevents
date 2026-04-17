@@ -87,34 +87,48 @@ if (_selfUrl) {
     } catch (e) { /* ignore */ }
 }
 
+// Also allow common Render deployment patterns
+_allowedOrigins.push(
+    'https://emerald-staff-system.onrender.com',
+    'http://localhost:3001',
+    'http://127.0.0.1:3001'
+);
+
 // Log CORS config for debugging
 console.log('[CORS] Allowed origins:', _allowedOrigins);
 
 app.use(cors({
     origin: (origin, callback) => {
         // Allow if:
-        // 1. no origin (same-origin requests)
-        // 2. origin is 'null' (file:// or localhost)
-        // 3. origin is in the explicit allowlist (exact match or by hostname)
+        // 1. no origin (same-origin requests from server-side or proxies)
+        // 2. origin is 'null' (file:// requests)
+        // 3. exact match in allowlist
+        // 4. hostname matches any allowed origin hostname
         if (!origin || origin === 'null') return callback(null, true);
         
         // Check exact match first
         if (_allowedOrigins.includes(origin)) return callback(null, true);
         
-        // Check by hostname (for deployed domains)
+        // Check by hostname (for deployed domains with different protocols/ports)
         try {
             const incomingUrl = new URL(origin);
             const incomingHostname = incomingUrl.hostname;
+            
             for (const allowed of _allowedOrigins) {
                 try {
                     const allowedUrl = new URL(allowed);
+                    // Match by hostname (ignoring protocol and port)
                     if (allowedUrl.hostname === incomingHostname) {
                         return callback(null, true);
                     }
                 } catch (e) { /* skip malformed URLs */ }
             }
-        } catch (e) { /* invalid URL, reject */ }
+        } catch (e) { 
+            // If origin is not a valid URL, just reject it
+            console.warn('[CORS] Invalid origin URL:', origin);
+        }
         
+        console.warn('[CORS] Rejected origin:', origin);
         callback(new Error(`CORS: origin '${origin}' not permitted`));
     },
     credentials: true,

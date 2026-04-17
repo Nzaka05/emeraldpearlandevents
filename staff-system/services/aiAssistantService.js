@@ -684,22 +684,33 @@ Always be helpful, never refuse reasonable requests. If asked something outside 
         });
     }
     messages.push({ role: "user", content: sanitized });
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash", systemInstruction: systemPrompt });
-    const geminiHistory = [];
+    
+    try {
+        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash", systemInstruction: systemPrompt });
+        const geminiHistory = [];
 
-    if (messages.length > 1) { messages.slice(0,-1).forEach(m => { geminiHistory.push({ role: m.role === "assistant" ? "model" : "user", parts: [{ text: m.content }] }); }); }
-    const chat = model.startChat({ history: geminiHistory });
-    const result = await chat.sendMessage(sanitized);
-    const aiResponse = result.response.text();
+        if (messages.length > 1) { messages.slice(0,-1).forEach(m => { geminiHistory.push({ role: m.role === "assistant" ? "model" : "user", parts: [{ text: m.content }] }); }); }
+        const chat = model.startChat({ history: geminiHistory });
+        const result = await chat.sendMessage(sanitized);
+        const aiResponse = result.response.text();
 
+        await AIConversationLog.create({
+            user_id: userId, role, query: sanitized,
+            response: aiResponse, context_used: businessData
+        }).catch(err => console.error("[PEARL Log]", err.message));
 
-
-    await AIConversationLog.create({
-        user_id: userId, role, query: sanitized,
-        response: aiResponse, context_used: businessData
-    }).catch(err => console.error("[PEARL Log]", err.message));
-
-    return { reply: aiResponse, response: aiResponse, summary: aiResponse, recommendedActions: [] };
+        return { reply: aiResponse, response: aiResponse, summary: aiResponse, recommendedActions: [] };
+    } catch (geminiError) {
+        console.error('[PEARL] Gemini API Error:', geminiError);
+        const fallbackResponse = `I encountered an issue: ${geminiError.message}. Please try again.`;
+        
+        await AIConversationLog.create({
+            user_id: userId, role, query: sanitized,
+            response: fallbackResponse, context_used: businessData, error: geminiError.message
+        }).catch(err => console.error("[PEARL Log]", err.message));
+        
+        return { reply: fallbackResponse, response: fallbackResponse, summary: fallbackResponse, recommendedActions: [] };
+    }
 }
 
 module.exports = { processAssistantQuery };
