@@ -1,5 +1,6 @@
-/*
 const respond = require('../../utils/respond');
+
+/*
 CLIENT PORTAL <-> STAFF SYSTEM DATA CONTRACTS
 
 1) Event Health Response (GET /internal/client-portal/event-health/:eventId)
@@ -40,7 +41,6 @@ CLIENT PORTAL <-> STAFF SYSTEM DATA CONTRACTS
     }
 }
 */
-
 const clientAuthService = require('../services/clientAuthService');
 const ClientSession = require('../models/ClientSession');
 const staffSystemGateway = require('../services/staffSystemGateway');
