@@ -347,6 +347,7 @@ app.use('/api/v1/admin', adminRoutes);
 app.use('/api/v1', bookingRoutes);
 // Client portal (EJS-rendered, session-based)
 if (clientPortalRoutes) {
+    app.use('/client', clientPortalRoutes);
     app.use('/api/v1/client', clientPortalRoutes);
     console.log('✅ Client portal routes loaded');
 } else {
