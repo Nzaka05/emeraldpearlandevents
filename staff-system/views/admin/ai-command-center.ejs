@@ -82,7 +82,9 @@ async function sendMessage() {
             addMessage(reply, 'ai');
             conversationHistory.push({ query: query, response: reply });
         } else {
-            addMessage('Error: ' + (data.error || data.message || 'Could not process request'), 'ai');
+            const errorMsg = data.error || data.message || 'Could not process request';
+            const displayError = typeof errorMsg === 'object' ? JSON.stringify(errorMsg) : errorMsg;
+            addMessage('Error: ' + displayError, 'ai');
         }
     } catch (err) {
         typing.remove();

@@ -77,6 +77,10 @@ app.use(express.static(path.join(__dirname, 'public')));
 // Set ALLOWED_ORIGINS in Render env vars as comma-separated URLs:
 //   https://yourbookingsite.netlify.app,https://admin.yourdomain.com
 const _allowedOrigins = (process.env.ALLOWED_ORIGINS || '').split(',').map(o => o.trim()).filter(Boolean);
+// Always allow same-origin requests (staff system to itself)
+const _selfUrl = process.env.STAFF_SYSTEM_BASE_URL || 'http://localhost:3001';
+if (_selfUrl) _allowedOrigins.push(_selfUrl);
+
 app.use(cors({
     origin: (origin, callback) => {
         // Allow if no origin, or if origin is in the allowlist, or if origin is the string 'null' (same-origin/file requests)

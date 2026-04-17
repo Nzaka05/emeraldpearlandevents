@@ -119,7 +119,14 @@ async function sendMessage() {
     });
     const data = await res.json();
     typing.remove();
-    const reply = data.success ? (data.data?.reply || data.data?.response || 'No response') : (data.message || 'Something went wrong.');
+    // Properly handle error message - convert objects to strings
+    let reply;
+    if (data.success) {
+      reply = data.data?.reply || data.data?.response || 'No response';
+    } else {
+      const msg = data.message || data.error || 'Something went wrong.';
+      reply = typeof msg === 'object' ? JSON.stringify(msg) : msg;
+    }
     addMessage(reply, 'ai');
     conversationHistory.push({ query, response: reply });
   } catch (err) {
