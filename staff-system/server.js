@@ -77,18 +77,48 @@ app.use(express.static(path.join(__dirname, 'public')));
 // Set ALLOWED_ORIGINS in Render env vars as comma-separated URLs:
 //   https://yourbookingsite.netlify.app,https://admin.yourdomain.com
 const _allowedOrigins = (process.env.ALLOWED_ORIGINS || '').split(',').map(o => o.trim()).filter(Boolean);
-// Always allow same-origin requests (staff system to itself)
+// Always allow same-origin and self requests
 const _selfUrl = process.env.STAFF_SYSTEM_BASE_URL || 'http://localhost:3001';
-if (_selfUrl) _allowedOrigins.push(_selfUrl);
+if (_selfUrl) {
+    _allowedOrigins.push(_selfUrl);
+    try {
+        const url = new URL(_selfUrl);
+        _allowedOrigins.push(url.origin);
+    } catch (e) { /* ignore */ }
+}
+
+// Log CORS config for debugging
+console.log('[CORS] Allowed origins:', _allowedOrigins);
 
 app.use(cors({
     origin: (origin, callback) => {
-        // Allow if no origin, or if origin is in the allowlist, or if origin is the string 'null' (same-origin/file requests)
-        if (!origin || origin === 'null' || _allowedOrigins.includes(origin)) return callback(null, true);
+        // Allow if:
+        // 1. no origin (same-origin requests)
+        // 2. origin is 'null' (file:// or localhost)
+        // 3. origin is in the explicit allowlist (exact match or by hostname)
+        if (!origin || origin === 'null') return callback(null, true);
+        
+        // Check exact match first
+        if (_allowedOrigins.includes(origin)) return callback(null, true);
+        
+        // Check by hostname (for deployed domains)
+        try {
+            const incomingUrl = new URL(origin);
+            const incomingHostname = incomingUrl.hostname;
+            for (const allowed of _allowedOrigins) {
+                try {
+                    const allowedUrl = new URL(allowed);
+                    if (allowedUrl.hostname === incomingHostname) {
+                        return callback(null, true);
+                    }
+                } catch (e) { /* skip malformed URLs */ }
+            }
+        } catch (e) { /* invalid URL, reject */ }
+        
         callback(new Error(`CORS: origin '${origin}' not permitted`));
     },
     credentials: true,
-    methods: ['GET', 'POST', 'PATCH', 'DELETE']
+    methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS']
 }));
 // Note: Skipping mongoSanitize for Express 5 compatibility - using manual sanitization in routes instead
 

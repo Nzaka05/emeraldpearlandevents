@@ -106,7 +106,25 @@ const surveyCtrl = require('../controllers/surveyController');
 router.get('/survey/:token', surveyCtrl.getSurveyPage);
 router.post('/survey/:token/submit', sanitizeRequestBody, surveyCtrl.submitSurvey);
 
-router.get('/ai', (req, res) => res.render('staff/pearl', { currentPage: 'pearl', user: req.user }));
-router.post('/ai/chat', async (req, res) => { try { const aiAssistantService = require('../services/aiAssistantService'); const { query, eventContext, history } = req.body; if (!query) return res.status(400).json({ success: false, message: 'Query required' }); const userId = req.user?._id || '000000000000000000000000'; const role = req.user?.role || 'Staff'; const fullContext = { ...eventContext, userName: req.user?.name, role }; const result = await aiAssistantService.processAssistantQuery(userId, role, query, fullContext, history || []); res.json({ success: true, data: result }); } catch (error) { res.status(500).json({ success: false, message: error.message }); } });
+// ── PEARL AI Assistant ─────────────────────────────────────────────────────────
+router.get('/ai', protect, (req, res) => res.render('staff/pearl', { currentPage: 'pearl', user: req.user }));
+router.post('/ai/chat', protect, async (req, res) => {
+    try {
+        const aiAssistantService = require('../services/aiAssistantService');
+        const { query, eventContext, history } = req.body;
+        if (!query) return res.status(400).json({ success: false, message: 'Query required' });
+        
+        const userId = req.user?._id || '000000000000000000000000';
+        const role = req.user?.role || 'Staff';
+        const fullContext = { ...eventContext, userName: req.user?.name, role };
+        
+        const result = await aiAssistantService.processAssistantQuery(userId, role, query, fullContext, history || []);
+        res.json({ success: true, data: result });
+    } catch (error) {
+        console.error('[PEARL] Error:', error.message);
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
 module.exports = router;
 
