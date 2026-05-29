@@ -1,7 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcrypt');
+const mongoose = require('mongoose');
 const { syncStaffToOperations } = require('../utils/staffSync');
+const { logSecurityEvent } = require('../utils/securityLogger');
 const Admin = require('../models/Admin');
 const Booking = require('../models/Booking');
 const Customer = require('../models/Customer');
@@ -14,6 +16,8 @@ const ClientAccount = require('../models/ClientAccount');
 const ClientAuditLog = require('../models/ClientAuditLog');
 const ClientSession = require('../models/ClientSession');
 const { verifyAdminJWT, generateAdminToken } = require('../middleware/adminAuth');
+const { csrfProtection, attachCsrfToken } = require('../middleware/csrfProtection');
+const { getCache, setCache, invalidateCache, invalidatePattern } = require('../utils/cache');
 
 
 // ═══════════════════════════════════════════════════════════
@@ -33,7 +37,7 @@ router.get('/vapid-public-key', verifyAdminJWT, (req, res) => {
 });
 
 // POST /api/v1/admin/push-subscribe
-router.post('/push-subscribe', verifyAdminJWT, async (req, res) => {
+router.post('/push-subscribe', verifyAdminJWT, csrfProtection, async (req, res) => {
     try {
         const { subscription } = req.body;
         if (!subscription) {
@@ -93,6 +97,12 @@ router.post('/login', async (req, res) => {
 
         if (!isPasswordValid) {
             console.log('❌ Invalid password');
+            // Log failed login attempt
+            logSecurityEvent('login_failed', {
+                userEmail: email,
+                ipAddress: req.ip,
+                userAgent: req.headers['user-agent']
+            }).catch(err => console.error('Security logging error:', err.message));
             return res.status(401).json({
                 success: false,
                 message: 'Invalid email or password',
@@ -103,11 +113,19 @@ router.post('/login', async (req, res) => {
         console.log('✓ Password valid');
 
         // Generate token
-        const token = generateAdminToken(admin._id, admin.email);
+        const token = generateAdminToken(admin._id, admin.email, admin.role);
 
         // Update last login
         admin.lastLogin = new Date();
         await admin.save();
+
+        // Log successful login
+        logSecurityEvent('login_success', {
+            userId: admin._id.toString(),
+            userEmail: admin.email,
+            ipAddress: req.ip,
+            userAgent: req.headers['user-agent']
+        }).catch(err => console.error('Security logging error:', err.message));
 
         // Set httpOnly cookies for backward compatibility and PRD/test expectations
         const cookieOptions = {
@@ -169,7 +187,7 @@ router.get('/me', verifyAdminJWT, async (req, res) => {
 });
 
 // PATCH /api/v1/admin/me - Update admin profile
-router.patch('/me', verifyAdminJWT, async (req, res) => {
+router.patch('/me', verifyAdminJWT, csrfProtection, async (req, res) => {
     try {
         const { name, avatar } = req.body;
         const admin = await Admin.findById(req.admin.adminId);
@@ -227,6 +245,9 @@ router.use('/bookings', require('../../modules/bookings/bookings.routes'));
 // GET /api/v1/admin/analytics/overview
 router.get('/analytics/overview', verifyAdminJWT, async (req, res) => {
     try {
+        const cached = await getCache('cache:dashboard:overview');
+        if (cached) return res.json(cached);
+
         const now = new Date();
         const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
         const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
@@ -235,15 +256,57 @@ router.get('/analytics/overview', verifyAdminJWT, async (req, res) => {
         // All-time total bookings
         const totalBookings = await Booking.countDocuments({});
 
-        // This month bookings
-        const thisMonthBookings = await Booking.countDocuments({
-            createdAt: { $gte: startOfMonth }
-        });
+        // This month summary (bookings + revenue)
+        const [thisMonthSummary] = await Booking.aggregate([
+            {
+                $match: {
+                    createdAt: { $gte: startOfMonth }
+                }
+            },
+            {
+                $group: {
+                    _id: null,
+                    count: { $sum: 1 },
+                    revenue: {
+                        $sum: {
+                            $cond: [
+                                { $or: [{ $eq: ['$isPaid', true] }, { $eq: ['$status', 'completed'] }] },
+                                '$amountPaid',
+                                0
+                            ]
+                        }
+                    }
+                }
+            }
+        ]);
+        const thisMonthBookings = thisMonthSummary?.count || 0;
+        const revenueThisMonth = thisMonthSummary?.revenue || 0;
 
-        // Last month bookings
-        const lastMonthBookings = await Booking.countDocuments({
-            createdAt: { $gte: startOfLastMonth, $lte: endOfLastMonth }
-        });
+        // Last month summary (bookings + revenue)
+        const [lastMonthSummary] = await Booking.aggregate([
+            {
+                $match: {
+                    createdAt: { $gte: startOfLastMonth, $lte: endOfLastMonth }
+                }
+            },
+            {
+                $group: {
+                    _id: null,
+                    count: { $sum: 1 },
+                    revenue: {
+                        $sum: {
+                            $cond: [
+                                { $or: [{ $eq: ['$isPaid', true] }, { $eq: ['$status', 'completed'] }] },
+                                '$amountPaid',
+                                0
+                            ]
+                        }
+                    }
+                }
+            }
+        ]);
+        const lastMonthBookings = lastMonthSummary?.count || 0;
+        const revenueLastMonth = lastMonthSummary?.revenue || 0;
 
         // Pending confirmations
         const pendingConfirmations = await Booking.countDocuments({
@@ -260,19 +323,6 @@ router.get('/analytics/overview', verifyAdminJWT, async (req, res) => {
             eventDate: { $gte: weekStart, $lte: weekEnd },
             status: { $ne: 'cancelled' }
         });
-
-        // Calculate Revenue This Month and Last Month
-        const thisMonthRevenueAgg = await Booking.aggregate([
-            { $match: { createdAt: { $gte: startOfMonth }, $or: [{ isPaid: true }, { status: 'completed' }] } },
-            { $group: { _id: null, total: { $sum: "$amountPaid" } } }
-        ]);
-        const revenueThisMonth = thisMonthRevenueAgg.length > 0 ? thisMonthRevenueAgg[0].total : 0;
-
-        const lastMonthRevenueAgg = await Booking.aggregate([
-            { $match: { createdAt: { $gte: startOfLastMonth, $lte: endOfLastMonth }, $or: [{ isPaid: true }, { status: 'completed' }] } },
-            { $group: { _id: null, total: { $sum: "$amountPaid" } } }
-        ]);
-        const revenueLastMonth = lastMonthRevenueAgg.length > 0 ? lastMonthRevenueAgg[0].total : 0;
 
         // Calculate 6-month Revenue Trend for Chart.js
         const trendStart = new Date(now.getFullYear(), now.getMonth() - 5, 1);
@@ -306,16 +356,16 @@ router.get('/analytics/overview', verifyAdminJWT, async (req, res) => {
         const revenueChangePercent = revenueLastMonth ? ((revenueThisMonth - revenueLastMonth) / revenueLastMonth * 100).toFixed(1) : 0;
 
         // Calculate Projected Revenue (Confirmed but unpaid)
-        const projectedRevenueAgg = await Booking.aggregate([
+        const [projectedRevenueResult] = await Booking.aggregate([
             { $match: { status: 'confirmed', isPaid: false } },
-            { $group: { _id: null, total: { $sum: "$estimatedTotal" } } }
+            { $group: { _id: null, total: { $sum: '$estimatedTotal' } } }
         ]);
-        const projectedRevenue = projectedRevenueAgg.length > 0 ? projectedRevenueAgg[0].total : 0;
+        const projectedRevenue = projectedRevenueResult?.total || 0;
 
         // Count VIP clients
         const vipCount = await Customer.countDocuments({ isVIP: true });
 
-        res.json({
+        const result = {
             success: true,
             stats: {
                 totalBookings,
@@ -332,7 +382,10 @@ router.get('/analytics/overview', verifyAdminJWT, async (req, res) => {
                     revenue: revenueData
                 }
             }
-        });
+        };
+
+        await setCache('cache:dashboard:overview', result, 60);
+        res.json(result);
     } catch (error) {
         console.error('Error fetching analytics:', error);
         res.status(500).json({
@@ -345,20 +398,47 @@ router.get('/analytics/overview', verifyAdminJWT, async (req, res) => {
 // GET /api/v1/admin/notifications
 router.get('/notifications', verifyAdminJWT, async (req, res) => {
     try {
-        const { unreadOnly = false } = req.query;
+        const { unreadOnly = false, lastId } = req.query;
+        const rawLimit = parseInt(req.query.limit, 10);
+        if (Number.isFinite(rawLimit) && rawLimit > 100) {
+            return res.status(400).json({
+                success: false,
+                message: 'limit cannot be greater than 100'
+            });
+        }
+
+        const limit = Math.min(rawLimit || 25, 100);
         const query = unreadOnly ? { isRead: false } : {};
+        
+        if (lastId) {
+            if (!mongoose.Types.ObjectId.isValid(lastId)) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Invalid lastId parameter'
+                });
+            }
+            query._id = { $lt: new mongoose.Types.ObjectId(lastId) };
+        }
 
         const notifications = await AdminNotification.find(query)
             .populate('bookingRef', 'bookingReference eventType')
-            .sort({ createdAt: -1 })
-            .limit(20);
+            .sort({ _id: -1 })
+            .limit(limit);
 
+        const total = await AdminNotification.countDocuments(unreadOnly ? { isRead: false } : {});
         const unreadCount = await AdminNotification.countDocuments({ isRead: false });
+        const nextCursor = notifications.length === limit ? notifications[notifications.length - 1]._id : null;
 
+        res.set('X-Total-Count', total);
         res.json({
             success: true,
             notifications,
-            unreadCount
+            unreadCount,
+            meta: {
+                nextCursor,
+                limit,
+                total
+            }
         });
     } catch (error) {
         res.status(500).json({
@@ -369,7 +449,7 @@ router.get('/notifications', verifyAdminJWT, async (req, res) => {
 });
 
 // PATCH /api/v1/admin/notifications/:id/read
-router.patch('/notifications/:id/read', verifyAdminJWT, async (req, res) => {
+router.patch('/notifications/:id/read', verifyAdminJWT, csrfProtection, async (req, res) => {
     try {
         const notification = await AdminNotification.findByIdAndUpdate(
             req.params.id,
@@ -390,7 +470,7 @@ router.patch('/notifications/:id/read', verifyAdminJWT, async (req, res) => {
 });
 
 // DELETE /api/v1/admin/notifications/:id
-router.delete('/notifications/:id', verifyAdminJWT, async (req, res) => {
+router.delete('/notifications/:id', verifyAdminJWT, csrfProtection, async (req, res) => {
     try {
         const notification = await AdminNotification.findByIdAndDelete(req.params.id);
 
@@ -417,15 +497,40 @@ router.delete('/notifications/:id', verifyAdminJWT, async (req, res) => {
 router.get('/staff', verifyAdminJWT, async (req, res) => {
     try {
         const { category } = req.query;
+        const rawLimit = parseInt(req.query.limit, 10);
+        if (Number.isFinite(rawLimit) && rawLimit > 100) {
+            return res.status(400).json({
+                success: false,
+                message: 'limit cannot be greater than 100'
+            });
+        }
+
+        const page  = Math.max(parseInt(req.query.page,  10) || 1, 1);
+        const limit = Math.min(parseInt(req.query.limit, 10) || 25, 100);
+        const skip  = (page - 1) * limit;
+
         const query = category ? { category } : { category: { $exists: true, $ne: null } };
 
-        const staff = await Staff.find(query)
-            .populate('assignedBookings', 'bookingReference eventDate')
-            .sort({ name: 1 });
+        const [staff, total] = await Promise.all([
+            Staff.find(query)
+                .populate('assignedBookings', 'bookingReference eventDate')
+                .sort({ name: 1 })
+                .skip(skip)
+                .limit(limit),
+            Staff.countDocuments(query)
+        ]);
 
+        res.set('X-Total-Count', total);
         res.json({
             success: true,
-            staff
+            staff,
+            data: staff,
+            meta: {
+                page,
+                limit,
+                total,
+                totalPages: Math.ceil(total / limit)
+            }
         });
     } catch (error) {
         res.status(500).json({
@@ -436,7 +541,7 @@ router.get('/staff', verifyAdminJWT, async (req, res) => {
 });
 
 // POST /api/v1/admin/staff
-router.post('/staff', verifyAdminJWT, async (req, res) => {
+router.post('/staff', verifyAdminJWT, csrfProtection, async (req, res) => {
     try {
         const { name, category, email, phone, whatsapp, bio, photo } = req.body;
 
@@ -474,7 +579,7 @@ router.post('/staff', verifyAdminJWT, async (req, res) => {
 });
 
 // DELETE /api/v1/admin/staff/:id
-router.delete('/staff/:id', verifyAdminJWT, async (req, res) => {
+router.delete('/staff/:id', verifyAdminJWT, csrfProtection, async (req, res) => {
     try {
         const staff = await Staff.findByIdAndDelete(req.params.id);
 
@@ -506,11 +611,16 @@ router.delete('/staff/:id', verifyAdminJWT, async (req, res) => {
 // GET /api/v1/admin/public/gallery
 router.get('/public/gallery', async (req, res) => {
     try {
+        const cached = await getCache('cache:gallery:list');
+        if (cached) return res.json(cached);
+
         const gallery = await Gallery.find()
             .sort({ order: 1, uploadedAt: -1 })
             .limit(9)
             .lean();
-        res.json({ success: true, gallery });
+        const result = { success: true, gallery };
+        await setCache('cache:gallery:list', result, 300);
+        res.json(result);
     } catch (err) {
         res.status(500).json({ success: false, message: 'Error fetching gallery' });
     }
@@ -519,6 +629,9 @@ router.get('/public/gallery', async (req, res) => {
 // GET /api/v1/admin/public/testimonials
 router.get('/public/testimonials', async (req, res) => {
     try {
+        const cached = await getCache('cache:testimonials:list');
+        if (cached) return res.json(cached);
+
         const Testimonial = require('../models/Testimonial');
         const testimonials = await Testimonial.find({
             $or: [{ displayOnWebsite: true }, { status: 'approved' }]
@@ -526,7 +639,9 @@ router.get('/public/testimonials', async (req, res) => {
         .sort({ createdAt: -1 })
         .limit(6)
         .lean();
-        res.json({ success: true, testimonials });
+        const result = { success: true, testimonials };
+        await setCache('cache:testimonials:list', result, 600);
+        res.json(result);
     } catch (err) {
         res.status(500).json({ success: false, message: 'Error fetching testimonials' });
     }
@@ -535,13 +650,43 @@ router.get('/public/testimonials', async (req, res) => {
 // GET /api/v1/admin/gallery
 router.get('/gallery', verifyAdminJWT, async (req, res) => {
     try {
-        const gallery = await Gallery.find()
-            .sort({ order: 1 });
+        const rawLimit = parseInt(req.query.limit, 10);
+        if (Number.isFinite(rawLimit) && rawLimit > 100) {
+            return res.status(400).json({
+                success: false,
+                message: 'limit cannot be greater than 100'
+            });
+        }
 
-        res.json({
+        const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
+        const limit = Math.min(rawLimit || 25, 100);
+        const skip = (page - 1) * limit;
+        const cacheKey = `cache:gallery:list:admin:${page}:${limit}`;
+
+        const cached = await getCache(cacheKey);
+        if (cached) return res.json(cached);
+
+        const [gallery, total] = await Promise.all([
+            Gallery.find()
+                .sort({ order: 1 })
+                .skip(skip)
+                .limit(limit),
+            Gallery.countDocuments()
+        ]);
+
+        const result = {
             success: true,
-            gallery
-        });
+            gallery,
+            meta: {
+                page,
+                limit,
+                total,
+                totalPages: Math.ceil(total / limit)
+            }
+        };
+        res.set('X-Total-Count', total);
+        await setCache(cacheKey, result, 300);
+        res.json(result);
     } catch (error) {
         res.status(500).json({
             success: false,
@@ -554,15 +699,32 @@ router.get('/gallery', verifyAdminJWT, async (req, res) => {
 router.get('/testimonials', verifyAdminJWT, async (req, res) => {
     try {
         const { status } = req.query;
+        const page  = Math.max(parseInt(req.query.page,  10) || 1, 1);
+        const limit = Math.min(parseInt(req.query.limit, 10) || 25, 100);
+        const skip  = (page - 1) * limit;
+
+        if (!status) {
+            const cached = await getCache('cache:testimonials:list');
+            if (cached) return res.json(cached);
+        }
+        
         const query = status ? { status } : {};
 
-        const testimonials = await Testimonial.find(query)
-            .sort({ createdAt: -1 });
+        const [testimonials, total] = await Promise.all([
+            Testimonial.find(query)
+                .sort({ createdAt: -1 })
+                .skip(skip)
+                .limit(limit),
+            Testimonial.countDocuments(query)
+        ]);
 
-        res.json({
+        const result = {
             success: true,
-            testimonials
-        });
+            data: testimonials
+        };
+        res.set('X-Total-Count', total);
+        if (!status) await setCache('cache:testimonials:list', result, 600);
+        res.json(result);
     } catch (error) {
         res.status(500).json({
             success: false,
@@ -572,7 +734,7 @@ router.get('/testimonials', verifyAdminJWT, async (req, res) => {
 });
 
 // POST /api/v1/admin/testimonials
-router.post('/testimonials', verifyAdminJWT, async (req, res) => {
+router.post('/testimonials', verifyAdminJWT, csrfProtection, async (req, res) => {
     try {
         const { name, role, text, rating, eventType, status, displayOnWebsite } = req.body;
         const testimonial = await Testimonial.create({
@@ -580,6 +742,7 @@ router.post('/testimonials', verifyAdminJWT, async (req, res) => {
             eventType, status: status || 'pending',
             displayOnWebsite: displayOnWebsite || false
         });
+        await invalidateCache('cache:testimonials:list');
         res.status(201).json({ success: true, testimonial });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
@@ -587,11 +750,12 @@ router.post('/testimonials', verifyAdminJWT, async (req, res) => {
 });
 
 // PATCH /api/v1/admin/testimonials/:id
-router.patch('/testimonials/:id', verifyAdminJWT, async (req, res) => {
+router.patch('/testimonials/:id', verifyAdminJWT, csrfProtection, async (req, res) => {
     try {
         const testimonial = await Testimonial.findByIdAndUpdate(
             req.params.id, req.body, { new: true }
         );
+        await invalidateCache('cache:testimonials:list');
         res.json({ success: true, testimonial });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
@@ -599,9 +763,10 @@ router.patch('/testimonials/:id', verifyAdminJWT, async (req, res) => {
 });
 
 // DELETE /api/v1/admin/testimonials/:id
-router.delete('/testimonials/:id', verifyAdminJWT, async (req, res) => {
+router.delete('/testimonials/:id', verifyAdminJWT, csrfProtection, async (req, res) => {
     try {
         await Testimonial.findByIdAndDelete(req.params.id);
+        await invalidateCache('cache:testimonials:list');
         res.json({ success: true, message: 'Testimonial deleted' });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
@@ -611,15 +776,20 @@ router.delete('/testimonials/:id', verifyAdminJWT, async (req, res) => {
 // GET /api/v1/admin/settings
 router.get('/settings', verifyAdminJWT, async (req, res) => {
     try {
+        const cached = await getCache('cache:settings');
+        if (cached) return res.json(cached);
+
         let settings = await AdminSettings.findOne();
         if (!settings) {
             settings = await AdminSettings.create({});
         }
 
-        res.json({
+        const result = {
             success: true,
             settings
-        });
+        };
+        await setCache('cache:settings', result, 1800);
+        res.json(result);
     } catch (error) {
         res.status(500).json({
             success: false,
@@ -629,7 +799,7 @@ router.get('/settings', verifyAdminJWT, async (req, res) => {
 });
 
 // PATCH /api/v1/admin/settings
-router.patch('/settings', verifyAdminJWT, async (req, res) => {
+router.patch('/settings', verifyAdminJWT, csrfProtection, async (req, res) => {
     try {
         const { businessName, businessPhone, businessEmail, businessAddress, notifyOnNewBooking, notifyOnWhatsApp, darkMode, instagramHandle, instagramUrl, facebookUrl, beholdfeedId, profileImage } = req.body;
 
@@ -652,6 +822,7 @@ router.patch('/settings', verifyAdminJWT, async (req, res) => {
         if (profileImage !== undefined) settings.profileImage = profileImage;
 
         await settings.save();
+        await invalidateCache('cache:settings');
 
         res.json({
             success: true,
@@ -682,7 +853,7 @@ router.get('/pricing', verifyAdminJWT, async (req, res) => {
     }
 });
 // PUT /api/v1/admin/pricing
-router.put('/pricing', verifyAdminJWT, async (req, res) => {
+router.put('/pricing', verifyAdminJWT, csrfProtection, async (req, res) => {
     try {
         const PricingSettings = require('../models/PricingSettings');
         const { usherRate, supervisorRate, globalSupervisorRate, vatRate, currency, notes, services, categories, paymentMethods } = req.body;
@@ -698,11 +869,12 @@ router.put('/pricing', verifyAdminJWT, async (req, res) => {
         await pricing.save();
         // Sync pricing to staff portal
         try {
-            const axios = require('axios');
+            const { createSyncHeaders } = require('../../staff-system/middleware/syncAuth');
+            const pricingSyncBody = { categories: pricing.categories, vatRate: pricing.vatRate, globalSupervisorRate: pricing.globalSupervisorRate, paymentMethods: pricing.paymentMethods };
             await axios.post(
                 `${process.env.STAFF_SYSTEM_BASE_URL || 'http://localhost:3001'}/internal/sync-pricing`,
-                { categories: pricing.categories, vatRate: pricing.vatRate, globalSupervisorRate: pricing.globalSupervisorRate, paymentMethods: pricing.paymentMethods },
-                { headers: { 'x-sync-secret': process.env.SYNC_SECRET } }
+                pricingSyncBody,
+                { headers: createSyncHeaders(process.env.SYNC_SECRET, pricingSyncBody) }
             );
         } catch(e) { console.log('Pricing sync to staff portal skipped:', e.message); }
         res.json({ success: true, pricing });
@@ -717,7 +889,7 @@ router.put('/pricing', verifyAdminJWT, async (req, res) => {
 // ═══════════════════════════════════════════════════════════
 
 // GET /api/v1/admin/profile
-router.get('/profile', verifyAdminJWT, async (req, res) => {
+router.get('/profile', verifyAdminJWT, csrfProtection, attachCsrfToken, async (req, res) => {
     try {
         const admin = await Admin.findById(req.admin.adminId).select('-passwordHash');
         if (!admin) {
@@ -730,7 +902,7 @@ router.get('/profile', verifyAdminJWT, async (req, res) => {
 });
 
 // PATCH /api/v1/admin/profile
-router.patch('/profile', verifyAdminJWT, async (req, res) => {
+router.patch('/profile', verifyAdminJWT, csrfProtection, async (req, res) => {
     try {
         const { name, email, avatar } = req.body;
         const admin = await Admin.findById(req.admin.adminId);
@@ -767,7 +939,7 @@ router.patch('/profile', verifyAdminJWT, async (req, res) => {
 // ═══════════════════════════════════════════════════════════
 
 // POST /api/v1/admin/change-password
-router.post('/change-password', verifyAdminJWT, async (req, res) => {
+router.post('/change-password', verifyAdminJWT, csrfProtection, async (req, res) => {
     try {
         console.log('🔐 Change password request received');
         console.log('Admin ID:', req.admin?.adminId);
@@ -844,9 +1016,41 @@ router.post('/change-password', verifyAdminJWT, async (req, res) => {
 // GET /api/v1/admin/gallery
 router.get('/gallery', verifyAdminJWT, async (req, res) => {
     try {
-        const items = await Gallery.find().sort({ order: 1, uploadedAt: -1 });
+        const rawLimit = parseInt(req.query.limit, 10);
+        if (Number.isFinite(rawLimit) && rawLimit > 100) {
+            return res.status(400).json({
+                success: false,
+                message: 'limit cannot be greater than 100'
+            });
+        }
+
+        const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
+        const limit = Math.min(rawLimit || 25, 100);
+        const skip = (page - 1) * limit;
+        const cacheKey = `cache:gallery:list:admin:${page}:${limit}`;
+
+        const cached = await getCache(cacheKey);
+        if (cached) return res.json(cached);
+
+        const [items, total] = await Promise.all([
+            Gallery.find().sort({ order: 1, uploadedAt: -1 }).skip(skip).limit(limit),
+            Gallery.countDocuments()
+        ]);
         console.log(`📸 GET /gallery invoked. Found ${items.length} items`);
-        res.json({ success: true, gallery: items });
+        
+        const result = {
+            success: true,
+            gallery: items,
+            meta: {
+                page,
+                limit,
+                total,
+                totalPages: Math.ceil(total / limit)
+            }
+        };
+        res.set('X-Total-Count', total);
+        await setCache(cacheKey, result, 300);
+        res.json(result);
     } catch (error) {
         console.error('Error fetching gallery:', error);
         res.status(500).json({ success: false, message: 'Error fetching gallery' });
@@ -854,7 +1058,7 @@ router.get('/gallery', verifyAdminJWT, async (req, res) => {
 });
 
 // POST /api/v1/admin/gallery/upload
-router.post('/gallery/upload', verifyAdminJWT, async (req, res) => {
+router.post('/gallery/upload', verifyAdminJWT, csrfProtection, async (req, res) => {
     try {
         const { filename, url, eventType, caption } = req.body;
         if (!url) return res.status(400).json({ success: false, message: "Image data (url) is required." });
@@ -876,6 +1080,10 @@ router.post('/gallery/upload', verifyAdminJWT, async (req, res) => {
 
         await item.save();
         console.log(`✅ Gallery image saved: ${item.filename} with ID: ${item._id}`);
+        await Promise.all([
+            invalidateCache('cache:gallery:list'),
+            invalidatePattern('cache:gallery:list:admin:')
+        ]);
 
         res.status(201).json({ success: true, message: 'Image uploaded successfully', item });
     } catch (error) {
@@ -885,10 +1093,14 @@ router.post('/gallery/upload', verifyAdminJWT, async (req, res) => {
 });
 
 // DELETE /api/v1/admin/gallery/:id
-router.delete('/gallery/:id', verifyAdminJWT, async (req, res) => {
+router.delete('/gallery/:id', verifyAdminJWT, csrfProtection, async (req, res) => {
     try {
         const item = await Gallery.findByIdAndDelete(req.params.id);
         if (!item) return res.status(404).json({ success: false, message: 'Image not found' });
+        await Promise.all([
+            invalidateCache('cache:gallery:list'),
+            invalidatePattern('cache:gallery:list:admin:')
+        ]);
         res.json({ success: true, message: 'Image deleted successfully' });
     } catch (error) {
         res.status(500).json({ success: false, message: 'Error deleting image' });
@@ -896,7 +1108,7 @@ router.delete('/gallery/:id', verifyAdminJWT, async (req, res) => {
 });
 
 // PATCH /api/v1/admin/gallery/:id  (reorder / update caption)
-router.patch('/gallery/:id', verifyAdminJWT, async (req, res) => {
+router.patch('/gallery/:id', verifyAdminJWT, csrfProtection, async (req, res) => {
     try {
         const { order, caption, eventType } = req.body;
         const update = {};
@@ -905,6 +1117,10 @@ router.patch('/gallery/:id', verifyAdminJWT, async (req, res) => {
         if (eventType !== undefined) update.eventType = eventType;
         const item = await Gallery.findByIdAndUpdate(req.params.id, update, { new: true });
         if (!item) return res.status(404).json({ success: false, message: 'Image not found' });
+        await Promise.all([
+            invalidateCache('cache:gallery:list'),
+            invalidatePattern('cache:gallery:list:admin:')
+        ]);
         res.json({ success: true, item });
     } catch (error) {
         res.status(500).json({ success: false, message: 'Error updating image' });
@@ -918,7 +1134,7 @@ router.patch('/gallery/:id', verifyAdminJWT, async (req, res) => {
 // POST /api/v1/admin/gallery/generate-captions
 // Body: { eventType: string, filename: string }
 // Returns: { success: true, captions: string[] }  (always 5 options)
-router.post('/gallery/generate-captions', verifyAdminJWT, async (req, res) => {
+router.post('/gallery/generate-captions', verifyAdminJWT, csrfProtection, async (req, res) => {
     try {
         const { eventType, filename } = req.body;
 
@@ -976,7 +1192,7 @@ Where memories are made and moments become magic`;
 // ═══════════════════════════════════════════════════════════
 
 // PATCH /api/v1/admin/staff/:id  (update staff details including whatsapp)
-router.patch('/staff/:id', verifyAdminJWT, async (req, res) => {
+router.patch('/staff/:id', verifyAdminJWT, csrfProtection, async (req, res) => {
     try {
         const { name, category, email, phone, whatsapp, notes, isAvailable, hourlyRate, photo } = req.body;
         const update = {};
@@ -1008,7 +1224,7 @@ router.patch('/staff/:id', verifyAdminJWT, async (req, res) => {
 // ═══════════════════════════════════════════════════════════
 
 // POST /api/v1/admin/bookings/:id/assign-staff
-router.post('/bookings/:id/assign-staff', verifyAdminJWT, async (req, res) => {
+router.post('/bookings/:id/assign-staff', verifyAdminJWT, csrfProtection, async (req, res) => {
     try {
         const { supervisorId, staffIds } = req.body;
         const booking = await Booking.findById(req.params.id);
@@ -1052,15 +1268,24 @@ router.post('/bookings/:id/assign-staff', verifyAdminJWT, async (req, res) => {
 // GET /api/v1/admin/customers
 router.get('/customers', verifyAdminJWT, async (req, res) => {
     try {
-        const customers = await Customer.find().sort({ createdAt: -1 });
-        res.json({ success: true, customers });
+        const page  = Math.max(parseInt(req.query.page,  10) || 1, 1);
+        const limit = Math.min(parseInt(req.query.limit, 10) || 25, 100);
+        const skip  = (page - 1) * limit;
+
+        const [customers, total] = await Promise.all([
+            Customer.find().sort({ createdAt: -1 }).skip(skip).limit(limit),
+            Customer.countDocuments()
+        ]);
+
+        res.set('X-Total-Count', total);
+        res.json({ success: true, customers, data: customers });
     } catch (error) {
         res.status(500).json({ success: false, message: 'Error fetching customers' });
     }
 });
 
 // POST /api/v1/admin/customers
-router.post('/customers', verifyAdminJWT, async (req, res) => {
+router.post('/customers', verifyAdminJWT, csrfProtection, async (req, res) => {
     try {
         const { name, email, phone, location, tags, notes } = req.body;
         const newCustomer = new Customer({
@@ -1095,7 +1320,7 @@ router.get('/customers/:id', verifyAdminJWT, async (req, res) => {
 });
 
 // PUT /api/v1/admin/customers/:id - Update customer
-router.put('/customers/:id', verifyAdminJWT, async (req, res) => {
+router.put('/customers/:id', verifyAdminJWT, csrfProtection, async (req, res) => {
     try {
         const { name, email, phone, location, notes, isVIP, status, howTheyFoundUs } = req.body;
         
@@ -1130,7 +1355,7 @@ router.put('/customers/:id', verifyAdminJWT, async (req, res) => {
 });
 
 // DELETE /api/v1/admin/customers/:id
-router.delete('/customers/:id', verifyAdminJWT, async (req, res) => {
+router.delete('/customers/:id', verifyAdminJWT, csrfProtection, async (req, res) => {
     try {
         await Customer.findByIdAndDelete(req.params.id);
         res.json({ success: true, message: 'Customer deleted' });
@@ -1147,15 +1372,23 @@ router.delete('/customers/:id', verifyAdminJWT, async (req, res) => {
 // GET /api/v1/admin/clients
 router.get('/clients', verifyAdminJWT, async (req, res) => {
     try {
-        const { search = '', page = 1, limit = 20 } = req.query;
+        const { search = '' } = req.query;
+        const page  = Math.max(parseInt(req.query.page,  10) || 1, 1);
+        const limit = Math.min(parseInt(req.query.limit, 10) || 25, 100);
+        const skip  = (page - 1) * limit;
+
         let query = {};
         if (search) {
             query = { email: { $regex: search, $options: 'i' } };
         }
-        const skip = (page - 1) * limit;
-        const clients = await ClientAccount.find(query).populate('client_id').skip(skip).limit(parseInt(limit)).sort({ createdAt: -1 });
-        const total = await ClientAccount.countDocuments(query);
-        res.json({ success: true, data: { clients, pagination: { total, pages: Math.ceil(total / limit), page: parseInt(page) } } });
+
+        const [clients, total] = await Promise.all([
+            ClientAccount.find(query).populate('client_id').sort({ createdAt: -1 }).skip(skip).limit(limit),
+            ClientAccount.countDocuments(query)
+        ]);
+
+        res.set('X-Total-Count', total);
+        res.json({ success: true, data: { clients, pagination: { total, pages: Math.ceil(total / limit), page } } });
     } catch (error) {
         res.status(500).json({ success: false, message: 'Server error fetching client accounts' });
     }
@@ -1173,7 +1406,7 @@ router.get('/clients/:clientId', verifyAdminJWT, async (req, res) => {
 });
 
 // POST /api/v1/admin/clients/:clientId/toggle
-router.post('/clients/:clientId/toggle', verifyAdminJWT, async (req, res) => {
+router.post('/clients/:clientId/toggle', verifyAdminJWT, csrfProtection, async (req, res) => {
     try {
         const client = await ClientAccount.findById(req.params.clientId);
         if (!client) return res.status(404).json({ success: false, message: 'Client account not found' });

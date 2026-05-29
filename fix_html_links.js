@@ -1,11 +1,14 @@
 const fs = require('fs');
 const path = require('path');
 
-const adminDir = path.join(__dirname, 'admin');
+const adminDir = path.resolve(__dirname, 'admin');
 
 fs.readdirSync(adminDir).forEach(file => {
     if (file.endsWith('.html')) {
-        const filePath = path.join(adminDir, file);
+        const filePath = path.normalize(path.join(adminDir, file));
+        if (!filePath.startsWith(adminDir + path.sep)) {
+            throw new Error('Path traversal detected');
+        }
         let content = fs.readFileSync(filePath, 'utf8');
 
         let original = content;
@@ -14,7 +17,8 @@ fs.readdirSync(adminDir).forEach(file => {
         // But exclude ones that already have .html
         content = content.replace(/href="\/admin\/([a-zA-Z0-9_-]+)([\?"])/g, (match, pageName, suffix) => {
             // Check if pageName exists in the directory
-            const htmlExists = fs.existsSync(path.join(adminDir, pageName + '.html'));
+            const checkPath = path.normalize(path.join(adminDir, pageName + '.html'));
+            const htmlExists = checkPath.startsWith(adminDir + path.sep) && fs.existsSync(checkPath);
             if (htmlExists) {
                 return `href="/admin/${pageName}.html${suffix}`;
             }

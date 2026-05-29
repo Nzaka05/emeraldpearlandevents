@@ -1,6 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const dir = __dirname;
+const dir = path.resolve(__dirname);
 
 const files = [
     'analytics.html',
@@ -24,7 +24,10 @@ const newLink = `            <li class="sidebar-nav-item">
             </li>`;
 
 files.forEach(file => {
-    const fullPath = path.join(dir, file);
+    const fullPath = path.normalize(path.join(dir, file));
+    if (!fullPath.startsWith(dir + path.sep)) {
+        throw new Error('Path traversal detected');
+    }
     if (fs.existsSync(fullPath)) {
         let content = fs.readFileSync(fullPath, 'utf8');
 

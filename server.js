@@ -126,6 +126,15 @@ app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 app.get('/index.html', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 app.get('/booking.html', (req, res) => res.sendFile(path.join(__dirname, 'booking.html')));
 
+// Stripe payments route (webhook needs raw body, mounted before global body parser)
+// app.use('/api/payments/stripe', require('./server/routes/stripeRoutes')); // Disabled — Paystack handles all payments. To re-enable, uncomment this line.
+
+// Paystack payments route (webhook needs raw body, mounted before global body parser)
+app.use('/api/payments/paystack', require('./server/routes/paystackRoutes'));
+
+// Staff payout routes (admin-only, uses Paystack Transfer API)
+app.use('/api/payouts', require('./server/routes/staffPayoutRoutes'));
+
 app.use(bodyParser.json({ limit: '50mb' }));
 app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
 app.use(express.static('public'));
@@ -634,16 +643,19 @@ app.use('/portal', portalCsrf, (req, res, next) => {
 });
 
 // ── STAFF PORTAL ROUTES ──
-const portalAuthRoutes = require('./staff-system/staff-routes/auth');
-const portalStaffRoutes = require('./staff-system/staff-routes/staff');
-const portalSupervisorRoutes = require('./staff-system/staff-routes/supervisor');
-const portalAdminStaffRoutes = require('./staff-system/staff-routes/admin');
+const portalAuthRoutes = require('./staff-system/routes/auth');
+const portalStaffRoutes = require('./staff-system/routes/staff');
+const portalSupervisorRoutes = require('./staff-system/routes/supervisor');
+const portalAdminStaffRoutes = require('./staff-system/routes/admin');
 const portalAiRoutes = require('./staff-system/staff-routes/aiRoutes');
 
 app.use('/portal/auth', portalAuthRoutes);
 app.use('/portal/staff', portalStaffRoutes);
 app.use('/portal/supervisor', portalSupervisorRoutes);
 app.use('/portal/ai', portalAiRoutes);
+
+// ── COMMAND CENTER ROUTES ──
+app.use('/admin/command-center', adminCommandCenterRoutes);
 
 // Public M-Pesa callbacks - no auth, no CSRF
 app.post('/portal/admin-staff/mpesa/callback', async (req, res) => {

@@ -192,6 +192,7 @@ exports.generateDeviceSession = async (account, ipAddress, userAgent) => {
     const rawRefreshToken = crypto.randomBytes(64).toString('hex');
     const refreshSalt = await bcrypt.genSalt(10);
     const refresh_token_hash = await bcrypt.hash(rawRefreshToken, refreshSalt);
+    const tokenIndex = rawRefreshToken.substring(0, 16);
 
     const expiryDate = new Date();
     expiryDate.setDate(expiryDate.getDate() + 30);
@@ -199,6 +200,7 @@ exports.generateDeviceSession = async (account, ipAddress, userAgent) => {
     await ClientSession.create({
         client_id: account.client_id,
         refresh_token_hash,
+        tokenIndex,
         ip_address: ipAddress,
         user_agent: userAgent,
         device_name: userAgent ? userAgent.split(' ')[0] : 'Unknown Device',
@@ -243,18 +245,12 @@ exports.loginClient = async (email, password, ipAddress, userAgent) => {
 };
 
 exports.refreshToken = async (rawRefreshToken, ipAddress, userAgent) => {
-    // Find all active sessions across all clients
-    const activeSessions = await ClientSession.find({ is_active: true });
-    
-    let validSession = null;
-    for (const session of activeSessions) {
-        if (await bcrypt.compare(rawRefreshToken, session.refresh_token_hash)) {
-            validSession = session;
-            break;
-        }
-    }
+    const tokenIndex = rawRefreshToken.substring(0, 16);
+    const validSession = await ClientSession.findOne({ is_active: true, tokenIndex });
 
-    if (!validSession) throw new Error('401:Invalid or expired refresh token');
+    const isValid = validSession && await bcrypt.compare(rawRefreshToken, validSession.refresh_token_hash);
+
+    if (!isValid) throw new Error('401:Invalid or expired refresh token');
 
     if (validSession.expires_at < new Date()) {
         validSession.is_active = false;

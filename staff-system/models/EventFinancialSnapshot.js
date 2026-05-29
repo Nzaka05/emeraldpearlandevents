@@ -23,9 +23,10 @@ const EventFinancialSnapshotSchema = new mongoose.Schema({
 
 EventFinancialSnapshotSchema.pre('save', async function() {
     if (this.isNew && !this.snapshotId) {
-        const count = await this.constructor.countDocuments();
+        const { getNextSequence } = require('./Counter');
+        const seq = await getNextSequence('EventFinancialSnapshot');
         const year = new Date().getFullYear();
-        this.snapshotId = 'EPE-SNP-' + year + '-' + String(count + 1).padStart(4, '0');
+        this.snapshotId = 'EPE-SNP-' + year + '-' + String(seq).padStart(4, '0');
     }
     this.totalExpenses = (this.staffPayrollTotal || 0) + (this.operationalExpenses || 0) + (this.incidentExpenses || 0);
     this.eventProfit = (this.clientPayment || 0) - this.totalExpenses;

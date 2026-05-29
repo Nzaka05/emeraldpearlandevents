@@ -1,11 +1,14 @@
 const fs = require('fs');
 const path = require('path');
 
-const adminDir = path.join(__dirname, 'admin');
+const adminDir = path.resolve(__dirname, 'admin');
 
 fs.readdirSync(adminDir).forEach(file => {
     if (file.endsWith('.html')) {
-        const filePath = path.join(adminDir, file);
+        const filePath = path.normalize(path.join(adminDir, file));
+        if (!filePath.startsWith(adminDir + path.sep)) {
+            throw new Error('Path traversal detected');
+        }
         let content = fs.readFileSync(filePath, 'utf8');
 
         const target = '<a href="/admin/bookings" class="fab-item">';

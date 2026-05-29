@@ -516,3 +516,108 @@
 @media (min-width: 641px) {
   .hide-desktop { display: none !important; }
 }
+
+/* ─── NEW UX ADDITIONS ───────────────────────────────────────── */
+
+.touch-target {
+  min-height: 44px;
+  min-width: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@keyframes cardExit {
+  from { opacity: 1; transform: translateY(0); }
+  to { opacity: 0; transform: translateY(-12px); }
+}
+
+.card-exit {
+  animation: cardExit 300ms ease-in forwards;
+}
+
+@keyframes cardEnter {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.card-enter {
+  animation: cardEnter 250ms ease-out forwards;
+}
+
+@keyframes statusBadgeUpdate {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+  100% { transform: scale(1); }
+}
+
+.status-badge-update {
+  animation: statusBadgeUpdate 200ms ease-in-out;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.btn-loading {
+  pointer-events: none;
+  opacity: 0.7;
+  position: relative;
+  color: transparent !important;
+}
+
+.btn-loading::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 1rem;
+  height: 1rem;
+  margin-top: -0.5rem;
+  margin-left: -0.5rem;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes skeletonPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.skeleton-pulse {
+  animation: skeletonPulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+}
+
+@keyframes drawerSlideIn {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
+
+.drawer-slide-in {
+  animation: drawerSlideIn 250ms ease-out forwards;
+}
+
+.drawer-backdrop {
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card-exit,
+  .card-enter,
+  .status-badge-update,
+  .btn-loading::after,
+  .skeleton-pulse,
+  .drawer-slide-in,
+  .drawer-backdrop,
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+

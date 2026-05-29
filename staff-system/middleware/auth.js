@@ -4,18 +4,13 @@ const STAFF_COOKIE = 'staff_portal_token';
 const LEGACY_COOKIE = 'portal_token';
 
 function verifyWithStaffSecrets(token) {
-    const secrets = [process.env.STAFF_JWT_SECRET, process.env.JWT_SECRET].filter(Boolean);
-    let lastError;
+    const secret = process.env.STAFF_JWT_SECRET;
 
-    for (const secret of secrets) {
-        try {
-            return jwt.verify(token, secret);
-        } catch (err) {
-            lastError = err;
-        }
+    if (!secret) {
+        throw new Error('JWT secret not configured');
     }
 
-    throw lastError || new Error('JWT secret not configured');
+    return jwt.verify(token, secret);
 }
 
 // Helper: detect API/JSON request vs browser request
@@ -23,6 +18,18 @@ function isApiRequest(req) {
     return (req.headers['content-type'] && req.headers['content-type'].includes('application/json')) ||
            (req.headers['authorization'] && req.headers['authorization'].startsWith('Bearer')) ||
            (req.headers['accept'] && req.headers['accept'].includes('application/json'));
+}
+
+// Helper: send a 401 response (API or redirect)
+function sendUnauthorized(req, res, code, message) {
+    if (isApiRequest(req)) {
+        return res.status(401).json({
+            success: false,
+            error: { code, message, statusCode: 401 },
+            timestamp: new Date().toISOString()
+        });
+    }
+    return res.redirect(`/portal/auth/login?error=${encodeURIComponent(message)}`);
 }
 
 // Protect routes
@@ -44,14 +51,7 @@ exports.protect = async (req, res, next) => {
 
     // Make sure token exists
     if (!token) {
-        if (isApiRequest(req)) {
-            return res.status(401).json({
-                success: false,
-                error: { code: 'NOT_AUTHENTICATED', message: 'Not authorized to access this route', statusCode: 401 },
-                timestamp: new Date().toISOString()
-            });
-        }
-        return res.redirect('/portal/auth/login?error=Not authorized to access this route');
+        return sendUnauthorized(req, res, 'NOT_AUTHENTICATED', 'Not authorized to access this route');
     }
 
     try {
@@ -61,14 +61,30 @@ exports.protect = async (req, res, next) => {
         req.user = await Staff.findById(decoded.id);
 
         if (!req.user) {
-            if (isApiRequest(req)) {
-                return res.status(401).json({
-                    success: false,
-                    error: { code: 'USER_NOT_FOUND', message: 'User no longer exists', statusCode: 401 },
-                    timestamp: new Date().toISOString()
-                });
-            }
-            return res.redirect('/portal/auth/login?error=User no longer exists');
+            return sendUnauthorized(req, res, 'USER_NOT_FOUND', 'User no longer exists');
+        }
+
+        // ── SECURITY FIX: Block suspended / inactive accounts ────────────────
+        // This kills zombie sessions: even if the JWT is cryptographically
+        // valid, a suspended user is immediately locked out.
+        if (req.user.status !== 'Active') {
+            // Clear the cookie so the browser stops sending it
+            res.clearCookie(STAFF_COOKIE, { httpOnly: true, path: '/' });
+            res.clearCookie(LEGACY_COOKIE, { httpOnly: true, path: '/' });
+            return sendUnauthorized(req, res, 'ACCOUNT_SUSPENDED', 'Account suspended. Contact administrator.');
+        }
+
+        // ── SECURITY FIX: Token version invalidation ─────────────────────────
+        // If the token was issued before the user's tokenVersion was bumped
+        // (e.g. via logout-all-sessions or password change), reject it.
+        // decoded.tv is undefined for legacy tokens — those are treated as
+        // version 0 and will be rejected once the user's tokenVersion > 0.
+        const tokenVer = decoded.tv ?? 0;
+        const userVer = req.user.tokenVersion ?? 0;
+        if (tokenVer < userVer) {
+            res.clearCookie(STAFF_COOKIE, { httpOnly: true, path: '/' });
+            res.clearCookie(LEGACY_COOKIE, { httpOnly: true, path: '/' });
+            return sendUnauthorized(req, res, 'TOKEN_REVOKED', 'Session invalidated. Please log in again.');
         }
 
         // Force password change check
@@ -88,14 +104,7 @@ exports.protect = async (req, res, next) => {
         res.locals.user = req.user;
         next();
     } catch (err) {
-        if (isApiRequest(req)) {
-            return res.status(401).json({
-                success: false,
-                error: { code: 'INVALID_TOKEN', message: 'Not authorized to access this route', statusCode: 401 },
-                timestamp: new Date().toISOString()
-            });
-        }
-        return res.redirect('/portal/auth/login?error=Not authorized to access this route');
+        return sendUnauthorized(req, res, 'INVALID_TOKEN', 'Not authorized to access this route');
     }
 };
 

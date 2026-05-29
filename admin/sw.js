@@ -34,8 +34,7 @@ self.addEventListener('notificationclick', function (event) {
     event.waitUntil(
         self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function (clientList) {
             // First try to find a tab that's already open to the admin panel
-            for (let i = 0; i < clientList.length; i++) {
-                const client = clientList[i];
+            for (const client of clientList) {
                 if (client.url.includes('/admin/') && 'focus' in client) {
                     client.navigate(urlToOpen);
                     return client.focus();

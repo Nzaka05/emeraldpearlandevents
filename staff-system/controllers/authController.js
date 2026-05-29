@@ -7,22 +7,27 @@ const crypto = require('crypto');
 const emailService = require('../services/emailService');
 const { notificationQueue } = require('../../config/queues');
 const queueMode = (process.env.QUEUE_MODE || 'inline').toLowerCase();
-const staffAuthSecret = process.env.STAFF_JWT_SECRET || process.env.JWT_SECRET;
+const staffAuthSecret = process.env.STAFF_JWT_SECRET;
+if (!staffAuthSecret) {
+    throw new Error('FATAL: STAFF_JWT_SECRET is required. Do not fallback to generic JWT secret.');
+}
 const STAFF_COOKIE = 'staff_portal_token';
 const LEGACY_COOKIE = 'portal_token';
 
 // Send token in cookie
 const sendTokenResponse = (user, statusCode, res) => {
-    const token = jwt.sign({ id: user._id }, staffAuthSecret, {
-        expiresIn: process.env.JWT_EXPIRE
-    });
+    const token = jwt.sign(
+        { id: user._id, tv: user.tokenVersion || 0 },
+        staffAuthSecret,
+        { expiresIn: process.env.JWT_EXPIRE || '30d' }
+    );
 
     const options = {
         expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
         httpOnly: true,
         path: '/',
         secure: process.env.NODE_ENV === 'production',
-        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
+        sameSite: 'strict'
     };
 
     // Set dedicated staff cookie and a legacy cookie for transition compatibility
@@ -166,6 +171,8 @@ exports.changePassword = async (req, res) => {
         const salt = await bcrypt.genSalt(10);
         user.password = await bcrypt.hash(new_password, salt);
         user.mustChangePassword = false;
+        // Bump tokenVersion to invalidate ALL existing sessions (other devices/browsers)
+        user.tokenVersion = (user.tokenVersion || 0) + 1;
         await user.save();
 
         await AuditLog.create({
@@ -226,7 +233,7 @@ exports.refresh = async (req, res) => {
         }
 
         const newToken = jwt.sign(
-            { id: user._id, role: user.role, mustChangePassword: user.mustChangePassword },
+            { id: user._id, tv: user.tokenVersion || 0 },
             staffAuthSecret,
             { expiresIn: '8h' }
         );
@@ -437,3 +444,34 @@ exports.getProfileJson = async (req, res) => {
         respond(res, 500, { success: false, error: 'Server Error' });
     }
 };
+
+// @desc    Logout all sessions — bumps tokenVersion to invalidate every JWT
+// @route   POST /portal/auth/logout-all
+exports.logoutAllSessions = async (req, res) => {
+    try {
+        const user = await Staff.findById(req.user._id);
+        if (!user) return respond(res, 404, { success: false, error: 'User not found' });
+
+        user.tokenVersion = (user.tokenVersion || 0) + 1;
+        await user.save({ validateBeforeSave: false });
+
+        await AuditLog.create({
+            actionType: 'LOGOUT_ALL_SESSIONS',
+            targetModel: 'Staff',
+            targetId: user._id,
+            performedBy: user._id,
+            details: { newTokenVersion: user.tokenVersion },
+            ipAddress: req.ip
+        });
+
+        // Clear the current session cookie
+        res.clearCookie(STAFF_COOKIE, { httpOnly: true, path: '/' });
+        res.clearCookie(LEGACY_COOKIE, { httpOnly: true, path: '/' });
+
+        respond(res, 200, { success: true, data: { message: 'All sessions invalidated.' } });
+    } catch (error) {
+        console.error(error);
+        respond(res, 500, { success: false, error: 'Server Error' });
+    }
+};
+

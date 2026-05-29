@@ -9,6 +9,32 @@
 //   3. totalPaid / totalInvoiced used correctly for progress bar bottom labels.
 // ─────────────────────────────────────────────────────────────────────────────
 
+const escapeHTML = (str) => {
+    if (!str) return '';
+    return String(str).replace(/[&<>'"]/g, tag => {
+        switch (tag) {
+            case '&': return '&amp;';
+            case '<': return '&lt;';
+            case '>': return '&gt;';
+            case "'": return '&#39;';
+            case '"': return '&quot;';
+            default: return tag;
+        }
+    });
+};
+
+const sanitizeClassName = (str) => {
+    if (!str) return 'fa-money-bill';
+    return str.replace(/[^a-zA-Z0-9_-]/g, '');
+};
+
+const safeGet = (obj, key) => {
+    if (typeof key !== 'string' || key === '__proto__' || key === 'constructor' || key === 'prototype') {
+        return undefined;
+    }
+    return obj && Object.prototype.hasOwnProperty.call(obj, key) ? Reflect.get(obj, key) : undefined;
+};
+
 const loadDashboard = async () => {
     const urlParams = new URLSearchParams(window.location.search);
     const ssoRef = urlParams.get('ref');
@@ -76,16 +102,38 @@ const loadDashboard = async () => {
             const methodsList = document.getElementById('payment-methods-list');
             methodsList.innerHTML = '';
             methods.forEach(m => {
-                methodsList.innerHTML += `
-                    <div class="flex items-start gap-3 p-3 rounded-lg bg-gray-50 border border-gray-100">
-                        <div class="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center flex-shrink-0">
-                            <i class="fas ${m.icon || 'fa-money-bill'} text-emerald-600 text-sm"></i>
-                        </div>
-                        <div class="min-w-0">
-                            <p class="text-sm font-semibold text-gray-800">${m.name}</p>
-                            <p class="text-xs text-gray-500 mt-0.5 break-words">${m.details || ''}</p>
-                        </div>
-                    </div>`;
+                const iconClass = sanitizeClassName(m.icon);
+                const name = m.name || '';
+                const details = m.details || '';
+                
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'flex items-start gap-3 p-3 rounded-lg bg-gray-50 border border-gray-100';
+                
+                const iconContainer = document.createElement('div');
+                iconContainer.className = 'w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center flex-shrink-0';
+                
+                const icon = document.createElement('i');
+                icon.className = 'fas ' + iconClass + ' text-emerald-600 text-sm';
+                iconContainer.appendChild(icon);
+                
+                const textContainer = document.createElement('div');
+                textContainer.className = 'min-w-0';
+                
+                const nameP = document.createElement('p');
+                nameP.className = 'text-sm font-semibold text-gray-800';
+                nameP.textContent = name;
+                
+                const detailsP = document.createElement('p');
+                detailsP.className = 'text-xs text-gray-500 mt-0.5 break-words';
+                detailsP.textContent = details;
+                
+                textContainer.appendChild(nameP);
+                textContainer.appendChild(detailsP);
+                
+                itemDiv.appendChild(iconContainer);
+                itemDiv.appendChild(textContainer);
+                
+                methodsList.appendChild(itemDiv);
             });
         }
 
@@ -117,7 +165,10 @@ const loadDashboard = async () => {
             events.length + ' event' + (events.length !== 1 ? 's' : '');
 
         if (events.length === 0) {
-            list.innerHTML = '<li class="py-10 text-center text-sm text-gray-400">No events found. Your bookings will appear here.</li>';
+            const noEventsLi = document.createElement('li');
+            noEventsLi.className = 'py-10 text-center text-sm text-gray-400';
+            noEventsLi.textContent = 'No events found. Your bookings will appear here.';
+            list.appendChild(noEventsLi);
             return;
         }
 
@@ -125,7 +176,7 @@ const loadDashboard = async () => {
         const featured = events.find(e => !['COMPLETED', 'FINANCE_SETTLED'].includes(e.status)) || events[0];
 
         if (featured && featured.status !== 'FINANCE_SETTLED') {
-            const statusInfo = STATUS_MAP[featured.status] || {};
+            const statusInfo = safeGet(STATUS_MAP, featured.status) || {};
             document.getElementById('timeline-section').classList.remove('hidden');
             document.getElementById('timeline-event-name').textContent  = featured.title || 'Your Event';
             document.getElementById('timeline-event-date').textContent  = featured.date
@@ -135,44 +186,104 @@ const loadDashboard = async () => {
             badge.textContent  = statusInfo.label || featured.status;
             badge.className    = 'text-xs font-bold px-3 py-1 rounded-full ' + (statusInfo.badge || 'bg-gray-100 text-gray-600');
             renderTimeline(featured.status);
-            document.getElementById('timeline-message').textContent = TIMELINE_MSG[featured.status] || '';
+            document.getElementById('timeline-message').textContent = safeGet(TIMELINE_MSG, featured.status) || '';
         }
 
         // ── Events list rows ──────────────────────────────────────────────────
         events.forEach(evt => {
-            const statusObj  = STATUS_MAP[evt.status] || { label: evt.status || 'Pending', color: 'bg-gray-100 text-gray-600' };
+            const statusObj  = safeGet(STATUS_MAP, evt.status) || { label: evt.status || 'Pending', color: 'bg-gray-100 text-gray-600' };
             const isFinished = ['COMPLETED', 'FINANCE_SETTLED'].includes(evt.status);
             const dateStr    = evt.date
                 ? new Date(evt.date).toLocaleDateString('en-KE', { day: 'numeric', month: 'short', year: 'numeric' })
                 : '—';
+            
+            const title = evt.title || 'Private Event';
+            const location = evt.location || '';
+            const id = evt._id || '';
 
-            list.innerHTML += `
-                <li class="px-6 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors">
-                    <div class="flex items-center gap-4 min-w-0">
-                        <div class="w-10 h-10 rounded-lg bg-emerald-50 flex items-center justify-center flex-shrink-0">
-                            <svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                            </svg>
-                        </div>
-                        <div class="min-w-0">
-                            <p class="text-sm font-semibold text-gray-900 truncate">${evt.title || 'Private Event'}</p>
-                            <p class="text-xs text-gray-400 mt-0.5">${dateStr}${evt.location ? ' · ' + evt.location : ''}</p>
-                        </div>
-                    </div>
-                    <div class="flex items-center gap-4 flex-shrink-0 ml-4">
-                        <span class="px-2.5 py-1 rounded-full text-xs font-semibold ${statusObj.color} hidden sm:inline-block">
-                            ${statusObj.label}
-                        </span>
-                        <div class="flex flex-col items-end gap-1">
-                            <a href="/client/events/${evt._id}" class="text-xs font-semibold text-emerald-600 hover:text-emerald-700">View →</a>
-                            ${evt.estimatedTotal > 0
-                                ? `<p class="text-xs text-gray-400">${formatKSh(evt.amountPaid)} / ${formatKSh(evt.estimatedTotal)}</p>`
-                                : ''}
-                            ${isFinished ? `<a href="/client/etr/${evt._id}" class="text-xs text-blue-500 hover:text-blue-700">ETR Report</a>` : ''}
-                        </div>
-                    </div>
-                </li>`;
+            const li = document.createElement('li');
+            li.className = 'px-6 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors';
+
+            // Left side container
+            const leftContainer = document.createElement('div');
+            leftContainer.className = 'flex items-center gap-4 min-w-0';
+
+            // SVG icon container
+            const svgContainer = document.createElement('div');
+            svgContainer.className = 'w-10 h-10 rounded-lg bg-emerald-50 flex items-center justify-center flex-shrink-0';
+            
+            const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            svg.setAttribute('class', 'w-5 h-5 text-emerald-500');
+            svg.setAttribute('fill', 'none');
+            svg.setAttribute('stroke', 'currentColor');
+            svg.setAttribute('viewBox', '0 0 24 24');
+            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            path.setAttribute('stroke-linecap', 'round');
+            path.setAttribute('stroke-linejoin', 'round');
+            path.setAttribute('stroke-width', '2');
+            path.setAttribute('d', 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z');
+            svg.appendChild(path);
+            svgContainer.appendChild(svg);
+
+            // Info container
+            const infoContainer = document.createElement('div');
+            infoContainer.className = 'min-w-0';
+
+            const titleP = document.createElement('p');
+            titleP.className = 'text-sm font-semibold text-gray-900 truncate';
+            titleP.textContent = title;
+
+            const descP = document.createElement('p');
+            descP.className = 'text-xs text-gray-400 mt-0.5';
+            descP.textContent = dateStr + (location ? ' · ' + location : '');
+
+            infoContainer.appendChild(titleP);
+            infoContainer.appendChild(descP);
+
+            leftContainer.appendChild(svgContainer);
+            leftContainer.appendChild(infoContainer);
+
+            // Right side container
+            const rightContainer = document.createElement('div');
+            rightContainer.className = 'flex items-center gap-4 flex-shrink-0 ml-4';
+
+            // Status label
+            const statusSpan = document.createElement('span');
+            statusSpan.className = 'px-2.5 py-1 rounded-full text-xs font-semibold ' + sanitizeClassName(statusObj.color) + ' hidden sm:inline-block';
+            statusSpan.textContent = statusObj.label;
+            rightContainer.appendChild(statusSpan);
+
+            // Action links/amounts container
+            const actionsContainer = document.createElement('div');
+            actionsContainer.className = 'flex flex-col items-end gap-1';
+
+            const viewLink = document.createElement('a');
+            viewLink.className = 'text-xs font-semibold text-emerald-600 hover:text-emerald-700';
+            viewLink.href = '/client/events/' + encodeURIComponent(id);
+            viewLink.textContent = 'View →';
+            actionsContainer.appendChild(viewLink);
+
+            if (evt.estimatedTotal > 0) {
+                const priceP = document.createElement('p');
+                priceP.className = 'text-xs text-gray-400';
+                priceP.textContent = formatKSh(evt.amountPaid) + ' / ' + formatKSh(evt.estimatedTotal);
+                actionsContainer.appendChild(priceP);
+            }
+
+            if (isFinished) {
+                const etrLink = document.createElement('a');
+                etrLink.className = 'text-xs text-blue-500 hover:text-blue-700';
+                etrLink.href = '/client/etr/' + encodeURIComponent(id);
+                etrLink.textContent = 'ETR Report';
+                actionsContainer.appendChild(etrLink);
+            }
+
+            rightContainer.appendChild(actionsContainer);
+
+            li.appendChild(leftContainer);
+            li.appendChild(rightContainer);
+
+            list.appendChild(li);
         });
 
     } catch(e) {

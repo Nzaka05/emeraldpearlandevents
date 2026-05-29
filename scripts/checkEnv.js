@@ -4,6 +4,7 @@ const criticalVars = [
     'JWT_SECRET',
     'STAFF_JWT_SECRET',
     'CLIENT_JWT_SECRET',
+        'SSO_JWT_SECRET',
     'MONGO_URI',
     'MPESA_CONSUMER_KEY',
     'MPESA_CONSUMER_SECRET',

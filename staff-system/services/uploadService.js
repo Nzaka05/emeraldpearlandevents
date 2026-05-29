@@ -59,13 +59,20 @@ function uploadToLocal(fileBuffer, folder, originalname) {
             
             // Note: staff-system is mounted at /portal/staff-system? No, it's public dir.
             // Let's use the staff-system/public folder
-            const dir = path.join(__dirname, '..', 'public', 'uploads', folder);
+            const baseUploadDir = path.resolve(__dirname, '..', 'public', 'uploads');
+            const dir = path.normalize(path.join(baseUploadDir, folder));
+            if (!dir.startsWith(baseUploadDir + path.sep)) {
+                return reject(new Error('Path traversal detected in folder name'));
+            }
             
             if (!fs.existsSync(dir)) {
                 fs.mkdirSync(dir, { recursive: true });
             }
             
-            const filepath = path.join(dir, filename);
+            const filepath = path.normalize(path.join(dir, filename));
+            if (!filepath.startsWith(dir + path.sep)) {
+                return reject(new Error('Path traversal detected in filename'));
+            }
             fs.writeFile(filepath, fileBuffer, (err) => {
                 if (err) return reject(err);
                 resolve({ 

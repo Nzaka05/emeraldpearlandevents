@@ -1,12 +1,15 @@
 const fs = require('fs');
 const path = require('path');
-const dir = path.join(process.cwd(), 'admin');
+const dir = path.resolve(__dirname, 'admin');
 
 const files = fs.readdirSync(dir).filter(f => f.endsWith('.html'));
 let count = 0;
 
 files.forEach(file => {
-    const fullPath = path.join(dir, file);
+    const fullPath = path.normalize(path.join(dir, file));
+    if (!fullPath.startsWith(dir + path.sep)) {
+        throw new Error('Path traversal detected');
+    }
     let content = fs.readFileSync(fullPath, 'utf8');
 
     // Check if overlay already exists  

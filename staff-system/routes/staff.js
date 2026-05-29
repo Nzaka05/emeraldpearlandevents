@@ -101,10 +101,8 @@ router.get('/payment-history', getPaymentHistory);
 router.get('/payments/:assignmentId/receipt', downloadPaymentReceipt);
 router.post('/push-subscribe', subscribePush);
 
-// ── Phase 11: Post-event surveys (token-accessible without auth) ──────────────
-const surveyCtrl = require('../controllers/surveyController');
-router.get('/survey/:token', surveyCtrl.getSurveyPage);
-router.post('/survey/:token/submit', sanitizeRequestBody, surveyCtrl.submitSurvey);
+// Protected: requires staff login via protect middleware
+// Survey token links are mounted as public routes in server.js.
 
 // ── PEARL AI Assistant ─────────────────────────────────────────────────────────
 router.get('/ai', protect, (req, res) => res.render('staff/pearl', { currentPage: 'pearl', user: req.user }));

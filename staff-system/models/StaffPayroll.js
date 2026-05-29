@@ -23,14 +23,15 @@ const StaffPayrollSchema = new mongoose.Schema({
     recordedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'Staff' }
 }, { timestamps: true });
 
+// Atomic ID generation using Counter collection.
 StaffPayrollSchema.pre('save', async function() {
     if (this.isNew && !this.paymentId) {
-        const count = await this.constructor.countDocuments();
+        const { getNextSequence } = require('./Counter');
+        const seq = await getNextSequence('StaffPayroll');
         const year = new Date().getFullYear();
-        this.paymentId = 'EPE-PAY-' + year + '-' + String(count + 1).padStart(4, '0');
+        this.paymentId = 'EPE-PAY-' + year + '-' + String(seq).padStart(4, '0');
     }
     this.totalPay = (this.basePay || 0) + (this.overtimePay || 0) + (this.bonus || 0) - (this.deductions || 0);
 });
 
 module.exports = mongoose.models.StaffPayroll || mongoose.model('StaffPayroll', StaffPayrollSchema);
-

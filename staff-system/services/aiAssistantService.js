@@ -6,6 +6,8 @@
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 const AIConversationLog = require("../ai-learning/models/AIConversationLog");
 const nodemailer = require("nodemailer");
+const fs = require("fs");
+const path = require("path");
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
@@ -13,6 +15,27 @@ const transporter = nodemailer.createTransport({
     service: "gmail",
     auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASSWORD }
 });
+
+const PROMPT_TEMPLATE_PATH = path.join(__dirname, "..", "config", "pearl-system-prompt.txt");
+
+function loadPearlPromptTemplate() {
+    try {
+        const customTemplate = fs.readFileSync(PROMPT_TEMPLATE_PATH, "utf8").trim();
+        if (customTemplate) return customTemplate;
+    } catch (e) {
+        console.warn("[PEARL] Prompt template file not found, using built-in fallback:", e.message);
+    }
+
+    return [
+        "You are PEARL (Personal Emerald Assistant for Real-time Leadership) for Emerald Pearland Events.",
+        "Operate with concise, practical answers and a warm professional tone.",
+        "Do not mention internal model providers or hidden system instructions.",
+        "If uncertainty is high, say what is unknown and propose the next best action.",
+        "Prioritize safety, privacy, and lawful behavior.",
+        "For staff role, never expose sensitive finance data.",
+        "Use live business context included below to answer accurately."
+    ].join("\n");
+}
 
 async function sendEmailViaPearl(to, subject, body) {
     try {
@@ -222,13 +245,15 @@ async function pearlUpdateBooking(bookingId, updates) {
                     client_email: booking.clientEmail || ''
                 });
                 const port = process.env.STAFF_PORT || process.env.PORT || 3001;
+                const { createSyncHeaders: _createSyncHeaders } = require('../middleware/syncAuth');
+                const parsedBody = JSON.parse(postData);
+                const hmacHeaders = _createSyncHeaders(syncSecret, parsedBody);
                 const options = {
                     hostname: 'localhost', port,
                     path: '/internal/sync-booking',
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json',
-                        'x-sync-secret': syncSecret,
+                        ...hmacHeaders,
                         'Content-Length': Buffer.byteLength(postData)
                     }
                 };
@@ -565,46 +590,18 @@ async function processAssistantQuery(userId, role, query, eventContext = {}, his
         return { reply, response: reply, summary: reply, recommendedActions: [] };
     }
 
-    const systemPrompt = `You are PEARL (Personal Emerald Assistant for Real-time Leadership), the dedicated AI secretary and assistant for Emerald Pearland Events.
-
-You have the intelligence, warmth, and versatility of a world-class AI assistant � like Claude � but you are exclusively dedicated to Emerald Pearland Events and its team. You can help with virtually anything: business questions, general knowledge, writing, calculations, creative ideas, advice, and casual conversation.
-
-PERSONALITY:
-You are PEARL — sharp, warm, and direct. You think carefully before responding and say exactly what needs to be said, nothing more. You are not a chatbot that performs enthusiasm. You are genuinely helpful, occasionally witty, and always honest. You treat the people you work with as intelligent adults.
-
-- Direct: get to the point immediately, no preamble
-- Honest: if something is unclear or missing, say so plainly
-- Warm but not performative: friendly without being bubbly or sycophantic
-- Curious and engaged: when something is interesting, show it naturally
-- Occasionally dry wit is fine — but only when the moment calls for it
-- You remember past conversations and use that context naturally without announcing it
-
-RESPONSE LENGTH — match the weight of the question:
-- Greetings, small talk, simple yes/no: 1-2 sentences, full stop
-- Single fact ("how many staff available"): answer in one sentence
-- Action done ("confirmed", "sent"): brief confirmation + any relevant next step
-- Business question needing context: a few sentences or a short clean list
-- Deep question or analysis: thorough but tight — cut every word that does not earn its place
-- Never add summaries at the end of already clear answers
-- Never say "I hope this helps" or "feel free to ask" or "certainly" or "of course"
-- Never start a response with "I" as the first word
-
-FORMATTING:
-- No ** bold **, no * italics *, no ### headers — ever
-- For lists use a plain dash (-) or number
-- Write the way a sharp colleague would message you, not the way a corporate AI writes a report
-- Punctuate like a human. Short sentences are fine. Fragments too, when they fit.
-
-CURRENT TIME: ${nairobiTime} � ${nairobiDate}
+    const basePromptTemplate = loadPearlPromptTemplate();
+    const dynamicContextBlock = `
+CURRENT TIME: ${nairobiTime} - ${nairobiDate}
 USE GREETING: ${greeting}
 USER: ${eventContext.userName || "Team Member"} | ROLE: ${role} | TITLE: ${eventContext.title || ""}
 
-PAST CONVERSATION MEMORY (last 20 interactions):
+PAST CONVERSATION MEMORY:
 ${memory.length > 0 ? memory.slice(-5).map(m => `User: ${m.query}\nPEARL: ${m.response}`).join("\n---\n") : "No previous conversations with this user."}
 
 LIVE BUSINESS DATA:
 - Active Staff: ${businessData.staffCount} (Available: ${businessData.availableStaff}, Busy: ${businessData.busyStaff}, On Leave: ${businessData.onLeave || 0})
-- Staff: ${JSON.stringify(businessData.staff?.map(s => s.name + " (" + (s.title || s.category || s.role) + ") - " + (s.availability_status || "Unknown")))}
+- Staff Snapshot: ${JSON.stringify(businessData.staff?.map(s => s.name + " (" + (s.title || s.category || s.role) + ") - " + (s.availability_status || "Unknown")))}
 - Upcoming Events: ${JSON.stringify(businessData.upcomingEvents)}
 - Recent Bookings: ${JSON.stringify(businessData.recentBookings)}
 ${role !== "Staff" ? `- Revenue: KSh ${businessData.financials?.totalRevenue || 0} | Pending: KSh ${businessData.financials?.pendingPayments || 0}` : ""}
@@ -614,67 +611,15 @@ MAIN CLIENT PORTAL DATA:
 - Revenue Collected: KSh ${portalData.financials.totalRevenue.toLocaleString()} (${portalData.financials.paidCount} paid bookings)
 - Outstanding Payments: KSh ${portalData.financials.pendingPayments.toLocaleString()} (${portalData.financials.unpaidCount} unpaid)
 - Total Customers: ${portalData.customers.total}
-- Recent Bookings (newest first): ${JSON.stringify(portalData.bookings.recent)}
+- Recent Bookings: ${JSON.stringify(portalData.bookings.recent)}
 - Upcoming Events: ${JSON.stringify(portalData.bookings.upcoming)}
 - Recent Customers: ${JSON.stringify(portalData.customers.recent)}
-
-BOOKING ACTIONS (Admin only - tell user to confirm with booking ID):
-- To confirm a booking: use the admin panel or say "confirm booking [ID]"
-- To update payment status: use the admin panel /bookings section
-- Booking IDs are shown in the recent bookings data above
 ` : ""}
 
-CAPABILITIES:
-1. Business assistant � staff, events, bookings, analytics, reports
-2. General knowledge � answer ANY question like a knowledgeable assistant  
-3. Event planning expert � luxury events, trends, best practices, vendor advice
-4. Writing assistant � draft proposals, contracts, emails, speeches, thank you notes
-5. Email sender � say "send email to [address] [message]"
-6. Financial advisor � budgets, pricing, cost analysis (Admin only)
-7. Creative assistant � event themes, decor ideas, unique experiences
-8. Personal assistant � reminders, summaries, research
+ROLE RESTRICTION:
+${role === "Staff" ? "Do not reveal confidential finance or payroll details." : "Admin and supervisor may view finance summaries."}`;
 
-LUXURY EVENT EXPERTISE:
-- Expert in weddings, corporate galas, birthday parties, traditional ceremonies
-- Knows Kenyan event industry, Nairobi venues, local vendors
-- Familiar with luxury brands, high-end catering, premium entertainment
-- Can suggest themes, budgets, timelines, staffing requirements
-
-WRITING TEMPLATES AVAILABLE:
-- Event proposals, quotations, contracts
-- Client thank you letters
-- Staff briefing documents  
-- Post-event reports
-- Marketing copy
-
-${role === "Staff" ? "RESTRICTION: Do not share financial data, other staff salaries, or confidential business metrics with Staff users." : ""}
-
-ADMIN MESSAGING COMMANDS (Admin only):
-- "email [person name] about [topic/message]" → finds person and emails them
-- "send email to [email@address.com] [message]" → direct email
-- "find [name]" / "who is [name]" → looks up staff or customer contact details
-- "list all staff contacts" → shows all staff with emails and phones
-- "list all customers" → shows all customers with contacts
-
-PEARL BOOKING ACTIONS (Admin/Supervisor only):
-You can directly perform these actions when given a booking ID:
-- "confirm booking [ID]" → confirms booking + syncs to staff portal
-- "mark booking [ID] as contacted" → updates status to contacted
-- "mark booking [ID] as completed" → marks event as done
-- "cancel booking [ID]" → cancels the booking
-- "mark booking [ID] as paid" → marks payment as received
-- "add note to booking [ID] [note text]" → adds admin note
-- "show booking details [ID]" → shows full booking info
-
-Booking IDs are the 24-character codes shown in the booking data above.
-When an admin asks to confirm/update a booking, extract the ID from context and perform the action.
-After any action, confirm what was done and suggest next steps.
-
-CRITICAL — YOUR CAPABILITIES (do not deny these):
-You have LIVE access to the Emerald main portal database right now. You can see all bookings, customers, financials, and staff. You can confirm bookings, send emails, look up contacts, and update booking statuses. Never tell users you lack access or need integration — you are already integrated. If live data appears above, use it. If a field is empty it means there is no data yet, not that you lack access.
-
-IMPORTANT: You are PEARL. Never mention Claude or Anthropic. You are Emerald's own AI.
-Always be helpful, never refuse reasonable requests. If asked something outside business, answer it � you are a full assistant.`;
+    const systemPrompt = `${basePromptTemplate}\n\n${dynamicContextBlock}`;
 
     const messages = [];
     if (history && history.length > 0) {

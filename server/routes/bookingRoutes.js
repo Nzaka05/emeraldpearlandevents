@@ -1,6 +1,7 @@
 const express = require('express');
 const rateLimit = require('express-rate-limit');
 const { body, validationResult } = require('express-validator');
+const mongoose = require('mongoose');
 const Booking = require('../models/Booking');
 const Customer = require('../models/Customer');
 const AdminNotification = require('../models/AdminNotification');
@@ -9,6 +10,8 @@ const { initializeEmailService } = require('../services/emailService');
 const { notificationQueue } = require('../../config/queues');
 const { sendPushNotificationToAdmins } = require('../services/notificationService');
 const { normalizePhone, normalizeEmail } = require('../utils/normalization');
+const { verifyAdminJWT } = require('../middleware/adminAuth');
+const { createSyncHeaders } = require('../../staff-system/middleware/syncAuth');
 
 // ── INITIALIZE EMAIL TRANSPORTER ──
 initializeEmailService();
@@ -22,14 +25,14 @@ function sendSyncWebhook(endpoint, payload) {
     try {
         const url = new URL(urlStr);
         const data = JSON.stringify(payload);
+        const hmacHeaders = createSyncHeaders(process.env.SYNC_SECRET, payload);
         const options = {
             hostname: url.hostname,
             port: url.port,
             path: url.pathname + url.search,
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
-                'X-Internal-Secret': process.env.SYNC_SECRET,
+                ...hmacHeaders,
                 'Content-Length': Buffer.byteLength(data)
             }
         };
@@ -469,8 +472,15 @@ router.post('/book-event', bookingLimiter, bookingValidationRules, handleBooking
 // ═══════════════════════════════════════════════════════════
 // GET BOOKING DETAILS (for admin dashboard - optional)
 // ═══════════════════════════════════════════════════════════
-router.get('/booking/:bookingId', async (req, res) => {
+router.get('/booking/:bookingId', verifyAdminJWT, async (req, res) => {
     try {
+        if (!mongoose.Types.ObjectId.isValid(req.params.bookingId)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid booking ID format'
+            });
+        }
+
         const booking = await Booking.findById(req.params.bookingId)
             .populate('customerId', 'name email phone');
 
@@ -496,8 +506,15 @@ router.get('/booking/:bookingId', async (req, res) => {
 // ═══════════════════════════════════════════════════════════
 // UPDATE BOOKING STATUS (for admin use)
 // ═══════════════════════════════════════════════════════════
-router.patch('/booking/:bookingId/status', async (req, res) => {
+router.patch('/booking/:bookingId/status', verifyAdminJWT, async (req, res) => {
     try {
+        if (!mongoose.Types.ObjectId.isValid(req.params.bookingId)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid booking ID format'
+            });
+        }
+
         const { status } = req.body;
         const validStatuses = ['new', 'contacted', 'confirmed', 'completed', 'cancelled'];
 

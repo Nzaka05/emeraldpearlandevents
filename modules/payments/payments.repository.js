@@ -11,6 +11,20 @@ try {
   Transaction = null;
 }
 const Assignment = require('../../staff-system/models/Assignment');
+const { DEFAULT_PAGE_SIZE } = require('../../utils/constants');
+
+const PAYMENT_LIST_PROJECTION = {
+  rawCallbackPayload: 0,
+  __v: 0,
+  notes: 0
+};
+
+const TRANSACTION_LIST_PROJECTION = {
+  rawPayload: 0,
+  notes: 0,
+  internalLog: 0,
+  __v: 0
+};
 
 const transactionFallbackStore = new Map();
 
@@ -18,23 +32,48 @@ class PaymentsRepository {
   /**
    * Find all payments with filters and pagination
    */
-  async findAll(filter = {}, page = 1, limit = 20) {
-    const skip = (page - 1) * limit;
-    const payments = await Payment.find(filter)
-      .populate('bookingId', 'bookingReference eventType eventDate')
-      .populate('clientId', 'name email phone')
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(parseInt(limit));
+  async findAll(filterOrOptions = {}, pageArg = 1, limitArg = DEFAULT_PAGE_SIZE) {
+    const useOptionsObject = filterOrOptions && typeof filterOrOptions === 'object' &&
+      (Object.prototype.hasOwnProperty.call(filterOrOptions, 'page') ||
+       Object.prototype.hasOwnProperty.call(filterOrOptions, 'limit'));
 
-    const total = await Payment.countDocuments(filter);
+    const rawPage = useOptionsObject ? filterOrOptions.page : pageArg;
+    const rawLimit = useOptionsObject ? filterOrOptions.limit : limitArg;
+    const filter = useOptionsObject
+      ? (({ page, limit, ...rest }) => rest)(filterOrOptions)
+      : (filterOrOptions || {});
+
+    const parsedPage = Math.floor(Number(rawPage));
+    const parsedLimit = Math.floor(Number(rawLimit));
+    const page = Number.isFinite(parsedPage) && parsedPage >= 1 ? parsedPage : 1;
+    const limit = Number.isFinite(parsedLimit) && parsedLimit >= 1 ? parsedLimit : DEFAULT_PAGE_SIZE;
+    const skip = (page - 1) * limit;
+
+    const [items, total] = await Promise.all([
+      Payment.find(filter, PAYMENT_LIST_PROJECTION)
+        .populate('bookingId', 'bookingReference eventType eventDate')
+        .populate('clientId', 'name email phone')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit),
+      Payment.countDocuments(filter)
+    ]);
+
+    const pages = Math.ceil(total / limit);
 
     return {
-      payments,
+      items,
+      payments: items,
+      total,
+      page,
+      limit,
+      pages,
       pagination: {
+        currentPage: page,
+        page,
+        limit,
         total,
-        pages: Math.ceil(total / limit),
-        currentPage: parseInt(page)
+        pages
       }
     };
   }
@@ -151,7 +190,9 @@ class PaymentsRepository {
       return await Transaction.find({
         type,
         ...filter
-      }).sort({ createdAt: -1 });
+      })
+      .select(TRANSACTION_LIST_PROJECTION)
+      .sort({ createdAt: -1 });
     }
 
     return Array.from(transactionFallbackStore.values())

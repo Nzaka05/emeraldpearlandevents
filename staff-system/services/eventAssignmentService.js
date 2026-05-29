@@ -148,11 +148,13 @@ exports.updateAssignment = async (admin_id, assignment_id, updateData) => {
             try {
                 const axios = require('axios');
                 const axiosRetry = require('axios-retry').default || require('axios-retry');
+                const { createSyncHeaders } = require('../middleware/syncAuth');
                 axiosRetry(axios, { retries: 3, retryDelay: axiosRetry.exponentialDelay });
+                const syncBody = { booking_ref: assignment.booking_ref, status: 'Completed' };
                 await axios.post(
                     `${process.env.MAIN_PORTAL_URL || 'http://localhost:3000'}/internal/sync-event-complete`,
-                    { booking_ref: assignment.booking_ref, status: 'Completed' },
-                    { headers: { 'x-sync-secret': process.env.SYNC_SECRET } }
+                    syncBody,
+                    { headers: createSyncHeaders(process.env.SYNC_SECRET, syncBody) }
                 );
             } catch(syncErr) { console.log('Port 3000 sync skipped:', syncErr.message); }
         }

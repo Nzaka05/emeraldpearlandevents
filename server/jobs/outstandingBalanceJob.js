@@ -2,6 +2,7 @@ const cron = require('node-cron');
 const ClientInvoice = require('../models/ClientInvoice');
 const ClientAccount = require('../models/ClientAccount');
 const { sendOutstandingReminder } = require('../services/clientNotificationService');
+const logger = require('../utils/logger');
 
 /**
  * Initializes the scheduled job handling automated 7-day collection emails
@@ -10,7 +11,7 @@ const { sendOutstandingReminder } = require('../services/clientNotificationServi
 const startOutstandingBalanceJob = () => {
     // Run daily at 09:00 server time
     cron.schedule('0 9 * * *', async () => {
-        console.log(`[CRON] Analyzing outstanding client balances at ${new Date().toISOString()}`);
+        logger.info('Analyzing outstanding client balances');
 
         try {
             const sevenDaysAgo = new Date();
@@ -40,20 +41,20 @@ const startOutstandingBalanceJob = () => {
                         );
                         
                         reminderSentCounter++;
-                        console.log(`[CRON] Outstanding Reminder sent for Invoice #${invoice.invoiceNumber}`);
+                        logger.info({ invoiceNumber: invoice.invoiceNumber }, 'Outstanding reminder sent');
                     } catch (e) {
-                        console.error(`[CRON] Failed to send reminder for Invoice #${invoice.invoiceNumber}:`, e.message);
+                        logger.error({ err: e, invoiceNumber: invoice.invoiceNumber }, 'Failed to send reminder');
                     }
                 }
             }
 
-            console.log(`[CRON] Balance tracking complete. Reminders sent: ${reminderSentCounter}`);
+            logger.info({ count: reminderSentCounter }, 'Balance tracking complete');
         } catch (err) {
-            console.error('[CRON] Error escalating outstanding balances:', err);
+            logger.error({ err }, 'Error escalating outstanding balances');
         }
     });
 
-    console.log('[CRON] Outstanding Balance Reminders scheduled successfully.');
+    logger.info('Outstanding Balance Reminders scheduled successfully');
 };
 
 module.exports = startOutstandingBalanceJob;

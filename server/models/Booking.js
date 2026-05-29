@@ -137,6 +137,23 @@ const BookingSchema = new mongoose.Schema({
         type: Date,
         default: null
     },
+    paymentMethod: {
+        type: String,
+        enum: ['mpesa', 'stripe', 'paystack', 'cash', 'pending'],
+        default: 'pending'
+    },
+    stripeSessionId: {
+        type: String,
+        default: null
+    },
+    paystackReference: {
+        type: String,
+        default: null
+    },
+    paidAt: {
+        type: Date,
+        default: null
+    },
     // ── Phase 1: Sync status tracking ─────────────────────────────────────────
     // Tracks whether this booking has been successfully synced to the staff portal.
     // The reconciliation cron queries for 'pending'/'failed' records and retries.
@@ -185,6 +202,7 @@ BookingSchema.index({ createdAt: 1 });
 BookingSchema.index({ status: 1, eventDate: -1 });
 BookingSchema.index({ syncStatus: 1, lastSyncAttempt: 1 }); // for reconciliation cron
 BookingSchema.index({ createdAt: -1 });                      // for dashboard sort
+BookingSchema.index({ customerId: 1, status: 1 }); // client portal booking history (customerId + status)
 BookingSchema.index({ paymentIdempotencyKey: 1 });            // payment dedupe lookups
 
 // ── Phase 4: Removed global auto-populate ────────────────────────────────────

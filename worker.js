@@ -2,10 +2,12 @@ require('dotenv').config();
 
 const { Worker } = require('bullmq');
 const { connection } = require('./config/queues');
+const logger = require('./server/utils/logger');
+const { normalizeMpesaCallback } = require('./utils/mpesaCallbackNormalizer');
 
 async function handleBookingJob(job) {
     if (job.name !== 'confirmed') {
-        console.log('[bookingWorker] No handler for job:', job.name);
+        logger.warn({ jobId: job.id, jobName: job.name, queueName: 'bookingQueue' }, 'No handler for job');
         return { skipped: true, reason: 'unsupported_job', jobName: job.name };
     }
 
@@ -24,47 +26,49 @@ async function handleBookingJob(job) {
         await syncToStaffPortal(bookingId);
         stepResults.syncToStaffPortal = true;
     } catch (err) {
-        console.error('[bookingWorker] syncToStaffPortal failed:', bookingId, err.message);
+        logger.error({ err, bookingId, jobId: job.id, jobName: job.name, queueName: 'bookingQueue' }, 'syncToStaffPortal failed');
     }
 
     try {
         await sendConfirmationEmail(bookingId);
         stepResults.sendConfirmationEmail = true;
     } catch (err) {
-        console.error('[bookingWorker] sendConfirmationEmail failed:', bookingId, err.message);
+        logger.error({ err, bookingId, jobId: job.id, jobName: job.name, queueName: 'bookingQueue' }, 'sendConfirmationEmail failed');
     }
 
     try {
         await sendStaffNotifications(bookingId);
         stepResults.sendStaffNotifications = true;
     } catch (err) {
-        console.error('[bookingWorker] sendStaffNotifications failed:', bookingId, err.message);
+        logger.error({ err, bookingId, jobId: job.id, jobName: job.name, queueName: 'bookingQueue' }, 'sendStaffNotifications failed');
     }
 
     return { bookingId, stepResults };
 }
 
 async function syncToStaffPortal(bookingId) {
-    console.log('[bookingWorker] syncToStaffPortal placeholder:', bookingId);
+    logger.info({ bookingId }, 'syncToStaffPortal placeholder');
 }
 
 async function sendConfirmationEmail(bookingId) {
-    console.log('[bookingWorker] sendConfirmationEmail placeholder:', bookingId);
+    logger.info({ bookingId }, 'sendConfirmationEmail placeholder');
 }
 
 async function sendStaffNotifications(bookingId) {
-    console.log('[bookingWorker] sendStaffNotifications placeholder:', bookingId);
+    logger.info({ bookingId }, 'sendStaffNotifications placeholder');
 }
 
 async function handlePaymentJob(job) {
     if (job.name !== 'mpesa.callback') {
-        console.log('[paymentWorker] No handler for job:', job.name);
+        logger.warn({ jobId: job.id, jobName: job.name, queueName: 'paymentQueue' }, 'No handler for job');
         return { skipped: true, reason: 'unsupported_job', jobName: job.name };
     }
 
     const payload = job.data?.payload;
-    if (!payload?.Result || !payload?.Result?.Occasion) {
-        throw new Error('mpesa.callback job requires payload.Result.Occasion');
+    const normalized = normalizeMpesaCallback(payload);
+    const isProcessableB2C = normalized?.flow === 'b2c' && Boolean(normalized.identifiers?.occasion);
+    if (!isProcessableB2C) {
+        throw new Error('mpesa.callback job requires a valid B2C callback payload with Occasion');
     }
 
     // Idempotency is enforced inside eventPaymentService.mpesaCallback.
@@ -74,7 +78,7 @@ async function handlePaymentJob(job) {
 
 async function handleNotificationJob(job) {
     if (job.name !== 'email') {
-        console.log('[notificationWorker] No handler for job:', job.name);
+        logger.warn({ jobId: job.id, jobName: job.name, queueName: 'notificationQueue' }, 'No handler for job');
         return { skipped: true, reason: 'unsupported_job', jobName: job.name };
     }
 
@@ -210,7 +214,7 @@ async function handleSyncJob(job) {
 const bookingWorker = new Worker(
     'bookingQueue',
     async (job) => {
-        console.log('[bookingWorker] Processing job:', job.name, job.data);
+        logger.info({ jobId: job.id, jobName: job.name, queueName: 'bookingQueue' }, 'Job started');
         return handleBookingJob(job);
     },
     { connection }
@@ -219,7 +223,7 @@ const bookingWorker = new Worker(
 const paymentWorker = new Worker(
     'paymentQueue',
     async (job) => {
-        console.log('[paymentWorker] Processing job:', job.name, job.data);
+        logger.info({ jobId: job.id, jobName: job.name, queueName: 'paymentQueue' }, 'Job started');
         return handlePaymentJob(job);
     },
     { connection }
@@ -228,7 +232,7 @@ const paymentWorker = new Worker(
 const notificationWorker = new Worker(
     'notificationQueue',
     async (job) => {
-        console.log('[notificationWorker] Processing job:', job.name, job.data);
+        logger.info({ jobId: job.id, jobName: job.name, queueName: 'notificationQueue' }, 'Job started');
         return handleNotificationJob(job);
     },
     { connection }
@@ -237,43 +241,59 @@ const notificationWorker = new Worker(
 const syncWorker = new Worker(
     'syncQueue',
     async (job) => {
-        console.log('[syncWorker] Processing job:', job.name, job.data);
+        logger.info({ jobId: job.id, jobName: job.name, queueName: 'syncQueue' }, 'Job started');
         return handleSyncJob(job);
     },
     { connection }
 );
 
+bookingWorker.on('completed', (job) => {
+    logger.info({ jobId: job?.id, jobName: job?.name, queueName: 'bookingQueue' }, 'Job completed');
+});
+
+paymentWorker.on('completed', (job) => {
+    logger.info({ jobId: job?.id, jobName: job?.name, queueName: 'paymentQueue' }, 'Job completed');
+});
+
+notificationWorker.on('completed', (job) => {
+    logger.info({ jobId: job?.id, jobName: job?.name, queueName: 'notificationQueue' }, 'Job completed');
+});
+
+syncWorker.on('completed', (job) => {
+    logger.info({ jobId: job?.id, jobName: job?.name, queueName: 'syncQueue' }, 'Job completed');
+});
+
 bookingWorker.on('failed', (job, err) => {
-    console.error('[bookingWorker] Job failed:', job?.id, job?.name, err.message);
+    logger.error({ err, jobId: job?.id, jobName: job?.name, queueName: 'bookingQueue' }, 'Job failed');
 });
 
 paymentWorker.on('failed', (job, err) => {
-    console.error('[paymentWorker] Job failed:', job?.id, job?.name, err.message);
+    logger.error({ err, jobId: job?.id, jobName: job?.name, queueName: 'paymentQueue' }, 'Job failed');
 });
 
 notificationWorker.on('failed', (job, err) => {
-    console.error('[notificationWorker] Job failed:', job?.id, job?.name, err.message);
+    logger.error({ err, jobId: job?.id, jobName: job?.name, queueName: 'notificationQueue' }, 'Job failed');
 });
 
 syncWorker.on('failed', (job, err) => {
-    console.error('[syncWorker] Job failed:', job?.id, job?.name, err.message);
+    logger.error({ err, jobId: job?.id, jobName: job?.name, queueName: 'syncQueue' }, 'Job failed');
 });
 
 async function shutdown() {
-    console.log('SIGTERM received. Closing workers...');
+    logger.warn('SIGTERM received. Closing workers...');
     await Promise.allSettled([
         bookingWorker.close(),
         paymentWorker.close(),
         notificationWorker.close(),
         syncWorker.close()
     ]);
-    console.log('All workers closed. Exiting.');
+    logger.info('All workers closed. Exiting.');
     process.exit(0);
 }
 
 process.on('SIGTERM', shutdown);
 
-console.log('All workers started');
+logger.info('All workers started');
 
 module.exports = {
     bookingWorker,

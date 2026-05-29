@@ -9,6 +9,8 @@ const { validateParam } = require('../utils/validateObjectId');
 const router = express.Router();
 
 const ctrl = require('../controllers/adminEventsController');
+const plannerCtrl = require('../controllers/plannerController');
+const surveyCtrl = require('../controllers/surveyController');
 const { protect, authorize } = require('../middleware/auth');
 const { validateAssignmentCreation, sanitizeRequestBody } = require('../middleware/validation');
 
@@ -18,6 +20,14 @@ router.use(protect, authorize('Admin', 'Super Admin'));
 // ── EJS page views ────────────────────────────────────────────
 router.get('/events',             ctrl.getEventsPage);
 router.get('/attendance',         ctrl.getAttendancePage);
+router.get('/planners',           plannerCtrl.getPlannersPage);
+router.get('/surveys',            surveyCtrl.getSurveyAnalyticsPage);
+
+// ── Phase 7: Event Planners Directory ────────────────────────
+router.post('/planners',                      sanitizeRequestBody, plannerCtrl.createPlanner);
+router.put('/planners/:id', validateParam('id'), sanitizeRequestBody, plannerCtrl.updatePlanner);
+router.delete('/planners/:id', validateParam('id'),                  plannerCtrl.deletePlanner);
+router.post('/planners/:id/link/:assignmentId', validateParam('id'), validateParam('assignmentId'), plannerCtrl.linkPlannerToAssignment);
 
 // ── Team management ───────────────────────────────────────────
 router.get('/event-teams',                        ctrl.getAllTeams);

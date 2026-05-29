@@ -10,7 +10,6 @@ const Staff = require('../models/Staff');
 const AuditLog = require('../models/AuditLog');
 const emailService = require('./emailService');
 
-const emitMetricUpdate = async () => { try { if (global.io) { const Staff = require('../models/Staff'); const s = await Staff.countDocuments(); global.io.to('Admin').emit('metricUpdate', { totalStaff: s }); } } catch(e) {} };
 
 exports.createStaffAccount = async (admin_id, staffData) => {
     const { name, email, role, specific_role, phone, department, skills, shift_start, shift_end, category } = staffData;

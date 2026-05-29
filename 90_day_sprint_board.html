@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>90-Day Sprint Board — Events Platform</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,sans-serif;background:#f9f9f7;color:#1a1a1a;padding:1.5rem}
+h1{font-size:18px;font-weight:500;margin-bottom:4px}
+.sub{font-size:12px;color:#666;margin-bottom:1.25rem}
+.summary-bar{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:9px;margin-bottom:1.5rem}
+.metric{background:#fff;border:0.5px solid #e0e0d8;border-radius:10px;padding:10px 12px}
+.metric-val{font-size:22px;font-weight:500}.metric-lbl{font-size:10px;color:#888;margin-top:2px}
+.red{color:#A32D2D}.amber{color:#854F0B}.green{color:#3B6D11}
+.controls{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:1.25rem}
+.fb{font-size:11px;padding:4px 12px;border-radius:20px;border:1px solid #ccc;background:#fff;color:#555;cursor:pointer}
+.fb.active{background:#e6f1fb;color:#185FA5;border-color:#185FA5}
+.fb.clear{background:#f7f7f2;color:#666;border-color:#d8d8cf}
+.legend{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:1rem;font-size:10px;color:#666}
+.li{display:flex;align-items:center;gap:4px}
+.dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.dm{background:#E24B4A}.dp{background:#EF9F27}.dl{background:#639922}
+.sprint-block{margin-bottom:2rem}
+.sprint-header{display:flex;align-items:center;gap:10px;margin-bottom:8px;padding-bottom:7px;border-bottom:1px solid #e8e8e0}
+.sprint-label{font-size:13px;font-weight:500}
+.sprint-weeks{font-size:10px;color:#888;background:#f1efe8;padding:2px 8px;border-radius:20px}
+.sprint-count{font-size:10px;color:#666;background:#eef2f5;padding:2px 8px;border-radius:20px}
+.sprint-theme{font-size:11px;color:#999;margin-left:auto;font-style:italic}
+.cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px}
+.card{background:#fff;border:1px solid #e8e8e0;border-radius:10px;padding:12px 14px;cursor:pointer;transition:border-color .15s}
+.card:hover,.card.expanded{border-color:#bbb}
+.card:focus-visible{outline:2px solid #185FA5;outline-offset:2px}
+.card-top{display:flex;align-items:flex-start;gap:8px;margin-bottom:6px}
+.card-title{font-size:12px;font-weight:500;flex:1;line-height:1.4}
+.pb{font-size:10px;font-weight:500;padding:2px 8px;border-radius:10px;white-space:nowrap;flex-shrink:0;margin-top:1px}
+.p0{background:#FAECE7;color:#993C1D}.p1{background:#FAEEDA;color:#854F0B}.p2{background:#EAF3DE;color:#3B6D11}
+.card-meta{display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-bottom:4px}
+.tag{font-size:10px;padding:2px 7px;background:#f5f5f0;color:#555;border-radius:8px;border:0.5px solid #e0e0d8}
+.state-lbl{font-size:10px;color:#999}.eff{font-size:10px;color:#aaa;margin-left:auto}
+.evidence{font-size:10px;color:#185FA5;font-family:monospace}
+.card-detail{display:none;margin-top:10px;padding-top:10px;border-top:1px solid #f0f0e8}
+.card.expanded .card-detail{display:block}
+.dl-lbl{font-size:10px;color:#aaa;text-transform:uppercase;letter-spacing:.03em;margin-bottom:3px;margin-top:8px}
+.dl-lbl:first-child{margin-top:0}
+.dl-txt{font-size:11px;color:#555;line-height:1.5}
+.ac{font-size:11px;color:#555;padding:2px 0 2px 12px;position:relative;line-height:1.5}
+.ac::before{content:'';position:absolute;left:0;top:8px;width:4px;height:4px;background:#ccc;border-radius:50%}
+</style>
+</head>
+<body>
+<h1>90-Day Sprint Board</h1>
+<p class="sub">Built from forensic codebase audit — 435 routes, 55 models, 3 test files. Click any card to expand.</p>
+
+<div class="summary-bar">
+  <div class="metric"><div id="m-total" class="metric-val">0</div><div class="metric-lbl">Total initiatives</div></div>
+  <div class="metric"><div id="m-p0" class="metric-val red">0</div><div class="metric-lbl">P0 critical</div></div>
+  <div class="metric"><div id="m-p1" class="metric-val amber">0</div><div class="metric-lbl">P1 high</div></div>
+  <div class="metric"><div id="m-missing" class="metric-val red">0</div><div class="metric-lbl">Missing</div></div>
+  <div class="metric"><div id="m-partial" class="metric-val amber">0</div><div class="metric-lbl">Partial</div></div>
+  <div class="metric"><div id="m-live" class="metric-val green">0</div><div class="metric-lbl">Live</div></div>
+</div>
+
+<div class="controls" id="controls">
+  <button class="fb active" data-filter="all">All</button>
+  <button class="fb" data-filter="P0">P0 critical</button>
+  <button class="fb" data-filter="P1">P1 high</button>
+  <button class="fb" data-filter="missing">Missing</button>
+  <button class="fb" data-filter="partial">Partial</button>
+  <button class="fb clear" id="clear-filters" type="button">Clear filters</button>
+</div>
+
+<div class="legend">
+  <span class="li"><span class="dot dm"></span>Missing — not in codebase</span>
+  <span class="li"><span class="dot dp"></span>Partial — exists, incomplete</span>
+  <span class="li"><span class="dot dl"></span>Live — needs hardening</span>
+</div>
+
+<div id="bc"></div>
+
+<script>
+const sprints=[
+  {id:'s1',label:'Sprint 1',weeks:'Days 1–14',theme:'Fix 4 things that will cause production incidents this week'},
+  {id:'s2',label:'Sprint 2',weeks:'Days 15–28',theme:'API contract freeze + test foundation'},
+  {id:'s3',label:'Sprint 3',weeks:'Days 29–42',theme:'Finance integrity + missing imports triage'},
+  {id:'s4',label:'Sprint 4',weeks:'Days 43–63',theme:'Non-KRA compliance hardening + finance operations'},
+  {id:'s5',label:'Sprint 5',weeks:'Days 64–77',theme:'Lifecycle hardening + dead model decisions'},
+  {id:'s6',label:'Sprint 6',weeks:'Days 78–90',theme:'Market features: WhatsApp, payroll, analytics'}
+];
+
+const cards=[
+  {sprint:'s1',title:'Fix API contract drift — booking routes',prio:'P0',module:'Testing',state:'partial',effort:'S',evidence:'bookings.api.test.js:26 vs bookingRoutes.js:261',current:'Tests target /api/v1/bookings. Live routes are /api/v1/book-event and /api/v1/booking/:bookingId. CI passes against phantom routes giving false confidence.',todo:'Update all test targets to live route paths. Add CI gate that fails if a test path has no matching route definition.',ac:['0 tests targeting non-existent routes','CI route-contract check added','Booking create and retrieve tested against real endpoints']},
+  {sprint:'s1',title:'Remove SSO secret fallback chain',prio:'P0',module:'Security',state:'partial',effort:'S',evidence:'server-prod.js:193',current:'SSO secret falls back to generic JWT secret. One compromised secret breaks both auth domains simultaneously.',todo:'Require dedicated SSO_JWT_SECRET with no fallback. Hard-fail on startup if missing. Add to env contract.',ac:['Startup throws if SSO_JWT_SECRET missing','No fallback to generic JWT secret','Env contract updated in .env.example']},
+  {sprint:'s1',title:'Normalise env variable naming',prio:'P0',module:'Security',state:'partial',effort:'S',evidence:'security.routes.js:251-259 vs env_used.txt',current:'Security diagnostics expect SSO_SECRET and MONGODB_URI. Runtime uses SSO_JWT_SECRET and MONGO_URI. Health checks always return wrong results.',todo:'Pick one canonical name per variable. Update security.routes.js, checkEnv.js, .env.example. Add startup hard-fail.',ac:['security.routes.js env checks match runtime names','Startup self-test returns accurate health','Single .env.example is source of truth']},
+  {sprint:'s1',title:'Fix adminFinanceController.js header anomaly',prio:'P0',module:'Finance',state:'partial',effort:'S',evidence:'adminFinanceController.js:1 and :8',current:'Malformed comment block likely comments out the respond import while it is used throughout — causes silent 500s on all finance endpoints.',todo:'Fix comment block, restore import, run lint parse check, add smoke test for all finance routes.',ac:['All finance endpoints return 2xx on happy path','ESLint parse check added to CI','No undefined respond errors in logs']},
+  {sprint:'s2',title:'Audit and verify all 74 unmounted routes',prio:'P0',module:'Platform',state:'partial',effort:'M',evidence:'routes_inventory_normalized.txt — 74 UNMOUNTED rows',current:'74 route definitions found by scanner with no confirmed mount point. Unknown if dead code, feature-flagged, or forgotten.',todo:'For each: confirm intentionally unmounted and document why, or mount it and add a test. Produce final mounted route registry.',ac:['Every route mounted+tested or explicitly deprecated','Mounted route count confirmed in CI','No silent dead-code routes remain']},
+  {sprint:'s2',title:'Resolve all 22 missing import references',prio:'P0',module:'Platform',state:'partial',effort:'M',evidence:'missing_imports.txt — 22 entries',current:'22 require()/import statements point to files that do not exist. Any code path hitting these causes an immediate runtime crash.',todo:'For each: create missing file, fix path, or remove dead import. Prioritise any in payment or auth paths.',ac:['0 missing import references in codebase','No runtime crashes from missing modules','CI import resolution check added']},
+  {sprint:'s2',title:'Build route contract test suite (critical paths)',prio:'P0',module:'Testing',state:'missing',effort:'H',evidence:'tests_files.txt — only 3 test files for 435 routes',current:'3 test files cover 435 routes. Entire auth, payments, portal, and booking API is untested at contract level.',todo:'Write contract tests for: auth, payments callbacks, bookings CRUD, client portal invoice and ETR, key admin routes.',ac:['Auth routes have contract tests','Payment callback idempotency tested','Booking CRUD tested','Client portal invoice endpoint tested']},
+  {sprint:'s2',title:'Triage all TODO/FIXME into tracked tickets',prio:'P1',module:'Platform',state:'partial',effort:'S',evidence:'todo_fixme.txt',current:'Unknown TODOs exist in runtime-adjacent code paths — some may be in payment or auth flows.',todo:'Categorise every TODO/FIXME: critical (payment/auth/compliance) vs non-critical. Convert critical ones to tickets immediately.',ac:['All TODOs in payment/auth/compliance paths converted to tickets','Non-critical TODOs tagged with owner','No TODO inside a function that handles money or tokens']},
+  {sprint:'s3',title:'Wrap ledger+transaction writes in atomic operations',prio:'P0',module:'Finance',state:'partial',effort:'M',evidence:'ledgerService.js, Transaction.js',current:'Ledger and transaction updates are not atomic. A failure mid-write can leave orphaned ledger entries with no matching transaction.',todo:'Wrap all mutations in MongoDB sessions. Add rollback test. Add dead-letter on failure.',ac:['No orphaned ledger entry possible','Simulated mid-write failure leaves no orphan records','Integration test proves atomicity']},
+  {sprint:'s3',title:'Unify M-Pesa B2C/STK naming and callbacks',prio:'P1',module:'Finance',state:'partial',effort:'M',evidence:'payments.routes.js:18-19, payments.controller.js:126-158',current:'M-Pesa is production-routed but field names and callback handling are inconsistent between STK and B2C paths.',todo:'Define canonical payment field schema. Migrate both controllers. Ensure idempotency keys on all callbacks.',ac:['Single shared payment type definition','STK and B2C callbacks parse identically','Duplicate callback does not double-credit']},
+  {sprint:'s3',title:'Auto-generate invoice + VAT on booking confirmation',prio:'P1',module:'Finance',state:'missing',effort:'M',evidence:'ClientInvoice.js exists but no trigger from booking',current:'No automatic invoice generation at booking time. Invoices created manually. VAT not auto-applied.',todo:'Trigger invoice on booking confirmation. Auto-apply 16% VAT. Generate PDF. Store against booking.',ac:['Invoice created automatically on booking confirm','VAT line item correct at 16%','PDF downloadable immediately']},
+  {sprint:'s3',title:'Decide on 7 potentially unused models',prio:'P1',module:'Platform',state:'partial',effort:'S',evidence:'model_usage_scan.txt — Analytics, AITrainingLog, EventFinancialSnapshot, EventPlanner, LiveMessage, SharedClientETR, StaffPerformanceSummary',current:'7 models defined but no confirmed query usage. Unknown if reserved for future use or genuinely dead.',todo:'Tag each: active/reserved/deprecated. Remove deprecated ones. Document reserved ones.',ac:['Every model tagged with status and reason','Deprecated models removed','Migration script committed']},
+  {sprint:'s5',title:'eTIMS: KRA sandbox integration + invoice schema (post-confirmation)',prio:'P0',module:'Compliance',state:'missing',effort:'H',evidence:'Scope decision: KRA eTIMS integration deferred pending formal confirmation',current:'KRA eTIMS integration intentionally deferred until KRA onboarding/certificate confirmation.',todo:'Start only after formal confirmation. Implement full KRA scope in one controlled sprint with compliance sign-off.',ac:['Formal confirmation captured before kickoff','No partial KRA implementation shipped pre-confirmation','Full KRA scope delivered with compliance sign-off']},
+  {sprint:'s4',title:'Replace client ETR placeholder with real data',prio:'P0',module:'Compliance',state:'live',effort:'M',evidence:'server/controllers/clientPortalController.js:444-550 uses staffSystemGateway.getClientEtr + persisted ClientETR/ClientInvoice fallback',current:'Client-facing ETR endpoint returns real synced ETR/invoice data with ownership checks and non-placeholder responses.',todo:'Implemented in Sprint 4. Production completeness validation baseline completed and handoff moved to BAU monitoring.',ac:['Endpoint returns real CU number and KRA data','Client cannot access another client ETR','Returns clear pending message if submission in queue']},
+  {sprint:'s4',title:'Invoice controls: voids, credit notes, QR codes (internal)',prio:'P0',module:'Compliance',state:'live',effort:'H',evidence:'Internal invoice control flow completed without KRA dependency',current:'Void/credit-note handling and QR retrieval are completed in internal workflow scope.',todo:'Implemented in Sprint 4. Audit-log retention and production monitoring handed to BAU operations.',ac:['Invoice void flow available internally','Credit note records stored and retrievable','QR code retrievable on invoice PDF']},
+  {sprint:'s4',title:'Submission retry queue + admin dashboard (internal)',prio:'P1',module:'Compliance',state:'live',effort:'M',evidence:'Internal retry queue and admin status visibility implemented',current:'Submission retries and admin visibility are active for internal submission workflows.',todo:'Implemented in Sprint 4 with baseline retry thresholds and alerts. Ongoing threshold tuning moved to BAU optimization.',ac:['Failed submissions retry up to 5x','Admin sees live submission status','Manual re-trigger available']},
+  {sprint:'s5',title:'Lifecycle: block illegal backward transitions',prio:'P1',module:'Staff Ops',state:'partial',effort:'M',evidence:'eventLifecycleService.js:67-68',current:'Code allows STAFFING→PLANNED and READY→STAFFING rollbacks, conflicting with strict PRD progression.',todo:'Add transition matrix. Throw on illegal moves. Admin-override escape hatch with reason + audit log.',ac:['Illegal transitions throw with descriptive error','Override requires ADMIN role + reason','Every transition logged immutably']},
+  {sprint:'s5',title:'Mount or deprecate remaining unmounted routes',prio:'P1',module:'Platform',state:'partial',effort:'M',evidence:'routes_inventory_normalized.txt',current:'Sprint 2 audited these. Sprint 5 completes the work — mount confirmed routes, remove the rest.',todo:'Mount confirmed routes with auth middleware. Delete deprecated route files. Update route registry.',ac:['Route registry matches codebase 1:1','No unmounted route definitions remain','All newly mounted routes have a test']},
+  {sprint:'s5',title:'M-Pesa reconciliation engine',prio:'P1',module:'Finance',state:'missing',effort:'H',evidence:'payments.controller.js:126 — callbacks exist, no reconciliation job',current:'No automated reconciliation between Daraja callbacks and internal transaction records.',todo:'Build reconciliation job matching callbacks to transactions. Flag unmatched. Queue exceptions.',ac:['Daily reconciliation job runs and reports','Unmatched transactions surface in finance dashboard','Exception queue with manual review']},
+  {sprint:'s4',title:'Staff attendance schema harmonisation',prio:'P1',module:'Staff Ops',state:'live',effort:'S',evidence:'Attendance.js, staffController.js:250',current:'Canonical attendance fields are aligned across model and controller paths for Sprint 4 scope.',todo:'Implemented in Sprint 4. Legacy-field compatibility checks completed and migration toggles retired from active rollout scope.',ac:['Single canonical schema in use','Migration tested on staging data','All attendance queries consistent']},
+  {sprint:'s4',title:'Activate SharedClientETR and EventFinancialSnapshot',prio:'P1',module:'Compliance',state:'live',effort:'S',evidence:'model_usage_scan.txt — both flagged unused',current:'EventFinancialSnapshot is wired in active close-flow paths. SharedClientETR is explicitly staged for post-KRA confirmation rollout.',todo:'Sprint 4 scope complete: EventFinancialSnapshot activated. SharedClientETR intentionally deferred and gated until KRA confirmation.',ac:['EventFinancialSnapshot written on event close','SharedClientETR integration readiness documented','Both models appear in active query paths or have explicit deferral notes']},
+  {sprint:'s6',title:'WhatsApp Business API integration',prio:'P1',module:'Client Experience',state:'missing',effort:'M',evidence:'No WhatsApp reference in integrations scan',current:'No WhatsApp channel. All comms via email which has low open rates in Kenyan market.',todo:'Integrate WhatsApp BSP. Booking confirmations, invoice links, payment reminders. Track consent and opt-out.',ac:['Booking confirmation sent via WhatsApp within 2 min','Invoice link delivered on creation','Opt-out honoured and logged']},
+  {sprint:'s6',title:"Africa's Talking SMS notifications",prio:'P1',module:'Platform',state:'missing',effort:'S',evidence:"No Africa's Talking reference in integrations scan",current:'No SMS channel. Notification service placeholder only.',todo:"Integrate Africa's Talking. Event reminders, payment confirmations, attendance alerts. Fallback from WhatsApp.",ac:["SMS delivered via Africa's Talking",'Delivery receipt tracked','Fallback triggers if WhatsApp undelivered after 10 min']},
+  {sprint:'s6',title:'Payroll compliance pack: monthly staff summaries',prio:'P1',module:'Staff Ops',state:'missing',effort:'M',evidence:'No payroll summary generation in audit',current:'Finance team manually compiles per-staff payment records each month.',todo:'Generate monthly PDF/CSV per staff. Events worked, amounts paid, M-Pesa refs. Totals reconcile with ledger.',ac:['PDF generated per staff per month','CSV export for finance team','Totals match transaction ledger']},
+  {sprint:'s6',title:'Executive profitability dashboard',prio:'P1',module:'Analytics',state:'partial',effort:'M',evidence:'adminCommandCenterController.js exists, Analytics model unused',current:'Metrics exist but no clean P&L view by event type, county, or period. Analytics model is unused.',todo:'Wire Analytics model. Build P&L dashboard by event type and county. Trend lines. PDF export.',ac:['P&L visible by event type and county','Month-over-month trend visible','Analytics model actively written to']},
+  {sprint:'s6',title:'Milestone-based payment journey',prio:'P1',module:'Finance',state:'missing',effort:'M',evidence:'Standard Kenyan market pattern — not found in codebase',current:'No structured payment milestone flow. Single payment model only.',todo:'Add payment schedule to booking. Configurable % per milestone. Track status. Send reminders.',ac:['3-stage schedule creatable per booking','Each stage has due date and % amount','Automated reminder fires on due date']},
+  {sprint:'s6',title:'Wire StaffPerformanceSummary + reliability index',prio:'P2',module:'Staff Ops',state:'partial',effort:'M',evidence:'model_usage_scan.txt — StaffPerformanceSummary flagged unused',current:'Model defined but never queried. Reliability data scattered across attendance, ratings, replacements.',todo:'Wire model into post-event flow. Build composite score. Surface on assignment views.',ac:['Score from attendance + ratings + replacement frequency','Visible on staff profile and assignment card','Flag shown below threshold']}
+];
+
+function fc(filter){
+  document.querySelectorAll('.card').forEach(card=>{
+    const p=card.dataset.prio,s=card.dataset.state,m=card.dataset.module;
+    let show=filter==='all'||(filter==='P0'&&p==='P0')||(filter==='P1'&&p==='P1')||(filter==='missing'&&s==='missing')||(filter==='partial'&&s==='partial')||m===filter;
+    card.style.display=show?'':'none';
+  });
+  sprints.forEach(sp=>{
+    const bl=document.getElementById(sp.id);
+    const vis=bl.querySelectorAll('.card:not([style*="display: none"])').length;
+    const countEl=document.getElementById('count-'+sp.id);
+    if(countEl) countEl.textContent=vis+' visible';
+    bl.style.display=vis===0?'none':'';
+  });
+}
+
+function toggle(el){
+  const expanded=!el.classList.contains('expanded');
+  el.classList.toggle('expanded');
+  el.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+}
+
+const bc=document.getElementById('bc');
+sprints.forEach(sp=>{
+  const spCards=cards.filter(c=>c.sprint===sp.id);
+  const bl=document.createElement('div');
+  bl.className='sprint-block';bl.id=sp.id;
+  bl.innerHTML=`<div class="sprint-header"><span class="sprint-label">${sp.label}</span><span class="sprint-weeks">${sp.weeks}</span><span class="sprint-count" id="count-${sp.id}">${spCards.length} visible</span><span class="sprint-theme">${sp.theme}</span></div><div class="cards-grid" id="g-${sp.id}"></div>`;
+  bc.appendChild(bl);
+  const grid=document.getElementById('g-'+sp.id);
+  spCards.forEach(c=>{
+    const el=document.createElement('div');
+    el.className='card';el.dataset.prio=c.prio;el.dataset.state=c.state;el.dataset.module=c.module;
+    el.setAttribute('tabindex','0');
+    el.setAttribute('role','button');
+    el.setAttribute('aria-expanded','false');
+    el.onclick=()=>toggle(el);
+    el.onkeydown=(e)=>{
+      if(e.key==='Enter' || e.key===' '){
+        e.preventDefault();
+        toggle(el);
+      }
+    };
+    const dc=c.state==='missing'?'dm':c.state==='partial'?'dp':'dl';
+    const em={S:'Small 1–2d',M:'Medium 3–5d',H:'Large 6–10d'};
+    el.innerHTML=`<div class="card-top"><span class="card-title">${c.title}</span><span class="pb ${c.prio.toLowerCase()}">${c.prio}</span></div><div class="card-meta"><span class="tag">${c.module}</span><span class="dot ${dc}" style="margin-left:4px"></span><span class="state-lbl">${c.state}</span><span class="eff">${em[c.effort]}</span></div><div class="evidence">${c.evidence}</div><div class="card-detail"><div class="dl-lbl">Current state (from audit)</div><div class="dl-txt">${c.current}</div><div class="dl-lbl">What to build / fix</div><div class="dl-txt">${c.todo}</div><div class="dl-lbl">Acceptance criteria</div>${c.ac.map(a=>`<div class="ac">${a}</div>`).join('')}</div>`;
+    grid.appendChild(el);
+  });
+});
+
+function addModuleFilters(){
+  const controls=document.getElementById('controls');
+  const base=new Set(['all','P0','P1','missing','partial']);
+  const countsByModule=cards.reduce((acc,c)=>{
+    acc[c.module]=(acc[c.module]||0)+1;
+    return acc;
+  },{});
+  const modules=[...new Set(cards.map(c=>c.module))].sort((a,b)=>a.localeCompare(b));
+
+  document.querySelectorAll('.fb[data-filter]').forEach(btn=>{
+    const key=btn.dataset.filter;
+    if(key==='all') btn.textContent='All ('+cards.length+')';
+    else if(key==='P0' || key==='P1') btn.textContent=key+' '+(key==='P0'?'critical':'high')+' ('+cards.filter(c=>c.prio===key).length+')';
+    else if(key==='missing' || key==='partial') btn.textContent=key.charAt(0).toUpperCase()+key.slice(1)+' ('+cards.filter(c=>c.state===key).length+')';
+  });
+
+  modules.forEach(module=>{
+    if(base.has(module)) return;
+    const b=document.createElement('button');
+    b.className='fb';
+    b.dataset.filter=module;
+    b.textContent=module+' ('+countsByModule[module]+')';
+    controls.appendChild(b);
+  });
+}
+
+function bindFilterButtons(){
+  document.querySelectorAll('.fb[data-filter]').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      document.querySelectorAll('.fb').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      fc(btn.dataset.filter);
+    });
+  });
+
+  const clearBtn=document.getElementById('clear-filters');
+  if(clearBtn){
+    clearBtn.addEventListener('click',()=>{
+      const allBtn=document.querySelector('.fb[data-filter="all"]');
+      if(!allBtn) return;
+      document.querySelectorAll('.fb').forEach(b=>b.classList.remove('active'));
+      allBtn.classList.add('active');
+      fc('all');
+    });
+  }
+}
+
+function updateSummary(){
+  const total=cards.length;
+  const p0=cards.filter(c=>c.prio==='P0').length;
+  const p1=cards.filter(c=>c.prio==='P1').length;
+  const missing=cards.filter(c=>c.state==='missing').length;
+  const partial=cards.filter(c=>c.state==='partial').length;
+  const live=cards.filter(c=>c.state==='live').length;
+  document.getElementById('m-total').textContent=total;
+  document.getElementById('m-p0').textContent=p0;
+  document.getElementById('m-p1').textContent=p1;
+  document.getElementById('m-missing').textContent=missing;
+  document.getElementById('m-partial').textContent=partial;
+  document.getElementById('m-live').textContent=live;
+}
+
+addModuleFilters();
+bindFilterButtons();
+updateSummary();
+fc('all');
+</script>
+</body>
+</html>

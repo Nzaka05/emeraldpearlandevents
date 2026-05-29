@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Security Center - Emerald Pearl Events Admin</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #0f172a;
+            color: #e2e8f0;
+            min-height: 100vh;
+            padding: 24px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            margin-bottom: 32px;
+            border-bottom: 1px solid #1e293b;
+            padding-bottom: 20px;
+        }
+
+        h1 {
+            font-size: 28px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #f1f5f9;
+        }
+
+        .subtitle {
+            color: #94a3b8;
+            font-size: 14px;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 24px;
+            margin-bottom: 32px;
+        }
+
+        .panel {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 24px;
+            overflow: hidden;
+        }
+
+        .panel-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #f1f5f9;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 6px;
+            padding: 16px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: #60a5fa;
+            margin-bottom: 8px;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-card.pending .stat-value {
+            color: #fbbf24;
+        }
+
+        .stat-card.failed .stat-value {
+            color: #f87171;
+        }
+
+        .stat-card.synced .stat-value {
+            color: #34d399;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 16px;
+        }
+
+        th {
+            background: #0f172a;
+            border: 1px solid #334155;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 12px;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        td {
+            border: 1px solid #334155;
+            padding: 12px;
+            font-size: 13px;
+        }
+
+        tr:hover td {
+            background: #0f172a;
+        }
+
+        .refresh-btn {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            transition: background 0.2s;
+        }
+
+        .refresh-btn:hover {
+            background: #2563eb;
+        }
+
+        .refresh-btn:disabled {
+            background: #64748b;
+            cursor: not-allowed;
+        }
+
+        .btn-retry {
+            background: #8b5cf6;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 11px;
+            font-weight: 600;
+            transition: background 0.2s;
+        }
+
+        .btn-retry:hover {
+            background: #7c3aed;
+        }
+
+        .btn-retry:disabled {
+            background: #64748b;
+            cursor: not-allowed;
+        }
+
+        .timeline {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .timeline-item {
+            display: flex;
+            gap: 12px;
+            padding: 12px;
+            background: #0f172a;
+            border-left: 3px solid #3b82f6;
+            border-radius: 4px;
+        }
+
+        .timeline-item.failed {
+            border-left-color: #f87171;
+        }
+
+        .timeline-item.success {
+            border-left-color: #34d399;
+        }
+
+        .timeline-time {
+            color: #64748b;
+            font-size: 12px;
+            min-width: 80px;
+        }
+
+        .timeline-content {
+            flex: 1;
+        }
+
+        .timeline-event {
+            font-weight: 600;
+            margin-bottom: 4px;
+            font-size: 13px;
+        }
+
+        .timeline-detail {
+            color: #94a3b8;
+            font-size: 12px;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 3px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .badge.success {
+            background: #10b981;
+            background-color: rgba(16, 185, 129, 0.2);
+            color: #6ee7b7;
+        }
+
+        .badge.failed {
+            background: #ef4444;
+            background-color: rgba(239, 68, 68, 0.2);
+            color: #fca5a5;
+        }
+
+        .badge.info {
+            background: #3b82f6;
+            background-color: rgba(59, 130, 246, 0.2);
+            color: #93c5fd;
+        }
+
+        .checklist {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .check-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: #0f172a;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+
+        .check-icon {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 12px;
+            color: #0f172a;
+        }
+
+        .check-item.present .check-icon {
+            background: #34d399;
+        }
+
+        .check-item.missing .check-icon {
+            background: #f87171;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #64748b;
+        }
+
+        .empty-state p {
+            margin-bottom: 16px;
+            font-size: 14px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #64748b;
+            font-size: 13px;
+        }
+
+        .last-update {
+            font-size: 11px;
+            color: #64748b;
+            margin-top: 12px;
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .stat-grid {
+                grid-template-columns: 1fr;
+            }
+
+            table {
+                font-size: 12px;
+            }
+
+            td, th {
+                padding: 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🔒 Security Center</h1>
+            <p class="subtitle">System health, events, and operational status</p>
+        </header>
+
+        <div class="dashboard-grid">
+            <!-- Sync Status Panel -->
+            <div class="panel">
+                <div class="panel-title">
+                    📊 Sync Status Dashboard
+                    <button class="refresh-btn" onclick="refreshSyncStatus()" id="sync-refresh">Refresh</button>
+                </div>
+
+                <h3 style="font-size: 14px; color: #cbd5e1; margin-bottom: 12px;">Bookings</h3>
+                <div class="stat-grid" id="bookings-stats">
+                    <div class="stat-card">
+                        <div class="stat-value">-</div>
+                        <div class="stat-label">Pending</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">-</div>
+                        <div class="stat-label">Synced</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">-</div>
+                        <div class="stat-label">Failed</div>
+                    </div>
+                </div>
+
+                <h3 style="font-size: 14px; color: #cbd5e1; margin-bottom: 12px;">Payments</h3>
+                <div class="stat-grid" id="payments-stats">
+                    <div class="stat-card">
+                        <div class="stat-value">-</div>
+                        <div class="stat-label">Pending</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">-</div>
+                        <div class="stat-label">Confirmed</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">-</div>
+                        <div class="stat-label">Failed</div>
+                    </div>
+                </div>
+
+                <div class="last-update" id="sync-update">Last updated: --</div>
+            </div>
+
+            <!-- Queue Health Panel -->
+            <div class="panel">
+                <div class="panel-title">
+                    ⚙️ Queue Health
+                    <button class="refresh-btn" onclick="refreshQueueHealth()" id="queue-refresh">Refresh</button>
+                </div>
+
+                <div id="queue-content">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Queue</th>
+                                <th>Waiting</th>
+                                <th>Active</th>
+                                <th>Completed</th>
+                                <th>Failed</th>
+                                <th>Delayed</th>
+                            </tr>
+                        </thead>
+                        <tbody id="queue-body">
+                            <tr><td colspan="6" class="loading">Loading...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="last-update" id="queue-update">Last updated: --</div>
+            </div>
+
+            <!-- Environment Integrity Panel -->
+            <div class="panel">
+                <div class="panel-title">
+                    🔑 Environment Integrity
+                </div>
+
+                <div class="checklist" id="env-checklist">
+                    <div class="loading">Loading...</div>
+                </div>
+
+                <div class="last-update" id="env-update">Last updated: --</div>
+            </div>
+
+            <!-- Events Timeline Panel -->
+            <div class="panel">
+                <div class="panel-title">
+                    📜 Security Events Timeline
+                    <button class="refresh-btn" onclick="refreshEvents()" id="events-refresh">Refresh</button>
+                </div>
+
+                <div id="events-content">
+                    <div class="empty-state">
+                        <p>Loading events...</p>
+                    </div>
+                </div>
+
+                <div class="last-update" id="events-update">Last updated: --</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== CONFIGURATION ====================
+        const API_BASE = '/api/v1/admin/security';
+        const REFRESH_INTERVAL = 60000; // 60 seconds
+        let adminToken = localStorage.getItem('adminToken') || sessionStorage.getItem('adminToken');
+
+        // ==================== AUTH HEADER ====================
+        function getAuthHeader() {
+            return {
+                'Authorization': `Bearer ${adminToken}`,
+                'Content-Type': 'application/json'
+            };
+        }
+
+        // Check auth on load
+        window.addEventListener('load', () => {
+            if (!adminToken) {
+                // Try to get from cookies
+                const cookies = document.cookie.split(';').reduce((acc, cookie) => {
+                    const [key, val] = cookie.trim().split('=');
+                    acc[key] = val;
+                    return acc;
+                }, {});
+                adminToken = cookies.adminToken;
+                if (adminToken) {
+                    localStorage.setItem('adminToken', adminToken);
+                }
+            }
+
+            if (!adminToken) {
+                document.body.innerHTML = '<div style="padding: 40px; text-align: center; color: #e2e8f0;"><h2>Not Authorized</h2><p>Please log in first.</p><a href="/admin" style="color: #3b82f6;">Go to Admin</a></div>';
+                return;
+            }
+
+            // Load all panels
+            refreshSyncStatus();
+            refreshQueueHealth();
+            refreshEnvironment();
+            refreshEvents();
+
+            // Auto-refresh every 60 seconds
+            setInterval(() => {
+                refreshSyncStatus();
+                refreshQueueHealth();
+                refreshEvents();
+            }, REFRESH_INTERVAL);
+        });
+
+        // ==================== SYNC STATUS ====================
+        async function refreshSyncStatus() {
+            const btn = document.getElementById('sync-refresh');
+            btn.disabled = true;
+
+            try {
+                const response = await fetch(`${API_BASE}/sync-status`, {
+                    headers: getAuthHeader()
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    const { bookings, payments } = data.data;
+
+                    // Update bookings
+                    document.getElementById('bookings-stats').innerHTML = `
+                        <div class="stat-card pending">
+                            <div class="stat-value">${bookings.pending}</div>
+                            <div class="stat-label">Pending</div>
+                        </div>
+                        <div class="stat-card synced">
+                            <div class="stat-value">${bookings.synced}</div>
+                            <div class="stat-label">Synced</div>
+                        </div>
+                        <div class="stat-card failed">
+                            <div class="stat-value">${bookings.failed}</div>
+                            <div class="stat-label">Failed</div>
+                        </div>
+                    `;
+
+                    // Update payments
+                    document.getElementById('payments-stats').innerHTML = `
+                        <div class="stat-card pending">
+                            <div class="stat-value">${payments.pending}</div>
+                            <div class="stat-label">Pending</div>
+                        </div>
+                        <div class="stat-card synced">
+                            <div class="stat-value">${payments.synced}</div>
+                            <div class="stat-label">Confirmed</div>
+                        </div>
+                        <div class="stat-card failed">
+                            <div class="stat-value">${payments.failed}</div>
+                            <div class="stat-label">Failed</div>
+                        </div>
+                    `;
+
+                    document.getElementById('sync-update').textContent = `Last updated: ${new Date().toLocaleTimeString()}`;
+                }
+            } catch (err) {
+                console.error('Sync status error:', err);
+            }
+
+            btn.disabled = false;
+        }
+
+        // ==================== QUEUE HEALTH ====================
+        async function refreshQueueHealth() {
+            const btn = document.getElementById('queue-refresh');
+            btn.disabled = true;
+
+            try {
+                const response = await fetch(`${API_BASE}/queue-health`, {
+                    headers: getAuthHeader()
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    const { queues } = data.data;
+                    let html = '';
+
+                    queues.forEach(q => {
+                        html += `
+                            <tr>
+                                <td><strong>${q.name.replace('Queue', '')}</strong></td>
+                                <td>${q.waiting}</td>
+                                <td>${q.active}</td>
+                                <td>${q.completed}</td>
+                                <td><span class="badge ${q.failed > 0 ? 'failed' : 'info'}">${q.failed}</span></td>
+                                <td>${q.delayed}</td>
+                            </tr>
+                        `;
+                    });
+
+                    document.getElementById('queue-body').innerHTML = html;
+                    document.getElementById('queue-update').textContent = `Last updated: ${new Date().toLocaleTimeString()}`;
+                }
+            } catch (err) {
+                console.error('Queue health error:', err);
+                document.getElementById('queue-body').innerHTML = '<tr><td colspan="6" class="loading">Error loading queue data</td></tr>';
+            }
+
+            btn.disabled = false;
+        }
+
+        // ==================== ENVIRONMENT CHECK ====================
+        async function refreshEnvironment() {
+            try {
+                const response = await fetch(`${API_BASE}/env-check`, {
+                    headers: getAuthHeader()
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    const { variables } = data.data;
+                    let html = '';
+
+                    Object.entries(variables).forEach(([varName, present]) => {
+                        html += `
+                            <div class="check-item ${present ? 'present' : 'missing'}">
+                                <div class="check-icon">${present ? '✓' : '✗'}</div>
+                                <div>${varName}</div>
+                            </div>
+                        `;
+                    });
+
+                    document.getElementById('env-checklist').innerHTML = html;
+                    document.getElementById('env-update').textContent = `Last updated: ${new Date().toLocaleTimeString()}`;
+                }
+            } catch (err) {
+                console.error('Environment check error:', err);
+            }
+        }
+
+        // ==================== EVENTS TIMELINE ====================
+        async function refreshEvents() {
+            const btn = document.getElementById('events-refresh');
+            btn.disabled = true;
+
+            try {
+                const response = await fetch(`${API_BASE}/events?limit=20`, {
+                    headers: getAuthHeader()
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    const { events } = data.data;
+
+                    if (events.length === 0) {
+                        document.getElementById('events-content').innerHTML = `
+                            <div class="empty-state">
+                                <p>No security events yet</p>
+                            </div>
+                        `;
+                    } else {
+                        let html = '<div class="timeline">';
+
+                        events.forEach(event => {
+                            const date = new Date(event.createdAt);
+                            const timeStr = date.toLocaleTimeString();
+                            const isSuccess = event.eventType.includes('success');
+                            const isFailed = event.eventType.includes('failed');
+
+                            html += `
+                                <div class="timeline-item ${isFailed ? 'failed' : isSuccess ? 'success' : ''}">
+                                    <div class="timeline-time">${timeStr}</div>
+                                    <div class="timeline-content">
+                                        <div class="timeline-event">
+                                            <span class="badge ${isFailed ? 'failed' : isSuccess ? 'success' : 'info'}">
+                                                ${event.eventType.replace(/_/g, ' ').toUpperCase()}
+                                            </span>
+                                        </div>
+                                        <div class="timeline-detail">
+                                            User: ${event.userEmail}<br>
+                                            IP: ${event.ipAddress || 'N/A'}
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                        });
+
+                        html += '</div>';
+                        document.getElementById('events-content').innerHTML = html;
+                    }
+
+                    document.getElementById('events-update').textContent = `Last updated: ${new Date().toLocaleTimeString()}`;
+                }
+            } catch (err) {
+                console.error('Events error:', err);
+                document.getElementById('events-content').innerHTML = `
+                    <div class="empty-state">
+                        <p>Error loading events</p>
+                    </div>
+                `;
+            }
+
+            btn.disabled = false;
+        }
+
+        // ==================== UTILITIES ====================
+        function formatDate(date) {
+            return new Date(date).toLocaleString();
+        }
+    </script>
+</body>
+</html>

@@ -40,14 +40,20 @@ const assignmentSchema = new mongoose.Schema({
         staff_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Staff' },
         staff_name: { type: String },
         amount: { type: Number },
-        status: { type: String, enum: ['Pending', 'Sent', 'Received', 'Disputed'], default: 'Pending' },
+        status: { type: String, enum: ['Pending', 'Sent', 'Received', 'Failed', 'Disputed', 'Disbursed', 'Settled'], default: 'Pending' },
         payment_method: { type: String, enum: ['MPesa', 'Cash', 'Bank'], default: 'MPesa' },
         sent_at: { type: Date },
         received_at: { type: Date },
         phone: { type: String },
         transaction_id: { type: String },
         receipt_number: { type: String },
-        notes: { type: String }
+        notes: { type: String },
+        // M-Pesa sync tracking
+        paymentSyncStatus: { type: String, enum: ['pending', 'sent', 'synced', 'failed'], default: 'pending' },
+        idempotency_key: { type: String, default: null },
+        callback_idempotency_key: { type: String, default: null },
+        lastSyncError: { type: String, default: '' },
+        manually_confirmed: { type: Boolean, default: false }
     }],
     payment_confirmed_at: { type: Date }, // When staff confirms payment received
     payment_disputed_reason: { type: String }, // Reason for dispute if payment is disputed

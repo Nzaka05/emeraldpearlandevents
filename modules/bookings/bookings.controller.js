@@ -7,6 +7,7 @@ const respond = require('../../utils/respond');
 
 const servicePath = './bookings.service';
 const service = require(servicePath);
+const { invalidateCache } = require('../../utils/cache');
 
 class BookingsController {
   /**
@@ -14,8 +15,19 @@ class BookingsController {
    */
   async list(req, res) {
     try {
-      const { status, eventType, search, clientEmail, clientPhone, page = 1, limit = 20 } = req.query;
-      
+      const { status, eventType, search, clientEmail, clientPhone, page = 1, limit = 25 } = req.query;
+
+      const rawLimit = parseInt(limit, 10);
+      if (Number.isFinite(rawLimit) && rawLimit > 100) {
+        return respond(res, 400, {
+          success: false,
+          message: 'limit cannot be greater than 100'
+        });
+      }
+
+      const parsedPage = Math.max(1, parseInt(page, 10) || 1);
+      const parsedLimit = Math.min(100, Math.max(1, parseInt(limit, 10) || 25));
+
       const filters = {};
       if (status) filters.status = status;
       if (eventType) filters.eventType = eventType;
@@ -23,11 +35,19 @@ class BookingsController {
       if (clientPhone) filters.clientPhone = clientPhone;
       if (search) filters.search = search;
 
-      const result = await service.getAllRecords(filters, parseInt(page), parseInt(limit));
+      const result = await service.getAllRecords(filters, parsedPage, parsedLimit);
+
+      res.set('X-Total-Count', result.total);
 
       respond(res, 200, {
         success: true,
-        ...result
+        data: result.items,
+        meta: {
+          page: result.page,
+          limit: result.limit,
+          total: result.total,
+          totalPages: Math.ceil(result.total / result.limit)
+        }
       });
     } catch (error) {
       console.error('Error fetching bookings:', error);
@@ -85,6 +105,8 @@ class BookingsController {
         });
       }
 
+      await invalidateCache('cache:dashboard:overview');
+
       // If status changed to confirmed and queued, notify
       if (updatedBooking.status === 'confirmed' && process.env.QUEUE_MODE === 'async') {
         return respond(res, 200, {
@@ -133,6 +155,8 @@ class BookingsController {
         });
       }
 
+      await invalidateCache('cache:dashboard:overview');
+
       respond(res, 200, {
         success: true,
         message: 'Payment details updated successfully',
@@ -166,6 +190,8 @@ class BookingsController {
           message: 'Booking not found'
         });
       }
+
+      await invalidateCache('cache:dashboard:overview');
 
       respond(res, 200, {
         success: true,
@@ -266,6 +292,8 @@ class BookingsController {
           message: 'Booking not found'
         });
       }
+
+      await invalidateCache('cache:dashboard:overview');
 
       respond(res, 200, {
         success: true,

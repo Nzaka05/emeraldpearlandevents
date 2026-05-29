@@ -26,7 +26,7 @@ function totalPay(a) { return a.pay_rate || 0; }
             
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <% pending.forEach(function(a) { %>
-                    <div class="glass-card flex flex-col cursor-crosshair border-t border-t-gold-500/50 hover:border-white/20 transition-colors shadow-lg" onclick='showEventDetail(<%- JSON.stringify(a) %>)'>
+                    <div data-assignment-id="<%= a._id %>" class="glass-card flex flex-col cursor-crosshair border-t border-t-gold-500/50 hover:border-white/20 transition-colors shadow-lg" onclick='showEventDetail(<%- JSON.stringify(a) %>)'>
                         <div class="p-4 flex-1">
                             <div class="flex items-start justify-between mb-3 border-b border-white/5 pb-3">
                                 <div>
@@ -95,7 +95,7 @@ function totalPay(a) { return a.pay_rate || 0; }
             
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <% openEvents.forEach(function(a) { %>
-                    <div class="glass-card flex flex-col cursor-crosshair border-l-2 border-l-blue-500 hover:border-white/20 transition-colors shadow-lg" onclick='showEventDetail(<%- JSON.stringify(a) %>)'>
+                    <div data-assignment-id="<%= a._id %>" class="glass-card flex flex-col cursor-crosshair border-l-2 border-l-blue-500 hover:border-white/20 transition-colors shadow-lg" onclick='showEventDetail(<%- JSON.stringify(a) %>)'>
                         <div class="p-4 flex-1">
                             <div class="flex items-start justify-between mb-3 border-b border-white/5 pb-3">
                                 <div class="min-w-0 pr-3">
@@ -137,7 +137,7 @@ function totalPay(a) { return a.pay_rate || 0; }
             
             <div class="space-y-3">
                 <% applied.forEach(function(a) { %>
-                    <div class="glass-card p-3 border border-white/5 flex items-center justify-between opacity-80">
+                    <div data-assignment-id="<%= a._id %>" class="glass-card p-3 border border-white/5 flex items-center justify-between opacity-80">
                         <div class="min-w-0 pr-3">
                             <h4 class="text-sm font-bold text-tx-1 truncate"><%= a.title %></h4>
                             <div class="text-[0.65rem] text-tx-3 font-mono mt-1"><%= new Date(a.date).toLocaleDateString('en-GB') %> • Under Command Review</div>
@@ -158,7 +158,7 @@ function totalPay(a) { return a.pay_rate || 0; }
             
             <div class="space-y-3">
                 <% accepted.forEach(function(a) { %>
-                    <div class="glass-card p-3.5 border-l-2 border-emerald-500 hover:bg-white/5 transition-colors cursor-crosshair group flex items-stretch justify-between" onclick='showEventDetail(<%- JSON.stringify(a) %>)'>
+                    <div data-assignment-id="<%= a._id %>" class="glass-card p-3.5 border-l-2 border-emerald-500 hover:bg-white/5 transition-colors cursor-crosshair group flex items-stretch justify-between" onclick='showEventDetail(<%- JSON.stringify(a) %>)'>
                         <div class="min-w-0 pr-3 flex flex-col justify-center">
                             <h4 class="text-sm font-bold text-tx-1 group-hover:text-emerald-300 transition-colors truncate mb-1.5"><%= a.title %></h4>
                             <div class="flex items-center gap-3 text-[0.65rem] text-tx-3 uppercase tracking-wider font-bold">
@@ -186,7 +186,7 @@ function totalPay(a) { return a.pay_rate || 0; }
             
             <div class="space-y-3">
                 <% past.forEach(function(a) { %>
-                    <div class="bg-black/40 border border-white/5 p-3 rounded-xl flex justify-between items-center">
+                    <div data-assignment-id="<%= a._id %>" class="bg-black/40 border border-white/5 p-3 rounded-xl flex justify-between items-center">
                         <div class="min-w-0 pr-3 opacity-60">
                             <h4 class="text-xs font-bold text-tx-1 truncate mb-0.5"><%= a.title %></h4>
                             <div class="text-[0.65rem] text-tx-3 font-mono"><%= new Date(a.date).toLocaleDateString('en-GB') %></div>
@@ -301,23 +301,90 @@ function totalPay(a) { return a.pay_rate || 0; }
 
     async function respond(id, decision) {
         if(decision === 'decline' && !confirm('Sys_Prompt: Reject this incoming mandate? Details will be removed from your terminal.')) return;
+        
+        // Find the card
+        const card = document.querySelector(
+          '[data-assignment-id="' + id + '"]'
+        );
+
+        // Get action buttons on this card
+        const buttons = card
+          ? card.querySelectorAll('button')
+          : [];
+
+        // Optimistic: disable buttons immediately
+        buttons.forEach(btn => {
+          btn.classList.add('btn-loading');
+          btn.disabled = true;
+        });
+
         try {
-            const csrf = document.querySelector('meta[name="csrf-token"]')?.content || '';
-            const r = await fetch('/portal/staff/assignments/' + id + '/response', {
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
+            const res = await fetch('/portal/staff/assignments/' + id + '/response', {
                 method: 'POST', 
-                headers: { 'Content-Type': 'application/json', 'CSRF-Token': csrf },
+                headers: { 
+                  'Content-Type': 'application/json', 
+                  'CSRF-Token': csrfToken 
+                },
                 body: JSON.stringify({ response: decision })
             });
-            const d = await r.json();
-            const msg = decision === 'accept' ? 'Target Locked.' : decision === 'apply' ? 'Application Synced.' : 'Mandate Dropped.';
-            if (d.success) { 
-                showToast(msg, 'success'); 
-                setTimeout(() => location.reload(), 1000); 
-            } else {
-                showToast(d.error || 'System fault.', 'error');
+
+            if (!res.ok) {
+              throw new Error('Request failed: ' + res.status);
+            }
+
+            const d = await res.json();
+            if (!d.success) {
+              throw new Error(d.error || 'System fault.');
+            }
+
+            // Success: animate card out
+            if (card) {
+              card.classList.add('card-exit');
+              setTimeout(() => {
+                card.remove();
+
+                // Update pending count badge if present
+                const badge = document.getElementById(
+                  'pending-count'
+                );
+                if (badge) {
+                  const current = parseInt(
+                    badge.textContent, 10
+                  ) || 0;
+                  if (current > 0) {
+                    badge.textContent = current - 1;
+                  }
+                }
+              }, 300);
+            }
+
+            // Push success notification
+            if (window.NotificationSystem) {
+              const msg = decision === 'accept' ? 'Target Locked.' : decision === 'apply' ? 'Application Synced.' : 'Mandate Dropped.';
+              window.NotificationSystem.push(
+                'assignmentResponse',
+                msg,
+                decision === 'accept' || decision === 'apply' ? 'success' : 'info',
+                null
+              );
             }
         } catch(err) { 
-            showToast('Network disjointed.', 'error'); 
+            // Restore buttons on error
+            buttons.forEach(btn => {
+              btn.classList.remove('btn-loading');
+              btn.disabled = false;
+            });
+
+            // Show error notification
+            if (window.NotificationSystem) {
+              window.NotificationSystem.push(
+                'assignmentError',
+                'Failed to ' + decision + ' assignment. ' + err.message,
+                'critical',
+                null
+              );
+            }
         }
     }
 </script>

@@ -11,10 +11,16 @@ const ClientPaymentSchema = new mongoose.Schema({
     transactionId: { type: String, default: '' },
     paymentDate: { type: Date, default: Date.now },
     status: { type: String, enum: ['Pending', 'Confirmed', 'Failed', 'Refunded'], default: 'Confirmed' },
+    idempotencyKey: { type: String },
     notes: { type: String, default: '' },
     recordedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin' },
     receiptNumber: { type: String, default: '' }
 }, { timestamps: true });
+
+// Compound indexes for payment status and dedup safety.
+ClientPaymentSchema.index({ bookingId: 1, status: 1 });
+// Enforce uniqueness only when idempotencyKey exists.
+ClientPaymentSchema.index({ idempotencyKey: 1 }, { unique: true, sparse: true });
 
 ClientPaymentSchema.pre('save', async function() {
     if (this.isNew && !this.receiptNumber) {

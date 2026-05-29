@@ -36,12 +36,15 @@ const sidebarCss = `
 </style>`;
 
 // Fix 2: Update all admin HTML files
-const adminDir = 'admin';
+const adminDir = path.resolve(__dirname, 'admin');
 const skip = ['403.html','404.html','500.html','login.html'];
 const files = fs.readdirSync(adminDir).filter(f => f.endsWith('.html') && !skip.includes(f));
 
 files.forEach(file => {
-    const filePath = path.join(adminDir, file);
+    const filePath = path.normalize(path.join(adminDir, file));
+    if (!filePath.startsWith(adminDir + path.sep)) {
+        throw new Error('Path traversal detected');
+    }
     let content = fs.readFileSync(filePath, 'utf8');
     
     // Remove old mobile CSS if exists

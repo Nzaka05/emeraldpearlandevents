@@ -31,9 +31,14 @@ const staffSchema = new mongoose.Schema({
         ref: 'Staff', 
         default: null 
     },
+    // Token version — increment to invalidate ALL existing JWTs for this user.
+    // Used by: logout-all-sessions, forced revocation after password change.
+    tokenVersion: { type: Number, default: 0 },
     pushSubscription: { type: Object },
     secureLoginToken: { type: String },
     secureLoginExpire: { type: Date },
+    resetPasswordToken: { type: String },
+    resetPasswordExpire: { type: Date },
     last_location: {
         lat: { type: Number },
         lng: { type: Number },

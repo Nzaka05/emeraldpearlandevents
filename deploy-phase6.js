@@ -1,7 +1,11 @@
 const fs = require('fs');
 const path = require('path');
 
-const filePath = path.join(__dirname, 'staff-system', 'views', 'admin', 'events.ejs');
+const baseDir = path.resolve(__dirname);
+const filePath = path.normalize(path.join(baseDir, 'staff-system', 'views', 'admin', 'events.ejs'));
+if (!filePath.startsWith(baseDir + path.sep)) {
+  throw new Error('Path traversal detected');
+}
 const content  = fs.readFileSync(filePath, 'utf8');
 
 // Find where the original file's tbody content starts

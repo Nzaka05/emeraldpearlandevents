@@ -1,11 +1,14 @@
 const fs = require('fs');
 const path = require('path');
 
-const adminDir = 'admin';
+const adminDir = path.resolve(__dirname, 'admin');
 const files = fs.readdirSync(adminDir).filter(f => f.endsWith('.html'));
 
 files.forEach(file => {
-    const filePath = path.join(adminDir, file);
+    const filePath = path.normalize(path.join(adminDir, file));
+    if (!filePath.startsWith(adminDir + path.sep)) {
+        throw new Error('Path traversal detected');
+    }
     let content = fs.readFileSync(filePath, 'utf8');
     
     // Check if mobile sidebar script is already there

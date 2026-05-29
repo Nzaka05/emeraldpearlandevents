@@ -1,14 +1,15 @@
 const fs = require('fs');
 const path = require('path');
 
-const root = process.cwd();
+const root = path.resolve(__dirname, '..');
 const exts = new Set(['.js', '.ts', '.tsx', '.jsx', '.ejs', '.html']);
 const skipDirs = new Set(['node_modules', '.git', 'tmp', 'logs']);
 
 function walk(dir, out = []) {
   for (const ent of fs.readdirSync(dir, { withFileTypes: true })) {
     if (skipDirs.has(ent.name)) continue;
-    const full = path.join(dir, ent.name);
+    const full = path.normalize(path.join(dir, ent.name));
+    if (!full.startsWith(root + path.sep)) continue;
     if (ent.isDirectory()) walk(full, out);
     else if (exts.has(path.extname(ent.name))) out.push(full);
   }

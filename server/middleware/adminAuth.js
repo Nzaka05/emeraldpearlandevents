@@ -55,9 +55,9 @@ const verifyAdminPage = (req, res, next) => {
     }
 };
 
-const generateAdminToken = (adminId, email) => {
+const generateAdminToken = (adminId, email, role) => {
     return jwt.sign(
-        { adminId, email },
+        { adminId, email, role },
         process.env.JWT_SECRET,
         { expiresIn: '24h' }
     );

@@ -1,5 +1,6 @@
 const https = require('https');
 const http = require('http');
+const { createSyncHeaders } = require('../../staff-system/middleware/syncAuth');
 
 async function syncStaffToOperations(action, staffData) {
   const baseUrl = process.env.STAFF_SYSTEM_BASE_URL || 
@@ -20,11 +21,12 @@ async function syncStaffToOperations(action, staffData) {
   const lib = url.protocol === 'https:' ? https : http;
   
   return new Promise((resolve) => {
+    const body = JSON.parse(payload);
+    const hmacHeaders = createSyncHeaders(syncSecret, body);
     const req = lib.request(url, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        'x-sync-secret': syncSecret,
+        ...hmacHeaders,
         'Content-Length': Buffer.byteLength(payload)
       }
     }, (res) => {

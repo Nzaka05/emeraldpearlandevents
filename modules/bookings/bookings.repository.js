@@ -6,30 +6,41 @@
 const Booking = require('../../server/models/Booking');
 const Customer = require('../../server/models/Customer');
 const ClientPayment = require('../../server/models/ClientPayment');
+const Staff = require('../../server/models/Staff');
+const { DEFAULT_PAGE_SIZE } = require('../../utils/constants');
+
+const DEFAULT_LIST_PROJECTION = {
+  syncAttempts: 0,
+  lastSyncError: 0,
+  __v: 0,
+  notes: 0,
+  adminNotes: 0,
+  selectedServices: 0,
+  paymentIdempotencyKey: 0
+};
 
 class BookingsRepository {
   /**
    * Find all bookings with filters and pagination
    */
-  async findAll(query, page = 1, limit = 20) {
-    const skip = (page - 1) * limit;
-    const bookings = await Booking.find(query)
-      .populate('customerId')
-      .populate('assignedStaff')
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(parseInt(limit));
+  async findAll({ page = 1, limit = DEFAULT_PAGE_SIZE, ...query }) {
+    const parsedPage = Math.floor(Number(page));
+    const parsedLimit = Math.floor(Number(limit));
+    const safePage = Number.isFinite(parsedPage) && parsedPage >= 1 ? parsedPage : 1;
+    const safeLimit = Number.isFinite(parsedLimit) && parsedLimit >= 1 ? parsedLimit : DEFAULT_PAGE_SIZE;
+    const skip = (safePage - 1) * safeLimit;
 
-    const total = await Booking.countDocuments(query);
+    const [items, total] = await Promise.all([
+      Booking.find(query, DEFAULT_LIST_PROJECTION)
+        .populate('customerId', 'name email phone')
+        .populate('assignedStaff')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(safeLimit),
+      Booking.countDocuments(query)
+    ]);
 
-    return {
-      bookings,
-      pagination: {
-        total,
-        pages: Math.ceil(total / limit),
-        currentPage: parseInt(page)
-      }
-    };
+    return { items, total, page: safePage, limit: safeLimit };
   }
 
   /**
@@ -130,6 +141,35 @@ class BookingsRepository {
    */
   async getCustomer(customerId) {
     return await Customer.findById(customerId);
+  }
+
+  /**
+   * Assign supervisor and staff to a booking
+   */
+  async assignStaff(bookingId, { supervisorId, staffIds }) {
+    const booking = await Booking.findById(bookingId);
+    if (!booking) return null;
+
+    if (supervisorId !== undefined) booking.supervisor = supervisorId || null;
+    if (staffIds !== undefined) booking.assignedStaff = staffIds;
+
+    await booking.save();
+    return booking;
+  }
+
+  /**
+   * Find staff members by array of IDs (for notification text)
+   */
+  async findStaffByIds(ids, selectFields = 'name') {
+    if (!ids || !ids.length) return [];
+    return await Staff.find({ _id: { $in: ids } }).select(selectFields);
+  }
+
+  /**
+   * Find a single staff member by ID
+   */
+  async findStaffById(staffId, selectFields = 'name') {
+    return await Staff.findById(staffId).select(selectFields);
   }
 }
 

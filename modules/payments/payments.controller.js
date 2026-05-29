@@ -19,7 +19,18 @@ class PaymentsController {
    */
   async list(req, res) {
     try {
-      const { payment_status, start_date, end_date, staff_id, page = 1, limit = 20 } = req.query;
+      const { payment_status, start_date, end_date, staff_id, page = 1, limit = 25 } = req.query;
+
+      const rawLimit = parseInt(limit, 10);
+      if (Number.isFinite(rawLimit) && rawLimit > 100) {
+        return respond(res, 400, {
+          success: false,
+          message: 'limit cannot be greater than 100'
+        });
+      }
+
+      const parsedPage = parseInt(page, 10) || 1;
+      const parsedLimit = Math.min(parseInt(limit, 10) || 25, 100);
 
       const filters = {};
       if (payment_status) filters.payment_status = payment_status;
@@ -27,11 +38,22 @@ class PaymentsController {
       if (end_date) filters.end_date = end_date;
       if (staff_id) filters.staff_id = staff_id;
 
-      const result = await service.getAllPayments(filters, parseInt(page), parseInt(limit));
+      const result = await service.getAllPayments(filters, parsedPage, parsedLimit);
 
-      respond(res, 200, {
+      res.set('X-Total-Count', result.total);
+
+      res.status(200).json({
         success: true,
-        ...result
+        data: result.items,
+        total: result.total,
+        page: result.page,
+        limit: result.limit,
+        meta: {
+          page: result.page,
+          limit: result.limit,
+          total: result.total,
+          totalPages: Math.ceil(result.total / result.limit)
+        }
       });
     } catch (error) {
       console.error('Error fetching payments:', error);
@@ -114,14 +136,16 @@ class PaymentsController {
         idempotencyKey: req.headers['x-idempotency-key'] || req.body?.idempotencyKey
       };
 
-      const result = payload?.Result;
-      if (!result || typeof result !== 'object' || !result.Occasion) {
+      const normalized = service.normalizeMpesaCallback(payload);
+      if (!normalized) {
         console.warn('M-Pesa callback invalid payload ignored');
         return respond(res, 200, { success: true, ignored: true });
       }
 
-      // Queue or process inline
-      if (queueMode === 'async') {
+      // Existing worker expects B2C payload.Result.Occasion. STK callbacks stay inline.
+      const canUseQueue = normalized.flow === 'b2c' && Boolean(normalized.identifiers?.occasion);
+
+      if (queueMode === 'async' && canUseQueue) {
         await paymentQueue.add('mpesa.callback', { payload });
       } else {
         await service.processMpesaCallback(payload);

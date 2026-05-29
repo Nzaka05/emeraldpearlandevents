@@ -1,5 +1,12 @@
 const fs = require('fs');
-let content = fs.readFileSync('staff-system/views/layout.ejs', 'utf8');
+const path = require('path');
+
+const baseDir = path.resolve(__dirname);
+const layoutPath = path.normalize(path.join(baseDir, 'staff-system', 'views', 'layout.ejs'));
+if (!layoutPath.startsWith(baseDir + path.sep)) {
+    throw new Error('Path traversal detected');
+}
+let content = fs.readFileSync(layoutPath, 'utf8');
 
 // Replace ALL sidebar toggle functions with one clean version
 const oldToggle = content.indexOf('function toggleSidebar()');
@@ -10,8 +17,8 @@ let endIdx = oldClose;
 let depth = 0;
 let started = false;
 for (let i = oldClose; i < content.length; i++) {
-    if (content[i] === '{') { depth++; started = true; }
-    if (content[i] === '}') { depth--; }
+    if (content.charAt(i) === '{') { depth++; started = true; }
+    if (content.charAt(i) === '}') { depth--; }
     if (started && depth === 0) { endIdx = i + 1; break; }
 }
 
@@ -56,8 +63,8 @@ let staffEndIdx = oldStaffClose;
 let staffDepth = 0;
 let staffStarted = false;
 for (let i = oldStaffClose; i < content.length; i++) {
-    if (content[i] === '{') { staffDepth++; staffStarted = true; }
-    if (content[i] === '}') { staffDepth--; }
+    if (content.charAt(i) === '{') { staffDepth++; staffStarted = true; }
+    if (content.charAt(i) === '}') { staffDepth--; }
     if (staffStarted && staffDepth === 0) { staffEndIdx = i + 1; break; }
 }
 
@@ -106,5 +113,5 @@ document.addEventListener('DOMContentLoaded', function() {
 </body>`
 );
 
-fs.writeFileSync('staff-system/views/layout.ejs', content);
+fs.writeFileSync(layoutPath, content);
 console.log('Done - rewrote mobile sidebar logic');

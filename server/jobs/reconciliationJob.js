@@ -10,7 +10,8 @@
  * Call startReconciliationJob() from server-prod.js after DB connects.
  */
 
-const mongoose = require('mongoose');
+const logger = require('../utils/logger');
+const { createSyncHeaders } = require('../../staff-system/middleware/syncAuth');
 
 const MAX_ATTEMPTS = 5;
 const RETRY_AFTER_MS = 5 * 60 * 1000;       // 5 minutes
@@ -46,12 +47,10 @@ async function syncToStaffPortal(booking) {
         usherCount: booking.usherCount || 0
     };
 
+    const hmacHeaders = createSyncHeaders(SYNC_SECRET, payload);
     const response = await fetch(`${STAFF_SYSTEM_BASE_URL}/internal/sync-booking`, {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'x-sync-secret': SYNC_SECRET
-        },
+        headers: hmacHeaders,
         body: JSON.stringify(payload),
         timeout: 10000  // 10 second timeout per attempt
     });
@@ -69,6 +68,7 @@ async function syncToStaffPortal(booking) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 async function runReconciliation() {
+    logger.info('Reconciliation job running');
     const Booking = require('../models/Booking');
 
     const cutoff = new Date(Date.now() - RETRY_AFTER_MS);
@@ -87,11 +87,11 @@ async function runReconciliation() {
     }).select('_id bookingReference eventType eventDate location notes customerId amountPaid usherCount syncAttempts').lean();
 
     if (staleBookings.length === 0) {
-        console.log('[Reconciliation] No bookings require sync retry');
+        logger.info('No bookings require sync retry');
         return;
     }
 
-    console.log(`[Reconciliation] Found ${staleBookings.length} booking(s) to retry`);
+    logger.info({ count: staleBookings.length }, 'Found bookings to retry sync');
 
     const results = await Promise.allSettled(
         staleBookings.map(async (booking) => {
@@ -105,7 +105,10 @@ async function runReconciliation() {
                     $unset: { lastSyncError: 1 }
                 });
 
-                console.log(`[Reconciliation] ✅ Synced booking ${booking.bookingReference}`);
+                logger.info(
+                    { bookingId: booking._id?.toString(), syncAttempts: (booking.syncAttempts || 0) + 1 },
+                    'Sync retry succeeded'
+                );
             } catch (err) {
                 const nextAttempt = (booking.syncAttempts || 0) + 1;
                 const exhausted = nextAttempt >= MAX_ATTEMPTS;
@@ -117,13 +120,20 @@ async function runReconciliation() {
                     lastSyncError: err.message
                 });
 
+                logger.error(
+                    { err, bookingId: booking._id?.toString(), syncAttempts: nextAttempt },
+                    'Sync retry failed'
+                );
+
                 if (exhausted) {
-                    console.error(
-                        `[Reconciliation] ❌ Giving up on booking ${booking.bookingReference} after ${MAX_ATTEMPTS} attempts. Last error: ${err.message}`
+                    logger.warn(
+                        { bookingId: booking._id?.toString(), syncAttempts: nextAttempt, maxAttempts: MAX_ATTEMPTS },
+                        'Sync retries exhausted for booking'
                     );
                 } else {
-                    console.warn(
-                        `[Reconciliation] ⚠️  Retry ${nextAttempt}/${MAX_ATTEMPTS} failed for booking ${booking.bookingReference}: ${err.message}`
+                    logger.warn(
+                        { bookingId: booking._id?.toString(), syncAttempts: nextAttempt, maxAttempts: MAX_ATTEMPTS },
+                        'Sync retry scheduled for next reconciliation pass'
                     );
                 }
             }
@@ -131,7 +141,7 @@ async function runReconciliation() {
     );
 
     const succeeded = results.filter(r => r.status === 'fulfilled').length;
-    console.log(`[Reconciliation] Pass complete — ${succeeded}/${staleBookings.length} synced`);
+    logger.info({ succeeded, total: staleBookings.length }, 'Reconciliation pass complete');
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -139,17 +149,17 @@ async function runReconciliation() {
 // ─────────────────────────────────────────────────────────────────────────────
 
 function startReconciliationJob() {
-    console.log('[Reconciliation] Job scheduled — runs every 15 minutes');
+    logger.info({ intervalMs: JOB_INTERVAL_MS }, 'Reconciliation job scheduled');
 
     // Run once immediately on startup to catch anything that failed during a
     // previous deployment or crash
     runReconciliation().catch(err =>
-        console.error('[Reconciliation] Startup run error:', err.message)
+        logger.error({ err }, 'Reconciliation startup run failed')
     );
 
     setInterval(() => {
         runReconciliation().catch(err =>
-            console.error('[Reconciliation] Scheduled run error:', err.message)
+            logger.error({ err }, 'Reconciliation scheduled run failed')
         );
     }, JOB_INTERVAL_MS);
 }

@@ -349,7 +349,18 @@
                   <% } %>
                 </div>
               <div>
-                  <div class="text-sm font-bold text-tx-1"><%= _userName.split(' ')[0] %></div>
+                  <div class="text-sm font-bold text-tx-1 flex items-center">
+                    <%= _userName.split(' ')[0] %>
+                    <span
+                      id="notification-badge"
+                      style="display:none; background:#ef4444;
+                      color:#fff; border-radius:50%;
+                      width:20px; height:20px;
+                      font-size:0.7rem; font-weight:700;
+                      align-items:center; justify-content:center;
+                      margin-left:8px;">
+                    </span>
+                  </div>
                   <div class="text-[0.65rem] text-emerald-400"><%= locals.user && locals.user.specific_role ? locals.user.specific_role : _role %></div>
               </div>
           </div>
@@ -410,6 +421,7 @@
      SCRIPTS
      ������������������������������������������������������������������������������������������������������������������������������������������������������������������������������ -->
 <script src="/socket.io/socket.io.js"></script>
+<script src="/js/notifications.js"></script>
 <script>
 // Global avatar helper
 window.avatarHtml = function(name, photoUrl, size, bg) {
@@ -502,6 +514,12 @@ function closeSidebar() {
 }
 
 window.addEventListener('DOMContentLoaded', () => {
+  // Phase 5: notification init
+  if (window.NotificationSystem) {
+    window.NotificationSystem.clearExpired();
+    window.NotificationSystem.showPending();
+  }
+
   if (localStorage.getItem('sidebarCollapsed') === 'true' && window.innerWidth > 900) {
     const sb = document.getElementById('sidebar');
     const main = document.getElementById('mainContent');
@@ -510,6 +528,16 @@ window.addEventListener('DOMContentLoaded', () => {
     if (main) main.style.marginLeft = '64px';
     if (hdr) hdr.style.left = '64px';
   }
+
+  // Highlight active nav item
+  const currentPath = window.location.pathname;
+  document.querySelectorAll('.drawer-link, .sidebar-link').forEach(link => {
+    if (link.getAttribute('href') === currentPath) {
+      link.classList.add('active');
+      link.style.fontWeight = '700';
+      link.style.opacity = '1';
+    }
+  });
 });
 
 // ��� Toast ���
@@ -548,7 +576,147 @@ document.addEventListener('keydown', e => {
 try {
   const socket = io();
   socket.on('notification', d => showToast(d.message, d.type || 'info'));
+
+  socket.on('paymentProcessed', function(data) {
+    // Update DOM if element exists on this page
+    const el = document.querySelector(
+      '[data-payment-id="' + data.paymentId + '"]'
+    );
+    if (el) {
+      const badge = el.querySelector('.status-badge');
+      if (badge) {
+        badge.textContent = 'Confirmed';
+        badge.classList.add('status-badge-update');
+        setTimeout(() => {
+          badge.classList.remove('status-badge-update');
+        }, 200);
+      }
+    }
+    // Always push to notification system
+    if (window.NotificationSystem) {
+      window.NotificationSystem.push(
+        'paymentProcessed',
+        'Payment confirmed' +
+          (data.bookingRef ? ' for ' + data.bookingRef : ''),
+        'success',
+        null
+      );
+    }
+  });
+
+  socket.on('paymentFailed', function(data) {
+    const el = document.querySelector(
+      '[data-payment-id="' + data.paymentId + '"]'
+    );
+    if (el) {
+      const badge = el.querySelector('.status-badge');
+      if (badge) {
+        badge.textContent = 'Failed';
+        badge.style.color = '#ef4444';
+      }
+    }
+    if (window.NotificationSystem) {
+      window.NotificationSystem.push(
+        'paymentFailed',
+        'Payment failed' +
+          (data.bookingRef ? ' for ' + data.bookingRef : ''),
+        'critical',
+        '/payments'
+      );
+    }
+  });
+
+  socket.on('systemAlert', function(data) {
+    // Non-interrupting — push to notifications only
+    if (window.NotificationSystem) {
+      window.NotificationSystem.push(
+        'systemAlert',
+        data.message || 'System alert received',
+        data.severity || 'warning',
+        null
+      );
+    }
+  });
+
+  socket.on('deadLetterAlert', function(data) {
+    // Critical — show modal requiring acknowledgment
+    showDeadLetterModal(data);
+    if (window.NotificationSystem) {
+      window.NotificationSystem.push(
+        'deadLetterAlert',
+        'Payment permanently failed: ' +
+          (data.bookingRef || data.jobId),
+        'critical',
+        '/admin/dead-letter-queue'
+      );
+    }
+  });
+
 } catch(e) {}
+
+function showDeadLetterModal(data) {
+  // Remove existing modal if present
+  const existing =
+    document.getElementById('dlq-modal');
+  if (existing) existing.remove();
+
+  const modal = document.createElement('div');
+  modal.id = 'dlq-modal';
+  modal.style.cssText = `
+    position: fixed;
+    inset: 0;
+    z-index: 10001;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,0,0,0.7);
+    padding: 16px;
+  `;
+  modal.innerHTML = \`
+    <div style="background:#1a1a2e; border:1px solid
+      rgba(239,68,68,0.3); border-radius:16px;
+      padding:24px; max-width:420px; width:100%;">
+      <h3 style="color:#ef4444; margin:0 0 12px;">
+        ⚠ Payment Failed Permanently
+      </h3>
+      <p style="color:#ccc; font-size:0.85rem;
+        margin:0 0 8px;">
+        A payment job has been moved to the
+        dead letter queue.
+      </p>
+      <div style="background:rgba(255,255,255,0.05);
+        border-radius:8px; padding:12px;
+        margin-bottom:16px; font-size:0.8rem;
+        color:#aaa;">
+        <div>Queue: \${data.queueName || 'payment'}</div>
+        <div>Job ID: \${data.jobId || 'unknown'}</div>
+        <div>Booking: \${data.bookingRef || 'N/A'}</div>
+        <div>Error: \${data.error || 'Unknown error'}</div>
+      </div>
+      <div style="display:flex; gap:12px;">
+        <a href="/admin/dead-letter-queue"
+          style="flex:1; padding:10px;
+          background:#ef4444; color:#fff;
+          border-radius:8px; text-align:center;
+          text-decoration:none; font-weight:600;
+          font-size:0.85rem;">
+          View DLQ
+        </a>
+        <button onclick="
+          document.getElementById(
+            'dlq-modal').remove()"
+          style="flex:1; padding:10px;
+          background:rgba(255,255,255,0.1);
+          color:#fff; border:none;
+          border-radius:8px; font-weight:600;
+          font-size:0.85rem; cursor:pointer;">
+          Dismiss
+        </button>
+      </div>
+    </div>
+  \`;
+  document.body.appendChild(modal);
+}
 
 // ������ Staff Drawer ������
   // Welcome toast
@@ -564,14 +732,36 @@ function toggleStaffDrawer() {
   const backdrop = document.getElementById('staffDrawerBackdrop');
   const icon = document.getElementById('drawerHamburgerIcon');
   if (!drawer) return;
+
+  // Add backdrop to DOM if not present
+  if (!document.getElementById('drawer-backdrop')) {
+    const newBackdrop = document.createElement('div');
+    newBackdrop.id = 'drawer-backdrop';
+    newBackdrop.className = 'drawer-backdrop';
+    newBackdrop.style.cssText = `
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 999;
+    `;
+    newBackdrop.addEventListener('click', toggleStaffDrawer);
+    document.body.appendChild(newBackdrop);
+  }
+
+  const customBackdrop = document.getElementById('drawer-backdrop');
+
   const isOpen = !drawer.classList.contains('-translate-x-full');
   if (isOpen) {
     drawer.classList.add('-translate-x-full');
+    drawer.classList.remove('drawer-slide-in');
     backdrop.classList.add('hidden');
+    customBackdrop.style.display = 'none';
     if (icon) { icon.classList.remove('fa-xmark'); icon.classList.add('fa-bars'); }
   } else {
     drawer.classList.remove('-translate-x-full');
+    drawer.classList.add('drawer-slide-in');
     backdrop.classList.remove('hidden');
+    customBackdrop.style.display = 'block';
     if (icon) { icon.classList.remove('fa-bars'); icon.classList.add('fa-xmark'); }
   }
 }

@@ -12,22 +12,33 @@ const { validateParam } = require('../utils/validateObjectId');
 const router = express.Router();
 
 const ctrl = require('../controllers/adminFinanceController');
+const invoiceCtrl = require('../controllers/invoiceController');
+const adminController = require('../controllers/adminController');
 const { protect, authorize } = require('../middleware/auth');
 const { sanitizeRequestBody } = require('../middleware/validation');
-
-// ── PUBLIC callbacks (Safaricom, no auth) ─────────────────────
-router.post('/mpesa/callback', ctrl.mpesaCallback);
-router.post('/mpesa/timeout',  ctrl.mpesaTimeout);
+// Centralized webhook security — verifySafaricomIP is mounted in server.js
+// directly on the callback route, before these routes load.
+// Kept here as reference import only.
+// const { verifySafaricomIP } = require('../middleware/webhookSecurity');
 
 // ── Apply auth to all routes below ───────────────────────────
 router.use(protect, authorize('Admin', 'Super Admin'));
 
 // ── EJS page views ────────────────────────────────────────────
 router.get('/payments-page',   ctrl.getPaymentsPage);
+router.get('/invoices',        invoiceCtrl.getInvoicesPage);
 
 // ── JSON API ──────────────────────────────────────────────────
 router.get('/payments',        ctrl.getAllPayments);
-// router.get('/export/payments', ctrl.exportPayments); // TODO: implement
+router.get('/export/payments', adminController.exportPayments);
+
+// ── Phase 6: Client Invoices ──────────────────────────────────
+router.post('/invoices/generate',        sanitizeRequestBody, invoiceCtrl.generateInvoice);
+router.get('/invoices/:id/download',     validateParam('id'), invoiceCtrl.downloadInvoice);
+router.put('/invoices/:id/status',       validateParam('id'), sanitizeRequestBody, invoiceCtrl.updateInvoiceStatus);
+router.put('/invoices/:id',              validateParam('id'), sanitizeRequestBody, invoiceCtrl.updateInvoice);
+router.post('/invoices/:id/send-email',  validateParam('id'), invoiceCtrl.sendInvoiceEmail);
+router.delete('/invoices/:id',           validateParam('id'), invoiceCtrl.deleteInvoice);
 
 // ── Per-assignment payment operations ────────────────────────
 router.put('/assignments/:id/payment', validateParam('id'),                         sanitizeRequestBody, ctrl.updatePaymentStatus);

@@ -1,5 +1,5 @@
 const express = require('express');
-const { login, logout, refresh, changePassword, forgotPassword, resetPassword, secureLogin, staffForgotPassword, getPortalChoice, getProfileJson } = require('../controllers/authController');
+const { login, logout, logoutAllSessions, refresh, changePassword, forgotPassword, resetPassword, secureLogin, staffForgotPassword, getPortalChoice, getProfileJson } = require('../controllers/authController');
 const { protect } = require('../middleware/auth');
 const { validateLogin, validatePasswordChange, sanitizeRequestBody } = require('../middleware/validation');
 
@@ -18,6 +18,7 @@ router.get('/login', (req, res) => {
 router.post('/login', sanitizeRequestBody, validateLogin, login);
 router.get('/logout', logout);
 router.post('/logout', logout);
+router.post('/logout-all', protect, logoutAllSessions);
 router.post('/refresh', refresh);
 router.get('/portal-choice', protect, getPortalChoice);
 router.get('/me', protect, getProfileJson);

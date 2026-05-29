@@ -12,10 +12,22 @@ console.trace('[DEBUG] clientPortalRoutes started loading');
 const express = require('express');
 const router = express.Router();
 const csrf = require('csurf');
+const rateLimit = require('express-rate-limit');
 const { protectClient, enforceDataOwnership } = require('../middleware/clientAuthMiddleware');
 const { loginLimiter, passwordResetLimiter, generalApiLimiter } = require('../middleware/clientRateLimiter');
 const clientPortalController = require('../controllers/clientPortalController');
 const passport = require('passport');
+
+const aiRateLimiter = rateLimit({
+    windowMs: 60 * 1000,
+    max: 10,
+    message: {
+        success: false,
+        message: 'Too many requests, please try again in a minute.'
+    },
+    standardHeaders: true,
+    legacyHeaders: false
+});
 
 // CSRF Protection config
 const csrfProtection = csrf({ cookie: { httpOnly: true, sameSite: 'strict', secure: process.env.NODE_ENV === 'production' } });
@@ -63,7 +75,7 @@ router.get('/invoices', protectClient, clientPortalController.renderInvoices);
 router.get('/invoices/:invoiceId', protectClient, enforceDataOwnership, clientPortalController.renderInvoices);
 router.get('/invoices/:invoiceId/download', protectClient, enforceDataOwnership, (req, res) => res.send('PDF'));
 router.get('/etr/:eventId', protectClient, enforceDataOwnership, clientPortalController.renderEtrView);
-router.get('/etr/:eventId/download', protectClient, enforceDataOwnership, (req, res) => res.send('PDF'));
+router.get('/etr/:eventId/download', protectClient, enforceDataOwnership, clientPortalController.apiDownloadEtr);
 router.get('/sessions', protectClient, clientPortalController.renderSessions);
 
 // ── API ROUTES ──
@@ -87,12 +99,7 @@ router.get('/api/sessions', clientPortalController.apiGetSessions);
 router.delete('/api/sessions/:sessionId', clientPortalController.apiDeleteSession);
 
 // ── Client Event Health (AI-powered, safe exposure only) ──
-let clientHealthLimiter = (req, res, next) => next(); // fallback no-op
-try {
-    // Check staff-system/middleware for equivalent rate limiting if needed
-    // Currently using fallback no-op as aiRateLimiter.js is missing
-} catch(e) { console.warn('[ClientPortal] aiRateLimiter not available, using fallback'); }
-router.get('/api/event-health/:eventId', clientHealthLimiter, enforceDataOwnership, clientPortalController.apiGetEventHealth);
+router.get('/api/event-health/:eventId', aiRateLimiter, enforceDataOwnership, clientPortalController.apiGetEventHealth);
 
 // Error fallback for CSRF
 router.use((err, req, res, next) => {

@@ -15,6 +15,8 @@ const jwt = require('jsonwebtoken');
 const methodOverride = require('method-override');
 const compression = require('compression');
 const morgan = require('morgan');
+const { createServiceLogger } = require('../server/utils/logger');
+const staffLogger = createServiceLogger('staff-system');
 
 // Route files
 const authRoutes       = require('./routes/auth');
@@ -28,15 +30,25 @@ const adminEventsRoutes    = require('./routes/adminEventsRoutes');
 const adminFinanceRoutes   = require('./routes/adminFinanceRoutes');
 const adminReportsRoutes   = require('./routes/adminReportsRoutes');
 
-// ── Remaining admin.js routes not yet split (live, planner, invoice, survey) ──
-const adminLegacyRoutes = require('./routes/admin');
 const Staff = require('./models/Staff');
 const AuditLog = require('./models/AuditLog');
 const { protect, authorize } = require('./middleware/auth');
+const { sanitizeRequestBody } = require('./middleware/validation');
+const surveyController = require('./controllers/surveyController');
 const emailService = require('./services/emailService');
 emailService.initializeEmailService();
+const adminFinanceController = require('./controllers/adminFinanceController');
+const { startJob, stopJob } = require('./jobs/missingStaffJob');
+const { verifySafaricomIP } = require('./middleware/webhookSecurity');
+const { verifySyncAuth } = require('./middleware/syncAuth');
+const { globalLimiter, authLimiter, webhookLimiter } = require('./middleware/rateLimiter');
 const STAFF_COOKIE = 'staff_portal_token';
 const LEGACY_COOKIE = 'portal_token';
+
+// IP verification and sync auth now handled by centralized middleware:
+// - staff-system/middleware/webhookSecurity.js  (verifySafaricomIP)
+// - staff-system/middleware/syncAuth.js          (verifySyncAuth)
+// - staff-system/middleware/rateLimiter.js       (globalLimiter, authLimiter, webhookLimiter)
 
 const app = express();
 app.set('trust proxy', 1);
@@ -151,8 +163,9 @@ app.use(helmet({
   }
 }));
 app.use(compression());
-if (process.env.NODE_ENV === 'production') {
-  app.use(morgan('combined'));
+if (process.env.NODE_ENV !== 'test') {
+    const requestLogger = require('../logger/requestLogger');
+    app.use(requestLogger);
 }
 app.use(methodOverride(function(req, res) {
   if (req.body && typeof req.body === 'object' && '_method' in req.body) {
@@ -209,35 +222,16 @@ app.use('/portal', (req, res, next) => {
   next();
 });
 
-// Rate limiting
-const limiter = rateLimit({
-    windowMs: 10 * 60 * 1000, // 10 mins
-    max: 1000, // Increased for subagent testing
-    message: { success: false, error: 'Too many requests, please try again later' },
-    standardHeaders: true,
-    legacyHeaders: false
-});
-
-// Stricter rate limiting for authentication endpoints
-const authLimiter = rateLimit({
-    windowMs: 1 * 60 * 1000, // 1 minute
-    max: 100, // 100 requests per window
-    message: { success: false, error: 'Too many authentication attempts, please try again later' }
-});
-
-// Apply rate limiting to /portal/auth routes
-app.use('/portal/auth/', limiter);
+// Rate limiting — using centralized tiered limiters from middleware/rateLimiter.js
+app.use(globalLimiter);
 app.use('/portal/auth/login', authLimiter);
 app.use('/portal/auth/forgot-password', authLimiter);
 app.use('/portal/auth/reset-password', authLimiter);
+app.use('/portal/auth/staff-forgot-password', authLimiter);
 
 // Booking sync receiver from port 3000
-app.post('/internal/sync-booking', async (req, res) => {
+app.post('/internal/sync-booking', verifySyncAuth, async (req, res) => {
   try {
-    const syncSecret = process.env.SYNC_SECRET;
-    if (req.headers['x-sync-secret'] !== syncSecret) {
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
     const Assignment = require('./models/Assignment');
     const Staff = require('./models/Staff');
     const { title, description, location, date, start_time, end_time,
@@ -332,12 +326,8 @@ app.post('/internal/sync-booking', async (req, res) => {
 });
 
   // Event completion sync from port 3000
-  app.post('/internal/sync-event-complete', async (req, res) => {
+  app.post('/internal/sync-event-complete', verifySyncAuth, async (req, res) => {
     try {
-      const syncSecret = process.env.SYNC_SECRET;
-      if (req.headers['x-sync-secret'] !== syncSecret) {
-        return res.status(401).json({ error: 'Unauthorized' });
-      }
       const { booking_ref, status } = req.body;
       if (!booking_ref) return res.json({ success: false, error: 'No booking_ref' });
 
@@ -357,13 +347,7 @@ app.post('/internal/sync-booking', async (req, res) => {
   });
 
 // Staff sync endpoint from port 3000
-app.post('/internal/sync-staff', async (req, res) => {
-  const syncSecret = process.env.SYNC_SECRET;
-  const authHeader = req.headers['x-sync-secret'];
-  
-  if (authHeader !== syncSecret) {
-    return res.status(401).json({ error: 'Unauthorized' });
-  }
+app.post('/internal/sync-staff', verifySyncAuth, async (req, res) => {
   
   const { action, staff } = req.body;
   // action: 'create', 'update', 'delete'
@@ -412,10 +396,8 @@ app.post('/internal/sync-staff', async (req, res) => {
 });
 
 // ── Internal: Sync client payment amount to staff-system assignment ────────────
-app.post('/internal/sync-payment', async (req, res) => {
+app.post('/internal/sync-payment', verifySyncAuth, async (req, res) => {
     try {
-    const syncSecret = process.env.SYNC_SECRET;
-        if (req.headers['x-sync-secret'] !== syncSecret) return res.status(401).json({ error: 'Unauthorized' });
         const { booking_ref, clientPaymentAmount, paymentMethod, transactionId } = req.body;
         const Assignment = require('./models/Assignment');
         const assignment = await Assignment.findOne({ booking_ref });
@@ -434,10 +416,8 @@ app.post('/internal/sync-payment', async (req, res) => {
 });
 
 // ── Internal: Sync pricing settings from main portal ─────────────────────────
-app.post('/internal/sync-pricing', async (req, res) => {
+app.post('/internal/sync-pricing', verifySyncAuth, async (req, res) => {
     try {
-    const syncSecret = process.env.SYNC_SECRET;
-        if (req.headers['x-sync-secret'] !== syncSecret) return res.status(401).json({ error: 'Unauthorized' });
         const PricingSettings = require('./models/PricingSettings');
         const { categories, vatRate, globalSupervisorRate, paymentMethods } = req.body;
         let pricing = await PricingSettings.findOne();
@@ -458,6 +438,10 @@ app.post('/internal/sync-pricing', async (req, res) => {
 // Mount Routes — all under /portal prefix (isolated from static admin panel)
 app.use('/portal/auth', authRoutes);
 
+// Public M-Pesa callbacks must be mounted before protected /portal/admin-staff routes.
+app.post('/portal/admin-staff/mpesa/callback', webhookLimiter, verifySafaricomIP, adminFinanceController.mpesaCallback);
+app.post('/portal/admin-staff/mpesa/timeout', webhookLimiter, adminFinanceController.mpesaTimeout);
+
 // ── Admin domain routes (split from monolithic admin.js) ──────────────────────
 app.use('/portal/admin-staff', adminDashboardRoutes);
 app.use('/portal/admin-staff', adminStaffRoutes);
@@ -465,9 +449,9 @@ app.use('/portal/admin-staff', adminEventsRoutes);
 app.use('/portal/admin-staff', adminFinanceRoutes);
 app.use('/portal/admin-staff', adminReportsRoutes);
 
-// ── Remaining routes (live command center, planners, invoices, surveys) ───────
-// TODO: extract these into their own domain routers in a future refactor
-app.use('/portal/admin-staff', adminLegacyRoutes);
+// Public: accessible via survey link token, no auth required
+app.get('/portal/staff/survey/:token', surveyController.getSurveyPage);
+app.post('/portal/staff/survey/:token/submit', sanitizeRequestBody, surveyController.submitSurvey);
 
 app.use('/portal/staff', staffRoutes);
 app.use('/portal/supervisor', supervisorRoutes);
@@ -505,7 +489,11 @@ app.get('/staff-admin/sso-handoff', async (req, res) => {
     return res.redirect(loginRedirect);
   }
 
-  const ssoSecret = process.env.SSO_JWT_SECRET || process.env.SYNC_SECRET || process.env.JWT_SECRET;
+  const ssoSecret = process.env.SSO_JWT_SECRET;
+  if (!ssoSecret) {
+    console.error('FATAL: SSO_JWT_SECRET is required for SSO exchange.');
+    return res.redirect(loginRedirect);
+  }
   let payload;
   try {
     payload = jwt.verify(token, ssoSecret);
@@ -515,7 +503,7 @@ app.get('/staff-admin/sso-handoff', async (req, res) => {
   }
 
   if (payload.type !== 'staff-ops-sso' || !payload.email) return res.redirect(loginRedirect);
-  if (!['Admin', 'Super Admin'].includes(payload.role)) return res.redirect(loginRedirect);
+  if (!['admin', 'super_admin'].includes(payload.role)) return res.redirect(loginRedirect);
 
   try {
     const user = await Staff.findOne({ email: payload.email, role: 'Admin' });
@@ -525,7 +513,11 @@ app.get('/staff-admin/sso-handoff', async (req, res) => {
       return res.redirect(loginRedirect);
     }
 
-    const staffAuthSecret = process.env.STAFF_JWT_SECRET || process.env.JWT_SECRET;
+    const staffAuthSecret = process.env.STAFF_JWT_SECRET;
+    if (!staffAuthSecret) {
+      console.error('FATAL: STAFF_JWT_SECRET is required.');
+      return res.redirect(loginRedirect);
+    }
     const sessionToken = jwt.sign(
       { id: user._id },
       staffAuthSecret,
@@ -537,7 +529,7 @@ app.get('/staff-admin/sso-handoff', async (req, res) => {
       httpOnly: true,
       path: '/',
       secure: process.env.NODE_ENV === 'production',
-      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
+      sameSite: 'strict'
     };
     res.cookie(STAFF_COOKIE, sessionToken, cookieOptions);
     res.cookie(LEGACY_COOKIE, sessionToken, cookieOptions);
@@ -634,15 +626,7 @@ setInterval(async () => {
     }
 })();
 
-app.get('/health', (req, res) => {
-  res.status(200).json({
-    status: 'ok',
-    service: process.env.PORT_ADMIN ? 'admin-portal' : 'staff-operations',
-    timestamp: new Date().toISOString(),
-    uptime: process.uptime(),
-    environment: process.env.NODE_ENV
-  });
-});
+app.use('/health', require('../server/routes/health.routes'));
 
 app.use((err, req, res, next) => {
   console.error(err.stack);
@@ -673,18 +657,30 @@ const PORT = process.env.PORT || process.env.PORT_STAFF || 3001;
 if (!process.env.PORT && process.env.NODE_ENV === 'production') {
   console.warn('[WARN] process.env.PORT not set in production; falling back to PORT_STAFF/3001');
 }
-server.listen(PORT, () => {
+if (process.env.NODE_ENV !== 'test' && require.main === module) {
+  server.listen(PORT, () => {
     console.log(`Staff System running on port ${PORT}`);
     console.log(`✅ Phase 8 automation scheduler active`);
     console.log(`✅ Phase 12 live command center ready`);
-    
+
     // Start Missing Staff recovery check & interval loop
-    require('./jobs/missingStaffJob').startJob();
-});
+    startJob();
+
+    // Start Payment Recovery Service (every 10 minutes)
+    const { runRecovery } = require('./financials/services/paymentRecoveryService');
+    const RECOVERY_INTERVAL = 10 * 60 * 1000; // 10 minutes
+    global._paymentRecoveryInterval = setInterval(() => {
+      runRecovery().catch(err => console.error('[Recovery] Unhandled error:', err.message));
+    }, RECOVERY_INTERVAL);
+    console.log(`✅ Payment recovery service active (every ${RECOVERY_INTERVAL / 60000}min)`);
+  });
+}
 
 // Graceful shutdown
 process.on('SIGINT', () => {
     console.log('\n[SHUTDOWN] Stopping staff server gracefully...');
+  stopJob();
+  if (global._paymentRecoveryInterval) clearInterval(global._paymentRecoveryInterval);
     server.close(() => {
         mongoose.connection.close();
         process.exit(0);

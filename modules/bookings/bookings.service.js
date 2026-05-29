@@ -12,7 +12,9 @@ const PricingSettings = require('../../server/models/PricingSettings');
 const queues = require('../../config/queues');
 const bookingQueue = queues.bookingQueue;
 const notificationQueue = queues.notificationQueue;
+const logger = require('../../server/utils/logger');
 const emailService = require('../../server/services/emailService');
+const { createSyncHeaders } = require('../../staff-system/middleware/syncAuth');
 const { sendClientAppreciationEmail, sendStaffFeedbackRequestEmail, sendEmail } = emailService;
 const Staff = require('../../server/models/Staff');
 
@@ -51,9 +53,9 @@ class RecordsService {
   /**
    * Get all bookings with search/filter
    */
-  async getAllRecords(filters = {}, page = 1, limit = 20) {
+  async getAllRecords(filters = {}, page = 1, limit = 25) {
     const query = this.buildQuery(filters);
-    return await repository.findAll(query, page, limit);
+    return await repository.findAll({ page, limit, ...query });
   }
 
   /**
@@ -142,14 +144,27 @@ class RecordsService {
           client_name: record.customerId?.name || '',
           client_email: record.customerId?.email || ''
         },
-        { headers: { 'x-sync-secret': syncSecret } }
+        { headers: createSyncHeaders(syncSecret, {
+            title: record.eventType || 'Event',
+            description: record.notes || 'Synced from client booking',
+            location: record.location || 'TBD',
+            date: record.eventDate,
+            start_time: '09:00',
+            end_time: '17:00',
+            pay_rate: staffPayRate,
+            usherCount: record.usherCount || 0,
+            required_staff_count: record.selectedServices?.reduce((sum, s) => sum + (s.quantity || 0), 0) || record.usherCount || 1,
+            booking_ref: record._id.toString(),
+            client_name: record.customerId?.name || '',
+            client_email: record.customerId?.email || ''
+        }) }
       );
 
       await repository.updateSyncStatus(record._id, 'synced');
-      console.log('Record synced to staff portal:', record._id);
+      logger.info({ bookingId: record._id?.toString() }, 'Record synced to staff portal');
     } catch (syncErr) {
       await repository.updateSyncStatus(record._id, 'pending', syncErr.message);
-      console.warn('Staff portal sync failed (inline mode):', syncErr.message);
+      logger.warn({ err: syncErr, bookingId: record._id?.toString() }, 'Staff portal sync failed (inline mode)');
     }
   }
 
@@ -167,7 +182,7 @@ class RecordsService {
         if (match) return match.staffPayRate || 1000;
       }
     } catch (e) {
-      console.log('Pricing lookup failed:', e.message);
+      logger.warn({ err: e }, 'Pricing lookup failed');
     }
     return 1000;
   }
@@ -260,7 +275,12 @@ class RecordsService {
           paymentMethod: paymentData.paymentMethod,
           transactionId: paymentData.transactionId
         },
-        { headers: { 'x-sync-secret': syncSecret } }
+        { headers: createSyncHeaders(syncSecret, {
+            booking_ref: record._id.toString(),
+            clientPaymentAmount: paymentData.amount,
+            paymentMethod: paymentData.paymentMethod,
+            transactionId: paymentData.transactionId
+        }) }
       );
 
       // Build proforma HTML
@@ -304,9 +324,9 @@ class RecordsService {
           htmlContent: proformaHtml
         });
       }
-      console.log('Proforma invoice sent to:', record.customerId?.email);
+      logger.info({ bookingId: record._id?.toString() }, 'Proforma invoice sent');
     } catch (invErr) { 
-      console.log('Proforma invoice/sync skip:', invErr.message); 
+      logger.warn({ err: invErr, bookingId: record._id?.toString() }, 'Proforma invoice/sync skipped');
     }
   }
 
@@ -370,7 +390,7 @@ class RecordsService {
           }
           successCount++;
         } catch (e) {
-          console.error(`Failed sending to staff ${staff.name}:`, e.message);
+          logger.error({ err: e, staffId: staff._id?.toString(), staffName: staff.name }, 'Failed sending staff feedback request');
           failCount++;
         }
       } else {
@@ -386,6 +406,36 @@ class RecordsService {
     );
 
     return { successCount, failCount };
+  }
+
+  /**
+   * Assign staff (supervisor + team) to a booking
+   * @returns {{ booking, assignedNames: string[] } | null}
+   */
+  async assignStaff(bookingId, { supervisorId, staffIds }) {
+    const booking = await repository.assignStaff(bookingId, { supervisorId, staffIds });
+    if (!booking) return null;
+
+    // Build human-readable names for the notification
+    const assignedNames = [];
+    if (supervisorId) {
+      const sup = await repository.findStaffById(supervisorId);
+      if (sup) assignedNames.push(`Supervisor: ${sup.name}`);
+    }
+    if (staffIds && staffIds.length) {
+      const team = await repository.findStaffByIds(staffIds);
+      team.forEach(s => assignedNames.push(s.name));
+    }
+
+    await AdminNotification.create({
+      type: 'staff_assigned',
+      title: 'Staff Assigned to Booking',
+      bookingRef: booking._id,
+      message: `Staff assigned to booking #${booking.bookingReference || booking._id}: ${assignedNames.join(', ') || 'None'}`,
+      isRead: false
+    });
+
+    return { booking, assignedNames };
   }
 
   /**

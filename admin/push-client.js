@@ -34,15 +34,30 @@ function playNotificationSound() {
     });
 }
 
+async function ensureCsrfToken() {
+    if (window.__csrfToken) {
+        return window.__csrfToken;
+    }
+
+    const profileRes = await fetch('/api/v1/admin/profile', {
+        method: 'GET',
+        credentials: 'same-origin'
+    });
+
+    const csrfToken = profileRes.headers.get('X-CSRF-Token');
+    if (csrfToken) {
+        window.__csrfToken = csrfToken;
+    }
+
+    return window.__csrfToken;
+}
+
 // Convert VAPID key
 function urlBase64ToUint8Array(base64String) {
     const padding = '='.repeat((4 - base64String.length % 4) % 4);
     const base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/');
     const rawData = window.atob(base64);
-    const outputArray = new Uint8Array(rawData.length);
-    for (let i = 0; i < rawData.length; ++i) {
-        outputArray[i] = rawData.charCodeAt(i);
-    }
+    const outputArray = Uint8Array.from(rawData, (_, i) => rawData.charCodeAt(i));
     return outputArray;
 }
 
@@ -81,10 +96,16 @@ async function initPushNotifications() {
             applicationServerKey: convertedVapidKey
         });
 
+        // Ensure CSRF token exists before mutating request
+        const csrfToken = await ensureCsrfToken();
+
         // Send subscription to backend
         await fetch('/api/v1/admin/push-subscribe', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-Token': csrfToken || ''
+            },
             credentials: 'same-origin',
             body: JSON.stringify({ subscription })
         });
@@ -150,6 +171,8 @@ async function setupManualPush() {
 
 // Run passively in background if permission already granted
 document.addEventListener('DOMContentLoaded', () => {
+    ensureCsrfToken().catch(() => {});
+
     if (Notification.permission === 'granted') {
         initPushNotifications();
 

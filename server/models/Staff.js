@@ -53,4 +53,9 @@ const StaffSchema = new mongoose.Schema({
     }
 });
 
+// ── Compound indexes for real query patterns ─────────────────────────────────
+StaffSchema.index({ category: 1, isAvailable: 1 });  // active staff by category queries
+StaffSchema.index({ assignedBookings: 1 });           // event roster lookups
+StaffSchema.index({ assignedBookings: 1, isAvailable: 1 }); // roster + availability filters
+
 module.exports = mongoose.model('Staff', StaffSchema);

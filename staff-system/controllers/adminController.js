@@ -1,4 +1,5 @@
 const respond = require('../../utils/respond');
+const { getCache, setCache, invalidateCache } = require('../../utils/cache');
 const Staff = require('../models/Staff');
 const bcrypt = require('bcrypt');
 const crypto = require('crypto');
@@ -12,6 +13,7 @@ const PerformanceReview = require('../models/PerformanceReview');
 const webpush = require('web-push');
 const emailService = require('../services/emailService');
 const { notificationQueue } = require('../../config/queues');
+const { normalizeMpesaCallback } = require('../../utils/mpesaCallbackNormalizer');
 const mpesaService = require('../services/mpesaService');
 const PDFDocument = require('pdfkit');
 const { Parser } = require('json2csv');
@@ -64,6 +66,13 @@ const emitMetricUpdate = async () => {
         console.error('Metric update error:', err.message);
     }
 };
+
+async function invalidateRosterCaches(assignmentId) {
+    await Promise.all([
+        invalidateCache(`cache:roster:${assignmentId}`),
+        invalidateCache(`cache:roster:report:${assignmentId}`)
+    ]);
+}
 
 // Helper: Build event report data (shared between view and export)
 const buildEventReport = async (assignmentId) => {
@@ -427,6 +436,7 @@ exports.updateAssignment = async (req, res) => {
     try {
         const eventAssignmentService = require('../services/eventAssignmentService');
         const assignment = await eventAssignmentService.updateAssignment(req.user._id, req.params.id, req.body);
+        await invalidateRosterCaches(req.params.id);
         
         if (req.headers['content-type'] && req.headers['content-type'].includes('application/json')) {
             respond(res, 200, { success: true, data: assignment });
@@ -447,6 +457,7 @@ exports.deleteAssignment = async (req, res) => {
     try {
         const eventAssignmentService = require('../services/eventAssignmentService');
         await eventAssignmentService.deleteAssignment(req.user._id, req.params.id);
+        await invalidateRosterCaches(req.params.id);
         respond(res, 200, { success: true, message: 'Event deleted successfully' });
     } catch (error) {
         console.error(error);
@@ -477,6 +488,7 @@ exports.handleApplicant = async (req, res) => {
     try {
         const eventAssignmentService = require('../services/eventAssignmentService');
         await eventAssignmentService.handleApplicant(req.params.id, req.params.staffId, req.body.action);
+        await invalidateRosterCaches(req.params.id);
         respond(res, 200, { success: true, action: req.body.action });
     } catch (err) {
         console.error(err);
@@ -497,14 +509,22 @@ exports.generatePaymentReceipt = async (req, res) => {
 };
 
 // @desc    Get single assignment (live modal refresh)
+// @desc    Get single assignment (live modal refresh)
 // @route   GET /portal/admin-staff/assignments/:id
 exports.getSingleAssignment = async (req, res) => {
     try {
+        const cacheKey = `cache:roster:${req.params.id}`;
+        const cached = await getCache(cacheKey);
+        if (cached) return respond(res, 200, cached);
+
         const assignment = await Assignment.findById(req.params.id)
             .populate('accepted_staff_ids', 'name email phone')
             .populate('applicant_ids', 'name email');
         if (!assignment) return respond(res, 404, { success: false });
-        respond(res, 200, { success: true, data: assignment.toObject() });
+
+        const result = { success: true, data: assignment.toObject() };
+        await setCache(cacheKey, result, 30);
+        respond(res, 200, result);
     } catch (err) {
         respond(res, 500, { success: false });
     }
@@ -596,9 +616,14 @@ exports.rejectReplacement = async (req, res) => {
 };
 
 // @desc    Get Event Completion Report (JSON)
+// @desc    Get Event Completion Report (JSON)
 // @route   GET /admin/assignments/:id/report
 exports.getEventReport = async (req, res) => {
     try {
+        const cacheKey = `cache:roster:report:${req.params.id}`;
+        const cached = await getCache(cacheKey);
+        if (cached) return respond(res, 200, cached);
+
         const Assignment = require('../models/Assignment');
         const assignment = await Assignment.findById(req.params.id)
             .populate('assigned_staff_ids', 'name role status availability_status photo_url')
@@ -614,7 +639,10 @@ exports.getEventReport = async (req, res) => {
         if (!report) {
             return respond(res, 404, { success: false, error: 'Assignment not found' });
         }
-        respond(res, 200, { success: true, data: { ...report, assignment } });
+
+        const result = { success: true, data: { ...report, assignment } };
+        await setCache(cacheKey, result, 30);
+        respond(res, 200, result);
     } catch (error) {
         console.error(error);
         respond(res, 500, { success: false, error: 'Server Error' });
@@ -752,6 +780,7 @@ exports.assignEventSupervisor = async (req, res) => {
     try {
         const eventTeamService = require('../services/eventTeamService');
         const result = await eventTeamService.assignEventSupervisor(req.user._id, req.user.name, req.params.id, req.body.supervisor_id);
+        await invalidateRosterCaches(req.params.id);
         respond(res, 200, { success: true, assignment: result.assignment, team: result.team });
     } catch (err) {
         console.error(err);
@@ -765,6 +794,7 @@ exports.assignStaffToEvent = async (req, res) => {
   try {
     const eventAssignmentService = require('../services/eventAssignmentService');
     const assignment = await eventAssignmentService.assignStaffToEvent(req.params.id, req.body.staff_ids);
+        await invalidateRosterCaches(req.params.id);
     respond(res, 200, { success: true, assignment });
   } catch (err) {
     respond(res, 500, { success: false, message: err.message });
@@ -777,6 +807,7 @@ exports.toggleApplications = async (req, res) => {
     try {
         const eventAssignmentService = require('../services/eventAssignmentService');
         const open = await eventAssignmentService.toggleApplications(req.params.id);
+        await invalidateRosterCaches(req.params.id);
         respond(res, 200, { success: true, open });
     } catch(err) {
         respond(res, 500, { success: false, message: err.message });
@@ -805,14 +836,16 @@ exports.mpesaCallback = async (req, res) => {
             ...req.body,
             idempotencyKey: req.headers['x-idempotency-key'] || req.body?.idempotencyKey
         };
-        const result = payload?.Result;
+        const normalized = normalizeMpesaCallback(payload);
 
-        if (!result || typeof result !== 'object' || !result.Occasion) {
+        if (!normalized) {
             console.warn('M-Pesa callback invalid payload ignored');
             return respond(res, 200, { success: true, ignored: true });
         }
 
-        if (queueMode === 'async') {
+        const canUseQueue = normalized.flow === 'b2c' && Boolean(normalized.identifiers?.occasion);
+
+        if (queueMode === 'async' && canUseQueue) {
             const { paymentQueue } = require('../../config/queues');
             await paymentQueue.add('mpesa.callback', { payload });
         } else {

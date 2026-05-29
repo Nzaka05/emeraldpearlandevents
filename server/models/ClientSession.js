@@ -10,6 +10,10 @@ const clientSessionSchema = new mongoose.Schema({
         type: String,
         required: true
     },
+    tokenIndex: {
+        type: String,
+        index: true
+    },
     ip_address: {
         type: String
     },

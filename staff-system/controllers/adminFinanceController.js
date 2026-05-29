@@ -1,9 +1,11 @@
 /**
-const respond = require('../../utils/respond');
  * adminFinanceController.js
  * Domain: Payments, M-Pesa, Ledger
  * Pattern: Thin controller — delegates all financial logic to eventPaymentService.
  */
+
+const respond = require('../../utils/respond');
+const { normalizeMpesaCallback } = require('../../utils/mpesaCallbackNormalizer');
 
 const Assignment = require('../models/Assignment');
 
@@ -103,19 +105,31 @@ exports.initiateStaffPayment = async (req, res) => {
 // ─────────────────────────────────────────────────────────────
 exports.mpesaCallback = async (req, res) => {
     try {
+        const callback = req.body?.Body?.stkCallback;
+        if (
+            !callback ||
+            typeof callback.MerchantRequestID !== 'string' ||
+            typeof callback.CheckoutRequestID !== 'string' ||
+            typeof callback.ResultCode !== 'number'
+        ) {
+            return res.status(400).json({ error: 'Invalid callback payload' });
+        }
+
         const queueMode = (process.env.QUEUE_MODE || 'inline').toLowerCase();
         const payload = {
             ...req.body,
             idempotencyKey: req.headers['x-idempotency-key'] || req.body?.idempotencyKey
         };
-        const result = payload?.Result;
+        const normalized = normalizeMpesaCallback(payload);
 
-        if (!result || typeof result !== 'object' || !result.Occasion) {
+        if (!normalized) {
             console.warn('[adminFinanceController] mpesaCallback invalid payload ignored');
             return respond(res, 200, { success: true, ignored: true });
         }
 
-        if (queueMode === 'async') {
+        const canUseQueue = normalized.flow === 'b2c' && Boolean(normalized.identifiers?.occasion);
+
+        if (queueMode === 'async' && canUseQueue) {
             const { paymentQueue } = require('../../config/queues');
             await paymentQueue.add('mpesa.callback', { payload });
         } else {

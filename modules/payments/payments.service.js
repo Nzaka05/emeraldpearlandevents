@@ -7,10 +7,17 @@
 const axios = require('axios');
 const repositoryPath = './payments.repository';
 const repository = require(repositoryPath);
-
-const queueMode = (process.env.QUEUE_MODE || 'inline').toLowerCase();
+const logger = require('../../server/utils/logger');
+const { normalizeMpesaCallback } = require('../../utils/mpesaCallbackNormalizer');
 
 class PaymentsService {
+  /**
+   * Normalize STK/B2C callback payloads into one canonical contract.
+   */
+  normalizeMpesaCallback(payload = {}) {
+    return normalizeMpesaCallback(payload);
+  }
+
   /**
    * Build payment filter query
    */
@@ -38,7 +45,7 @@ class PaymentsService {
   /**
    * Get all payments with search/filter
    */
-  async getAllPayments(filters = {}, page = 1, limit = 20) {
+  async getAllPayments(filters = {}, page = 1, limit = 25) {
     const filter = this.buildFilter(filters);
     return await repository.findAll(filter, page, limit);
   }
@@ -51,108 +58,115 @@ class PaymentsService {
   }
 
   /**
-   * Process M-Pesa B2C callback
-   * Called by Safaricom after STK push → user enters PIN
+   * Process M-Pesa callback payload (supports STK and B2C forms)
    */
   async processMpesaCallback(payload) {
-    if (!payload || !payload.Result) {
+    const normalized = this.normalizeMpesaCallback(payload);
+    if (!normalized) {
       throw new Error('Invalid M-Pesa callback payload');
     }
 
-    const result = payload.Result;
-    const { ResultCode, ResultDesc, ConversationID, OriginatorConversationID } = result;
-    
-    // Extract idempotency key to prevent duplicate processing
-    const idempotencyKey = payload.idempotencyKey || OriginatorConversationID;
+    const { idempotencyKey, resultCode } = normalized;
+    if (!idempotencyKey) {
+      throw new Error('Unable to derive callback idempotency key');
+    }
 
     try {
       // Check if already processed
       const existingTransaction = await repository.findTransaction(idempotencyKey);
       if (existingTransaction) {
-        console.log('M-Pesa callback already processed:', idempotencyKey);
+        logger.info('M-Pesa callback already processed');
+        logger.debug({ idempotencyKey }, 'Duplicate callback ignored');
         return { success: true, duplicate: true };
       }
 
       // Process based on result code
-      if (ResultCode === 0) {
+      if (resultCode === 0) {
         // Success
-        await this.handleMpesaSuccess(result, idempotencyKey);
+        await this.handleMpesaSuccess(normalized);
       } else {
         // Failure
-        await this.handleMpesaFailure(result, idempotencyKey);
+        await this.handleMpesaFailure(normalized);
       }
 
       return { success: true };
     } catch (error) {
-      console.error('M-Pesa callback processing error:', error);
+      logger.error({ err: error }, 'M-Pesa callback processing error');
       throw error;
     }
   }
 
   /**
-   * Handle successful M-Pesa B2C transaction
+   * Handle successful M-Pesa callback
    */
-  async handleMpesaSuccess(result, idempotencyKey) {
-    const { 
-      ConversationID, 
-      TransactionAmount,
-      ReceiverParty,
-      TransactionDate,
-      TransactionID
-    } = result;
+  async handleMpesaSuccess(normalized) {
+    const { idempotencyKey, flow, amount, phoneNumber, transactionDate, identifiers, resultCode, resultDesc } = normalized;
 
     // Create transaction record
     const transaction = await repository.upsertTransaction({
       transactionId: idempotencyKey,
-      mpesaTransactionId: TransactionID,
-      conversationId: ConversationID,
-      amount: TransactionAmount,
-      recipientPhone: ReceiverParty,
-      transactionDate: new Date(TransactionDate),
-      status: 'completed',
-      type: 'b2c_payment'
+      type: flow === 'b2c' ? 'staffPayroll' : 'clientPayment',
+      sourceSystem: 'main-portal',
+      amount: amount || 0,
+      currency: 'KES',
+      direction: flow === 'b2c' ? 'out' : 'in',
+      description: resultDesc || `M-Pesa ${flow.toUpperCase()} callback`,
+      paymentMethod: 'MPesa',
+      status: 'Completed',
+      referenceCollection: flow === 'b2c' ? 'Assignment' : 'ClientPayment',
+      referenceId: identifiers.occasion || identifiers.checkoutRequestId || '',
+      metadata: {
+        flow,
+        resultCode,
+        transactionDate,
+        phoneNumber,
+        ...identifiers
+      }
     });
 
-    // Extract assignment ID from metadata (stored in conversation)
-    // This would be set when initiating STK push
-    // For now, log the transaction for manual follow-up
-    console.log('✅ M-Pesa B2C success:', {
+    logger.info('M-Pesa callback success recorded');
+    logger.debug({
       transactionId: idempotencyKey,
-      amount: TransactionAmount,
-      recipient: ReceiverParty,
-      mpesaTxnId: TransactionID
-    });
+      flow,
+      amount,
+      phoneNumber,
+      resultCode
+    }, 'M-Pesa callback success details');
 
     return transaction;
   }
 
   /**
-   * Handle failed M-Pesa B2C transaction
+   * Handle failed M-Pesa callback
    */
-  async handleMpesaFailure(result, idempotencyKey) {
-    const { 
-      ConversationID,
-      ResultCode,
-      ResultDesc,
-      OriginatorConversationID
-    } = result;
+  async handleMpesaFailure(normalized) {
+    const { idempotencyKey, flow, resultCode, resultDesc, identifiers, amount, phoneNumber, transactionDate } = normalized;
 
     // Create transaction record with failed status
     const transaction = await repository.upsertTransaction({
       transactionId: idempotencyKey,
-      conversationId: ConversationID,
-      originatorConversationId: OriginatorConversationID,
-      resultCode: ResultCode,
-      resultDesc: ResultDesc,
-      status: 'failed',
-      type: 'b2c_payment'
+      type: flow === 'b2c' ? 'staffPayroll' : 'clientPayment',
+      sourceSystem: 'main-portal',
+      amount: amount || 0,
+      currency: 'KES',
+      direction: flow === 'b2c' ? 'out' : 'in',
+      description: resultDesc || `M-Pesa ${flow.toUpperCase()} callback failed`,
+      paymentMethod: 'MPesa',
+      status: 'Failed',
+      referenceCollection: flow === 'b2c' ? 'Assignment' : 'ClientPayment',
+      referenceId: identifiers.occasion || identifiers.checkoutRequestId || '',
+      metadata: {
+        flow,
+        resultCode,
+        resultDesc,
+        transactionDate,
+        phoneNumber,
+        ...identifiers
+      }
     });
 
-    console.log('❌ M-Pesa B2C failure:', {
-      transactionId: idempotencyKey,
-      resultCode: ResultCode,
-      resultDesc: ResultDesc
-    });
+    logger.info({ resultCode }, 'M-Pesa callback failure recorded');
+    logger.debug({ transactionId: idempotencyKey, resultCode, resultDesc, flow }, 'M-Pesa callback failure details');
 
     return transaction;
   }
@@ -186,7 +200,7 @@ class PaymentsService {
 
       return response.data;
     } catch (error) {
-      console.error('M-Pesa status check error:', error.message);
+      logger.error({ err: error }, 'M-Pesa status check error');
       throw error;
     }
   }
@@ -223,10 +237,11 @@ class PaymentsService {
         }
       );
 
-      console.log('✅ STK push initiated:', response.data);
+      logger.info('STK push initiated');
+      logger.debug({ response: response.data }, 'STK push response details');
       return response.data;
     } catch (error) {
-      console.error('STK push error:', error.response?.data || error.message);
+      logger.error({ err: error, responseData: error.response?.data }, 'STK push error');
       throw error;
     }
   }
@@ -252,7 +267,7 @@ class PaymentsService {
 
       return response.data.access_token;
     } catch (error) {
-      console.error('M-Pesa token error:', error.message);
+      logger.error({ err: error }, 'M-Pesa token error');
       throw error;
     }
   }
@@ -298,7 +313,8 @@ class PaymentsService {
   async markPaymentReceived(assignmentId, staffPaymentId) {
     const assignment = await repository.markPaymentReceived(assignmentId, staffPaymentId);
     if (assignment) {
-      console.log('✅ Payment marked as received:', { assignmentId, staffPaymentId });
+      logger.info({ assignmentId }, 'Payment marked as received');
+      logger.debug({ assignmentId, staffPaymentId }, 'Payment receipt identifiers');
     }
     return assignment;
   }

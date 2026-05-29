@@ -36,3 +36,10 @@ seed-admin.js
 *.resolved
 
 nul
+
+seedAdmin.js
+.env.test
+env.test.example
+coverage/
+tmp/
+.agent/

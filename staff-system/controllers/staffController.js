@@ -643,13 +643,15 @@ exports.updateProfile = async (req, res) => {
         try {
             const axios = require('axios');
             const axiosRetry = require('axios-retry').default || require('axios-retry');
+            const { createSyncHeaders } = require('../middleware/syncAuth');
             axiosRetry(axios, { retries: 3, retryDelay: axiosRetry.exponentialDelay });
-            await axios.post('http://localhost:3000/internal/sync-staff-update', {
+            const syncBody = {
                 email: updated.email,
                 name: updated.name,
                 phone: updated.phone
-            }, {
-                headers: { 'x-sync-secret': process.env.SYNC_SECRET }
+            };
+            await axios.post('http://localhost:3000/internal/sync-staff-update', syncBody, {
+                headers: createSyncHeaders(process.env.SYNC_SECRET, syncBody)
             });
         } catch (syncErr) {
             console.log('Port 3000 sync skipped (may be offline):', syncErr.message);

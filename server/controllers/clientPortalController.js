@@ -44,6 +44,13 @@ CLIENT PORTAL <-> STAFF SYSTEM DATA CONTRACTS
 const clientAuthService = require('../services/clientAuthService');
 const ClientSession = require('../models/ClientSession');
 const staffSystemGateway = require('../services/staffSystemGateway');
+const ClientETR = require('../models/ClientETR');
+const Booking = require('../models/Booking');
+
+let Assignment = null;
+let ClientInvoice = null;
+try { Assignment = require('../../staff-system/models/Assignment'); } catch (e) { Assignment = null; }
+try { ClientInvoice = require('../../staff-system/models/ClientInvoice'); } catch (e) { ClientInvoice = null; }
 
 // ── BOOKING STATUS → TIMELINE STAGE MAP ──────────────────────────────────────
 // Booking.status values:  new | contacted | confirmed | completed | cancelled
@@ -194,6 +201,7 @@ exports.apiLogout = async (req, res) => {
         }
         respond(res, 200, { success: true, data: { message: 'Logged out' }, timestamp: new Date() });
     } catch (e) {
+        console.error('[apiGetEtr] error:', e);
         respond(res, 500, { success: false, data: { message: e.message }, timestamp: new Date() });
     }
 };
@@ -204,14 +212,17 @@ exports.apiLogoutAllDevices = async (req, res) => {
         res.clearCookie('client_token');
         respond(res, 200, { success: true, data: { revoked: count }, timestamp: new Date() });
     } catch (e) {
+        console.error('[apiDownloadEtr] error:', e);
         respond(res, 500, { success: false, data: { message: e.message }, timestamp: new Date() });
     }
 };
 
 exports.apiRefreshToken = async (req, res) => {
     try {
-        const { refreshToken } = req.body;
-        if (!refreshToken) return respond(res, 400, { success: false, data: { message: 'Refresh token required' }, timestamp: new Date() });
+        const refreshToken = req.body?.refreshToken || req.body?.refresh_token;
+        if (!refreshToken) {
+            return res.status(401).json({ success: false, message: 'Refresh token required' });
+        }
         
         const newAccessToken = await clientAuthService.refreshToken(refreshToken, req.ip, req.headers['user-agent']);
         
@@ -222,9 +233,9 @@ exports.apiRefreshToken = async (req, res) => {
             maxAge: 15 * 60 * 1000
         });
 
-        respond(res, 200, { success: true, data: { accessToken: newAccessToken }, timestamp: new Date() });
+        return res.status(200).json({ success: true, accessToken: newAccessToken });
     } catch (e) {
-        respond(res, 401, { success: false, data: { message: e.message }, timestamp: new Date() });
+        return res.status(401).json({ success: false, message: e.message });
     }
 };
 
@@ -314,11 +325,43 @@ exports.apiGetDashboard = async (req, res) => {
 exports.apiGetEvents = async (req, res) => {
     try {
         const Booking = require('../models/Booking');
-        const rawBookings = await Booking.find({ customerId: req.client.client_id })
-            .select('eventType eventDate location status estimatedTotal amountPaid bookingReference')
-            .lean();
+        const rawLimit = parseInt(req.query.limit, 10);
+        if (Number.isFinite(rawLimit) && rawLimit > 100) {
+            return respond(res, 400, {
+                success: false,
+                data: { message: 'limit cannot be greater than 100' },
+                timestamp: new Date()
+            });
+        }
+
+        const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
+        const limit = Math.min(rawLimit || 25, 100);
+        const skip = (page - 1) * limit;
+
+        const [rawBookings, total] = await Promise.all([
+            Booking.find({ customerId: req.client.client_id })
+                .select('eventType eventDate location status estimatedTotal amountPaid bookingReference')
+                .sort({ eventDate: -1 })
+                .skip(skip)
+                .limit(limit)
+                .lean(),
+            Booking.countDocuments({ customerId: req.client.client_id })
+        ]);
+
         const events = rawBookings.map(bookingToEvent);
-        respond(res, 200, { success: true, data: { events }, timestamp: new Date() });
+        res.set('X-Total-Count', total);
+
+        respond(res, 200, {
+            success: true,
+            data: { events },
+            meta: {
+                page,
+                limit,
+                total,
+                totalPages: Math.ceil(total / limit)
+            },
+            timestamp: new Date()
+        });
     } catch (e) {
         respond(res, 500, { success: false, data: { message: e.message }, timestamp: new Date() });
     }
@@ -396,12 +439,149 @@ exports.apiGetInvoiceDetail = async (req, res) => {
         if (!booking) return respond(res, 404, { success: false, data: { message: 'Not found' }, timestamp: new Date() });
         respond(res, 200, { success: true, data: { invoice: booking }, timestamp: new Date() });
     } catch (e) {
-        respond(res, 500, { success: false, data: { message: e.message }, timestamp: new Date() });
+        const isStaffDown = /ECONNREFUSED|timeout|network|socket hang up/i.test(e.message);
+        respond(res, isStaffDown ? 503 : 500, { success: false, data: { message: isStaffDown ? 'Staff system unavailable' : e.message }, timestamp: new Date() });
     }
 };
 
 exports.apiGetEtr = async (req, res) => {
-    respond(res, 200, { success: true, data: { message: 'ETR Data' }, timestamp: new Date() });
+    try {
+        const eventId = req.params.eventId;
+        const clientId = req.client.client_id.toString();
+
+        // Primary path: query staff system through internal API boundary.
+        try {
+            const remote = await staffSystemGateway.getClientEtr(eventId, clientId);
+            if (remote && remote.success && remote.data) {
+                return respond(res, 200, { success: true, data: remote.data, timestamp: new Date() });
+            }
+        } catch (remoteErr) {
+            console.warn('[apiGetEtr] staff-system unavailable, using local fallback:', remoteErr.message);
+        }
+
+        // Local fallback with real persisted data only.
+        const booking = await Booking.findOne({ _id: eventId, customerId: clientId })
+            .select('_id bookingReference eventType eventDate location')
+            .lean();
+
+        if (!booking) {
+            return respond(res, 404, {
+                success: false,
+                data: { message: 'Event not found for this client' },
+                timestamp: new Date()
+            });
+        }
+
+        let assignment = null;
+        if (Assignment) {
+            assignment = await Assignment.findOne({ booking_ref: booking.bookingReference })
+                .select('_id title location date booking_ref')
+                .lean();
+        }
+
+        if (!assignment) {
+            return respond(res, 404, {
+                success: false,
+                data: { message: 'No synced event record found for this booking yet' },
+                timestamp: new Date()
+            });
+        }
+
+        const etr = await ClientETR.findOne({ event_id: assignment._id })
+            .sort({ version: -1 })
+            .lean();
+
+        const invoices = ClientInvoice
+            ? await ClientInvoice.find({ eventId: assignment._id })
+                .select('_id invoiceNumber totalAmount paymentStatus invoiceStatus invoiceDate dueDate etrNumber etrIssuedAt pdfUrl')
+                .sort({ createdAt: -1 })
+                .lean()
+            : [];
+
+        return respond(res, 200, {
+            success: true,
+            data: {
+                event: {
+                    bookingId: booking._id,
+                    assignmentId: assignment._id,
+                    bookingReference: booking.bookingReference,
+                    title: assignment.title || booking.eventType,
+                    date: assignment.date || booking.eventDate,
+                    location: assignment.location || booking.location
+                },
+                etr: etr
+                    ? {
+                        id: etr._id,
+                        etrNumber: etr.summary?.etrNumber || null,
+                        version: etr.version,
+                        generatedAt: etr.generated_at || etr.createdAt,
+                        deliveryStatus: etr.delivery_status,
+                        pdfUrl: etr.pdf_url || null,
+                        summary: etr.summary || null
+                    }
+                    : null,
+                invoices: invoices.map((inv) => ({
+                    id: inv._id,
+                    invoiceNumber: inv.invoiceNumber,
+                    totalAmount: inv.totalAmount,
+                    paymentStatus: inv.paymentStatus,
+                    invoiceStatus: inv.invoiceStatus,
+                    invoiceDate: inv.invoiceDate,
+                    dueDate: inv.dueDate,
+                    etrNumber: inv.etrNumber || null,
+                    etrIssuedAt: inv.etrIssuedAt || null,
+                    pdfUrl: inv.pdfUrl || null
+                }))
+            },
+            timestamp: new Date()
+        });
+    } catch (e) {
+        const isStaffDown = /ECONNREFUSED|timeout|network|socket hang up/i.test(e.message);
+        respond(res, isStaffDown ? 503 : 500, { success: false, data: { message: isStaffDown ? 'ETR service unavailable' : e.message }, timestamp: new Date() });
+    }
+};
+
+exports.apiDownloadEtr = async (req, res) => {
+    try {
+        const eventId = req.params.eventId;
+        const clientId = req.client.client_id.toString();
+
+        const booking = await Booking.findOne({ _id: eventId, customerId: clientId })
+            .select('bookingReference')
+            .lean();
+
+        if (!booking) {
+            return respond(res, 404, { success: false, data: { message: 'Event not found for this client' }, timestamp: new Date() });
+        }
+
+        if (!Assignment) {
+            return respond(res, 503, { success: false, data: { message: 'ETR service unavailable' }, timestamp: new Date() });
+        }
+
+        const assignment = await Assignment.findOne({ booking_ref: booking.bookingReference })
+            .select('_id')
+            .lean();
+
+        if (!assignment) {
+            return respond(res, 404, { success: false, data: { message: 'No synced event record found for this booking yet' }, timestamp: new Date() });
+        }
+
+        const etr = await ClientETR.findOne({ event_id: assignment._id }).sort({ version: -1 }).lean();
+        if (!etr || !etr.pdf_url) {
+            return respond(res, 404, { success: false, data: { message: 'ETR PDF not found' }, timestamp: new Date() });
+        }
+
+        if (etr.pdf_url.startsWith('http')) {
+            return res.redirect(etr.pdf_url);
+        }
+
+        const path = require('path');
+        const absolutePath = path.join(__dirname, '../../public', etr.pdf_url);
+        return res.download(absolutePath);
+    } catch (e) {
+        const isStaffDown = /ECONNREFUSED|timeout|network|socket hang up/i.test(e.message);
+        respond(res, isStaffDown ? 503 : 500, { success: false, data: { message: isStaffDown ? 'ETR download service unavailable' : e.message }, timestamp: new Date() });
+    }
 };
 
 exports.apiGetEventHealth = async (req, res) => {

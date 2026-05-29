@@ -1,12 +1,15 @@
 const fs = require('fs');
 const path = require('path');
 
-const dir = path.join(__dirname, 'admin');
+const dir = path.resolve(__dirname, 'admin');
 
 const files = fs.readdirSync(dir).filter(f => f.endsWith('.html'));
 
 files.forEach(f => {
-    let p = path.join(dir, f);
+    let p = path.normalize(path.join(dir, f));
+    if (!p.startsWith(dir + path.sep)) {
+        throw new Error('Path traversal detected');
+    }
     let content = fs.readFileSync(p, 'utf8');
 
     // Replace all occurrences of onclick=...toggleSidebar... 

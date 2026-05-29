@@ -1,12 +1,13 @@
 const fs = require('fs');
 const path = require('path');
 
-const root = process.cwd();
+const root = path.resolve(__dirname, '..');
 
 function walk(dir, out=[]) {
   for (const ent of fs.readdirSync(dir, { withFileTypes: true })) {
     if (ent.name === 'node_modules' || ent.name === '.git') continue;
-    const p = path.join(dir, ent.name);
+    const p = path.normalize(path.join(dir, ent.name));
+    if (!p.startsWith(root + path.sep)) continue;
     if (ent.isDirectory()) walk(p, out);
     else out.push(p);
   }

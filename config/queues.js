@@ -1,10 +1,10 @@
+const Redis = require('ioredis');
+const { Queue } = require('bullmq');
 const queueMode = (process.env.QUEUE_MODE || 'inline').toLowerCase();
 
-let connection = null;
-
-function buildConnection() {
+function buildConnectionConfig() {
     if (!process.env.REDIS_URL) {
-        throw new Error('REDIS_URL is required to initialize BullMQ queues');
+        return null;
     }
 
     const redisUrl = new URL(process.env.REDIS_URL);
@@ -15,8 +15,20 @@ function buildConnection() {
         port: Number(redisUrl.port || (isTls ? 6380 : 6379)),
         password: redisUrl.password || undefined,
         username: redisUrl.username || undefined,
-        tls: isTls ? {} : undefined
+        tls: isTls ? {} : undefined,
+        maxRetriesPerRequest: null // Required by BullMQ
     };
+}
+
+const connection = buildConnectionConfig();
+let redisClient = null;
+
+function createRedisClient() {
+    if (!connection) {
+        throw new Error('REDIS_URL is required to initialize BullMQ queues');
+    }
+
+    return new Redis(connection);
 }
 
 function createNoopQueue(name) {
@@ -45,8 +57,7 @@ function buildQueues() {
         };
     }
 
-    connection = buildConnection();
-    const { Queue } = require('bullmq');
+    redisClient = createRedisClient();
 
     return {
         bookingQueue: createBullQueue(Queue, 'bookingQueue', {
@@ -92,6 +103,7 @@ const { bookingQueue, paymentQueue, notificationQueue, syncQueue } = buildQueues
 
 module.exports = {
     connection,
+    redisClient,
     bookingQueue,
     paymentQueue,
     notificationQueue,

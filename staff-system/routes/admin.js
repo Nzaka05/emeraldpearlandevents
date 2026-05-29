@@ -1,3 +1,7 @@
+// DEPRECATED - routes migrated to split routers
+// Safe to delete after confirming no regressions
+// Date deprecated: 2026-04-24
+
 const express = require('express');
 const {
     getDashboard, getAllStaff, addStaff, editStaff, deleteStaff,

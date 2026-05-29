@@ -50,16 +50,26 @@ exports.protectClient = async (req, res, next) => {
 exports.enforceDataOwnership = async (req, res, next) => {
     try {
         const clientId = req.client.client_id;
+        const clientIdStr = String(clientId);
         
         // Check Event/Assignment Ownership
         const eventId = req.params.eventId || req.query.eventId || req.body.eventId;
         if (eventId) {
-            let assignedEvent;
+            let bookingEvent = null;
+            let assignedEvent = null;
             try {
-                assignedEvent = await Assignment.findById(eventId);
+                bookingEvent = await Booking.findOne({ _id: eventId, customerId: clientId }).select('_id').lean();
             } catch(e) {} // Ignore CastError
+
+            if (!bookingEvent && Assignment) {
+                try {
+                    assignedEvent = await Assignment.findById(eventId).select('client_id').lean();
+                } catch(e) {} // Ignore CastError
+            }
+
+            const assignmentClientId = assignedEvent && assignedEvent.client_id ? String(assignedEvent.client_id) : null;
             
-            if (!assignedEvent || assignedEvent.client_id.toString() !== clientId) {
+            if (!bookingEvent && assignmentClientId !== clientIdStr) {
                 if (req.originalUrl.includes('/api/')) {
                     return res.status(403).json({ success: false, error: 'access denied' });
                 }
@@ -72,10 +82,16 @@ exports.enforceDataOwnership = async (req, res, next) => {
         if (invoiceId) {
             let invoice;
             try {
-                invoice = await ClientInvoice.findById(invoiceId);
+                if (ClientInvoice) {
+                    invoice = await ClientInvoice.findById(invoiceId).select('client_id clientId').lean();
+                }
             } catch(e) {} // Ignore CastError
+
+            const invoiceClientId = invoice
+                ? String(invoice.client_id || invoice.clientId || '')
+                : null;
             
-            if (!invoice || invoice.client_id.toString() !== clientId) {
+            if (!invoice || invoiceClientId !== clientIdStr) {
                 if (req.originalUrl.includes('/api/')) {
                     return res.status(403).json({ success: false, error: 'access denied' });
                 }

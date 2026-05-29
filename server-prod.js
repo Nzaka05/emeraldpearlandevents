@@ -3,19 +3,25 @@ require('./scripts/checkEnv');
 const path = require('path');
 const express = require('express');
 const mongoose = require('mongoose');
+const Redis = require('ioredis');
 const cors = require('cors');
 const helmet = require('helmet');
 const compression = require('compression');
 const mongoSanitize = require('express-mongo-sanitize');
-const morgan = require('morgan');
 const bodyParser = require('body-parser');
 const rateLimit = require('express-rate-limit');
 const cookieParser = require('cookie-parser');
 const jwt = require('jsonwebtoken');
+const logger = require('./server/utils/logger');
+const requestLogger = require('./server/middleware/requestLogger');
+const { csrfErrorHandler } = require('./server/middleware/csrfProtection');
+const { verifySyncAuth } = require('./staff-system/middleware/syncAuth');
 
 // Import routes and services
 const bookingRoutes = require('./server/routes/bookingRoutes');
 const adminRoutes = require('./server/routes/adminRoutes');
+const adminCommandCenterRoutes = require('./server/routes/adminCommandCenterRoutes');
+const securityRoutes = require('./server/routes/security.routes');
 let clientPortalRoutes = null;
 try {
     clientPortalRoutes = require('./server/routes/clientPortalRoutes');
@@ -43,14 +49,15 @@ app.set('trust proxy', 1);
 const PORT = process.env.PORT || 3000;
 const NODE_ENV = process.env.NODE_ENV || 'development';
 const STAFF_SYSTEM_BASE_URL = process.env.STAFF_SYSTEM_BASE_URL || 'https://emerald-staff-system.onrender.com';
+const redisClient = new Redis(process.env.REDIS_URL);
 
 // ═══════════════════════════════════════════════════════════
 // MIDDLEWARE - SECURITY & PARSING
 // ═══════════════════════════════════════════════════════════
 
-// Production HTTP Request Logging
+// Request logging is mounted early so all routes include request context.
 if (NODE_ENV !== 'test') {
-    app.use(morgan('combined'));
+    app.use(requestLogger);
 }
 
 // Data Compression (Gzip/Brotli)
@@ -82,7 +89,9 @@ const _allowedOrigins = (process.env.ALLOWED_ORIGINS || '').split(',').map(o => 
 app.use(cors({
     origin: (origin, callback) => {
         if (!origin || _allowedOrigins.includes(origin)) return callback(null, true);
-        callback(new Error(`CORS: origin '${origin}' not permitted`));
+        const corsError = new Error(`CORS: origin '${origin}' not permitted`);
+        corsError.status = 403;
+        callback(corsError);
     },
     methods: ['GET', 'POST', 'PATCH', 'DELETE'],
     credentials: true
@@ -174,21 +183,15 @@ app.get('/admin/dashboard', verifyAdminPage, (req, res) => {
     res.sendFile(__dirname + '/admin/dashboard.html');
 });
 
-// SSO nonce store — short-lived, single-use, server-side only
-const ssoNonceStore = new Map();
-
-// Clean up expired nonces every 5 minutes
-setInterval(() => {
-    const now = Date.now();
-    for (const [nonce, entry] of ssoNonceStore.entries()) {
-        if (now > entry.expiresAt) ssoNonceStore.delete(nonce);
-    }
-}, 5 * 60 * 1000);
-
 // SSO Bridge — stores token server-side, redirects with nonce only
 app.get('/admin/staff-operations-sso', verifyAdminPage, async (req, res) => {
     try {
-        const ssoSecret = process.env.SSO_JWT_SECRET || process.env.SYNC_SECRET || process.env.JWT_SECRET;
+        const ssoSecret = process.env.SSO_JWT_SECRET;
+        if (!ssoSecret) {
+            const error = 'FATAL: SSO_JWT_SECRET is not defined. SSO requires dedicated secret.';
+            console.error(error);
+            return res.status(500).json({ success: false, message: error });
+        }
         const adminId = req.admin.adminId;
         const email = req.admin.email;
 
@@ -200,7 +203,7 @@ app.get('/admin/staff-operations-sso', verifyAdminPage, async (req, res) => {
             return res.status(403).send('Access denied');
         }
 
-        const tokenRole = role === 'super_admin' ? 'Super Admin' : 'Admin';
+        const tokenRole = role;
 
         const ssoToken = jwt.sign(
             { sub: adminId.toString(), email, role: tokenRole, type: 'staff-ops-sso' },
@@ -210,7 +213,12 @@ app.get('/admin/staff-operations-sso', verifyAdminPage, async (req, res) => {
 
         // Store token server-side — only nonce goes in the URL
         const nonce = require('crypto').randomBytes(32).toString('hex');
-        ssoNonceStore.set(nonce, { token: ssoToken, expiresAt: Date.now() + 60_000 });
+        await redisClient.set(
+            `sso:${nonce}`,
+            JSON.stringify({ token: ssoToken }),
+            'EX',
+            120
+        );
 
         return res.redirect(
             `${STAFF_SYSTEM_BASE_URL}/staff-admin/sso-handoff?nonce=${nonce}`
@@ -221,29 +229,24 @@ app.get('/admin/staff-operations-sso', verifyAdminPage, async (req, res) => {
     }
 });
 
-// SSO exchange endpoint — staff system POSTs nonce here to get the real token
-app.post('/admin/sso-exchange', express.json(), (req, res) => {
+app.post('/admin/sso-exchange', express.json(), async (req, res) => {
     const { nonce } = req.body;
     if (!nonce) return res.status(400).json({ error: 'Nonce required' });
 
-    const entry = ssoNonceStore.get(nonce);
-    if (!entry || Date.now() > entry.expiresAt) {
-        ssoNonceStore.delete(nonce);
+    const raw = await redisClient.get(`sso:${nonce}`);
+    await redisClient.del(`sso:${nonce}`);
+    const entry = raw ? JSON.parse(raw) : null;
+    if (!entry) {
         return res.status(401).json({ error: 'Invalid or expired nonce' });
     }
 
     // Single-use — delete immediately after exchange
-    ssoNonceStore.delete(nonce);
     return res.json({ token: entry.token });
 });
 
-// Staff profile sync receiver from port 3001
-app.post('/internal/sync-staff-update', express.json(), async (req, res) => {
+// Staff profile sync receiver from port 3001 — HMAC-secured (Phase 3)
+app.post('/internal/sync-staff-update', express.json(), verifySyncAuth, async (req, res) => {
     try {
-        const syncSecret = process.env.SYNC_SECRET;
-        if (req.headers['x-sync-secret'] !== syncSecret) {
-            return res.status(401).json({ error: 'Unauthorized' });
-        }
         const { email, name, phone } = req.body;
         const Staff = require('./server/models/Staff');
         const updated = await Staff.findOneAndUpdate(
@@ -341,8 +344,15 @@ app.set('views', path.join(__dirname, 'views'));
 // API ROUTES
 // ═══════════════════════════════════════════════════════════
 
+// Health endpoints must remain public and unprotected.
+app.use('/health', require('./server/routes/health.routes'));
+
 // Admin API (protected by JWT middleware)
 app.use('/api/v1/admin', adminRoutes);
+// Admin Command Center routes (UI + APIs)
+app.use('/admin/command-center', adminCommandCenterRoutes);
+// Admin Security Center routes
+app.use('/api/v1/admin/security', securityRoutes);
 // Main booking API
 app.use('/api/v1', bookingRoutes);
 // Client portal (EJS-rendered, session-based)
@@ -354,33 +364,13 @@ if (clientPortalRoutes) {
     console.warn('[WARN] Client portal unavailable - missing staff-models dependency');
 }
 
-// Health check
+// Health check aliases — served by health.routes.js mounted at /health above.
+// Legacy /api/v1/health preserved for backward compatibility.
 app.get('/api/v1/health', (req, res) => {
-    const mongooseState = mongoose.connection.readyState;
-    const isConnected = mongooseState === 1;
-
     res.json({
-        success: true,
-        status: 'running',
-        environment: NODE_ENV,
-        mongodb: isConnected ? 'connected' : 'disconnected',
+        status: 'ok',
+        uptime: process.uptime(),
         timestamp: new Date().toISOString(),
-        uptime: process.uptime()
-    });
-});
-
-// Health check alias for external verifiers expecting /health
-app.get('/health', (req, res) => {
-    const mongooseState = mongoose.connection.readyState;
-    const isConnected = mongooseState === 1;
-
-    res.json({
-        success: true,
-        status: 'running',
-        environment: NODE_ENV,
-        mongodb: isConnected ? 'connected' : 'disconnected',
-        timestamp: new Date().toISOString(),
-        uptime: process.uptime()
     });
 });
 
@@ -465,13 +455,9 @@ app.use('/api/v1/admin/forgot-password', loginLimiter);
 // 404 HANDLER
 // ═══════════════════════════════════════════════════════════
 
-// Internal sync route � receives event completion from port 3001
-app.post('/internal/sync-event-complete', async (req, res) => {
+// Internal sync route — receives event completion from port 3001 — HMAC-secured (Phase 3)
+app.post('/internal/sync-event-complete', express.json(), verifySyncAuth, async (req, res) => {
     try {
-        const syncSecret = process.env.SYNC_SECRET;
-        if (req.headers['x-sync-secret'] !== syncSecret) {
-            return res.status(401).json({ error: 'Unauthorized' });
-        }
         const { booking_ref, status } = req.body;
         if (!booking_ref) return res.json({ success: false, error: 'No booking_ref' });
 
@@ -506,6 +492,8 @@ app.use((req, res) => {
     // Very fallback
     res.status(404).send('Page not found');
 });
+
+app.use(csrfErrorHandler);
 
 // ═══════════════════════════════════════════════════════════
 // GLOBAL ERROR HANDLING MIDDLEWARE
@@ -558,6 +546,7 @@ const startServer = async () => {
 
         // Start listening
         app.listen(PORT, () => {
+            logger.info({ port: PORT }, 'Server started');
             console.log(`
 ╔════════════════════════════════════════════════════════════╗
 ║                                                            ║
@@ -576,9 +565,29 @@ const startServer = async () => {
             `);
         });
 
+        // Phase 4: Queue monitoring interval (every 60 seconds)
+        let _queueMonitorInterval = null;
+        try {
+            const { paymentQueue } = require('./queue/queues');
+            const { emitAlert, AlertTypes } = require('./queue/alerting');
+            _queueMonitorInterval = setInterval(async () => {
+                try {
+                    const counts = await paymentQueue.getJobCounts('waiting');
+                    if (counts.waiting > 10) {
+                        await emitAlert(AlertTypes.PAYMENT_QUEUE_BACKED_UP, 'high', { waiting: counts.waiting }, redisClient);
+                    }
+                } catch (err) {
+                    logger.error({ err: err.message }, 'Queue monitor check failed');
+                }
+            }, 60_000);
+        } catch (err) {
+            logger.warn({ err: err.message }, 'Queue monitoring unavailable (non-fatal)');
+        }
+
         // Graceful shutdown
         process.on('SIGINT', () => {
             console.log('\n[SHUTDOWN] Stopping server gracefully...');
+            if (_queueMonitorInterval) clearInterval(_queueMonitorInterval);
             stopCronJobs();
             mongoose.connection.close();
             process.exit(0);
@@ -590,7 +599,9 @@ const startServer = async () => {
     }
 };
 
-// Start the server
-startServer();
+// Start the server only when executed directly (not when required by tests)
+if (process.env.NODE_ENV !== 'test' && require.main === module) {
+    startServer();
+}
 
 module.exports = app;

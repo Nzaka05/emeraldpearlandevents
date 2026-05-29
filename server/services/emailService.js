@@ -474,6 +474,55 @@ const sendStaffEventReminder = async (staff, booking, customer, role = 'Team Mem
     });
 };
 
+// ─────────────────────────────────────────────────────────────
+// Email 8: Stripe Payment receipt email
+// ─────────────────────────────────────────────────────────────
+const sendReceiptEmail = async ({ to, clientName, booking, paymentMethod, currency, amountPaid }) => {
+    const formattedDate = new Date().toLocaleDateString('en-US', {
+        year: 'numeric', month: 'long', day: 'numeric'
+    });
+
+    const htmlContent = `
+        <html><head><style>
+            body { font-family: Arial, sans-serif; color: #333; background-color: #f9f9f9; padding: 20px; }
+            .container { max-width: 600px; margin: 0 auto; background-color: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+            .header { background: linear-gradient(135deg, #0a2f1c 0%, #2d8a5e 100%); color: white; padding: 20px; text-align: center; border-radius: 4px; }
+            .receipt-box { background-color: #f0f7f4; border-left: 4px solid #d4af37; padding: 15px; margin: 20px 0; border-radius: 4px; }
+            .ref { font-size: 16px; font-weight: bold; color: #0a2f1c; }
+            .footer { margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee; font-size: 12px; color: #999; text-align: center; }
+        </style></head>
+        <body>
+            <div class="container">
+                <div class="header"><h1>✨ Payment Receipt</h1></div>
+                <div style="margin-top:20px; line-height:1.6;">
+                    <p>Thank you, <strong>${clientName}</strong>!</p>
+                    <p>We have successfully received your payment for your booking request.</p>
+                    <div class="receipt-box">
+                        <p><strong>Payment Summary:</strong></p>
+                        <ul>
+                            <li><strong>Booking Reference:</strong> ${booking.bookingReference}</li>
+                            <li><strong>Payment Method:</strong> ${paymentMethod}</li>
+                            <li><strong>Amount Paid:</strong> ${currency} ${amountPaid.toLocaleString()}</li>
+                            <li><strong>Date:</strong> ${formattedDate}</li>
+                        </ul>
+                    </div>
+                    <p>Your event booking status has been updated to <strong>Paid & Confirmed</strong>. Our team is fully committed to delivering an exceptional experience for your upcoming event.</p>
+                </div>
+                <div class="footer">
+                    <p><strong>Emerald Pearland Events</strong></p>
+                    <p>📱 WhatsApp: +254 722 446 937 | 📧 ${process.env.EMAIL_USER || 'emeraldpearlandevents@gmail.com'}</p>
+                </div>
+            </div>
+        </body></html>
+    `;
+
+    return sendEmail({
+        to: [{ email: to, name: clientName }],
+        subject: `📄 Payment Receipt for ${booking.bookingReference}`,
+        htmlContent
+    });
+};
+
 module.exports = {
     initializeEmailService,
     sendBusinessBookingNotification,
@@ -483,5 +532,6 @@ module.exports = {
     sendClientAppreciationEmail,
     sendStaffFeedbackRequestEmail,
     sendStaffEventReminder,
+    sendReceiptEmail,
     sendEmail
 };

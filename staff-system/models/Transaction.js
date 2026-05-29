@@ -18,13 +18,16 @@ const TransactionSchema = new mongoose.Schema({
     metadata: { type: mongoose.Schema.Types.Mixed, default: {} }
 }, { timestamps: true });
 
+// Atomic ID generation using Counter collection.
+// The old countDocuments() approach was vulnerable to race conditions:
+// two concurrent saves could both read count=5 and both generate ID "...0006".
 TransactionSchema.pre('save', async function() {
     if (this.isNew && !this.transactionId) {
-        const count = await this.constructor.countDocuments();
+        const { getNextSequence } = require('./Counter');
+        const seq = await getNextSequence('Transaction');
         const year = new Date().getFullYear();
-        this.transactionId = 'EPE-TXN-' + year + '-' + String(count + 1).padStart(4, '0');
+        this.transactionId = 'EPE-TXN-' + year + '-' + String(seq).padStart(4, '0');
     }
 });
 
 module.exports = mongoose.models.Transaction || mongoose.model('Transaction', TransactionSchema);
-

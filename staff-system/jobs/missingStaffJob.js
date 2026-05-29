@@ -132,18 +132,31 @@ async function runMissingStaffCheck() {
     }
 }
 
+let jobInterval = null;
+
 function startJob() {
+    if (process.env.NODE_ENV === 'test') return;
+    if (jobInterval) return;
+
     console.log('[MissingStaffJob] Running immediate startup recovery check...');
     // Immediate execution on server start (Startup Recovery Check)
     runMissingStaffCheck().then(() => {
         console.log('[MissingStaffJob] Recovery check complete. Starting 5-minute interval loop.');
         // Run every 5 minutes
-        setInterval(runMissingStaffCheck, 5 * 60 * 1000);
+        jobInterval = setInterval(runMissingStaffCheck, 5 * 60 * 1000);
     });
+}
+
+function stopJob() {
+    if (jobInterval) {
+        clearInterval(jobInterval);
+        jobInterval = null;
+    }
 }
 
 module.exports = {
     startJob,
+    stopJob,
     _runCheckNow: runMissingStaffCheck // Exposed for tests
 };
 
