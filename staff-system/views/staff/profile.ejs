@@ -133,6 +133,7 @@
                     'Content-Type': 'application/json',
                     'CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content || ''
                 },
+                credentials: 'include',
                 body: JSON.stringify({
                     name: document.getElementById('profileName').value,
                     phone: document.getElementById('profilePhone').value
@@ -172,6 +173,7 @@
         const r = await fetch(`${portalBase}/change-password`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content || '' },
+            credentials: 'include',
             body: JSON.stringify({ current_password, new_password, confirm_new_password })
         });
         const d = await r.json();
@@ -183,6 +185,7 @@
         const r = await fetch(`${portalBase}/availability`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json', 'CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content || '' },
+            credentials: 'include',
             body: JSON.stringify({ availability_status: val })
         });
         const d = await r.json();
@@ -200,6 +203,7 @@
             const r = await fetch(`${portalBase}/profile/photo`, {
                 method: 'POST',
                 headers: { 'CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content || '' },
+                credentials: 'include',
                 body: formData
             });
             const data = await r.json();

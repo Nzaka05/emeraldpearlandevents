@@ -641,6 +641,121 @@
             transition: all 0.3s ease;
         }
         .logout-btn:hover { background: rgba(181, 51, 42, 0.2); color: #ff6b6b; }
+
+        /* ── OTP Verification Modal ── */
+        .otp-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+            z-index: 10000;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .otp-modal.active {
+            display: flex;
+            opacity: 1;
+        }
+        .otp-modal-content {
+            background: var(--bg-card);
+            border: 1px solid var(--accent-gold-hover);
+            border-radius: 12px;
+            width: 90%;
+            max-width: 420px;
+            padding: 32px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            transform: scale(0.9);
+            transition: transform 0.3s ease;
+            text-align: center;
+        }
+        .otp-modal.active .otp-modal-content {
+            transform: scale(1);
+        }
+        .otp-modal-header {
+            margin-bottom: 20px;
+        }
+        .otp-modal-icon {
+            font-size: 40px;
+            color: var(--accent-gold);
+            margin-bottom: 12px;
+        }
+        .otp-modal-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-main);
+            margin: 0;
+        }
+        .otp-modal-desc {
+            font-size: 14px;
+            color: #666;
+            line-height: 1.5;
+            margin-top: 8px;
+        }
+        .otp-input-wrap {
+            display: flex;
+            justify-content: space-between;
+            gap: 8px;
+            margin: 24px 0;
+        }
+        .otp-input-field {
+            width: 48px;
+            height: 48px;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 20px;
+            font-weight: 700;
+            text-align: center;
+            font-family: monospace;
+            background: var(--bg-primary);
+            color: var(--text-main);
+            transition: all 0.2s;
+        }
+        .otp-input-field:focus {
+            outline: none;
+            border-color: var(--accent-gold);
+            box-shadow: 0 0 0 3px rgba(201, 168, 76, 0.2);
+        }
+        .otp-modal-buttons {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+        }
+        .otp-btn-submit {
+            flex: 1;
+            padding: 12px;
+            background: var(--accent-gold);
+            color: var(--text-main);
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .otp-btn-submit:hover {
+            background: var(--accent-gold-hover);
+        }
+        .otp-btn-cancel {
+            flex: 1;
+            padding: 12px;
+            background: transparent;
+            color: #666;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .otp-btn-cancel:hover {
+            border-color: #666;
+            color: var(--text-main);
+        }
     </style>
 
     <!-- MOBILE & DARK LOGIC -->
@@ -1106,8 +1221,7 @@
                                 </div>
                             </div>
                             <div style="margin-top: 16px;">
-                                <button class="btn-save" onclick="changePassword()" style="width: 200px;"><i class="fas fa-sync-alt"></i> Update
-                                    Password</button>
+                                <button class="btn-save" onclick="requestPasswordChangeOTP()" style="width: 200px;" id="sendOtpBtn"><i class="fas fa-paper-plane"></i> Send OTP</button>
                             </div>
                         </div>
                     </div>
@@ -1134,6 +1248,39 @@
                 document.getElementById('darkMode').classList.add('active');
             }
         });
+
+        async function fetchWithCsrf(url, options = {}) {
+            let csrfToken = await ensureCsrfToken();
+            options.headers = options.headers || {};
+            if (!(options.headers instanceof Headers)) {
+                options.headers = { ...options.headers };
+                options.headers['X-CSRF-Token'] = csrfToken || '';
+            } else {
+                options.headers.set('X-CSRF-Token', csrfToken || '');
+            }
+            options.credentials = 'include';
+
+            let response = await fetch(url, options);
+
+            if (response.status === 403) {
+                const clone = response.clone();
+                try {
+                    const data = await clone.json();
+                    if (data && data.message && data.message.toLowerCase().includes('csrf')) {
+                        console.warn('CSRF validation failed, force-refreshing CSRF token and retrying...');
+                        csrfToken = await ensureCsrfToken(true);
+                        if (!(options.headers instanceof Headers)) {
+                            options.headers['X-CSRF-Token'] = csrfToken || '';
+                        } else {
+                            options.headers.set('X-CSRF-Token', csrfToken || '');
+                        }
+                        response = await fetch(url, options);
+                    }
+                } catch (e) {}
+            }
+
+            return response;
+        }
 
         let profileImageBase64 = '';
 
@@ -1198,10 +1345,11 @@
 
             try {
                 // Update profile with avatar
-                const response = await fetch('/api/v1/admin/me', {
+                const response = await fetchWithCsrf('/api/v1/admin/me', {
                     method: 'PATCH',
-                    headers: { 'Content-Type': 'application/json' },
-                    credentials: 'include',
+                    headers: { 
+                        'Content-Type': 'application/json'
+                    },
                     body: JSON.stringify({ name, avatar: profileImageBase64 || '' })
                 });
 
@@ -1290,9 +1438,11 @@
             };
 
             try {
-                const response = await fetch('/api/v1/admin/settings', {
+                const response = await fetchWithCsrf('/api/v1/admin/settings', {
                     method: 'PATCH',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 
+                        'Content-Type': 'application/json'
+                    },
                     body: JSON.stringify(settings)
                 });
                 const result = await response.json();
@@ -1319,12 +1469,13 @@
                 .catch(error => console.error('Logout error:', error));
         }
 
-        async function changePassword() {
+        async function requestPasswordChangeOTP() {
             const currentPassword = document.getElementById('currentPassword').value.trim();
             const newPassword = document.getElementById('newPassword').value.trim();
             const confirmPassword = document.getElementById('confirmPassword').value.trim();
             const successMsg = document.getElementById('passwordSuccessMessage');
             const errorMsg = document.getElementById('passwordErrorMessage');
+            const sendBtn = document.getElementById('sendOtpBtn');
 
             // Reset messages
             successMsg.style.display = 'none';
@@ -1362,45 +1513,167 @@
             }
 
             try {
-                const response = await fetch('/api/v1/admin/change-password', {
+                sendBtn.disabled = true;
+                sendBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+
+                const response = await fetchWithCsrf('/api/auth/password/request-otp', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 
+                        'Content-Type': 'application/json'
+                    },
                     body: JSON.stringify({ currentPassword, newPassword })
                 });
 
-                if (!response.ok) {
-                    let errorMessage = 'Failed to change password';
-                    try {
-                        const errorData = await response.json();
-                        errorMessage = errorData.message || errorMessage;
-                    } catch (e) { }
-                    errorMsg.textContent = '❌ ' + errorMessage;
+                const data = await response.json();
+
+                if (!response.ok || !data.success) {
+                    errorMsg.textContent = '❌ ' + (data.message || 'Failed to send OTP code');
                     errorMsg.style.display = 'block';
                     return;
                 }
 
-                const data = await response.json();
-
-                if (data.success) {
-                    successMsg.style.display = 'block';
-                    document.getElementById('currentPassword').value = '';
-                    document.getElementById('newPassword').value = '';
-                    document.getElementById('confirmPassword').value = '';
-
-                    setTimeout(() => {
-                        successMsg.style.display = 'none';
-                    }, 5000);
-                } else {
-                    errorMsg.textContent = '❌ ' + (data.message || 'Failed to change password');
-                    errorMsg.style.display = 'block';
-                }
+                // Open Modal
+                openOtpModal();
             } catch (error) {
                 errorMsg.textContent = '❌ Network error. Please try again.';
                 errorMsg.style.display = 'block';
+            } finally {
+                sendBtn.disabled = false;
+                sendBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Send OTP';
             }
         }
+
+        function openOtpModal() {
+            const modal = document.getElementById('otpModal');
+            modal.style.display = 'flex';
+            setTimeout(() => modal.classList.add('active'), 10);
+            
+            // Focus on first input
+            const firstInput = document.querySelector('.otp-input-field');
+            if (firstInput) {
+                firstInput.focus();
+            }
+
+            // Clear any old values and errors
+            document.querySelectorAll('.otp-input-field').forEach(inp => inp.value = '');
+            document.getElementById('otpModalErrorMessage').style.display = 'none';
+        }
+
+        function closeOtpModal() {
+            const modal = document.getElementById('otpModal');
+            modal.classList.remove('active');
+            setTimeout(() => modal.style.display = 'none', 300);
+        }
+
+        async function submitOtpAndChangePassword() {
+            const currentPassword = document.getElementById('currentPassword').value.trim();
+            const newPassword = document.getElementById('newPassword').value.trim();
+            const successMsg = document.getElementById('passwordSuccessMessage');
+            const errorMsg = document.getElementById('passwordErrorMessage');
+            const modalErrorMsg = document.getElementById('otpModalErrorMessage');
+            const submitBtn = document.getElementById('otpSubmitBtn');
+
+            modalErrorMsg.style.display = 'none';
+
+            const otpFields = document.querySelectorAll('.otp-input-field');
+            const otp = Array.from(otpFields).map(inp => inp.value).join('');
+
+            if (otp.length < 6) {
+                modalErrorMsg.textContent = '❌ Please enter the full 6-digit code';
+                modalErrorMsg.style.display = 'block';
+                return;
+            }
+
+            try {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verifying...';
+
+                const response = await fetchWithCsrf('/api/auth/password/verify-and-change', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ currentPassword, newPassword, otp })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok || !data.success) {
+                    modalErrorMsg.textContent = '❌ ' + (data.message || 'Verification failed');
+                    modalErrorMsg.style.display = 'block';
+                    return;
+                }
+
+                // Success
+                closeOtpModal();
+                successMsg.textContent = '✓ ' + (data.message || 'Password changed successfully!');
+                successMsg.style.display = 'block';
+
+                // Reset form
+                document.getElementById('currentPassword').value = '';
+                document.getElementById('newPassword').value = '';
+                document.getElementById('confirmPassword').value = '';
+
+                setTimeout(() => {
+                    successMsg.style.display = 'none';
+                }, 5000);
+
+            } catch (error) {
+                modalErrorMsg.textContent = '❌ Network error. Please try again.';
+                modalErrorMsg.style.display = 'block';
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = 'Verify & Change';
+            }
+        }
+
+        // Setup OTP inputs auto-focus behavior
+        document.addEventListener('DOMContentLoaded', () => {
+            const otpInputs = document.querySelectorAll('.otp-input-field');
+            otpInputs.forEach((input, index) => {
+                input.addEventListener('input', (e) => {
+                    const val = e.target.value;
+                    // Replace anything that is not a digit
+                    e.target.value = val.replace(/[^0-9]/g, '');
+                    if (e.target.value && index < otpInputs.length - 1) {
+                        otpInputs[index + 1].focus();
+                    }
+                });
+
+                input.addEventListener('keydown', (e) => {
+                    if (e.key === 'Backspace' && !e.target.value && index > 0) {
+                        otpInputs[index - 1].focus();
+                    }
+                });
+            });
+        });
     </script>
-        <script src="/admin/push-client.js"></script>
+    
+    <!-- OTP Verification Modal -->
+    <div id="otpModal" class="otp-modal">
+        <div class="otp-modal-content">
+            <div class="otp-modal-header">
+                <div class="otp-modal-icon"><i class="fas fa-key"></i></div>
+                <h3 class="otp-modal-title">Enter Verification Code</h3>
+                <p class="otp-modal-desc">We've sent a 6-digit OTP code to your email to verify this password change request.</p>
+            </div>
+            <div id="otpModalErrorMessage" class="error-message" style="margin-bottom: 16px;"></div>
+            <div class="otp-input-wrap">
+                <input type="text" class="otp-input-field" maxlength="1" pattern="[0-9]" inputmode="numeric" required>
+                <input type="text" class="otp-input-field" maxlength="1" pattern="[0-9]" inputmode="numeric" required>
+                <input type="text" class="otp-input-field" maxlength="1" pattern="[0-9]" inputmode="numeric" required>
+                <input type="text" class="otp-input-field" maxlength="1" pattern="[0-9]" inputmode="numeric" required>
+                <input type="text" class="otp-input-field" maxlength="1" pattern="[0-9]" inputmode="numeric" required>
+                <input type="text" class="otp-input-field" maxlength="1" pattern="[0-9]" inputmode="numeric" required>
+            </div>
+            <div class="otp-modal-buttons">
+                <button type="button" class="otp-btn-cancel" onclick="closeOtpModal()">Cancel</button>
+                <button type="button" class="otp-btn-submit" onclick="submitOtpAndChangePassword()" id="otpSubmitBtn">Verify & Change</button>
+            </div>
+        </div>
+    </div>
+    
+    <script src="/admin/push-client.js"></script>
     <script src="/admin/assets/mobile-sidebar.js?v=3"></script>
     <script src="/admin/admin-profile.js"></script>
 </body>

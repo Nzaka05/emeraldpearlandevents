@@ -895,7 +895,7 @@ router.get('/profile', verifyAdminJWT, csrfProtection, attachCsrfToken, async (r
         if (!admin) {
             return res.status(404).json({ success: false, message: 'Admin not found' });
         }
-        res.json({ success: true, profile: admin });
+        res.json({ success: true, profile: admin, csrfToken: req.csrfToken() });
     } catch (error) {
         res.status(500).json({ success: false, message: 'Error fetching profile' });
     }

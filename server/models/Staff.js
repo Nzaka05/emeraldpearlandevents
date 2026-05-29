@@ -43,6 +43,28 @@ const StaffSchema = new mongoose.Schema({
         type: String,
         default: ''
     },
+    password: {
+        type: String,
+        default: null
+    },
+    role: {
+        type: String,
+        enum: ['Admin', 'Supervisor', 'Staff'],
+        default: 'Staff'
+    },
+    status: {
+        type: String,
+        enum: ['Active', 'Suspended'],
+        default: 'Active'
+    },
+    mustChangePassword: {
+        type: Boolean,
+        default: true
+    },
+    tokenVersion: {
+        type: Number,
+        default: 0
+    },
     createdAt: {
         type: Date,
         default: Date.now

@@ -41,6 +41,7 @@ const bookingRoutes = require('./server/routes/bookingRoutes');
 // ── ADMIN ROUTER ──
 const adminRoutes = require('./server/routes/adminRoutes');
 const adminCommandCenterRoutes = require('./server/routes/adminCommandCenterRoutes');
+const passwordChangeRoutes = require('./server/routes/passwordChangeRoutes');
 
 mongoose.connect(process.env.MONGO_URI)
     .then(() => console.log('✅ MongoDB connected'))
@@ -86,7 +87,8 @@ app.use(cors({
         if (!origin || origin === 'null' || allowedOrigins.includes(origin)) callback(null, true);
         else callback(new Error('Not allowed by CORS'));
     },
-    credentials: true
+    credentials: true,
+    exposedHeaders: ['X-CSRF-Token']
 }));
 
 // serve admin static UI files so they load from the same origin as the API
@@ -583,6 +585,7 @@ app.use('/api/v1', bookingRoutes);
 // ── ADMIN ROUTES (handles /api/v1/admin/login, /api/v1/admin/change-password, etc) ──
 app.use('/api/v1/admin', adminLimiter, adminRoutes);
 app.use('/admin/command-center', adminCommandCenterRoutes);
+app.use('/api/auth/password', passwordChangeRoutes);
 
 // ── CLIENT PORTAL ROUTES ──
 const clientPortalRoutes = require('./server/routes/clientPortalRoutes');

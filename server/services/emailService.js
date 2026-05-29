@@ -523,6 +523,112 @@ const sendReceiptEmail = async ({ to, clientName, booking, paymentMethod, curren
     });
 };
 
+// ─────────────────────────────────────────────────────────────
+// Email: OTP for Password Change Verification
+// ─────────────────────────────────────────────────────────────
+const sendOTPEmail = async ({ to, name, otp, role }) => {
+    const signOff = role === 'admin'
+        ? 'Emerald Pearland Admin Team'
+        : 'Emerald Pearland Staff Support';
+
+    const htmlContent = `
+        <html><head><style>
+            body { font-family: Arial, sans-serif; color: #333; background-color: #f9f9f9; padding: 20px; margin: 0; }
+            .container { max-width: 600px; margin: 0 auto; background-color: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+            .header { background: #1a3c2e; color: white; padding: 28px 30px; text-align: center; }
+            .header h1 { margin: 0; font-size: 22px; font-weight: 600; letter-spacing: 0.5px; }
+            .body { padding: 32px 30px; }
+            .otp-box { background: #f0f7f4; border: 2px dashed #2d8a5e; border-radius: 10px; text-align: center; padding: 24px; margin: 24px 0; }
+            .otp-code { font-size: 36px; font-weight: 800; letter-spacing: 8px; color: #0a2f1c; font-family: 'Courier New', monospace; }
+            .expire-note { font-size: 13px; color: #888; margin-top: 10px; }
+            .warning { background: #fff8e1; border-left: 4px solid #f0ad4e; padding: 12px 16px; border-radius: 4px; margin: 20px 0; font-size: 14px; color: #856404; }
+            .footer { background: #f9f9f9; padding: 20px 30px; text-align: center; border-top: 1px solid #eee; }
+            .footer p { margin: 4px 0; font-size: 12px; color: #999; }
+        </style></head>
+        <body>
+            <div class="container">
+                <div class="header"><h1>🔐 Password Change Verification</h1></div>
+                <div class="body">
+                    <p>Hi <strong>${name}</strong>,</p>
+                    <p>You requested to change your password. Use the verification code below to confirm this action:</p>
+                    <div class="otp-box">
+                        <div class="otp-code">${otp}</div>
+                        <div class="expire-note">This code expires in <strong>10 minutes</strong></div>
+                    </div>
+                    <div class="warning">
+                        ⚠️ If you did not request this password change, please contact support immediately at
+                        <a href="mailto:emeraldpearlandevents@gmail.com">emeraldpearlandevents@gmail.com</a>.
+                    </div>
+                    <p style="margin-top: 24px;">Best regards,<br><strong>${signOff}</strong></p>
+                </div>
+                <div class="footer">
+                    <p><strong>Emerald Pearland Events</strong></p>
+                    <p>This is an automated security email. Do not share this code with anyone.</p>
+                </div>
+            </div>
+        </body></html>
+    `;
+
+    return sendEmail({
+        to: [{ email: to, name }],
+        subject: 'Emerald Pearland — Password Change Verification',
+        htmlContent
+    });
+};
+
+// ─────────────────────────────────────────────────────────────
+// Email: Password Successfully Changed Confirmation
+// ─────────────────────────────────────────────────────────────
+const sendPasswordChangedEmail = async ({ to, name }) => {
+    const timestamp = new Date().toLocaleString('en-US', {
+        timeZone: 'Africa/Nairobi',
+        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
+        hour: '2-digit', minute: '2-digit'
+    });
+
+    const htmlContent = `
+        <html><head><style>
+            body { font-family: Arial, sans-serif; color: #333; background-color: #f9f9f9; padding: 20px; margin: 0; }
+            .container { max-width: 600px; margin: 0 auto; background-color: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+            .header { background: linear-gradient(135deg, #0a2f1c 0%, #2d8a5e 100%); color: white; padding: 28px 30px; text-align: center; }
+            .header h1 { margin: 0; font-size: 22px; font-weight: 600; }
+            .body { padding: 32px 30px; }
+            .success-box { background: #f0f7f4; border-left: 4px solid #2d8a5e; padding: 16px 20px; border-radius: 4px; margin: 20px 0; }
+            .warning { background: #fff0f0; border-left: 4px solid #e74c3c; padding: 12px 16px; border-radius: 4px; margin: 20px 0; font-size: 14px; color: #c0392b; }
+            .footer { background: #f9f9f9; padding: 20px 30px; text-align: center; border-top: 1px solid #eee; }
+            .footer p { margin: 4px 0; font-size: 12px; color: #999; }
+        </style></head>
+        <body>
+            <div class="container">
+                <div class="header"><h1>✅ Password Changed Successfully</h1></div>
+                <div class="body">
+                    <p>Hi <strong>${name}</strong>,</p>
+                    <div class="success-box">
+                        <p style="margin:0;"><strong>Your password was changed successfully.</strong></p>
+                        <p style="margin:8px 0 0;font-size:14px;color:#666;">Changed on: ${timestamp} (EAT)</p>
+                    </div>
+                    <div class="warning">
+                        🚨 If you did not make this change, please contact us <strong>immediately</strong> at
+                        <a href="mailto:emeraldpearlandevents@gmail.com">emeraldpearlandevents@gmail.com</a>
+                        to secure your account.
+                    </div>
+                    <p style="margin-top: 24px;">Best regards,<br><strong>Emerald Pearland Events Team</strong></p>
+                </div>
+                <div class="footer">
+                    <p><strong>Emerald Pearland Events</strong></p>
+                    <p>This is an automated security notification.</p>
+                </div>
+            </div>
+        </body></html>
+    `;
+
+    return sendEmail({
+        to: [{ email: to, name }],
+        subject: 'Emerald Pearland — Password Successfully Changed',
+        htmlContent
+    });
+};
+
 module.exports = {
     initializeEmailService,
     sendBusinessBookingNotification,
@@ -533,5 +639,7 @@ module.exports = {
     sendStaffFeedbackRequestEmail,
     sendStaffEventReminder,
     sendReceiptEmail,
-    sendEmail
+    sendEmail,
+    sendOTPEmail,
+    sendPasswordChangedEmail
 };

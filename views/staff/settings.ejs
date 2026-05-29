@@ -51,8 +51,8 @@
                                     <i class="fa-solid fa-lock"></i>
                                     <h2>Change Password</h2>
                                 </div>
-                                <form id="passwordForm" action="/portal/staff/change-password" method="POST">
-                                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                <form id="passwordForm">
+                                    <input type="hidden" name="_csrf" id="staff_csrf" value="<%= csrfToken %>">
 
                                     <div class="form-group">
                                         <label for="current_password">Current Password</label>
@@ -96,8 +96,8 @@
                                         <small class="match-hint" id="matchHint"></small>
                                     </div>
 
-                                    <button type="submit" class="btn btn-primary" id="pwSubmitBtn">
-                                        <i class="fa-solid fa-shield-halved"></i> Update Password
+                                    <button type="button" class="btn btn-primary" id="pwSubmitBtn" onclick="requestPasswordChangeOTP()">
+                                        <i class="fa-solid fa-paper-plane"></i> Send OTP
                                     </button>
                                 </form>
                             </div>
@@ -297,7 +297,155 @@
             opacity: 0.5;
             cursor: not-allowed;
         }
+
+        /* ── OTP Verification Modal ── */
+        .otp-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+            z-index: 10000;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .otp-modal.active {
+            display: flex;
+            opacity: 1;
+        }
+        .otp-modal-content {
+            background: #fff;
+            border: 1px solid #2d8a5e;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 420px;
+            padding: 32px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+            transform: scale(0.9);
+            transition: transform 0.3s ease;
+            text-align: center;
+        }
+        .otp-modal.active .otp-modal-content {
+            transform: scale(1);
+        }
+        .otp-modal-header {
+            margin-bottom: 20px;
+        }
+        .otp-modal-icon {
+            font-size: 40px;
+            color: #2d8a5e;
+            margin-bottom: 12px;
+        }
+        .otp-modal-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #0a2f1c;
+            margin: 0;
+        }
+        .otp-modal-desc {
+            font-size: 14px;
+            color: #666;
+            line-height: 1.5;
+            margin-top: 8px;
+        }
+        .otp-input-wrap {
+            display: flex;
+            justify-content: space-between;
+            gap: 8px;
+            margin: 24px 0;
+        }
+        .otp-input-field {
+            width: 48px;
+            height: 48px;
+            border: 2.5px solid #ddd;
+            border-radius: 8px;
+            font-size: 20px;
+            font-weight: 700;
+            text-align: center;
+            font-family: monospace;
+            background: #f9f9f9;
+            color: #333;
+            transition: all 0.2s;
+        }
+        .otp-input-field:focus {
+            outline: none;
+            border-color: #2d8a5e;
+            box-shadow: 0 0 0 3px rgba(45, 138, 94, 0.15);
+        }
+        .otp-modal-buttons {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+        }
+        .otp-btn-submit {
+            flex: 1;
+            padding: 12px;
+            background: linear-gradient(135deg, #0a2f1c 0%, #2d8a5e 100%);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .otp-btn-submit:hover {
+            opacity: 0.9;
+        }
+        .otp-btn-cancel {
+            flex: 1;
+            padding: 12px;
+            background: transparent;
+            color: #666;
+            border: 1.5px solid #ddd;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .otp-btn-cancel:hover {
+            border-color: #999;
+            color: #333;
+        }
+        .error-message {
+            background: #fff0f0;
+            border: 1px solid #fcc;
+            color: #c0392b;
+            padding: 0.85rem 1.2rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            font-size: 0.9rem;
+            text-align: left;
+        }
     </style>
+
+    <!-- OTP Verification Modal -->
+    <div id="otpModal" class="otp-modal">
+        <div class="otp-modal-content">
+            <div class="otp-modal-header">
+                <div class="otp-modal-icon"><i class="fa-solid fa-key"></i></div>
+                <h3 class="otp-modal-title">Enter Verification Code</h3>
+                <p class="otp-modal-desc">We've sent a 6-digit OTP code to your email to verify this password change request.</p>
+            </div>
+            <div id="otpModalErrorMessage" class="error-message" style="margin-bottom: 16px; display: none;"></div>
+            <div class="otp-input-wrap">
+                <input type="text" class="otp-input-field" maxlength="1" pattern="[0-9]" inputmode="numeric" required>
+                <input type="text" class="otp-input-field" maxlength="1" pattern="[0-9]" inputmode="numeric" required>
+                <input type="text" class="otp-input-field" maxlength="1" pattern="[0-9]" inputmode="numeric" required>
+                <input type="text" class="otp-input-field" maxlength="1" pattern="[0-9]" inputmode="numeric" required>
+                <input type="text" class="otp-input-field" maxlength="1" pattern="[0-9]" inputmode="numeric" required>
+                <input type="text" class="otp-input-field" maxlength="1" pattern="[0-9]" inputmode="numeric" required>
+            </div>
+            <div class="otp-modal-buttons">
+                <button type="button" class="otp-btn-cancel" onclick="closeOtpModal()">Cancel</button>
+                <button type="button" class="otp-btn-submit" onclick="submitOtpAndChangePassword()" id="otpSubmitBtn">Verify & Change</button>
+            </div>
+        </div>
+    </div>
 
     <script>
         // Password strength checker
@@ -358,15 +506,171 @@
             });
         });
 
-        // Prevent submitting if passwords don't match
-        document.getElementById('passwordForm').addEventListener('submit', function (e) {
-            const pw = document.getElementById('password').value;
-            const cpw = document.getElementById('confirm_password').value;
-            if (pw !== cpw) {
-                e.preventDefault();
-                document.getElementById('matchHint').textContent = '✗ Passwords do not match';
-                document.getElementById('matchHint').style.color = '#e74c3c';
+        async function requestPasswordChangeOTP() {
+            const currentPassword = document.getElementById('current_password').value.trim();
+            const newPassword = document.getElementById('password').value.trim();
+            const confirmPassword = document.getElementById('confirm_password').value.trim();
+            const btn = document.getElementById('pwSubmitBtn');
+
+            // Validation
+            if (!currentPassword) {
+                showFlash('Please enter your current password', 'error');
+                return;
             }
+
+            if (!newPassword) {
+                showFlash('Please enter a new password', 'error');
+                return;
+            }
+
+            if (newPassword.length < 8) {
+                showFlash('Password must be at least 8 characters long', 'error');
+                return;
+            }
+
+            if (newPassword !== confirmPassword) {
+                showFlash('Passwords do not match', 'error');
+                return;
+            }
+
+            if (currentPassword === newPassword) {
+                showFlash('New password must be different from current password', 'error');
+                return;
+            }
+
+            try {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Sending...';
+
+                const csrfToken = document.getElementById('staff_csrf').value;
+                const response = await fetch('/api/auth/password/request-otp', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'X-CSRF-Token': csrfToken || ''
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({ currentPassword, newPassword })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok || !data.success) {
+                    showFlash(data.message || 'Failed to send OTP code', 'error');
+                    return;
+                }
+
+                // Open Modal
+                openOtpModal();
+            } catch (error) {
+                showFlash('Network error. Please try again.', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Send OTP';
+            }
+        }
+
+        function openOtpModal() {
+            const modal = document.getElementById('otpModal');
+            modal.style.display = 'flex';
+            setTimeout(() => modal.classList.add('active'), 10);
+            
+            // Focus on first input
+            const firstInput = document.querySelector('.otp-input-field');
+            if (firstInput) {
+                firstInput.focus();
+            }
+
+            // Clear any old values and errors
+            document.querySelectorAll('.otp-input-field').forEach(inp => inp.value = '');
+            document.getElementById('otpModalErrorMessage').style.display = 'none';
+        }
+
+        function closeOtpModal() {
+            const modal = document.getElementById('otpModal');
+            modal.classList.remove('active');
+            setTimeout(() => modal.style.display = 'none', 300);
+        }
+
+        async function submitOtpAndChangePassword() {
+            const currentPassword = document.getElementById('current_password').value.trim();
+            const newPassword = document.getElementById('password').value.trim();
+            const modalErrorMsg = document.getElementById('otpModalErrorMessage');
+            const submitBtn = document.getElementById('otpSubmitBtn');
+
+            modalErrorMsg.style.display = 'none';
+
+            const otpFields = document.querySelectorAll('.otp-input-field');
+            const otp = Array.from(otpFields).map(inp => inp.value).join('');
+
+            if (otp.length < 6) {
+                modalErrorMsg.textContent = '❌ Please enter the full 6-digit code';
+                modalErrorMsg.style.display = 'block';
+                return;
+            }
+
+            try {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Verifying...';
+
+                const csrfToken = document.getElementById('staff_csrf').value;
+                const response = await fetch('/api/auth/password/verify-and-change', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'X-CSRF-Token': csrfToken || ''
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({ currentPassword, newPassword, otp })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok || !data.success) {
+                    modalErrorMsg.textContent = '❌ ' + (data.message || 'Verification failed');
+                    modalErrorMsg.style.display = 'block';
+                    return;
+                }
+
+                // Success
+                closeOtpModal();
+                showFlash(data.message || 'Password changed successfully!', 'success');
+
+                // Reset form
+                document.getElementById('current_password').value = '';
+                document.getElementById('password').value = '';
+                document.getElementById('confirm_password').value = '';
+                document.getElementById('strengthWrap').style.display = 'none';
+                document.getElementById('strengthLabel').textContent = '';
+                document.getElementById('matchHint').textContent = '';
+
+            } catch (error) {
+                modalErrorMsg.textContent = '❌ Network error. Please try again.';
+                modalErrorMsg.style.display = 'block';
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = 'Verify & Change';
+            }
+        }
+
+        // Setup OTP inputs auto-focus behavior
+        document.addEventListener('DOMContentLoaded', () => {
+            const otpInputs = document.querySelectorAll('.otp-input-field');
+            otpInputs.forEach((input, index) => {
+                input.addEventListener('input', (e) => {
+                    const val = e.target.value;
+                    e.target.value = val.replace(/[^0-9]/g, '');
+                    if (e.target.value && index < otpInputs.length - 1) {
+                        otpInputs[index + 1].focus();
+                    }
+                });
+
+                input.addEventListener('keydown', (e) => {
+                    if (e.key === 'Backspace' && !e.target.value && index > 0) {
+                        otpInputs[index - 1].focus();
+                    }
+                });
+            });
         });
 
         // CSRF-aware fetch (already in layout.ejs global interceptor)

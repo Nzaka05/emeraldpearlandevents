@@ -511,6 +511,7 @@
         'Content-Type': 'application/json',
         'CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content || ''
       },
+      credentials: 'include',
       body: JSON.stringify({ newPassword: this.newPassword.value })
     });
     const d = await res.json();
@@ -540,7 +541,10 @@
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
     
     try {
-      const r = await fetch('/portal/admin-staff/staff', { headers: { 'CSRF-Token': csrfToken } });
+      const r = await fetch('/portal/admin-staff/staff', { 
+        headers: { 'CSRF-Token': csrfToken },
+        credentials: 'include'
+      });
       const data = await r.json();
       if (data.success) {
         const supervisors = data.data.filter(s => s.role === 'Supervisor' || s.role === 'Admin');
@@ -565,6 +569,7 @@
           'Content-Type': 'application/json',
           'CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content || ''
         },
+        credentials: 'include',
         body: JSON.stringify({ supervisorId })
       });
       const data = await r.json();
@@ -590,7 +595,8 @@
       headers: {
         'Content-Type': 'application/json',
         'CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content || ''
-      }
+      },
+      credentials: 'include'
     });
     const data = await r.json();
     if (data.success) {
@@ -620,6 +626,7 @@
           'Content-Type': 'application/json',
           'CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content || ''
         },
+        credentials: 'include',
         body: JSON.stringify(body)
       });
       const data = await r.json();

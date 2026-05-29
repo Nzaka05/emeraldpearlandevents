@@ -34,19 +34,33 @@ function playNotificationSound() {
     });
 }
 
-async function ensureCsrfToken() {
-    if (window.__csrfToken) {
+async function ensureCsrfToken(forceRefresh = false) {
+    if (window.__csrfToken && !forceRefresh) {
         return window.__csrfToken;
     }
 
-    const profileRes = await fetch('/api/v1/admin/profile', {
-        method: 'GET',
-        credentials: 'same-origin'
-    });
+    try {
+        const profileRes = await fetch('/api/v1/admin/profile', {
+            method: 'GET',
+            credentials: 'include'
+        });
 
-    const csrfToken = profileRes.headers.get('X-CSRF-Token');
-    if (csrfToken) {
-        window.__csrfToken = csrfToken;
+        // 1. Try to read from X-CSRF-Token header first
+        let csrfToken = profileRes.headers.get('X-CSRF-Token');
+
+        // 2. Try to read from JSON body as fallback
+        if (!csrfToken) {
+            const data = await profileRes.json();
+            if (data && data.csrfToken) {
+                csrfToken = data.csrfToken;
+            }
+        }
+
+        if (csrfToken) {
+            window.__csrfToken = csrfToken;
+        }
+    } catch (err) {
+        console.error('Failed to retrieve CSRF token:', err);
     }
 
     return window.__csrfToken;

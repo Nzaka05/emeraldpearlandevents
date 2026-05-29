@@ -29,6 +29,7 @@ const adminStaffRoutes     = require('./routes/adminStaffRoutes');
 const adminEventsRoutes    = require('./routes/adminEventsRoutes');
 const adminFinanceRoutes   = require('./routes/adminFinanceRoutes');
 const adminReportsRoutes   = require('./routes/adminReportsRoutes');
+const passwordChangeRoutes = require('../server/routes/passwordChangeRoutes');
 
 const Staff = require('./models/Staff');
 const AuditLog = require('./models/AuditLog');
@@ -144,7 +145,8 @@ app.use(cors({
         callback(new Error(`CORS: origin '${origin}' not permitted`));
     },
     credentials: true,
-    methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS']
+    methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
+    exposedHeaders: ['X-CSRF-Token']
 }));
 // Note: Skipping mongoSanitize for Express 5 compatibility - using manual sanitization in routes instead
 
@@ -437,6 +439,7 @@ app.post('/internal/sync-pricing', verifySyncAuth, async (req, res) => {
 
 // Mount Routes — all under /portal prefix (isolated from static admin panel)
 app.use('/portal/auth', authRoutes);
+app.use('/api/auth/password', passwordChangeRoutes);
 
 // Public M-Pesa callbacks must be mounted before protected /portal/admin-staff routes.
 app.post('/portal/admin-staff/mpesa/callback', webhookLimiter, verifySafaricomIP, adminFinanceController.mpesaCallback);

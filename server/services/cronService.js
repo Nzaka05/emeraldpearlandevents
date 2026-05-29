@@ -178,7 +178,7 @@ const initializeCronJobs = () => {
     cronJobs.dualApprovalJob = cron.schedule('*/5 * * * *', async () => {
         console.log(`[CRON] Running dual approval expiration check at ${new Date().toISOString()}`);
         try {
-            const EmergencyFundAudit = require('../../staff-system/models/EmergencyFundAudit');
+            const EmergencyFundAudit = require('../models/EmergencyFundAudit');
             const now = new Date();
             
             const expiredAudits = await EmergencyFundAudit.find({
@@ -194,7 +194,7 @@ const initializeCronJobs = () => {
                     audit.failure_reason = 'Dual approval window expired after 30 minutes';
                     await audit.save();
 
-                    const AuditLog = require('../../staff-system/models/AuditLog');
+                    const AuditLog = require('../models/AuditLog');
                     await AuditLog.create({
                         actionType: 'dual_approval_expired',
                         targetModel: 'Staff',

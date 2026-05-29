@@ -57,7 +57,11 @@ async function toggleCategory(category, enabled) {
     try {
         const res = await fetch('/portal/admin/category-settings', {
             method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+                'Content-Type': 'application/json',
+                'CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content || ''
+            },
+            credentials: 'include',
             body: JSON.stringify({ category, is_enabled: enabled })
         });
         const data = await res.json();
