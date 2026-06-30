@@ -1,5 +1,5 @@
-/**
 const respond = require('../../utils/respond');
+/**
  * plannerController.js — Phase 7: Event Planners Directory
  * CRUD for external event planner / organiser contacts
  */

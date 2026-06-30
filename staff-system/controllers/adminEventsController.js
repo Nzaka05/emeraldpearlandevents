@@ -1,5 +1,5 @@
-/**
 const respond = require('../../utils/respond');
+/**
  * adminEventsController.js
  * Domain: Events, Assignments, Teams, Attendance
  * Pattern: Thin controller — delegates all business logic to eventAssignmentService / eventTeamService.

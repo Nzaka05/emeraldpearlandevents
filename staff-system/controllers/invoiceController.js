@@ -1,5 +1,5 @@
-/**
 const respond = require('../../utils/respond');
+/**
  * invoiceController.js — Phase 6: Client Invoice System
  * Generates PDF invoices, sends via email, manages invoice records
  * FIXED: All field names now match ClientInvoice schema (camelCase)

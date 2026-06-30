@@ -1,5 +1,5 @@
-/**
 const respond = require('../../utils/respond');
+/**
  * surveyController.js — Phase 11: Post-Event Survey System
  * Staff, Supervisor, and Client survey management
  */

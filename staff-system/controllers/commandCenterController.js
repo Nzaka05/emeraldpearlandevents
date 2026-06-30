@@ -1,5 +1,5 @@
-/**
 const respond = require('../../utils/respond');
+/**
  * commandCenterController.js
  * Controller for the Supervisor Command Center (Port 3001)
  */

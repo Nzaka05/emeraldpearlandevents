@@ -1,5 +1,5 @@
-/**
 const respond = require('../../utils/respond');
+/**
  * adminStaffController.js
  * Domain: Staff Management — CRUD, suspension, location, category settings
  * Pattern: Thin controller — delegates all business logic to staffManagementService.

@@ -1,5 +1,5 @@
-/**
 const respond = require('../../utils/respond');
+/**
  * adminDashboardController.js
  * Domain: Dashboard, Analytics, Audit Logs, Leaderboard, Security
  * Pattern: Thin controller — delegates all data work to adminViewService.

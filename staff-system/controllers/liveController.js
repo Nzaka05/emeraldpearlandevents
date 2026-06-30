@@ -1,5 +1,5 @@
-/**
 const respond = require('../../utils/respond');
+/**
  * liveController.js — Phase 12: Live Event Command Center
  * Handles real-time admin ↔ supervisor comms, emergency flags, live ops board
  */

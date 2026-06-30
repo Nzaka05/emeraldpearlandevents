@@ -1,5 +1,5 @@
-/**
 const respond = require('../../utils/respond');
+/**
  * adminReportsController.js
  * Domain: Reports, PDF/CSV Exports
  * Pattern: Thin controller — delegates all generation logic to pdfReportService.

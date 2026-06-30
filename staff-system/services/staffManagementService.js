@@ -195,3 +195,4 @@ exports.getStaffCard = async (staffId) => {
     };
 };
 const emitMetricUpdate = async () => { try { if (global.io) { const Staff = require('../models/Staff'); const s = await Staff.countDocuments(); global.io.to('Admin').emit('metricUpdate', { totalStaff: s }); } } catch(e) {} };
+exports.emitMetricUpdate = emitMetricUpdate;
