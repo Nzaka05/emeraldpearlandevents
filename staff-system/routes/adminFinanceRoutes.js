@@ -15,7 +15,7 @@ const ctrl = require('../controllers/adminFinanceController');
 const invoiceCtrl = require('../controllers/invoiceController');
 const adminController = require('../controllers/adminController');
 const { protect, authorize } = require('../middleware/auth');
-const { csrfProtection } = require('../middleware/csrfProtection');
+const { csrfProtection } = require('../../server/middleware/csrfProtection');
 const { sanitizeRequestBody } = require('../middleware/validation');
 // Centralized webhook security — verifySafaricomIP is mounted in server.js
 // directly on the callback route, before these routes load.
