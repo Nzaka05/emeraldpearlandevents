@@ -655,7 +655,14 @@ document.getElementById('editInvoiceForm').addEventListener('submit', async (e) 
 async function sendInvoice(id) {
     if (!confirm('Send invoice to client email?')) return;
     const csrf = document.querySelector('meta[name="csrf-token"]')?.content || '';
-    const res  = await fetch(`/portal/admin-staff/invoices/${id}/send-email`, { method: 'POST', headers: {'CSRF-Token': csrf} });
+    const res  = await fetch(`/portal/admin-staff/invoices/${id}/send-email`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'CSRF-Token': csrf
+        },
+        body: JSON.stringify({ _csrf: csrf })
+    });
     const data = await res.json();
     if (data.success) { showToast(data.message, 'success'); location.reload(); }
     else showToast(data.error, 'error');
@@ -674,7 +681,14 @@ async function updateStatus(id, status) {
 async function deleteInvoice(id) {
     if (!confirm('Delete this invoice? This cannot be undone.')) return;
     const csrf = document.querySelector('meta[name="csrf-token"]')?.content || '';
-    const res  = await fetch(`/portal/admin-staff/invoices/${id}`, { method: 'DELETE', headers: {'CSRF-Token': csrf} });
+    const res  = await fetch(`/portal/admin-staff/invoices/${id}`, {
+        method: 'DELETE',
+        headers: {
+            'Content-Type': 'application/json',
+            'CSRF-Token': csrf
+        },
+        body: JSON.stringify({ _csrf: csrf })
+    });
     const data = await res.json();
     if (data.success) { showToast('Invoice deleted', 'success'); location.reload(); }
     else showToast(data.error, 'error');
@@ -683,7 +697,14 @@ async function resendThankYou(id, email) {
     if (!email) { showToast('No client email on this invoice', 'error'); return; }
     if (!confirm('Resend thank you email to ' + email + '?')) return;
     const csrf = document.querySelector('meta[name="csrf-token"]')?.content || '';
-    const res  = await fetch(`/portal/admin-staff/invoices/${id}/send-email`, { method: 'POST', headers: {'CSRF-Token': csrf} });
+    const res  = await fetch(`/portal/admin-staff/invoices/${id}/send-email`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'CSRF-Token': csrf
+        },
+        body: JSON.stringify({ _csrf: csrf })
+    });
     const data = await res.json();
     if (data.success) showToast('Email resent to ' + email, 'success');
     else showToast(data.error || 'Failed', 'error');

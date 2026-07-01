@@ -27,7 +27,14 @@ exports.getDashboard = async (req, res) => {
         const data = await adminViewService.getDashboardData();
         const metrics = data.stats || {};
         const assignments = data.allAssignments || [];
-        res.render('admin/dashboard', { user: req.user, ...data, metrics, assignments, getReadinessLabel });
+        res.render('admin/dashboard', {
+            user: req.user,
+            ...data,
+            metrics,
+            assignments,
+            getReadinessLabel,
+            csrfToken: req.csrfToken ? req.csrfToken() : ''
+        });
     } catch (error) {
         console.error('[adminDashboardController] getDashboard:', error);
         res.redirect('/?error=Server error');
@@ -42,7 +49,7 @@ exports.getAuditLogsPage = async (req, res) => {
     try {
         const adminViewService = require('../services/adminViewService');
         const data = await adminViewService.getAuditLogsPageData(req.query);
-        res.render('admin/audit-logs', { user: req.user, ...data });
+        res.render('admin/audit-logs', { user: req.user, ...data, csrfToken: req.csrfToken ? req.csrfToken() : '' });
     } catch (error) {
         console.error('[adminDashboardController] getAuditLogsPage:', error);
         res.status(500).send('Server Error');
@@ -74,7 +81,7 @@ exports.getSecurityPage = async (req, res) => {
     try {
         const adminViewService = require('../services/adminViewService');
         const data = await adminViewService.getSecurityPageData();
-        res.render('admin/security', { user: req.user, ...data });
+        res.render('admin/security', { user: req.user, ...data, csrfToken: req.csrfToken ? req.csrfToken() : '' });
     } catch (error) {
         console.error('[adminDashboardController] getSecurityPage:', error);
         res.status(500).send('Server Error');

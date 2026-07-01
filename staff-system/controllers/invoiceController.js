@@ -60,7 +60,8 @@ exports.getInvoicesPage = async (req, res) => {
             invoices,
             assignments,
             stats,
-            title:       'Client Invoices'
+            title:       'Client Invoices',
+            csrfToken:    req.csrfToken ? req.csrfToken() : ''
         });
     } catch (err) {
         res.status(500).send('Error loading invoices: ' + err.message);

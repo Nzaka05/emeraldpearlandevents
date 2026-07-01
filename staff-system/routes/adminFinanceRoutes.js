@@ -15,6 +15,7 @@ const ctrl = require('../controllers/adminFinanceController');
 const invoiceCtrl = require('../controllers/invoiceController');
 const adminController = require('../controllers/adminController');
 const { protect, authorize } = require('../middleware/auth');
+const { csrfProtection } = require('../middleware/csrfProtection');
 const { sanitizeRequestBody } = require('../middleware/validation');
 // Centralized webhook security — verifySafaricomIP is mounted in server.js
 // directly on the callback route, before these routes load.
@@ -33,12 +34,12 @@ router.get('/payments',        ctrl.getAllPayments);
 router.get('/export/payments', adminController.exportPayments);
 
 // ── Phase 6: Client Invoices ──────────────────────────────────
-router.post('/invoices/generate',        sanitizeRequestBody, invoiceCtrl.generateInvoice);
+router.post('/invoices/generate',        csrfProtection, sanitizeRequestBody, invoiceCtrl.generateInvoice);
 router.get('/invoices/:id/download',     validateParam('id'), invoiceCtrl.downloadInvoice);
 router.put('/invoices/:id/status',       validateParam('id'), sanitizeRequestBody, invoiceCtrl.updateInvoiceStatus);
 router.put('/invoices/:id',              validateParam('id'), sanitizeRequestBody, invoiceCtrl.updateInvoice);
 router.post('/invoices/:id/send-email',  validateParam('id'), invoiceCtrl.sendInvoiceEmail);
-router.delete('/invoices/:id',           validateParam('id'), invoiceCtrl.deleteInvoice);
+router.delete('/invoices/:id',           csrfProtection, validateParam('id'), invoiceCtrl.deleteInvoice);
 
 // ── Per-assignment payment operations ────────────────────────
 router.put('/assignments/:id/payment', validateParam('id'),                         sanitizeRequestBody, ctrl.updatePaymentStatus);

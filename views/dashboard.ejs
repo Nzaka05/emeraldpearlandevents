@@ -525,7 +525,13 @@
         fd.append('shift_end', document.getElementById('editStaffShiftEnd').value);
         var photoFile = document.getElementById('editStaffPhoto').files[0];
         if (photoFile) fd.append('photo', photoFile);
-        fetch('/admin/staff/' + id, { method: 'PUT', body: fd })
+        fetch('/api/v1/admin/staff/' + id, {
+            method: 'PUT',
+            headers: {
+                'CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+            },
+            body: fd
+        })
             .then(function(r) { return r.json(); }).then(function(res) {
                 if (res.success) { document.getElementById('editStaffModal').style.display = 'none'; alert('Staff updated!'); loadStaffPanel(); }
                 else alert(res.error);
@@ -533,7 +539,7 @@
     }
 
     function toggleSuspend(id) {
-        fetch('/admin/staff/' + id + '/suspend', { method: 'PUT', headers: { 'Content-Type': 'application/json' } })
+        fetch('/api/v1/admin/staff/' + id + '/suspend', { method: 'PUT', headers: { 'Content-Type': 'application/json', 'CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '' } })
             .then(function(r) { return r.json(); }).then(function(res) {
                 if (res.success) { alert('Account is now: ' + res.status); loadStaffPanel(); }
                 else alert(res.error);
@@ -542,7 +548,7 @@
 
     function adminResetPassword(id, name) {
         if (!confirm('Reset password for ' + name + '? A new temporary password will be emailed to them.')) return;
-        fetch('/admin/staff/' + id + '/reset-password', { method: 'POST', headers: { 'Content-Type': 'application/json' } })
+        fetch('/api/v1/admin/staff/' + id + '/reset-password', { method: 'POST', headers: { 'Content-Type': 'application/json', 'CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '' } })
             .then(function(r) { return r.json(); }).then(function(res) {
                 if (res.success) alert(res.message);
                 else alert(res.error);
@@ -551,7 +557,14 @@
 
     function deleteStaff(id, name) {
         if (!confirm('PERMANENTLY DELETE ' + name + '? This cannot be undone.')) return;
-        fetch('/admin/staff/' + id, { method: 'DELETE', headers: { 'Content-Type': 'application/json' } })
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+        fetch('/api/v1/admin/staff/' + id, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+                'CSRF-Token': csrfToken
+            }
+        })
             .then(function(r) { return r.json(); }).then(function(res) {
                 if (res.success) { alert('Deleted.'); loadStaffPanel(); }
                 else alert(res.error);

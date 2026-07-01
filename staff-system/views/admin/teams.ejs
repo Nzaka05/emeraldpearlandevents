@@ -340,7 +340,8 @@
     
     fetch('/portal/admin-staff/event-teams/auto-create', {
         method: 'POST',
-        headers: { 'CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content || '' }
+        headers: { 'Content-Type': 'application/json', 'CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content || '' },
+        body: JSON.stringify({ _csrf: document.querySelector('meta[name="csrf-token"]')?.content || '' })
     }).then(r => r.json()).then(d => {
         showToast(d.message || 'Matrices Synced', d.success ? 'success' : 'error');
         if (d.success) setTimeout(() => location.reload(), 1500);
@@ -420,7 +421,8 @@
 
           const r = await fetch(`/portal/admin-staff/event-teams/${teamId}/disband`, {
               method: 'POST',
-              headers: { 'Content-Type': 'application/json', 'CSRF-Token': csrf }
+              headers: { 'Content-Type': 'application/json', 'CSRF-Token': csrf },
+              body: JSON.stringify({ _csrf: csrf })
           });
           const d = await r.json();
           if (d.success) {

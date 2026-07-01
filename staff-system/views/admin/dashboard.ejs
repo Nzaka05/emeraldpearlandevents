@@ -515,6 +515,7 @@ function submitStaff(e) {
   e.preventDefault();
   const form = e.target;
   const fd = new FormData(form);
+  fd.append('_csrf', _csrf);
   fetch('/portal/admin-staff/staff', { method: 'POST', headers: { 'CSRF-Token': _csrf }, body: fd })
     .then(r => r.json()).then(res => {
       if (res.success) {
@@ -533,6 +534,7 @@ function submitAssignment(e) {
   const fd = new FormData(e.target);
   const data = Object.fromEntries(fd.entries());
   data.vip_flag = !!data.vip_flag;
+  data._csrf = _csrf;
   fetch('/portal/admin-staff/assignments', { method: 'POST', body: JSON.stringify(data), headers: { 'Content-Type': 'application/json', 'CSRF-Token': _csrf } })
     .then(r => r.json()).then(res => {
       if (res.success) { showToast('Assignment broadcasted!', 'success'); closeModal('newAssignModal'); setTimeout(() => window.location.reload(), 800); }
@@ -567,7 +569,8 @@ function submitEditAssignment(e) {
     pay_rate: document.getElementById('editAssignPay').value,
     vip_flag: document.getElementById('editAssignVip').checked,
     special_instructions: document.getElementById('editAssignInstructions').value,
-    dress_code: document.getElementById('editAssignDress').value
+    dress_code: document.getElementById('editAssignDress').value,
+    _csrf: _csrf
   };
   fetch('/portal/admin-staff/assignments/' + id, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'CSRF-Token': _csrf }, body: JSON.stringify(data) })
     .then(r => r.json()).then(res => {
@@ -580,7 +583,7 @@ function submitEditAssignment(e) {
 function updatePaymentStatus(id, newStatus) {
   fetch('/portal/admin-staff/assignments/' + id + '/payment', {
     method: 'PUT', headers: { 'Content-Type': 'application/json', 'CSRF-Token': _csrf },
-    body: JSON.stringify({ payment_status: newStatus })
+    body: JSON.stringify({ payment_status: newStatus, _csrf: _csrf })
   }).then(r => r.json()).then(res => {
     if (res.success) showToast('Payment status updated', 'success');
     else showToast(res.error || 'Failed', 'error');
@@ -590,7 +593,7 @@ function updatePaymentStatus(id, newStatus) {
 // ── Replacement Requests ──
 function processReplacement(reqId, action) {
   if (confirm('Are you sure you want to ' + action + ' this replacement request?')) {
-    fetch('/portal/admin-staff/replacements/' + reqId + '/' + action, { method: 'POST', headers: { 'Content-Type': 'application/json', 'CSRF-Token': _csrf } })
+    fetch('/portal/admin-staff/replacements/' + reqId + '/' + action, { method: 'POST', headers: { 'Content-Type': 'application/json', 'CSRF-Token': _csrf }, body: JSON.stringify({ _csrf: _csrf }) })
       .then(r => r.json()).then(res => {
         if (res.success) { showToast('Request ' + action + 'd!', 'success'); setTimeout(() => window.location.reload(), 800); }
         else showToast(res.error, 'error');
@@ -648,6 +651,7 @@ function submitEditStaff(e) {
   fd.append('skills', document.getElementById('editStaffSkills').value);
   fd.append('shift_start', document.getElementById('editStaffShiftStart').value);
   fd.append('shift_end', document.getElementById('editStaffShiftEnd').value);
+  fd.append('_csrf', _csrf);
   const photoFile = document.getElementById('editStaffPhoto').files[0];
   if (photoFile) fd.append('photo', photoFile);
   fetch('/portal/admin-staff/staff/' + id, { method: 'PUT', headers: { 'CSRF-Token': _csrf }, body: fd })
@@ -658,7 +662,7 @@ function submitEditStaff(e) {
 }
 
 function toggleSuspend(id) {
-  fetch('/portal/admin-staff/staff/' + id + '/suspend', { method: 'PUT', headers: { 'Content-Type': 'application/json', 'CSRF-Token': _csrf } })
+  fetch('/portal/admin-staff/staff/' + id + '/suspend', { method: 'PUT', headers: { 'Content-Type': 'application/json', 'CSRF-Token': _csrf }, body: JSON.stringify({ _csrf: _csrf }) })
     .then(r => r.json()).then(res => {
       if (res.success) showToast('Account: ' + res.status, 'success');
       else showToast(res.error, 'error');
@@ -667,7 +671,7 @@ function toggleSuspend(id) {
 
 function adminResetPassword(id, name) {
   if (!confirm('Reset password for ' + name + '?')) return;
-  fetch('/portal/admin-staff/staff/' + id + '/reset-password', { method: 'POST', headers: { 'Content-Type': 'application/json', 'CSRF-Token': _csrf } })
+  fetch('/portal/admin-staff/staff/' + id + '/reset-password', { method: 'POST', headers: { 'Content-Type': 'application/json', 'CSRF-Token': _csrf }, body: JSON.stringify({ _csrf: _csrf }) })
     .then(r => r.json()).then(res => {
       if (res.success) showToast(res.message, 'success');
       else showToast(res.error, 'error');
@@ -676,7 +680,7 @@ function adminResetPassword(id, name) {
 
 function deleteStaff(id, name) {
   if (!confirm('PERMANENTLY DELETE ' + name + '?')) return;
-  fetch('/portal/admin-staff/staff/' + id, { method: 'DELETE', headers: { 'Content-Type': 'application/json', 'CSRF-Token': _csrf } })
+  fetch('/portal/admin-staff/staff/' + id, { method: 'DELETE', headers: { 'Content-Type': 'application/json', 'CSRF-Token': _csrf }, body: JSON.stringify({ _csrf: _csrf }) })
     .then(r => r.json()).then(res => {
       if (res.success) showToast('Deleted.', 'success');
       else showToast(res.error, 'error');
