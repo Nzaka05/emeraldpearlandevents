@@ -6,6 +6,67 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
     <meta name="csrf-token" content="<%= csrfToken %>">
     <meta name="theme-color" content="#0a0e1a">
+    <script>
+    (function() {
+      const unsafeMethods = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
+      const originalFetch = window.fetch;
+      if (!originalFetch || window.__csrfFetchPatched) return;
+      window.__csrfFetchPatched = true;
+
+      function currentCsrfToken() {
+        return document.querySelector('meta[name="csrf-token"]')?.content ||
+               document.querySelector('[name="_csrf"]')?.value || '';
+      }
+
+      function normalizeHeaders(headers, token) {
+        const normalized = new Headers(headers || {});
+        if (token && !normalized.has('CSRF-Token')) normalized.set('CSRF-Token', token);
+        if (token && !normalized.has('X-CSRF-Token')) normalized.set('X-CSRF-Token', token);
+        return normalized;
+      }
+
+      function hasJsonContentType(headers) {
+        return (headers.get('Content-Type') || '').toLowerCase().includes('application/json');
+      }
+
+      function addTokenToBody(body, headers, token) {
+        if (!token || body == null) return body;
+        if (body instanceof FormData) {
+          if (!body.has('_csrf')) body.append('_csrf', token);
+          return body;
+        }
+        if (body instanceof URLSearchParams) {
+          if (!body.has('_csrf')) body.append('_csrf', token);
+          return body;
+        }
+        if (typeof body === 'string' && hasJsonContentType(headers)) {
+          try {
+            const parsed = JSON.parse(body || '{}');
+            if (parsed && typeof parsed === 'object' && !Array.isArray(parsed) && !parsed._csrf) {
+              parsed._csrf = token;
+              return JSON.stringify(parsed);
+            }
+          } catch (e) {}
+        }
+        return body;
+      }
+
+      window.fetch = function(input, init) {
+        const request = input instanceof Request ? input : null;
+        const method = (init?.method || request?.method || 'GET').toUpperCase();
+        if (!unsafeMethods.has(method)) return originalFetch(input, init);
+
+        const token = currentCsrfToken();
+        const nextInit = Object.assign({}, init || {});
+        nextInit.method = method;
+        nextInit.headers = normalizeHeaders(nextInit.headers || request?.headers, token);
+        if ('body' in nextInit) {
+          nextInit.body = addTokenToBody(nextInit.body, nextInit.headers, token);
+        }
+        return originalFetch(input, nextInit);
+      };
+    })();
+    </script>
     <title>Emerald Staff Portal</title>
 
     <!-- Fonts -->

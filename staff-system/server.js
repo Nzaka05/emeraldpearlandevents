@@ -5,7 +5,6 @@ const express = require('express');
 const http = require('http');
 const path = require('path');
 const cookieParser = require('cookie-parser');
-const csrf = require('csurf');
 const cors = require('cors');
 const helmet = require('helmet');
 const mongoSanitize = require('express-mongo-sanitize');
@@ -35,6 +34,7 @@ const Staff = require('./models/Staff');
 const AuditLog = require('./models/AuditLog');
 const { protect, authorize } = require('./middleware/auth');
 const { sanitizeRequestBody } = require('./middleware/validation');
+const { csrfProtection, csrfErrorHandler } = require('./middleware/csrfProtection');
 const surveyController = require('./controllers/surveyController');
 const emailService = require('./services/emailService');
 emailService.initializeEmailService();
@@ -178,39 +178,21 @@ app.use(methodOverride(function(req, res) {
 }));
 app.use(methodOverride('_method'));
 
-// CSRF only for staff portal routes — never applied to /admin
-const portalCsrf = csrf({ cookie: { httpOnly: true, sameSite: 'lax' } });
+const isPortalCsrfExempt = (req) => {
+  const pathForMatch = req.originalUrl.split('?')[0];
+  return pathForMatch.startsWith('/portal/admin-staff/mpesa/') ||
+         pathForMatch.match(/^\/portal\/staff\/survey\//);
+};
 
-// Add csrfToken + vapidPublicKey to res.locals for all /portal views
-app.use((req, res, next) => {
-  if (req.path.startsWith('/admin-staff/mpesa/')) return next();
-  if (req.path.match(/^\/staff\/survey\//)) return next();
-  
-  const isApiRoute = req.path.startsWith('/api') || 
-                     req.headers['content-type'] === 'application/json' ||
-                     req.headers['authorization'];
-  if (isApiRoute) return next();
-  
-  // Apply CSRF to all other requests (like form submissions and page loads)
-  if (req.path.startsWith('/portal')) {
-      portalCsrf(req, res, next);
-  } else {
-      next();
-  }
-});
-
+// Add csrfToken + vapidPublicKey to res.locals for all protected /portal requests.
 app.use('/portal', (req, res, next) => {
-  if (req.path.startsWith('/admin-staff/mpesa/')) return next();
-  if (req.path.match(/^\/staff\/survey\//)) return next();
-  
-  const isApiRoute = req.path.startsWith('/api') || 
-                     req.headers['content-type'] === 'application/json' ||
-                     req.headers['authorization'];
-  if (isApiRoute) return next();
-
-  res.locals.csrfToken = req.csrfToken();
-  res.locals.vapidPublicKey = process.env.VAPID_PUBLIC_KEY || '';
-  next();
+  if (isPortalCsrfExempt(req)) return next();
+  csrfProtection(req, res, (err) => {
+    if (err) return next(err);
+    res.locals.csrfToken = req.csrfToken();
+    res.locals.vapidPublicKey = process.env.VAPID_PUBLIC_KEY || '';
+    next();
+  });
 });
 
 // Fallback: ensure csrfToken is always available in views (empty string if CSRF was bypassed)
@@ -564,16 +546,7 @@ app.get('/staff-admin/dashboard', protect, authorize('Admin', 'Super Admin'), (r
 });
 
 // CSRF error handler for portal
-app.use('/portal', (err, req, res, next) => {
-    if (err.code === 'EBADCSRFTOKEN') {
-        return res.status(403).render('auth/login', {
-            error: 'Session expired. Please log in again.',
-            message: null,
-            csrfToken: req.csrfToken ? req.csrfToken() : ''
-        });
-    }
-    next(err);
-});
+app.use('/portal', csrfErrorHandler);
 
 // Convenience redirects so staff can find the portal easily
 app.get('/staff-login', (req, res) => res.redirect('/portal/auth/login'));
