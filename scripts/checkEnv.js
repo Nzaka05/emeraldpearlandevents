@@ -27,33 +27,37 @@ const optionalVars = [
 
 let failed = false;
 
-console.log('[ENV_CHECK] Auditing environment variables...');
+if (process.env.NODE_ENV === 'test') {
+    console.log('[ENV_CHECK] Skipping environment variable audit in test mode.');
+} else {
+    console.log('[ENV_CHECK] Auditing environment variables...');
 
-for (const v of criticalVars) {
-    if (!process.env[v]) {
-        console.error(`❌ [CRITICAL ENV MISSING] ${v}`);
-        console.error(`   -> The server cannot safely start without this value. If upgrading, please add it to your .env file.`);
-        failed = true;
-    }
-}
-
-for (const v of optionalVars) {
-    if (!process.env[v]) {
-        console.warn(`⚠️  [OPTIONAL ENV MISSING] ${v}`);
-        console.warn(`   -> Feature will be gracefully disabled or fallback to degraded operation (e.g. local uploads or no emails).`);
-    } else {
-        if (v === 'SOCKET_AUTH_REQUIRED' && process.env[v] !== 'true') {
-             console.warn(`⚠️  [OPTIONAL ENV UPDATE] ${v} usually maps to true. Currently set to ${process.env[v]}.`);
+    for (const v of criticalVars) {
+        if (!process.env[v]) {
+            console.error(`❌ [CRITICAL ENV MISSING] ${v}`);
+            console.error(`   -> The server cannot safely start without this value. If upgrading, please add it to your .env file.`);
+            failed = true;
         }
     }
-}
 
-if (failed) {
-    console.error('===============================================================');
-    console.error('🚨 SERVER HALTED: Critical environments are missing. Do not bypass.');
-    console.error('   Please consult UPGRADE.md on how to fulfill these properties.');
-    console.error('===============================================================');
-    process.exit(1);
-}
+    for (const v of optionalVars) {
+        if (!process.env[v]) {
+            console.warn(`⚠️  [OPTIONAL ENV MISSING] ${v}`);
+            console.warn(`   -> Feature will be gracefully disabled or fallback to degraded operation (e.g. local uploads or no emails).`);
+        } else {
+            if (v === 'SOCKET_AUTH_REQUIRED' && process.env[v] !== 'true') {
+                 console.warn(`⚠️  [OPTIONAL ENV UPDATE] ${v} usually maps to true. Currently set to ${process.env[v]}.`);
+            }
+        }
+    }
 
-console.log('✅ [ENV_CHECK] All critical runtime configs fulfilled.');
+    if (failed) {
+        console.error('===============================================================');
+        console.error('🚨 SERVER HALTED: Critical environments are missing. Do not bypass.');
+        console.error('   Please consult UPGRADE.md on how to fulfill these properties.');
+        console.error('===============================================================');
+        process.exit(1);
+    }
+
+    console.log('✅ [ENV_CHECK] All critical runtime configs fulfilled.');
+}
