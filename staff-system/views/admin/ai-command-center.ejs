@@ -72,7 +72,8 @@ async function sendMessage() {
                     role: '<%= user && user.role ? user.role : "Admin" %>',
                     email: '<%= user && user.email ? user.email : "" %>'
                 },
-                history: conversationHistory
+                history: conversationHistory,
+                _csrf: csrf
             })
         });
         const data = await res.json();

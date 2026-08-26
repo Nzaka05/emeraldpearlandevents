@@ -183,20 +183,33 @@ describe('Client Portal Routes - Contract Tests', () => {
   });
 
   describe('POST /api/v1/client/api/refresh-token - Client Token Refresh', () => {
+    const getClientCsrf = async () => {
+      const loginRes = await request(app).get('/api/v1/client/login');
+      const cookies = loginRes.headers['set-cookie'] || [];
+      const csrfCookie = cookies.find(c => c.startsWith('_csrf=')) || '';
+      const match = loginRes.text.match(/name="_csrf" value="([^"]+)"/);
+      return { cookie: csrfCookie.split(';')[0], token: match ? match[1] : '' };
+    };
+
     it('should return 401 when refresh token is missing', async () => {
+      const csrf = await getClientCsrf();
       const res = await request(app)
         .post('/api/v1/client/api/refresh-token')
         .set('Content-Type', 'application/json')
+        .set('Cookie', csrf.cookie)
+        .set('X-CSRF-Token', csrf.token)
         .send({});
 
-      // Phase 2 hardened: missing token is an auth failure (401), not validation (400)
       expect(res.status).toBe(401);
     });
 
     it('should reject invalid refresh token', async () => {
+      const csrf = await getClientCsrf();
       const res = await request(app)
         .post('/api/v1/client/api/refresh-token')
         .set('Content-Type', 'application/json')
+        .set('Cookie', csrf.cookie)
+        .set('X-CSRF-Token', csrf.token)
         .send({ refreshToken: 'invalid-token' });
 
       expect(res.status).toBe(401);

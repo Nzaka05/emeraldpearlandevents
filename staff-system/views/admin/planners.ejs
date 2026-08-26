@@ -196,9 +196,10 @@ document.getElementById('plannerForm').addEventListener('submit', async (e) => {
         notes:       document.getElementById('pNotes').value,
         event_types: types
     };
-    const url    = id ? `/portal/admin/planners/${id}` : '/portal/admin/planners';
+    body._csrf = document.querySelector('meta[name="csrf-token"]')?.content || '';
+    const url    = id ? `/portal/admin-staff/planners/${id}` : '/portal/admin-staff/planners';
     const method = id ? 'PUT' : 'POST';
-    const res    = await fetch(url, { method, headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) });
+    const res    = await fetch(url, { method, headers: {'Content-Type':'application/json', 'CSRF-Token': body._csrf}, body: JSON.stringify(body) });
     const data   = await res.json();
     if (data.success) { showToast(id ? 'Planner updated' : 'Planner added', 'success'); closePlannerModal(); location.reload(); }
     else showToast(data.error, 'error');
@@ -206,7 +207,12 @@ document.getElementById('plannerForm').addEventListener('submit', async (e) => {
 
 async function deletePlanner(id, name) {
     if (!confirm(`Delete ${name}?`)) return;
-    const res = await fetch(`/portal/admin/planners/${id}`, { method: 'DELETE' });
+    const csrf = document.querySelector('meta[name="csrf-token"]')?.content || '';
+    const res = await fetch(`/portal/admin-staff/planners/${id}`, { 
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json', 'CSRF-Token': csrf },
+        body: JSON.stringify({ _csrf: csrf })
+    });
     const data = await res.json();
     if (data.success) { showToast('Planner deleted', 'success'); location.reload(); }
     else showToast(data.error, 'error');

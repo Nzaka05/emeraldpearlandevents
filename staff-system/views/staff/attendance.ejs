@@ -183,10 +183,11 @@
             return;
         }
         showToast(`${type === 'in' ? 'Initializing' : 'Terminating'} session...`, 'info');
+        const csrf = document.querySelector('meta[name="csrf-token"]')?.content || '';
         const r = await fetch('/portal/staff/attendance/clock', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ type, lat: userLat, lng: userLng })
+            headers: { 'Content-Type': 'application/json', 'CSRF-Token': csrf },
+            body: JSON.stringify({ type, lat: userLat, lng: userLng, _csrf: csrf })
         });
         const d = await r.json();
         if (d.success) { 

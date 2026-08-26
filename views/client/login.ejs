@@ -466,7 +466,7 @@
             try {
                 const res = await fetch('/client/api/login', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': '<%= csrfToken %>' },
                     body: JSON.stringify({ email, password })
                 });
 

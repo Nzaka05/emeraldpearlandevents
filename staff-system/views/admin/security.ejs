@@ -185,7 +185,12 @@
     async function unsuspend(id) {
         if (!confirm('SYS_PROMPT: Declassify unit and restore operational capacity to node?')) return;
         try {
-           const r = await fetch('/portal/admin-staff/staff/' + id + '/unsuspend', { method: 'POST' });
+           const csrf = document.querySelector('meta[name="csrf-token"]')?.content || '';
+           const r = await fetch('/portal/admin-staff/staff/' + id + '/suspend', { 
+               method: 'PUT',
+               headers: { 'Content-Type': 'application/json', 'CSRF-Token': csrf },
+               body: JSON.stringify({ _csrf: csrf })
+           });
            const d = await r.json();
            if (d.success) { 
               showToast('Override success. Unit restored.', 'success'); 

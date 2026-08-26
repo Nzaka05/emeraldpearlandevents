@@ -4,14 +4,13 @@
  */
 
 module.exports = {
-    // Test environment
     testEnvironment: 'node',
 
     // Runs ONCE before any test module is loaded
     // Starts shared MongoMemoryServer & sets env vars
     globalSetup: './tests/globalSetup.js',
 
-    // Runs ONCE after all suites finish — stops the shared MongoMemoryServer
+    // Runs ONCE after all suites finish - stops the shared MongoMemoryServer
     globalTeardown: './tests/globalTeardown.js',
 
     // Where Jest looks for tests

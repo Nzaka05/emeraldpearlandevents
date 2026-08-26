@@ -379,6 +379,7 @@ async function sendMediaWithCaption() {
     closeMediaPreview();
     try {
         const csrf = document.querySelector('meta[name="csrf-token"]')?.content || '';
+        formData.append('_csrf', csrf);
         const r = await fetch('/portal/staff/team/message/upload', { method: 'POST', headers: { 'CSRF-Token': csrf }, body: formData });
         const d = await r.json();
         if (!d.success) showToast(d.error || 'Upload failed', 'error');
@@ -399,7 +400,7 @@ async function sendChatMessage() {
         const r = await fetch('/portal/staff/team/message', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'CSRF-Token': csrf },
-            body: JSON.stringify({ message })
+            body: JSON.stringify({ message, _csrf: csrf })
         });
         const d = await r.json();
         if (!d.success) { showToast(d.error || 'Failed to send', 'error'); input.value = message; }

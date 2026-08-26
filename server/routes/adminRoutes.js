@@ -16,7 +16,7 @@ const ClientAccount = require('../models/ClientAccount');
 const ClientAuditLog = require('../models/ClientAuditLog');
 const ClientSession = require('../models/ClientSession');
 const { verifyAdminJWT, generateAdminToken } = require('../middleware/adminAuth');
-const { csrfProtection, attachCsrfToken } = require('../middleware/csrfProtection');
+const { csrfProtection, attachCsrfToken, csrfErrorHandler } = require('../middleware/csrfProtection');
 const { getCache, setCache, invalidateCache, invalidatePattern } = require('../utils/cache');
 
 
@@ -161,7 +161,7 @@ router.post('/login', async (req, res) => {
 });
 
 // POST /api/v1/admin/logout
-router.post('/logout', (req, res) => {
+router.post('/logout', csrfProtection, csrfErrorHandler, (req, res) => {
     res.clearCookie('adminToken');
     res.clearCookie('portal_token');
     res.json({
@@ -1058,19 +1058,33 @@ router.get('/gallery', verifyAdminJWT, async (req, res) => {
 });
 
 // POST /api/v1/admin/gallery/upload
-router.post('/gallery/upload', verifyAdminJWT, csrfProtection, async (req, res) => {
+// Accepts multipart/form-data: file (image), caption (text), eventType (text)
+// multer runs BEFORE csrfProtection so the X-CSRF-Token header is still read correctly
+const multerMemory = require('multer')({ storage: require('multer').memoryStorage() });
+
+router.post('/gallery/upload', verifyAdminJWT, multerMemory.single('file'), csrfProtection, async (req, res) => {
     try {
-        const { filename, url, eventType, caption } = req.body;
-        if (!url) return res.status(400).json({ success: false, message: "Image data (url) is required." });
-        const cloudinary = require("cloudinary").v2;
+        if (!req.file) return res.status(400).json({ success: false, message: 'Image file is required.' });
+
+        const { eventType, caption } = req.body;
+        const cloudinary = require('cloudinary').v2;
         cloudinary.config({ cloudinary_url: process.env.CLOUDINARY_URL });
-        const uploadResult = await cloudinary.uploader.upload(url, { folder: "emerald/gallery", resource_type: "image" });
+
+        // Stream the raw buffer directly to Cloudinary — no base64 encoding overhead
+        const uploadResult = await new Promise((resolve, reject) => {
+            const stream = cloudinary.uploader.upload_stream(
+                { folder: 'emerald/gallery', resource_type: 'image' },
+                (error, result) => { if (error) reject(error); else resolve(result); }
+            );
+            stream.end(req.file.buffer);
+        });
+
         const cloudinaryUrl = uploadResult.secure_url;
         const lastItem = await Gallery.findOne().sort({ order: -1 });
         const nextOrder = lastItem ? (lastItem.order + 1) : 0;
 
         const item = new Gallery({
-            filename: filename || `upload_${Date.now()}`,
+            filename: req.file.originalname || `upload_${Date.now()}`,
             url: cloudinaryUrl,
             eventType: eventType || null,
             caption: caption || '',
@@ -1091,6 +1105,7 @@ router.post('/gallery/upload', verifyAdminJWT, csrfProtection, async (req, res) 
         res.status(500).json({ success: false, message: 'Error uploading image: ' + error.message });
     }
 });
+
 
 // DELETE /api/v1/admin/gallery/:id
 router.delete('/gallery/:id', verifyAdminJWT, csrfProtection, async (req, res) => {

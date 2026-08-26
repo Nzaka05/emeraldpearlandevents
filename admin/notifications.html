@@ -1040,16 +1040,19 @@
                 const notification = sampleNotifications.find(n => n.id === id);
                 if (forceRead && notification && notification.isRead) return;
 
-                const response = await fetch(`/api/v1/admin/notifications/${id}/read`, { method: 'PATCH' });
+                const response = await fetchWithCsrf(`/api/v1/admin/notifications/${id}/read`, { method: 'PATCH' });
                 const result = await response.json();
                 if (result.success) {
                     if (notification) {
                         notification.isRead = !notification.isRead;
                     }
                     renderNotifications();
+                } else {
+                    showCsrfToast('Failed to update notification.');
                 }
             } catch (error) {
                 console.error('Error toggling read status:', error);
+                showCsrfToast('Failed to update notification.');
             }
         }
 
@@ -1057,10 +1060,10 @@
             if (selectedNotificationIds.size === 0) return alert('No notifications selected');
 
             const promises = Array.from(selectedNotificationIds).map(id =>
-                fetch(`/api/v1/admin/notifications/${id}/read`, { method: 'PATCH' })
+                fetchWithCsrf(`/api/v1/admin/notifications/${id}/read`, { method: 'PATCH' })
             );
 
-            await Promise.all(promises);
+            await Promise.all(promises).catch(() => showCsrfToast('Some notifications could not be marked as read.'));
             selectedNotificationIds.clear();
             await loadNotifications();
         }
@@ -1070,20 +1073,22 @@
             if (!confirm(`Are you sure you want to delete ${selectedNotificationIds.size} notifications?`)) return;
 
             const promises = Array.from(selectedNotificationIds).map(id =>
-                fetch(`/api/v1/admin/notifications/${id}`, { method: 'DELETE' })
+                fetchWithCsrf(`/api/v1/admin/notifications/${id}`, { method: 'DELETE' })
             );
 
-            await Promise.all(promises);
+            await Promise.all(promises).catch(() => showCsrfToast('Some notifications could not be deleted.'));
             selectedNotificationIds.clear();
             await loadNotifications();
         }
 
         function handleLogout() {
-            fetch('/api/v1/admin/logout', { method: 'POST' })
+            fetchWithCsrf('/api/v1/admin/logout', { method: 'POST' })
                 .then(() => window.location.href = '/admin/login')
-                .catch(error => console.error('Logout error:', error));
+                .catch(error => { console.error('Logout error:', error); showCsrfToast('Logout failed. Please try again.'); });
         }
     </script>
+    <script src="/admin/push-client.js"></script>
+    <script src="/admin/assets/csrf-fetch.js"></script>
             <script src="/admin/assets/mobile-sidebar.js?v=3"></script>
     <script src="/admin/admin-profile.js"></script>
 </body>

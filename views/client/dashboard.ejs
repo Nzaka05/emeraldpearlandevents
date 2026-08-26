@@ -391,8 +391,7 @@
         document.getElementById('logout-btn').addEventListener('click', async () => {
             await fetch('/client/api/logout', {
                 method: 'POST',
-                body: JSON.stringify({ _csrf: '<%= csrfToken %>' }),
-                headers: { 'Content-Type': 'application/json' }
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': '<%= csrfToken %>' }
             });
             window.location.href = '/client/login';
         });

@@ -131,10 +131,11 @@
         const reason = prompt("Enter disciplinary reason for this flag (affects AI risk models):");
         if (!reason) return;
         try {
+            const csrf = document.querySelector('meta[name="csrf-token"]')?.content || '';
             const res = await fetch(`/portal/admin-staff/performance/flag/${staffId}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content || '' },
-                body: JSON.stringify({ reason })
+                body: JSON.stringify({ reason, _csrf: csrf })
             });
             const data = await res.json();
             if (data.success) {

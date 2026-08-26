@@ -1,7 +1,6 @@
 const csrf = require('csurf');
 
-// Cookie-based CSRF — works with httpOnly auth cookies
-const csrfProtection = csrf({
+const csurfInstance = csrf({
     cookie: {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
@@ -16,6 +15,20 @@ const csrfProtection = csrf({
                req.query?._csrf;
     }
 });
+
+const csrfProtection = (req, res, next) => {
+    const authHeader = req.headers.authorization;
+    const hasBearer = authHeader && authHeader.startsWith('Bearer ');
+    const hasAdminCookie = req.cookies && req.cookies.adminToken;
+    const hasClientCookie = req.cookies && req.cookies.client_token;
+
+    if (hasBearer && !hasAdminCookie && !hasClientCookie) {
+        // Skip CSRF validation for non-cookie CLI/script consumers
+        return next();
+    }
+
+    return csurfInstance(req, res, next);
+};
 
 // Middleware to expose token to frontend via response header
 const attachCsrfToken = (req, res, next) => {

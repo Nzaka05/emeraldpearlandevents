@@ -65,7 +65,7 @@
         const removeSession = async (sessionId) => {
             if(!confirm('Are you sure you want to revoke this session?')) return;
             try {
-                const res = await fetch(`/client/api/sessions/${sessionId}`, { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ _csrf: csrfToken }) });
+                const res = await fetch(`/client/api/sessions/${sessionId}`, { method: 'DELETE', headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken } });
                 if(res.ok) window.location.reload();
             } catch(e) { alert('Error revoking session'); }
         };
@@ -107,7 +107,7 @@
 
         document.getElementById('revoke-all-btn').addEventListener('click', async () => {
             if(!confirm('This will sign you out of all devices including this one. Continue?')) return;
-            const res = await fetch('/client/api/logout-all-devices', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ _csrf: csrfToken }) });
+            const res = await fetch('/client/api/logout-all-devices', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken } });
             if(res.ok) window.location.href = '/client/login';
         });
     </script>

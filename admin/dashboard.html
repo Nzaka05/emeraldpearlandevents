@@ -941,7 +941,7 @@
                 <a href="/admin/bookings" class="sidebar-nav-link">
                     <span class="sidebar-nav-icon"><i class="fas fa-calendar"></i></span>
                     <span>Bookings</span>
-                    <span class="nav-badge">12</span>
+                    <span class="nav-badge" id="navBadgeBookings" style="display:none"></span>
                 </a>
             </li>
             <li class="sidebar-nav-item">
@@ -1318,9 +1318,12 @@
 
         // Logout handler
         function handleLogout() {
-            fetch('/api/v1/admin/logout', { method: 'POST' })
+            fetchWithCsrf('/api/v1/admin/logout', { method: 'POST' })
                 .then(() => window.location.href = '/admin/login')
-                .catch(err => console.error('Logout error:', err));
+                .catch(err => {
+                    console.error('Logout error:', err);
+                    showCsrfToast('Logout failed. Please try again.', 'error');
+                });
         }
 
         // Animations on scroll
@@ -1396,6 +1399,7 @@
         });
     </script>
     <script src="/admin/push-client.js"></script>
+    <script src="/admin/assets/csrf-fetch.js"></script>
     <script src="/admin/assets/mobile-sidebar.js?v=3"></script>
     <script src="/admin/admin-profile.js"></script>
 </body>

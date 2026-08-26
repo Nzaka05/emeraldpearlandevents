@@ -12,6 +12,7 @@ const Payment = require('../models/ClientPayment');
 const logger = require('../utils/logger');
 const { bookingQueue, paymentQueue, notificationQueue, syncQueue } = require('../../config/queues');
 const { createSyncHeaders } = require('../../staff-system/middleware/syncAuth');
+const { csrfProtection, csrfErrorHandler } = require('../middleware/csrfProtection');
 
 // Middleware to verify admin role
 const requireAdmin = (req, res, next) => {
@@ -115,7 +116,7 @@ router.get('/sync-status', verifyAdminJWT, requireAdmin, async (req, res) => {
 });
 
 // POST /api/v1/admin/security/sync-retry/:bookingId
-router.post('/sync-retry/:bookingId', verifyAdminJWT, requireAdmin, async (req, res) => {
+router.post('/sync-retry/:bookingId', verifyAdminJWT, requireAdmin, csrfProtection, csrfErrorHandler, async (req, res) => {
     try {
         const { bookingId } = req.params;
 

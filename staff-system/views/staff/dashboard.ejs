@@ -281,7 +281,7 @@
                 'Content-Type': 'application/json',
                 'CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content || ''
             }, 
-            body: JSON.stringify({ action, assignment_id: id, lat, lng, selfie_base64: selfie }) 
+            body: JSON.stringify({ action, assignment_id: id, lat, lng, selfie_base64: selfie, _csrf: document.querySelector('meta[name="csrf-token"]')?.content || '' }) 
         })
         .then(r => r.json())
         .then(d => { 
@@ -303,7 +303,7 @@
                 'Content-Type': 'application/json',
                 'CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content || ''
             }, 
-            body: JSON.stringify({ response }) 
+            body: JSON.stringify({ response, _csrf: document.querySelector('meta[name="csrf-token"]')?.content || '' }) 
         })
         .then(r => r.json())
         .then(d => { 

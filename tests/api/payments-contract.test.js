@@ -34,7 +34,7 @@ describe('Payment Processing Routes - Contract Tests', () => {
       };
 
       const res = await request(app)
-        .post('/api/v1/payments/mpesa/callback')
+        .post('/api/v1/webhooks/mpesa/callback')
         .set('Content-Type', 'application/json')
         .send(mpesaCallback);
 
@@ -65,7 +65,7 @@ describe('Payment Processing Routes - Contract Tests', () => {
 
       // First callback
       const res1 = await request(app)
-        .post('/api/v1/payments/mpesa/callback')
+        .post('/api/v1/webhooks/mpesa/callback')
         .set('Content-Type', 'application/json')
         .send(mpesaCallback);
 
@@ -73,7 +73,7 @@ describe('Payment Processing Routes - Contract Tests', () => {
 
       // Duplicate callback (same transaction)
       const res2 = await request(app)
-        .post('/api/v1/payments/mpesa/callback')
+        .post('/api/v1/webhooks/mpesa/callback')
         .set('Content-Type', 'application/json')
         .send(mpesaCallback);
 
@@ -85,7 +85,7 @@ describe('Payment Processing Routes - Contract Tests', () => {
       const invalidCallback = { invalid: 'structure' };
 
       const res = await request(app)
-        .post('/api/v1/payments/mpesa/callback')
+        .post('/api/v1/webhooks/mpesa/callback')
         .set('Content-Type', 'application/json')
         .send(invalidCallback);
 
@@ -104,7 +104,7 @@ describe('Payment Processing Routes - Contract Tests', () => {
       };
 
       const res = await request(app)
-        .post('/api/v1/payments/mpesa/callback')
+        .post('/api/v1/webhooks/mpesa/callback')
         .set('Content-Type', 'application/json')
         .send(incompleteCallback);
 

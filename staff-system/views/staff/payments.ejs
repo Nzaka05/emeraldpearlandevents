@@ -164,9 +164,11 @@
     async function confirmReceipt(id) {
         if (!confirm('Confirm receipt of payment for this event?')) return;
         showToast('Confirming receipt...', 'info');
+        const csrf = document.querySelector('meta[name="csrf-token"]')?.content || '';
         const r = await fetch('/portal/staff/assignments/' + id + '/payment/confirm', { 
             method: 'POST',
-            headers: { 'CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content || '' }
+            headers: { 'Content-Type': 'application/json', 'CSRF-Token': csrf },
+            body: JSON.stringify({ _csrf: csrf })
         });
         const d = await r.json();
         if (d.success) { showToast('Payment confirmed!', 'success'); setTimeout(() => location.reload(), 1000); }
@@ -183,7 +185,7 @@
                 'Content-Type': 'application/json',
                 'CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content || ''
             },
-            body: JSON.stringify({ reason })
+            body: JSON.stringify({ reason, _csrf: document.querySelector('meta[name="csrf-token"]')?.content || '' })
         });
         const d = await r.json();
         if (d.success) { 

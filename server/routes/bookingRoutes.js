@@ -2,6 +2,7 @@ const express = require('express');
 const rateLimit = require('express-rate-limit');
 const { body, validationResult } = require('express-validator');
 const mongoose = require('mongoose');
+const { csrfProtection, csrfErrorHandler } = require('../middleware/csrfProtection');
 const Booking = require('../models/Booking');
 const Customer = require('../models/Customer');
 const AdminNotification = require('../models/AdminNotification');
@@ -506,7 +507,7 @@ router.get('/booking/:bookingId', verifyAdminJWT, async (req, res) => {
 // ═══════════════════════════════════════════════════════════
 // UPDATE BOOKING STATUS (for admin use)
 // ═══════════════════════════════════════════════════════════
-router.patch('/booking/:bookingId/status', verifyAdminJWT, async (req, res) => {
+router.patch('/booking/:bookingId/status', verifyAdminJWT, csrfProtection, csrfErrorHandler, async (req, res) => {
     try {
         if (!mongoose.Types.ObjectId.isValid(req.params.bookingId)) {
             return res.status(400).json({

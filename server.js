@@ -127,6 +127,8 @@ app.get('/admin', (req, res) => {
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 app.get('/index.html', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 app.get('/booking.html', (req, res) => res.sendFile(path.join(__dirname, 'booking.html')));
+app.get('/gallery', (req, res) => res.sendFile(path.join(__dirname, 'gallery.html')));
+app.get('/gallery.html', (req, res) => res.sendFile(path.join(__dirname, 'gallery.html')));
 
 // Stripe payments route (webhook needs raw body, mounted before global body parser)
 // app.use('/api/payments/stripe', require('./server/routes/stripeRoutes')); // Disabled — Paystack handles all payments. To re-enable, uncomment this line.
@@ -140,6 +142,7 @@ app.use('/api/payouts', require('./server/routes/staffPayoutRoutes'));
 app.use(bodyParser.json({ limit: '50mb' }));
 app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
 app.use(express.static('public'));
+app.use('/images', express.static(path.join(__dirname, 'images')));
 
 // ── RATE LIMITING (Prevent spam) ──
 const bookingLimiter = rateLimit({

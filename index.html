@@ -560,20 +560,50 @@
       <a href="/gallery.html" class="port-link">View full gallery <i class="fa-solid fa-arrow-right"></i></a>
     </div>
     <div class="port-grid reveal" id="port-grid">
-      <div class="port-item port-skeleton">
-        <div class="port-bg port-ph"><i class="fa-solid fa-camera"></i></div>
+      <div class="port-item" onclick="openLightbox('/images/gallery/Chezshot@WindsorGolfClub14.jpg.jpeg', 'Windsor Golf Club VIP Gala Reception', 'Corporate & VIP')">
+        <div class="port-bg loaded" style="background-image:url('/images/gallery/Chezshot@WindsorGolfClub14.jpg.jpeg'); background-size:cover; background-position:center;"></div>
+        <div class="port-overlay">
+          <div class="port-label">
+            <small>Corporate &amp; VIP</small>
+            Windsor Golf Club VIP Gala Reception
+          </div>
+        </div>
       </div>
-      <div class="port-item port-skeleton">
-        <div class="port-bg port-ph"><i class="fa-solid fa-camera"></i></div>
+      <div class="port-item" onclick="openLightbox('/images/gallery/Chezshot@WindsorGolfClub15.jpg.jpeg', 'Executive Protocol & Guest Hospitality', 'VIP Protocol')">
+        <div class="port-bg loaded" style="background-image:url('/images/gallery/Chezshot@WindsorGolfClub15.jpg.jpeg'); background-size:cover; background-position:center;"></div>
+        <div class="port-overlay">
+          <div class="port-label">
+            <small>VIP Protocol</small>
+            Executive Protocol &amp; Guest Hospitality
+          </div>
+        </div>
       </div>
-      <div class="port-item port-skeleton">
-        <div class="port-bg port-ph"><i class="fa-solid fa-camera"></i></div>
+      <div class="port-item" onclick="openLightbox('/images/gallery/Chezshot@WindsorGolfClub18.jpg.jpeg', 'Luxury Outdoor Event Setup & Ushering', 'Social & Private')">
+        <div class="port-bg loaded" style="background-image:url('/images/gallery/Chezshot@WindsorGolfClub18.jpg.jpeg'); background-size:cover; background-position:center;"></div>
+        <div class="port-overlay">
+          <div class="port-label">
+            <small>Social &amp; Private</small>
+            Luxury Outdoor Event Setup &amp; Ushering
+          </div>
+        </div>
       </div>
-      <div class="port-item port-skeleton">
-        <div class="port-bg port-ph"><i class="fa-solid fa-camera"></i></div>
+      <div class="port-item" onclick="openLightbox('/images/gallery/Chezshot@WindsorGolfClub19.jpg.jpeg', 'Prestigious Country Club Gathering', 'VIP Protocol')">
+        <div class="port-bg loaded" style="background-image:url('/images/gallery/Chezshot@WindsorGolfClub19.jpg.jpeg'); background-size:cover; background-position:center;"></div>
+        <div class="port-overlay">
+          <div class="port-label">
+            <small>VIP Protocol</small>
+            Prestigious Country Club Gathering
+          </div>
+        </div>
       </div>
-      <div class="port-item port-skeleton">
-        <div class="port-bg port-ph"><i class="fa-solid fa-camera"></i></div>
+      <div class="port-item" onclick="openLightbox('/images/gallery/Chezshot@WindsorGolfClub20.jpg.jpeg', 'Bespoke Event Coordination & Elegance', 'Corporate & VIP')">
+        <div class="port-bg loaded" style="background-image:url('/images/gallery/Chezshot@WindsorGolfClub20.jpg.jpeg'); background-size:cover; background-position:center;"></div>
+        <div class="port-overlay">
+          <div class="port-label">
+            <small>Corporate &amp; VIP</small>
+            Bespoke Event Coordination &amp; Elegance
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -786,35 +816,80 @@
   const statsSection = document.getElementById('stats');
   if (statsSection) statsObs.observe(statsSection);
 
+  // Lightbox Modal
+  function openLightbox(url, caption = '', eventType = '') {
+    let lb = document.getElementById('globalLightbox');
+    if (!lb) {
+      lb = document.createElement('div');
+      lb.id = 'globalLightbox';
+      lb.style.cssText = 'position:fixed;inset:0;background:rgba(8,29,16,0.95);backdrop-filter:blur(10px);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;opacity:0;transition:opacity 0.3s;cursor:zoom-out;';
+      lb.innerHTML = `
+        <button id="closeLightbox" style="position:absolute;top:24px;right:28px;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#fff;width:44px;height:44px;border-radius:50%;font-size:1.5rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background 0.2s;" aria-label="Close">&times;</button>
+        <div style="max-width:92vw;max-height:80vh;display:flex;align-items:center;justify-content:center;position:relative;cursor:default;" onclick="event.stopPropagation()">
+          <img id="lightboxImg" src="" alt="Gallery Image" style="max-width:100%;max-height:80vh;border-radius:4px;box-shadow:0 12px 50px rgba(0,0,0,0.6);object-fit:contain;border:1px solid rgba(201,168,76,0.3);">
+        </div>
+        <div style="margin-top:16px;text-align:center;color:#fff;cursor:default;" onclick="event.stopPropagation()">
+          <div id="lightboxTag" style="color:var(--gold-light);font-size:0.75rem;letter-spacing:0.14em;text-transform:uppercase;margin-bottom:4px;font-weight:500;"></div>
+          <div id="lightboxCaption" style="font-family:'Cormorant Garamond',serif;font-size:1.35rem;font-weight:300;"></div>
+        </div>
+      `;
+      document.body.appendChild(lb);
+      document.getElementById('closeLightbox').onclick = closeLightbox;
+      lb.onclick = closeLightbox;
+      document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeLightbox(); });
+    }
+    const img = document.getElementById('lightboxImg');
+    const cap = document.getElementById('lightboxCaption');
+    const tag = document.getElementById('lightboxTag');
+    img.src = url;
+    cap.textContent = caption;
+    tag.textContent = eventType;
+    lb.style.display = 'flex';
+    requestAnimationFrame(() => { lb.style.opacity = '1'; });
+  }
+
+  function closeLightbox() {
+    const lb = document.getElementById('globalLightbox');
+    if (lb) {
+      lb.style.opacity = '0';
+      setTimeout(() => { lb.style.display = 'none'; }, 300);
+    }
+  }
+
   // Gallery Loader
   (async function loadGallery() {
     const grid = document.getElementById('port-grid');
     if (!grid) return;
 
-    const BACKEND = 'https://emeraldpearlandevents.onrender.com';
+    const endpoints = [
+      '/api/v1/admin/public/gallery',
+      '/api/gallery',
+      'https://emeraldpearlandevents.onrender.com/api/gallery'
+    ];
 
-    try {
-      const res = await fetch(BACKEND + '/api/gallery');
-      const data = await res.json();
-
-      if (!data.success || !data.gallery || !data.gallery.length) return;
-
-      const items = data.gallery.slice(0, 5);
-
-      grid.innerHTML = items.map((item, i) => `
-        <div class="port-item">
-          <div class="port-bg loaded" style="background-image:url('${item.url}');background-size:cover;background-position:center;"></div>
-          <div class="port-overlay">
-            <div class="port-label">
-              <small>${item.eventType || ''}</small>
-              ${item.caption || ''}
+    for (const endpoint of endpoints) {
+      try {
+        const res = await fetch(endpoint);
+        if (!res.ok) continue;
+        const data = await res.json();
+        if (data.success && Array.isArray(data.gallery) && data.gallery.length) {
+          const items = data.gallery.slice(0, 5);
+          grid.innerHTML = items.map((item) => `
+            <div class="port-item" onclick="openLightbox('${item.url}', '${(item.caption || '').replace(/'/g, "\\'")}', '${(item.eventType || '').replace(/'/g, "\\'")}')">
+              <div class="port-bg loaded" style="background-image:url('${item.url}');background-size:cover;background-position:center;"></div>
+              <div class="port-overlay">
+                <div class="port-label">
+                  <small>${item.eventType || 'Portfolio'}</small>
+                  ${item.caption || ''}
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
-      `).join('');
-
-    } catch(e) {
-      console.warn('[Gallery] Could not load gallery images:', e.message);
+          `).join('');
+          break;
+        }
+      } catch (e) {
+        // Try next endpoint
+      }
     }
   })();
 </script>

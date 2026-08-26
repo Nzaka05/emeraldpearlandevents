@@ -1170,7 +1170,7 @@
             }
 
             try {
-                const response = await fetch('/api/v1/admin/customers', {
+                const response = await fetchWithCsrf('/api/v1/admin/customers', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ name, email, phone, location, notes })
@@ -1203,8 +1203,8 @@
                 const client = allClients.find(c => c.email === email);
                 if (client && client.isStandalone && client.id) {
                     try {
-                        await fetch(`/api/v1/admin/customers/\${client.id}`, { method: 'DELETE' });
-                    } catch (e) { console.error('Delete failed:', e); }
+                        await fetchWithCsrf(`/api/v1/admin/customers/${client.id}`, { method: 'DELETE' });
+                    } catch (e) { console.error('Delete failed:', e); showCsrfToast('Failed to delete client.'); }
                 }
                 allClients = allClients.filter(c => c.email !== email);
                 renderClients(allClients);
@@ -1212,12 +1212,14 @@
         }
 
         function handleLogout() {
-            fetch('/api/v1/admin/logout', { method: 'POST' })
+            fetchWithCsrf('/api/v1/admin/logout', { method: 'POST' })
                 .then(() => window.location.href = '/admin/login')
-                .catch(error => console.error('Logout error:', error));
+                .catch(error => { console.error('Logout error:', error); showCsrfToast('Logout failed. Please try again.'); });
         }
 
     </script>
+    <script src="/admin/push-client.js"></script>
+    <script src="/admin/assets/csrf-fetch.js"></script>
         <script src="/admin/assets/mobile-sidebar.js?v=3"></script>
     <script src="/admin/admin-profile.js"></script>
 </body>

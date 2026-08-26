@@ -1249,39 +1249,6 @@
             }
         });
 
-        async function fetchWithCsrf(url, options = {}) {
-            let csrfToken = await ensureCsrfToken();
-            options.headers = options.headers || {};
-            if (!(options.headers instanceof Headers)) {
-                options.headers = { ...options.headers };
-                options.headers['X-CSRF-Token'] = csrfToken || '';
-            } else {
-                options.headers.set('X-CSRF-Token', csrfToken || '');
-            }
-            options.credentials = 'include';
-
-            let response = await fetch(url, options);
-
-            if (response.status === 403) {
-                const clone = response.clone();
-                try {
-                    const data = await clone.json();
-                    if (data && data.message && data.message.toLowerCase().includes('csrf')) {
-                        console.warn('CSRF validation failed, force-refreshing CSRF token and retrying...');
-                        csrfToken = await ensureCsrfToken(true);
-                        if (!(options.headers instanceof Headers)) {
-                            options.headers['X-CSRF-Token'] = csrfToken || '';
-                        } else {
-                            options.headers.set('X-CSRF-Token', csrfToken || '');
-                        }
-                        response = await fetch(url, options);
-                    }
-                } catch (e) {}
-            }
-
-            return response;
-        }
-
         let profileImageBase64 = '';
 
         function handleProfileImageChange(e) {
@@ -1464,9 +1431,12 @@
         }
 
         function handleLogout() {
-            fetch('/api/v1/admin/logout', { method: 'POST' })
+            fetchWithCsrf('/api/v1/admin/logout', { method: 'POST' })
                 .then(() => window.location.href = '/admin/login')
-                .catch(error => console.error('Logout error:', error));
+                .catch(error => {
+                    console.error('Logout error:', error);
+                    showCsrfToast('Logout failed');
+                });
         }
 
         async function requestPasswordChangeOTP() {
@@ -1674,6 +1644,7 @@
     </div>
     
     <script src="/admin/push-client.js"></script>
+    <script src="/admin/assets/csrf-fetch.js"></script>
     <script src="/admin/assets/mobile-sidebar.js?v=3"></script>
     <script src="/admin/admin-profile.js"></script>
 </body>

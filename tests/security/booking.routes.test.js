@@ -113,9 +113,18 @@ describe('PATCH /api/v1/booking/:id/status', () => {
     it('passes auth gate with valid token and rejects bad status value', async () => {
         const token = makeAdminToken();
 
+        // Fetch CSRF token for the session
+        const profileRes = await request(app)
+            .get('/api/v1/admin/profile')
+            .set('Cookie', `adminToken=${token}`);
+        const csrfToken = profileRes.headers['x-csrf-token'];
+        const cookies = profileRes.headers['set-cookie'] || [];
+        const csrfCookie = cookies.find(c => c.startsWith('_csrf=')) || '';
+
         const res = await request(app)
             .patch(`/api/v1/booking/${FAKE_BOOKING_ID}/status`)
-            .set('Cookie', `adminToken=${token}`)
+            .set('Cookie', [`adminToken=${token}`, csrfCookie].filter(Boolean).join('; '))
+            .set('X-CSRF-Token', csrfToken)
             .send({ status: 'invalid_status' });
 
         // Auth passed — 400 for bad status or 404 for booking not found

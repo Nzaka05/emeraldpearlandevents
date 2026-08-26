@@ -555,10 +555,16 @@
                             <select id="uploadEventType">
                                 <option value="">Select type…</option>
                                 <option>Wedding</option>
-                                <option>Corporate</option>
-                                <option>Brand Activation</option>
-                                <option>VIP & Protocol</option>
-                                <option>Entertainment</option>
+                                <option>Anniversary</option>
+                                <option>Birthday Party</option>
+                                <option>Family & House Party</option>
+                                <option>Traditional Ceremony</option>
+                                <option>Memorial Service</option>
+                                <option>Corporate Event</option>
+                                <option>Brand Ambassador Event</option>
+                                <option>Product Launch</option>
+                                <option>Private Celebration</option>
+                                <option>Luxury Decor & Styling</option>
                                 <option>Other</option>
                             </select>
                         </div>
@@ -599,10 +605,16 @@
                         <select id="filterType" onchange="applyFilter()" style="padding:7px 10px;border:1px solid var(--border-color);border-radius:6px;background:var(--bg-card);color:var(--text-main);font-size:13px;">
                             <option value="all">All Types</option>
                             <option>Wedding</option>
-                            <option>Corporate</option>
-                            <option>Brand Activation</option>
-                            <option>VIP & Protocol</option>
-                            <option>Entertainment</option>
+                            <option>Anniversary</option>
+                            <option>Birthday Party</option>
+                            <option>Family & House Party</option>
+                            <option>Traditional Ceremony</option>
+                            <option>Memorial Service</option>
+                            <option>Corporate Event</option>
+                            <option>Brand Ambassador Event</option>
+                            <option>Product Launch</option>
+                            <option>Private Celebration</option>
+                            <option>Luxury Decor & Styling</option>
                             <option>Other</option>
                         </select>
                     </div>
@@ -735,7 +747,8 @@
        UPLOAD
     ───────────────────────────────────────────────────────── */
     async function uploadImage() {
-        if (!pendingImageData) return toast('Please select an image first.', 'error');
+        const fileObj = document.getElementById('fileInput').files[0];
+        if (!fileObj) return toast('Please select an image first.', 'error');
         const caption = document.getElementById('uploadCaption').value.trim();
         const eventType = document.getElementById('uploadEventType').value;
 
@@ -746,10 +759,15 @@
         showProgress(10, 'Uploading…');
 
         try {
-            const res = await fetch('/api/v1/admin/gallery/upload', {
+            const formData = new FormData();
+            formData.append('file', fileObj);
+            formData.append('caption', caption);
+            formData.append('eventType', eventType);
+
+            // Do NOT set Content-Type header — browser sets it with the correct multipart boundary
+            const res = await fetchWithCsrf('/api/v1/admin/gallery/upload', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ url: pendingImageData, caption, eventType })
+                body: formData
             });
             showProgress(80, 'Processing…');
             const data = await res.json();
@@ -766,6 +784,7 @@
             setTimeout(() => { document.getElementById('uploadProgressWrap').style.display = 'none'; }, 1200);
         }
     }
+
 
     function showProgress(pct, label) {
         const wrap = document.getElementById('uploadProgressWrap');
@@ -805,7 +824,7 @@
         const filename  = document.getElementById('fileInput').files[0]?.name || '';
 
         try {
-            const res = await fetch('/api/v1/admin/gallery/generate-captions', {
+            const res = await fetchWithCsrf('/api/v1/admin/gallery/generate-captions', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ eventType, filename })
@@ -842,7 +861,7 @@
     async function deleteImage(id) {
         if (!confirm('Delete this image? This cannot be undone.')) return;
         try {
-            const res = await fetch(`/api/v1/admin/gallery/${id}`, { method: 'DELETE' });
+            const res = await fetchWithCsrf(`/api/v1/admin/gallery/${id}`, { method: 'DELETE' });
             const data = await res.json();
             if (!data.success) throw new Error(data.message || 'Delete failed');
             toast('Image deleted.', 'success');
@@ -868,7 +887,7 @@
                 <select id="edit-type-${id}"
                     style="padding:7px 10px;border:1px solid var(--border-color);border-radius:5px;font-size:13px;background:var(--bg-primary);color:var(--text-main);">
                     <option value="">— type —</option>
-                    ${['Wedding','Corporate','Brand Activation','VIP & Protocol','Entertainment','Other']
+                    ${['Wedding','Anniversary','Birthday Party','Family & House Party','Traditional Ceremony','Memorial Service','Corporate Event','Brand Ambassador Event','Product Launch','Private Celebration','Luxury Decor & Styling','Other']
                         .map(t => `<option ${t===currentType?'selected':''}>${t}</option>`).join('')}
                 </select>
                 <div style="display:flex;gap:6px;">
@@ -882,7 +901,7 @@
         const caption = document.getElementById(`edit-caption-${id}`).value.trim();
         const eventType = document.getElementById(`edit-type-${id}`).value;
         try {
-            const res = await fetch(`/api/v1/admin/gallery/${id}`, {
+            const res = await fetchWithCsrf(`/api/v1/admin/gallery/${id}`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ caption, eventType })
@@ -932,12 +951,14 @@
     }
 
     async function handleLogout() {
-        await fetch('/admin/logout', { method: 'POST' }).catch(() => {});
+        await fetchWithCsrf('/api/v1/admin/logout', { method: 'POST' }).catch(err => { console.error('Logout error:', err); showCsrfToast('Logout failed. Please try again.'); });
         window.location.href = '/admin/login';
     }
     </script>
 
     <!-- Shared sidebar mobile toggle -->
+    <script src="/admin/push-client.js"></script>
+    <script src="/admin/assets/csrf-fetch.js"></script>
     <script src="/admin/assets/mobile-sidebar.js?v=3"></script>
     <!-- Admin profile (populates adminName / adminAvatar) -->
     <script src="/admin/admin-profile.js"></script>

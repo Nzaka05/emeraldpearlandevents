@@ -6,6 +6,7 @@
 const express = require('express');
 const router = express.Router();
 const { verifyAdminJWT } = require('../../server/middleware/adminAuth');
+const { csrfProtection, csrfErrorHandler } = require('../../server/middleware/csrfProtection');
 const controllerPath = './bookings.controller';
 const controller = require(controllerPath);
 
@@ -22,21 +23,21 @@ router.get('/', verifyAdminJWT, (req, res) => controller.list(req, res));
 router.get('/:id', verifyAdminJWT, (req, res) => controller.getById(req, res));
 
 // PATCH /api/v1/admin/bookings/:id
-router.patch('/:id', verifyAdminJWT, (req, res) => controller.update(req, res));
+router.patch('/:id', verifyAdminJWT, csrfProtection, csrfErrorHandler, (req, res) => controller.update(req, res));
 
 // PATCH /api/v1/admin/bookings/:id/pay
-router.patch('/:id/pay', verifyAdminJWT, (req, res) => controller.updatePayment(req, res));
+router.patch('/:id/pay', verifyAdminJWT, csrfProtection, csrfErrorHandler, (req, res) => controller.updatePayment(req, res));
 
 // POST /api/v1/admin/bookings/:id/payment
-router.post('/:id/payment', verifyAdminJWT, (req, res) => controller.recordPayment(req, res));
+router.post('/:id/payment', verifyAdminJWT, csrfProtection, csrfErrorHandler, (req, res) => controller.recordPayment(req, res));
 
 // POST /api/v1/admin/bookings/:id/send-appreciation
-router.post('/:id/send-appreciation', verifyAdminJWT, (req, res) => controller.sendAppreciation(req, res));
+router.post('/:id/send-appreciation', verifyAdminJWT, csrfProtection, csrfErrorHandler, (req, res) => controller.sendAppreciation(req, res));
 
 // POST /api/v1/admin/bookings/:id/message-staff
 router.post('/:id/message-staff', verifyAdminJWT, (req, res) => controller.messageStaff(req, res));
 
 // DELETE /api/v1/admin/bookings/:id
-router.delete('/:id', verifyAdminJWT, (req, res) => controller.delete(req, res));
+router.delete('/:id', verifyAdminJWT, csrfProtection, csrfErrorHandler, (req, res) => controller.delete(req, res));
 
 module.exports = router;

@@ -178,7 +178,7 @@
                                 const currency = document.getElementById('currency-select').value;
                                 const res = await fetch('/api/payments/stripe/create-checkout', {
                                     method: 'POST',
-                                    headers: { 'Content-Type': 'application/json' },
+                                    headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': '<%= csrfToken %>' },
                                     body: JSON.stringify({ bookingId: ev._id, currency })
                                 });
                                 if (!res.ok) {
@@ -205,7 +205,7 @@
                             const currency = document.getElementById('currency-select').value;
                             const res = await fetch('/api/payments/paystack/initialize', {
                                 method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
+                                headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': '<%= csrfToken %>' },
                                 body: JSON.stringify({ bookingId: ev._id, currency })
                             });
                             if (!res.ok) {

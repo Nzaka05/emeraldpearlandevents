@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gallery — Emerald Pearland Events | Luxury Event Portfolio Nairobi</title>
+  <meta name="description" content="Explore our live event gallery. High-profile corporate galas, VIP protocol, bespoke weddings, and luxury event coordination in Nairobi, Kenya.">
+  <meta name="keywords" content="Emerald Pearland Events gallery, event portfolio Nairobi, wedding photos Kenya, corporate gala ushers, VIP event staffing">
+  <meta name="robots" content="index, follow">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="/images/logo 2.png">
+
+  <!-- Fonts & Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <style>
+    :root {
+      --emerald:      #1a5c3a;
+      --emerald-dark: #0d3322;
+      --emerald-mid:  #246b45;
+      --gold:         #c9a84c;
+      --gold-light:   #e4c97a;
+      --cream:        #f7f3ed;
+      --warm-white:   #fdfbf8;
+      --charcoal:     #1c1c1c;
+      --ink:          #2a2a2a;
+      --muted:        #6b6b6b;
+      --border:       #e2ddd6;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body { font-family: 'DM Sans', sans-serif; color: var(--ink); background: var(--warm-white); overflow-x: hidden; min-height: 100vh; display: flex; flex-direction: column; }
+
+    /* ── NAVBAR ── */
+    nav#navbar {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+      height: 72px; padding: 0 6%;
+      display: flex; align-items: center; justify-content: space-between;
+      background: rgba(13,51,34,0.98);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 2px 30px rgba(0,0,0,0.25);
+    }
+    .nav-logo { display: flex; align-items: center; gap: 12px; text-decoration: none; }
+    .nav-logo img { height: 38px; width: 38px; border-radius: 50%; object-fit: contain; background: var(--gold); padding: 4px; }
+    .nav-logo-gem { width: 38px; height: 38px; border-radius: 50%; background: var(--gold); display: flex; align-items: center; justify-content: center; font-size: 16px; color: var(--emerald-dark); flex-shrink: 0; }
+    .nav-words strong { display: block; font-family: 'Cormorant Garamond', serif; font-weight: 600; font-size: 1.2rem; color: #fff; letter-spacing: 0.02em; line-height: 1.1; }
+    .nav-words span { font-size: 0.58rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--gold-light); font-weight: 300; }
+    .nav-links { display: flex; align-items: center; gap: 28px; list-style: none; }
+    .nav-links a { color: rgba(255,255,255,0.8); text-decoration: none; font-size: 0.84rem; font-weight: 400; letter-spacing: 0.03em; transition: color 0.2s; }
+    .nav-links a:hover, .nav-links a.active { color: var(--gold-light); }
+    .nav-cta { background: var(--gold) !important; color: var(--emerald-dark) !important; padding: 9px 20px; border-radius: 2px; font-weight: 500 !important; }
+    .nav-cta:hover { background: var(--gold-light) !important; }
+    .nav-ham { display: none; background: none; border: none; color: #fff; font-size: 1.4rem; cursor: pointer; }
+    #mobileMenu { display: none; position: fixed; top: 72px; left: 0; right: 0; background: var(--emerald-dark); padding: 16px 6% 28px; z-index: 999; border-top: 1px solid rgba(255,255,255,0.08); }
+    #mobileMenu.open { display: block; }
+    #mobileMenu a { display: block; color: rgba(255,255,255,0.82); text-decoration: none; padding: 13px 0; border-bottom: 1px solid rgba(255,255,255,0.09); font-size: 0.95rem; }
+    .mob-cta { margin-top: 14px; background: var(--gold); color: var(--emerald-dark) !important; text-align: center; padding: 13px; border-radius: 2px; font-weight: 500; border: none; border-bottom: none !important; }
+
+    /* ── HEADER HERO ── */
+    .gallery-hero {
+      padding-top: 130px;
+      padding-bottom: 50px;
+      background: linear-gradient(135deg, #081d10 0%, #0d3322 45%, #1a5c3a 100%);
+      color: #fff;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .gallery-hero::after {
+      content: ''; position: absolute; inset: 0;
+      background: radial-gradient(ellipse 60% 80% at 50% 100%, rgba(201,168,76,0.12) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .gallery-hero-inner { max-width: 800px; margin: 0 auto; padding: 0 6%; position: relative; z-index: 2; }
+    .sec-tag { display: inline-flex; align-items: center; gap: 10px; font-size: 0.72rem; letter-spacing: 0.22em; text-transform: uppercase; color: var(--gold); margin-bottom: 14px; }
+    .sec-tag::before, .sec-tag::after { content: ''; width: 24px; height: 1px; background: var(--gold); }
+    .gallery-title { font-family: 'Cormorant Garamond', serif; font-size: clamp(2.5rem, 5.5vw, 4rem); font-weight: 300; line-height: 1.1; margin-bottom: 18px; color: #fff; }
+    .gallery-title em { font-style: italic; color: var(--gold-light); }
+    .gallery-sub { font-size: 1rem; line-height: 1.8; color: rgba(255,255,255,0.7); max-width: 600px; margin: 0 auto 30px; font-weight: 300; }
+
+    /* ── FILTER BUTTONS ── */
+    .filter-bar {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin: 10px 0 0;
+    }
+    .filter-btn {
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.18);
+      color: rgba(255,255,255,0.85);
+      padding: 9px 20px;
+      border-radius: 30px;
+      font-size: 0.8rem;
+      letter-spacing: 0.04em;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      font-family: inherit;
+    }
+    .filter-btn:hover {
+      background: rgba(201,168,76,0.2);
+      border-color: var(--gold);
+      color: var(--gold-light);
+      transform: translateY(-1px);
+    }
+    .filter-btn.active {
+      background: var(--gold);
+      border-color: var(--gold);
+      color: var(--emerald-dark);
+      font-weight: 600;
+      box-shadow: 0 4px 15px rgba(201,168,76,0.35);
+    }
+
+    /* ── MAIN GALLERY SECTION ── */
+    .gallery-section {
+      flex: 1;
+      padding: 60px 6% 90px;
+      background: var(--warm-white);
+    }
+    .gallery-container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .gallery-stats-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+    .gallery-count-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--cream);
+      border: 1px solid var(--border);
+      padding: 5px 14px;
+      border-radius: 20px;
+      font-weight: 500;
+      color: var(--emerald);
+    }
+
+    /* ── MASONRY / CARD GRID ── */
+    .gallery-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      gap: 24px;
+    }
+    .gallery-card {
+      background: #fff;
+      border-radius: 4px;
+      overflow: hidden;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+      transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.35s ease;
+      cursor: pointer;
+      position: relative;
+      border: 1px solid rgba(0,0,0,0.04);
+      display: flex;
+      flex-direction: column;
+    }
+    .gallery-card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 16px 36px rgba(13,51,34,0.14);
+      border-color: rgba(201,168,76,0.4);
+    }
+    .gallery-card-thumb {
+      position: relative;
+      width: 100%;
+      height: 260px;
+      overflow: hidden;
+      background: #0d3322;
+    }
+    .gallery-card-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .gallery-card:hover .gallery-card-thumb img {
+      transform: scale(1.06);
+    }
+    .gallery-card-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to top, rgba(13,51,34,0.85) 0%, rgba(13,51,34,0.2) 60%, transparent 100%);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .gallery-card:hover .gallery-card-overlay {
+      opacity: 1;
+    }
+    .expand-btn {
+      background: rgba(255,255,255,0.92);
+      color: var(--emerald-dark);
+      padding: 10px 22px;
+      border-radius: 30px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transform: translateY(10px);
+      transition: transform 0.3s ease;
+    }
+    .gallery-card:hover .expand-btn {
+      transform: translateY(0);
+    }
+
+    .gallery-card-content {
+      padding: 20px 22px;
+      background: #fff;
+      display: flex;
+      flex-direction: column;
+      flex-grow: 1;
+      justify-content: space-between;
+    }
+    .gallery-card-tag {
+      font-size: 0.68rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--emerald);
+      font-weight: 600;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .gallery-card-tag i {
+      color: var(--gold);
+      font-size: 0.75rem;
+    }
+    .gallery-card-caption {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.28rem;
+      font-weight: 600;
+      color: var(--ink);
+      line-height: 1.3;
+    }
+
+    /* ── LIGHTBOX MODAL ── */
+    .lightbox-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(6, 22, 12, 0.96);
+      backdrop-filter: blur(12px);
+      z-index: 99999;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 30px;
+      opacity: 0;
+      transition: opacity 0.35s ease;
+    }
+    .lightbox-modal.active {
+      display: flex;
+      opacity: 1;
+    }
+    .lightbox-content {
+      max-width: 90vw;
+      max-height: 86vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+    }
+    .lightbox-img-wrap {
+      max-width: 100%;
+      max-height: 72vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .lightbox-img {
+      max-width: 100%;
+      max-height: 72vh;
+      object-fit: contain;
+      border-radius: 4px;
+      box-shadow: 0 16px 60px rgba(0,0,0,0.7);
+      border: 1px solid rgba(201,168,76,0.3);
+      user-select: none;
+    }
+    .lightbox-meta {
+      margin-top: 18px;
+      text-align: center;
+      color: #fff;
+    }
+    .lightbox-tag {
+      color: var(--gold-light);
+      font-size: 0.75rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+    .lightbox-caption {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.5rem;
+      font-weight: 300;
+      color: #fff;
+    }
+    .lightbox-counter {
+      color: rgba(255,255,255,0.45);
+      font-size: 0.75rem;
+      letter-spacing: 0.1em;
+      margin-top: 6px;
+    }
+
+    .lightbox-btn {
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.18);
+      color: #fff;
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      cursor: pointer;
+      position: absolute;
+      transition: all 0.2s ease;
+      z-index: 10;
+    }
+    .lightbox-btn:hover {
+      background: var(--gold);
+      color: var(--emerald-dark);
+      border-color: var(--gold);
+      transform: scale(1.08);
+    }
+    .lightbox-close { top: 24px; right: 24px; }
+    .lightbox-prev { left: 24px; top: 50%; transform: translateY(-50%); }
+    .lightbox-prev:hover { transform: translateY(-50%) scale(1.08); }
+    .lightbox-next { right: 24px; top: 50%; transform: translateY(-50%); }
+    .lightbox-next:hover { transform: translateY(-50%) scale(1.08); }
+
+    /* ── CTA BANNER ── */
+    .gallery-cta {
+      background: var(--emerald);
+      padding: 70px 6%;
+      text-align: center;
+      color: #fff;
+    }
+    .gallery-cta-inner { max-width: 650px; margin: 0 auto; }
+    .gallery-cta h2 { font-family: 'Cormorant Garamond', serif; font-size: clamp(2rem, 4vw, 3rem); font-weight: 300; margin-bottom: 14px; }
+    .gallery-cta h2 em { font-style: italic; color: var(--gold-light); }
+    .gallery-cta p { font-size: 0.95rem; color: rgba(255,255,255,0.7); margin-bottom: 30px; line-height: 1.7; font-weight: 300; }
+    .gallery-cta-btns { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+    .btn-white { background: #fff; color: var(--emerald); padding: 13px 30px; border-radius: 2px; text-decoration: none; font-weight: 500; font-size: 0.88rem; display: inline-flex; align-items: center; gap: 8px; transition: background 0.2s; }
+    .btn-white:hover { background: var(--cream); }
+    .btn-gold-outline { border: 1px solid var(--gold); color: var(--gold-light); padding: 13px 30px; border-radius: 2px; text-decoration: none; font-size: 0.88rem; display: inline-flex; align-items: center; gap: 8px; transition: background 0.2s; }
+    .btn-gold-outline:hover { background: rgba(201,168,76,0.15); }
+
+    /* ── FOOTER ── */
+    footer { background: var(--charcoal); color: rgba(255,255,255,0.55); padding: 60px 6% 30px; margin-top: auto; }
+    .footer-grid { max-width: 1100px; margin: 0 auto; display: grid; grid-template-columns: 2fr 1fr 1fr 1.5fr; gap: 40px; margin-bottom: 40px; }
+    .footer-brand p { font-size: 0.81rem; line-height: 1.78; max-width: 280px; margin-top: 14px; }
+    .footer-socials { display: flex; gap: 10px; margin-top: 16px; }
+    .footer-socials a { width: 34px; height: 34px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.14); display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,0.42); text-decoration: none; font-size: 0.82rem; transition: all 0.2s; }
+    .footer-socials a:hover { border-color: var(--gold); color: var(--gold); }
+    .footer-col h4 { font-size: 0.72rem; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(255,255,255,0.8); font-weight: 500; margin-bottom: 16px; }
+    .footer-col ul { list-style: none; }
+    .footer-col ul li { margin-bottom: 8px; }
+    .footer-col ul li a { color: rgba(255,255,255,0.48); text-decoration: none; font-size: 0.81rem; transition: color 0.2s; }
+    .footer-col ul li a:hover { color: var(--gold-light); }
+    .contact-item { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 12px; font-size: 0.81rem; }
+    .contact-item i { color: var(--gold); margin-top: 3px; font-size: 0.82rem; flex-shrink: 0; }
+    .footer-bottom { max-width: 1100px; margin: 0 auto; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.07); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; font-size: 0.74rem; }
+    .footer-bottom a { color: rgba(255,255,255,0.32); text-decoration: none; }
+    .footer-bottom a:hover { color: var(--gold-light); }
+
+    /* ── WHATSAPP FLOAT ── */
+    .wa-float { position: fixed; bottom: 28px; right: 28px; z-index: 900; width: 52px; height: 52px; border-radius: 50%; background: #25d366; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 1.5rem; text-decoration: none; box-shadow: 0 4px 16px rgba(37,211,102,0.35); transition: transform 0.2s, box-shadow 0.2s; }
+    .wa-float:hover { transform: scale(1.08); box-shadow: 0 6px 22px rgba(37,211,102,0.5); }
+
+    @media (max-width: 768px) {
+      .nav-links { display: none; }
+      .nav-ham { display: block; }
+      .gallery-grid { grid-template-columns: 1fr; }
+      .footer-grid { grid-template-columns: 1fr; gap: 30px; }
+      .lightbox-prev { left: 10px; }
+      .lightbox-next { right: 10px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAVBAR -->
+  <nav id="navbar">
+    <a href="/" class="nav-logo">
+      <img src="/images/logo 2.png" alt="Emerald Pearland Events" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+      <div class="nav-logo-gem" style="display:none;"><i class="fa-solid fa-gem"></i></div>
+      <div class="nav-words">
+        <strong>Emerald Pearland</strong>
+        <span>Events &amp; Staffing</span>
+      </div>
+    </a>
+    <ul class="nav-links">
+      <li><a href="/index.html#services">Services</a></li>
+      <li><a href="/gallery.html" class="active">Gallery</a></li>
+      <li><a href="/index.html#why">About</a></li>
+      <li><a href="/index.html#testimonials">Testimonials</a></li>
+      <li><a href="/index.html#cta">Contact</a></li>
+      <li><a href="/client/login" class="nav-cta">Client Portal</a></li>
+    </ul>
+    <button class="nav-ham" id="navHam" aria-label="Menu"><i class="fa-solid fa-bars"></i></button>
+  </nav>
+
+  <div id="mobileMenu">
+    <a href="/index.html#services">Services</a>
+    <a href="/gallery.html" class="active" style="color:var(--gold-light);">Gallery</a>
+    <a href="/index.html#why">About</a>
+    <a href="/index.html#testimonials">Testimonials</a>
+    <a href="/index.html#cta">Contact</a>
+    <a href="/client/login" class="mob-cta">Client Portal</a>
+  </div>
+
+  <!-- HERO -->
+  <section class="gallery-hero">
+    <div class="gallery-hero-inner">
+      <div class="sec-tag">Live Event Portfolio</div>
+      <h1 class="gallery-title">Moments of Distinction &amp; <em>Excellence</em></h1>
+      <p class="gallery-sub">A curated showcase of bespoke events, VIP protocol, executive staffing, and luxury celebrations managed by Emerald Pearland Events across Kenya.</p>
+      
+      <!-- Filter Bar -->
+      <div class="filter-bar" id="filterBar">
+        <button class="filter-btn active" data-filter="all">All Events</button>
+        <button class="filter-btn" data-filter="Corporate & VIP">Corporate &amp; VIP</button>
+        <button class="filter-btn" data-filter="VIP Protocol">VIP Protocol</button>
+        <button class="filter-btn" data-filter="Social & Private">Social &amp; Private</button>
+        <button class="filter-btn" data-filter="Weddings">Weddings</button>
+        <button class="filter-btn" data-filter="Event Staffing">Event Staffing</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- GALLERY GRID SECTION -->
+  <section class="gallery-section">
+    <div class="gallery-container">
+      <div class="gallery-stats-bar">
+        <span>Displaying authentic highlights from our latest event coordination</span>
+        <span class="gallery-count-badge" id="imageCountBadge"><i class="fa-solid fa-images"></i> 12 Photographs</span>
+      </div>
+
+      <div class="gallery-grid" id="galleryGrid">
+        <!-- Rendered dynamically with instant static fallback below -->
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="gallery-cta">
+    <div class="gallery-cta-inner">
+      <div class="sec-tag" style="color:var(--gold-light); margin-bottom:12px;">Plan Your Event</div>
+      <h2>Ready to craft an <em>extraordinary</em> experience?</h2>
+      <p>Let our dedicated event staffing and concierge team manage every detail with precision and grace.</p>
+      <div class="gallery-cta-btns">
+        <a href="/booking" class="btn-white"><i class="fa-solid fa-calendar-check"></i> Book Your Event</a>
+        <a href="https://wa.me/254722446937?text=Hi%20Emerald%20Pearland%20Events%2C%20I%20saw%20your%20live%20gallery%20and%20would%20like%20to%20discuss%20an%20event." target="_blank" class="btn-gold-outline"><i class="fa-brands fa-whatsapp"></i> Chat on WhatsApp</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <div class="nav-logo" style="cursor:default;">
+          <img src="/images/logo 2.png" alt="Emerald Pearland" style="height:36px;width:36px;border-radius:50%;object-fit:contain;background:var(--gold);padding:4px;" onerror="this.style.display='none'">
+          <div class="nav-words">
+            <strong>Emerald Pearland</strong>
+            <span>Events &amp; Staffing</span>
+          </div>
+        </div>
+        <p>Nairobi's premier event staffing and coordination company. Crafting memorable atmospheres with quiet excellence.</p>
+        <div class="footer-socials">
+          <a href="https://instagram.com/emerald.pearland.events" target="_blank" aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a>
+          <a href="https://wa.me/254722446937" target="_blank" aria-label="WhatsApp"><i class="fa-brands fa-whatsapp"></i></a>
+          <a href="mailto:emeraldpearlandevents@gmail.com" aria-label="Email"><i class="fa-solid fa-envelope"></i></a>
+        </div>
+      </div>
+      <div class="footer-col">
+        <h4>Services</h4>
+        <ul>
+          <li><a href="/index.html#services">Event Staffing</a></li>
+          <li><a href="/index.html#services">Weddings &amp; Ceremonies</a></li>
+          <li><a href="/index.html#services">Corporate Events</a></li>
+          <li><a href="/index.html#services">VIP &amp; Protocol</a></li>
+          <li><a href="/index.html#services">Brand Activations</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Navigation</h4>
+        <ul>
+          <li><a href="/index.html">Home</a></li>
+          <li><a href="/gallery.html">Live Gallery</a></li>
+          <li><a href="/index.html#why">Why Us</a></li>
+          <li><a href="/booking">Book an Event</a></li>
+          <li><a href="/client/login">Client Portal</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Contact</h4>
+        <div class="contact-item"><i class="fa-solid fa-location-dot"></i><span>Nairobi, Kenya</span></div>
+        <div class="contact-item"><i class="fa-solid fa-phone"></i><a href="tel:+254722446937" style="color:inherit;text-decoration:none;">+254 722 446 937</a></div>
+        <div class="contact-item"><i class="fa-solid fa-envelope"></i><a href="mailto:emeraldpearlandevents@gmail.com" style="color:inherit;text-decoration:none;">emeraldpearlandevents@gmail.com</a></div>
+        <div class="contact-item"><i class="fa-brands fa-instagram"></i><a href="https://instagram.com/emerald.pearland.events" target="_blank" style="color:inherit;text-decoration:none;">@emerald.pearland.events</a></div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>&copy; 2026 Emerald Pearland Events. All rights reserved.</span>
+      <div>
+        <a href="/index.html">Privacy Policy</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- WhatsApp Float -->
+  <a href="https://wa.me/254722446937?text=Hi%20Emerald%20Pearland%20Events%2C%20I%20would%20like%20to%20discuss%20an%20event." target="_blank" class="wa-float" aria-label="WhatsApp Us">
+    <i class="fa-brands fa-whatsapp"></i>
+  </a>
+
+  <!-- LIGHTBOX MODAL -->
+  <div class="lightbox-modal" id="lightboxModal">
+    <button class="lightbox-btn lightbox-close" id="lbClose" aria-label="Close lightbox">&times;</button>
+    <button class="lightbox-btn lightbox-prev" id="lbPrev" aria-label="Previous image"><i class="fa-solid fa-chevron-left"></i></button>
+    <button class="lightbox-btn lightbox-next" id="lbNext" aria-label="Next image"><i class="fa-solid fa-chevron-right"></i></button>
+    
+    <div class="lightbox-content" id="lbContent">
+      <div class="lightbox-img-wrap">
+        <img class="lightbox-img" id="lbImg" src="" alt="">
+      </div>
+      <div class="lightbox-meta">
+        <div class="lightbox-tag" id="lbTag"></div>
+        <div class="lightbox-caption" id="lbCaption"></div>
+        <div class="lightbox-counter" id="lbCounter"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Initial Seed Dataset (Instant Load & Fallback)
+    const initialImages = [
+      {
+        url: '/images/gallery/Chezshot@WindsorGolfClub14.jpg.jpeg',
+        caption: 'Windsor Golf Club VIP Gala Reception',
+        eventType: 'Corporate & VIP'
+      },
+      {
+        url: '/images/gallery/Chezshot@WindsorGolfClub15.jpg.jpeg',
+        caption: 'Executive Protocol & Guest Hospitality',
+        eventType: 'VIP Protocol'
+      },
+      {
+        url: '/images/gallery/Chezshot@WindsorGolfClub16.jpg.jpeg',
+        caption: 'Evening Banquet Service & Coordination',
+        eventType: 'Corporate & VIP'
+      },
+      {
+        url: '/images/gallery/Chezshot@WindsorGolfClub18.jpg.jpeg',
+        caption: 'Luxury Outdoor Event Setup & Ushering',
+        eventType: 'Social & Private'
+      },
+      {
+        url: '/images/gallery/Chezshot@WindsorGolfClub19.jpg.jpeg',
+        caption: 'Prestigious Country Club Gathering',
+        eventType: 'VIP Protocol'
+      },
+      {
+        url: '/images/gallery/Chezshot@WindsorGolfClub20.jpg.jpeg',
+        caption: 'Bespoke Event Coordination & Elegance',
+        eventType: 'Corporate & VIP'
+      },
+      {
+        url: '/images/gallery/Birthday%20Party.jpg',
+        caption: 'Milestone Celebration & Private Party Hosting',
+        eventType: 'Social & Private'
+      },
+      {
+        url: '/images/gallery/353106.jpg',
+        caption: 'High-End Corporate Hospitality Team',
+        eventType: 'Corporate & VIP'
+      },
+      {
+        url: '/images/gallery/353109.jpg',
+        caption: 'Impeccable Guest Welcoming & Protocol',
+        eventType: 'VIP Protocol'
+      },
+      {
+        url: '/images/gallery/353112.jpg',
+        caption: 'Professional Event Staffing & Registration',
+        eventType: 'Event Staffing'
+      },
+      {
+        url: '/images/gallery/353115.jpg',
+        caption: 'Elegant Wedding Coordination & Guest Ushering',
+        eventType: 'Weddings'
+      },
+      {
+        url: '/images/gallery/353124.jpg',
+        caption: 'Executive Hospitality & Brand Ambassadorship',
+        eventType: 'Event Staffing'
+      }
+    ];
+
+    let currentImages = [...initialImages];
+    let filteredImages = [...currentImages];
+    let activeFilter = 'all';
+    let currentLightboxIndex = 0;
+
+    const galleryGrid = document.getElementById('galleryGrid');
+    const imageCountBadge = document.getElementById('imageCountBadge');
+    const filterButtons = document.querySelectorAll('.filter-btn');
+
+    // Render Grid
+    function renderGallery(images) {
+      filteredImages = images;
+      imageCountBadge.innerHTML = `<i class="fa-solid fa-images"></i> ${images.length} Photograph${images.length !== 1 ? 's' : ''}`;
+
+      if (!images.length) {
+        galleryGrid.innerHTML = `
+          <div style="grid-column:1/-1; text-align:center; padding:60px 20px; color:var(--muted);">
+            <i class="fa-solid fa-image" style="font-size:3rem; margin-bottom:14px; opacity:0.3;"></i>
+            <p>No photographs found in this category.</p>
+          </div>`;
+        return;
+      }
+
+      galleryGrid.innerHTML = images.map((img, idx) => `
+        <div class="gallery-card" onclick="openLightbox(${idx})">
+          <div class="gallery-card-thumb">
+            <img src="${img.url}" alt="${img.caption || 'Emerald Event'}" loading="lazy">
+            <div class="gallery-card-overlay">
+              <span class="expand-btn"><i class="fa-solid fa-expand"></i> View</span>
+            </div>
+          </div>
+          <div class="gallery-card-content">
+            <div>
+              <div class="gallery-card-tag"><i class="fa-solid fa-gem"></i> ${img.eventType || 'Emerald Events'}</div>
+              <div class="gallery-card-caption">${img.caption || 'Event Highlights'}</div>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // Filter Logic
+    filterButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        filterButtons.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        activeFilter = btn.dataset.filter;
+
+        if (activeFilter === 'all') {
+          renderGallery(currentImages);
+        } else {
+          const filtered = currentImages.filter(item => 
+            (item.eventType || '').toLowerCase().includes(activeFilter.toLowerCase())
+          );
+          renderGallery(filtered);
+        }
+      });
+    });
+
+    // Lightbox Logic
+    const lbModal = document.getElementById('lightboxModal');
+    const lbImg = document.getElementById('lbImg');
+    const lbTag = document.getElementById('lbTag');
+    const lbCaption = document.getElementById('lbCaption');
+    const lbCounter = document.getElementById('lbCounter');
+    const lbClose = document.getElementById('lbClose');
+    const lbPrev = document.getElementById('lbPrev');
+    const lbNext = document.getElementById('lbNext');
+
+    function openLightbox(index) {
+      if (!filteredImages[index]) return;
+      currentLightboxIndex = index;
+      updateLightboxContent();
+      lbModal.classList.add('active');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeLightbox() {
+      lbModal.classList.remove('active');
+      document.body.style.overflow = '';
+    }
+
+    function updateLightboxContent() {
+      const item = filteredImages[currentLightboxIndex];
+      lbImg.src = item.url;
+      lbTag.textContent = item.eventType || 'Emerald Pearland Events';
+      lbCaption.textContent = item.caption || '';
+      lbCounter.textContent = `${currentLightboxIndex + 1} of ${filteredImages.length}`;
+    }
+
+    function prevImage() {
+      currentLightboxIndex = (currentLightboxIndex - 1 + filteredImages.length) % filteredImages.length;
+      updateLightboxContent();
+    }
+
+    function nextImage() {
+      currentLightboxIndex = (currentLightboxIndex + 1) % filteredImages.length;
+      updateLightboxContent();
+    }
+
+    lbClose.addEventListener('click', closeLightbox);
+    lbPrev.addEventListener('click', (e) => { e.stopPropagation(); prevImage(); });
+    lbNext.addEventListener('click', (e) => { e.stopPropagation(); nextImage(); });
+    lbModal.addEventListener('click', (e) => {
+      if (e.target === lbModal || e.target.id === 'lbContent' || e.target.classList.contains('lightbox-img-wrap')) {
+        closeLightbox();
+      }
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (!lbModal.classList.contains('active')) return;
+      if (e.key === 'Escape') closeLightbox();
+      if (e.key === 'ArrowLeft') prevImage();
+      if (e.key === 'ArrowRight') nextImage();
+    });
+
+    // Mobile Hamburger
+    const ham = document.getElementById('navHam');
+    const mob = document.getElementById('mobileMenu');
+    ham.addEventListener('click', () => {
+      mob.classList.toggle('open');
+      ham.innerHTML = mob.classList.contains('open') ? '<i class="fa-solid fa-xmark"></i>' : '<i class="fa-solid fa-bars"></i>';
+    });
+
+    // Dynamic Live Sync from Server API
+    async function syncLiveGallery() {
+      const endpoints = [
+        '/api/v1/admin/public/gallery',
+        '/api/gallery',
+        'https://emeraldpearlandevents.onrender.com/api/gallery'
+      ];
+
+      for (const ep of endpoints) {
+        try {
+          const res = await fetch(ep);
+          if (!res.ok) continue;
+          const data = await res.json();
+          if (data.success && Array.isArray(data.gallery) && data.gallery.length > 0) {
+            currentImages = data.gallery;
+            if (activeFilter === 'all') {
+              renderGallery(currentImages);
+            } else {
+              const filtered = currentImages.filter(item => 
+                (item.eventType || '').toLowerCase().includes(activeFilter.toLowerCase())
+              );
+              renderGallery(filtered);
+            }
+            break;
+          }
+        } catch (e) {
+          // Fallback to static initial dataset
+        }
+      }
+    }
+
+    // Initialize
+    renderGallery(initialImages);
+    syncLiveGallery();
+  </script>
+</body>
+</html>

@@ -1157,7 +1157,7 @@
                                 ${member.isAvailable ? '<i class="fas fa-check"></i> Available' : '<i class="fas fa-times"></i> Unavailable'}
                             </button>
                             <div class="staff-actions">
-                                <button class="action-btn" onclick="deleteStaff('${member._id}')" style="background: var(--accent-danger); margin-top: 8px;">Delete Access</button>
+                                <button class="action-btn" onclick="event.stopPropagation(); deleteStaff('${member._id}')" style="background: var(--accent-danger); margin-top: 8px;">Delete Access</button>
                             </div>
                         </div>
                     </div>
@@ -1173,6 +1173,42 @@ function handleCategoryChange(val) {
     if (customGroup) customGroup.style.display = val === 'Other' ? 'block' : 'none';
 }
 function filterStaff() {
+                    const category = document.getElementById('categoryFilter').value;
+                    const availability = document.getElementById('availabilityFilter').value;
+                    const filtered = staffData.filter(staff => {
+                        const catMatch = !category || (staff.category || '').toLowerCase() === category.toLowerCase();
+                        const availMatch = !availability || (availability === "available" ? staff.isAvailable : !staff.isAvailable);
+                        return catMatch && availMatch;
+                    });
+                    renderStaff(filtered);
+                }
+
+                function toggleAvailability(id) {
+                    alert('Status toggling requires backend implementation in staff model, skipping for now.');
+                }
+
+                function addStaff() {
+                    document.getElementById('staffName').value = '';
+                    document.getElementById('staffCategory').value = 'Waiters';
+                    document.getElementById('staffCustomRole').value = '';
+                    document.getElementById('customRoleGroup').style.display = 'none';
+                    document.getElementById('staffEmail').value = '';
+                    document.getElementById('staffPhone').value = '';
+                    document.getElementById('staffWhatsapp').value = '';
+                    document.getElementById('staffBio').value = '';
+                    document.getElementById('staffPhoto').value = '';
+                    document.getElementById('staffModal').dataset.editId = '';
+                    document.querySelector('#staffModal .modal-title').textContent = 'Add Staff Member';
+                    document.getElementById('staffModal').classList.add('show');
+                }
+
+                // Handle category change to show/hide custom role
+                document.getElementById('staffCategory').addEventListener('change', function () {
+                    document.getElementById('customRoleGroup').style.display = this.value === 'Other' ? 'block' : 'none';
+                });
+
+
+                function filterStaff() {
                     const category = document.getElementById('categoryFilter').value;
                     const availability = document.getElementById('availabilityFilter').value;
                     const filtered = staffData.filter(staff => {
@@ -1238,7 +1274,7 @@ function filterStaff() {
                 async function deleteStaff(id) {
                     if (confirm('Delete this staff member permanently?')) {
                         try {
-                            const response = await fetch(`/api/v1/admin/staff/${id}`, { method: 'DELETE' });
+                            const response = await fetchWithCsrf(`/api/v1/admin/staff/${id}`, { method: 'DELETE' });
                             const result = await response.json();
                             if (result.success) {
                                 loadStaff();
@@ -1247,6 +1283,7 @@ function filterStaff() {
                             }
                         } catch (error) {
                             console.error('Error deleting staff:', error);
+                            showCsrfToast('Failed to delete staff.');
                         }
                     }
                 }
@@ -1303,11 +1340,11 @@ function filterStaff() {
                     }
 
                     const editId = document.getElementById('staffModal').dataset.editId;
-                    const url = editId ? `/api/admin/staff/${editId}` : '/api/admin/staff';
+                    const url = editId ? `/api/v1/admin/staff/${editId}` : '/api/v1/admin/staff';
                     const method = editId ? 'PATCH' : 'POST';
 
                     try {
-                        const response = await fetch(url, {
+                        const response = await fetchWithCsrf(url, {
                             method: method,
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify(data)
@@ -1322,17 +1359,19 @@ function filterStaff() {
                         }
                     } catch (err) {
                         console.error('Error:', err);
-                        alert('Server error saving staff.');
+                        showCsrfToast('Server error saving staff.');
                     }
                 }
 
                 function handleLogout() {
-                    fetch('/api/v1/admin/logout', { method: 'POST' })
+                    fetchWithCsrf('/api/v1/admin/logout', { method: 'POST' })
                         .then(() => window.location.href = '/admin/login')
-                        .catch(error => console.error('Logout error:', error));
+                        .catch(error => { console.error('Logout error:', error); showCsrfToast('Logout failed. Please try again.'); });
                 }
             </script>
-                <script src="/admin/assets/mobile-sidebar.js?v=3"></script>
+    <script src="/admin/push-client.js"></script>
+    <script src="/admin/assets/csrf-fetch.js"></script>
+    <script src="/admin/assets/mobile-sidebar.js?v=3"></script>
     <script src="/admin/admin-profile.js"></script>
 </body>
 

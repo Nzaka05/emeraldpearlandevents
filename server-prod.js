@@ -20,6 +20,7 @@ const { verifySyncAuth } = require('./staff-system/middleware/syncAuth');
 // Import routes and services
 const bookingRoutes = require('./server/routes/bookingRoutes');
 const adminRoutes = require('./server/routes/adminRoutes');
+const mpesaWebhooksRoutes = require('./modules/payments/mpesa.webhooks.routes');
 const adminCommandCenterRoutes = require('./server/routes/adminCommandCenterRoutes');
 const securityRoutes = require('./server/routes/security.routes');
 let clientPortalRoutes = null;
@@ -159,6 +160,8 @@ app.use('/images', express.static('images', staticOptions));
 app.get('/', (req, res) => res.sendFile(require('path').join(__dirname, 'index.html')));
 app.get('/index.html', (req, res) => res.sendFile(require('path').join(__dirname, 'index.html')));
 app.get('/booking.html', (req, res) => res.sendFile(require('path').join(__dirname, 'booking.html')));
+app.get('/gallery', (req, res) => res.sendFile(require('path').join(__dirname, 'gallery.html')));
+app.get('/gallery.html', (req, res) => res.sendFile(require('path').join(__dirname, 'gallery.html')));
 
 // Admin static assets (CSS, JS, Service Worker)
 app.use('/admin/assets', express.static(require('path').join(__dirname, 'admin', 'assets'), staticOptions));
@@ -346,6 +349,9 @@ app.set('views', path.join(__dirname, 'views'));
 
 // Health endpoints must remain public and unprotected.
 app.use('/health', require('./server/routes/health.routes'));
+
+// Webhooks (must be mounted before CSRF middleware)
+app.use('/api/v1/webhooks/mpesa', mpesaWebhooksRoutes);
 
 // Admin API (protected by JWT middleware)
 app.use('/api/v1/admin', adminRoutes);

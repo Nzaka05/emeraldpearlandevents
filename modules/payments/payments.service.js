@@ -187,8 +187,8 @@ class PaymentsService {
           TransactionID: conversationId,
           PartyA: process.env.MPESA_SHORTCODE,
           IdentifierType: 4, // shortcode
-          ResultURL: `${process.env.STAFF_SYSTEM_BASE_URL}/api/mpesa/status-callback`,
-          QueueTimeOutURL: `${process.env.STAFF_SYSTEM_BASE_URL}/api/mpesa/timeout`
+          ResultURL: `${process.env.BASE_URL || 'https://api.emeraldpearlandevents.com'}/api/v1/webhooks/mpesa/status-callback`,
+          QueueTimeOutURL: `${process.env.BASE_URL || 'https://api.emeraldpearlandevents.com'}/api/v1/webhooks/mpesa/timeout`
         },
         {
           headers: {
@@ -225,7 +225,7 @@ class PaymentsService {
           PartyA: phoneNumber.replace(/^0/, '254'),
           PartyB: process.env.MPESA_SHORTCODE,
           PhoneNumber: phoneNumber.replace(/^0/, '254'),
-          CallBackURL: `${process.env.STAFF_SYSTEM_BASE_URL}/api/mpesa/callback`,
+          CallBackURL: `${process.env.BASE_URL || 'https://api.emeraldpearlandevents.com'}/api/v1/webhooks/mpesa/callback`,
           AccountReference: accountReference || 'Payment',
           TransactionDesc: description || 'Payment for event staffing'
         },

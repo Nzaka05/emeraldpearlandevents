@@ -421,6 +421,7 @@ function updateTimeline(msg, colorKey = 'emerald') {
 
 // ══ Send admin message ════════════════════════════════════════════════════════
 async function sendAdminMessage() {
+    const csrf = document.querySelector('meta[name="csrf-token"]')?.content || '';
     const content    = document.getElementById('msgContent').value.trim();
     const recipient  = document.getElementById('msgRecipient').value;
     const fileInput  = document.getElementById('msgAttachment');
@@ -432,9 +433,14 @@ async function sendAdminMessage() {
     if (content)    fd.append('content', content);
     if (recipient)  fd.append('recipient_id', recipient);
     if (attachment) fd.append('attachment', attachment);
+    fd.append('_csrf', csrf);
 
     try {
-        const res = await fetch('/portal/admin/live/message', { method: 'POST', body: fd });
+        const res = await fetch('/portal/admin-staff/live/message', {
+            method: 'POST',
+            headers: { 'CSRF-Token': csrf },
+            body: fd
+        });
         const data = await res.json();
 
         if (data.success) {
@@ -455,7 +461,12 @@ async function sendAdminMessage() {
 // ══ Acknowledge emergency ══════════════════════════════════════════════════════
 async function ackEmergency(id) {
     try {
-        await fetch(`/portal/admin/live/emergency-ack/${id}`, { method: 'POST' });
+        const csrf = document.querySelector('meta[name="csrf-token"]')?.content || '';
+        await fetch(`/portal/admin-staff/live/emergency-ack/${id}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'CSRF-Token': csrf },
+            body: JSON.stringify({ _csrf: csrf })
+        });
         if (liveSocket) liveSocket.emit('emergencyAck', { id, acked_by: '<%= user.name %>' });
         document.querySelector(`[data-emergency-id="${id}"]`)?.remove();
         document.getElementById('emergencyBanner')?.remove();
@@ -483,7 +494,7 @@ function focusEvent(eventId) {
 let lastFetch = Date.now();
 setInterval(async () => {
     try {
-        const res  = await fetch(`/portal/admin/live/messages?since=${new Date(lastFetch).toISOString()}`);
+        const res  = await fetch(`/portal/admin-staff/live/messages?since=${new Date(lastFetch).toISOString()}`);
         const data = await res.json();
         if (data.success && data.messages.length > 0) {
             data.messages.forEach(appendChatMessage);

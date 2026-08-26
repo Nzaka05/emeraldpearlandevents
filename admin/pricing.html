@@ -263,7 +263,7 @@ async function api(url,method='GET',body=null){
 function handleLogout(){document.cookie='adminToken=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/';window.location.href='/admin/login';}
 async function loadPricing(){
     try{
-        const d=await api('/api/admin/pricing');
+        const d=await api('/api/v1/admin/pricing');
         if(!d)return;
         pd=d.pricing||{};
         document.getElementById('supervisorRate').value=pd.globalSupervisorRate||5000;
@@ -342,7 +342,7 @@ function updatePreview(){
 async function savePricing(){
     const payload={globalSupervisorRate:parseFloat(document.getElementById('supervisorRate').value)||5000,vatRate:parseFloat(document.getElementById('vatRate').value)||16,currency:document.getElementById('currency').value,notes:document.getElementById('pricingNotes').value,categories:pd?.categories||[],paymentMethods:pd?.paymentMethods||[]};
     try{
-        const d=await api('/api/admin/pricing','PUT',payload);
+        const d=await api('/api/v1/admin/pricing','PUT',payload);
         if(!d)return;
         if(d.success){toast('Pricing saved successfully!','s');pd=d.pricing||payload;document.getElementById('lastUpdated').textContent='Last updated: '+new Date().toLocaleString('en-KE');updatePreview();}
         else toast(d.error||'Save failed','e');

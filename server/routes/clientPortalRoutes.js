@@ -32,20 +32,8 @@ const aiRateLimiter = rateLimit({
 // CSRF Protection config
 const csrfProtection = csrf({ cookie: { httpOnly: true, sameSite: 'strict', secure: process.env.NODE_ENV === 'production' } });
 
-// ── CSRF BYPASS FOR APIS ──
-router.use((req, res, next) => {
-    const isApiRoute = req.path.startsWith('/api') || 
-                       req.headers['content-type'] === 'application/json' ||
-                       req.headers['authorization'];
-    
-    if (isApiRoute) {
-        res.locals.csrfToken = '';
-        return next();
-    }
-    
-    // Evaluate CSRF for browser form requests
-    csrfProtection(req, res, next);
-});
+// Evaluate CSRF for all requests
+router.use(csrfProtection);
 
 // ── MIDDLEWARE FALLBACK ──
 router.use((req, res, next) => {

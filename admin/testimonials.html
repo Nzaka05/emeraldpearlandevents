@@ -834,25 +834,31 @@
     }
     function filterTestimonials(status) { currentFilter = status; renderTestimonials(); }
     async function approveTestimonial(id) {
-        await fetch('/api/v1/admin/testimonials/' + id, { method: 'PATCH', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ status: 'approved' }) });
+        await fetchWithCsrf('/api/v1/admin/testimonials/' + id, { method: 'PATCH', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ status: 'approved' }) })
+            .catch(err => { console.error('Approve error', err); showCsrfToast('Failed to approve testimonial'); });
         loadTestimonials();
     }
     async function toggleDisplay(id, current) {
-        await fetch('/api/v1/admin/testimonials/' + id, { method: 'PATCH', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ displayOnWebsite: !current, status: 'approved' }) });
+        await fetchWithCsrf('/api/v1/admin/testimonials/' + id, { method: 'PATCH', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ displayOnWebsite: !current, status: 'approved' }) })
+            .catch(err => { console.error('Toggle error', err); showCsrfToast('Failed to update testimonial'); });
         loadTestimonials();
     }
     async function deleteTestimonial(id) {
         if (!confirm('Delete this testimonial?')) return;
-        await fetch('/api/v1/admin/testimonials/' + id, { method: 'DELETE' });
+        await fetchWithCsrf('/api/v1/admin/testimonials/' + id, { method: 'DELETE' })
+            .catch(err => { console.error('Delete error', err); showCsrfToast('Failed to delete testimonial'); });
         loadTestimonials();
     }
     async function saveTestimonial() {
         const data = { name: document.getElementById('clientName').value, role: document.getElementById('clientRole').value, text: document.getElementById('testimonialText').value, rating: parseInt(document.getElementById('testimonialRating').value) || 5, eventType: document.getElementById('eventType').value, status: 'approved', displayOnWebsite: true };
-        await fetch('/api/v1/admin/testimonials', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(data) });
+        await fetchWithCsrf('/api/v1/admin/testimonials', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(data) })
+            .catch(err => { console.error('Save error', err); showCsrfToast('Failed to save testimonial'); });
         loadTestimonials();
         document.getElementById('testimonialModal').classList.remove('show');
     }
 </script>
+    <script src="/admin/push-client.js"></script>
+    <script src="/admin/assets/csrf-fetch.js"></script>
             <script src="/admin/assets/mobile-sidebar.js?v=3"></script>
     <script src="/admin/admin-profile.js"></script>
 </body>

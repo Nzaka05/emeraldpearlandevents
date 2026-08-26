@@ -1823,11 +1823,11 @@
 
         async function loadBookings() {
             try {
-                const response = await fetch('/api/v1/admin/bookings?limit=100');
+                const response = await fetch('/api/v1/admin/bookings?limit=100', { credentials: 'include' });
                 if (response.status === 401) { window.location.href = '/admin/login'; return; }
                 const result = await response.json();
                 if (result.success) {
-                    allBookings = result.bookings || [];
+                    allBookings = result.data || [];
                     filteredBookings = [...allBookings];
                     applyFilters();
 
@@ -1974,14 +1974,14 @@
             let successCount = 0;
             for (const id of ids) {
                 try {
-                    const res = await fetch(`/api/v1/admin/bookings/${id}`, {
+                    const res = await fetchWithCsrf(`/api/v1/admin/bookings/${id}`, {
                         method: 'PATCH',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ isPaid: true })
                     });
                     const result = await res.json();
                     if (result.success) successCount++;
-                } catch (e) { console.error('Bulk paid error', e); }
+                } catch (e) { console.error('Bulk paid error', e); showCsrfToast('Error marking booking as paid.'); }
             }
 
             alert(`<i class="fas fa-check-circle"></i> ${successCount} of ${ids.length} bookings marked as Paid.`);
@@ -1998,10 +1998,10 @@
             let successCount = 0;
             for (const id of ids) {
                 try {
-                    const res = await fetch(`/api/v1/admin/bookings/${id}`, { method: 'DELETE' });
+                    const res = await fetchWithCsrf(`/api/v1/admin/bookings/${id}`, { method: 'DELETE' });
                     const result = await res.json();
                     if (result.success) successCount++;
-                } catch (e) { console.error('Bulk delete error', e); }
+                } catch (e) { console.error('Bulk delete error', e); showCsrfToast('Error deleting booking.'); }
             }
 
             alert(`<i class="fas fa-trash"></i> ${successCount} of ${ids.length} bookings deleted.`);
@@ -2140,14 +2140,14 @@
 
             try {
                 // Update status
-                const res1 = await fetch(`/api/v1/admin/bookings/${currentBooking._id}`, {
+                const res1 = await fetchWithCsrf(`/api/v1/admin/bookings/${currentBooking._id}`, {
                     method: 'PATCH',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(statusData)
                 });
 
                 // Update payment via separate endpoint to trigger notifications
-                const res2 = await fetch(`/api/v1/admin/bookings/${currentBooking._id}/pay`, {
+                const res2 = await fetchWithCsrf(`/api/v1/admin/bookings/${currentBooking._id}/pay`, {
                     method: 'PATCH',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(paymentData)
@@ -2168,6 +2168,7 @@
                 }
             } catch (error) {
                 console.error('Error saving booking:', error);
+                showCsrfToast('Failed to save booking. Please try again.');
             }
         }
 
@@ -2200,7 +2201,7 @@
             }
 
             try {
-                const res = await fetch(`/api/v1/admin/bookings/${bookingId}/payment`, {
+                const res = await fetchWithCsrf(`/api/v1/admin/bookings/${bookingId}/payment`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ amount, paymentMethod, transactionId, paymentDate: date, notes })
@@ -2232,7 +2233,7 @@
             const teamIds = Array.from(document.getElementById('teamStaffSelect').selectedOptions).map(opt => opt.value);
 
             try {
-                const response = await fetch(`/api/v1/admin/bookings/${currentBooking._id}/assign-staff`, {
+                const response = await fetchWithCsrf(`/api/v1/admin/bookings/${currentBooking._id}/assign-staff`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -2281,11 +2282,11 @@
                     adminNotes: currentBooking.adminNotes
                 };
 
-                fetch(`/api/v1/admin/bookings/${currentBooking._id}`, {
+                fetchWithCsrf(`/api/v1/admin/bookings/${currentBooking._id}`, {
                     method: 'PATCH',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(updatedData)
-                }).catch(error => console.error('Error adding note:', error));
+                }).catch(error => { console.error('Error adding note:', error); showCsrfToast('Failed to save note.'); });
             }
         }
 
@@ -2293,7 +2294,7 @@
             if (!confirm('Are you sure you want to delete this booking?')) return;
 
             try {
-                const response = await fetch(`/api/v1/admin/bookings/${bookingId}`, {
+                const response = await fetchWithCsrf(`/api/v1/admin/bookings/${bookingId}`, {
                     method: 'DELETE'
                 });
 
@@ -2301,9 +2302,12 @@
                 if (result.success) {
                     loadBookings();
                     alert('Booking deleted successfully');
+                } else {
+                    showCsrfToast('Failed to delete booking: ' + (result.message || 'Unknown error'));
                 }
             } catch (error) {
                 console.error('Error deleting booking:', error);
+                showCsrfToast('Failed to delete booking. Please try again.');
             }
         }
 
@@ -2314,7 +2318,7 @@
             if (!confirm(`Are you sure you want to send the appreciation email to ${clientName}?`)) return;
 
             try {
-                const response = await fetch(`/api/v1/admin/bookings/${currentBooking._id}/send-appreciation`, {
+                const response = await fetchWithCsrf(`/api/v1/admin/bookings/${currentBooking._id}/send-appreciation`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' }
                 });
@@ -2350,7 +2354,7 @@
             }
 
             try {
-                const response = await fetch(`/api/v1/admin/bookings/${currentBooking._id}/message-staff`, {
+                const response = await fetchWithCsrf(`/api/v1/admin/bookings/${currentBooking._id}/message-staff`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -2400,9 +2404,9 @@
         }
 
         function handleLogout() {
-            fetch('/api/v1/admin/logout', { method: 'POST' })
+            fetchWithCsrf('/api/v1/admin/logout', { method: 'POST' })
                 .then(() => window.location.href = '/admin/login')
-                .catch(error => console.error('Logout error:', error));
+                .catch(error => { console.error('Logout error:', error); showCsrfToast('Logout failed. Please try again.'); });
         }
 
         // Filter event listeners
@@ -2422,6 +2426,7 @@
         });
     </script>
     <script src="/admin/push-client.js"></script>
+    <script src="/admin/assets/csrf-fetch.js"></script>
         <script src="/admin/assets/mobile-sidebar.js?v=3"></script>
     <script src="/admin/admin-profile.js"></script>
 </body>
