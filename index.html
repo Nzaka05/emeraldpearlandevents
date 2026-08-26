@@ -230,7 +230,7 @@
     /* ── PORTFOLIO SKELETON ── */
     .port-skeleton .port-bg { background: linear-gradient(90deg, #1a2e1e 25%, #223828 50%, #1a2e1e 75%); background-size: 200% 100%; animation: shimmer 1.6s infinite; }
     @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
-    .port-item .port-bg.loaded { background-size: cover; background-position: center; background-repeat: no-repeat; animation: none; }
+    .port-item .port-bg.loaded { background-size: cover; background-position: top center !important; background-repeat: no-repeat; animation: none; }
 
     /* ── TESTIMONIALS ── */
     #testimonials { background: var(--emerald-dark); }
@@ -561,7 +561,7 @@
     </div>
     <div class="port-grid reveal" id="port-grid">
       <div class="port-item" onclick="openLightbox('/images/gallery/Chezshot@WindsorGolfClub14.jpg.jpeg', 'Windsor Golf Club VIP Gala Reception', 'Corporate & VIP')">
-        <div class="port-bg loaded" style="background-image:url('/images/gallery/Chezshot@WindsorGolfClub14.jpg.jpeg'); background-size:cover; background-position:center;"></div>
+        <div class="port-bg loaded" style="background-image:url('/images/gallery/Chezshot@WindsorGolfClub14.jpg.jpeg'); background-size:cover; background-position:top center;"></div>
         <div class="port-overlay">
           <div class="port-label">
             <small>Corporate &amp; VIP</small>
@@ -570,7 +570,7 @@
         </div>
       </div>
       <div class="port-item" onclick="openLightbox('/images/gallery/Chezshot@WindsorGolfClub15.jpg.jpeg', 'Executive Protocol & Guest Hospitality', 'VIP Protocol')">
-        <div class="port-bg loaded" style="background-image:url('/images/gallery/Chezshot@WindsorGolfClub15.jpg.jpeg'); background-size:cover; background-position:center;"></div>
+        <div class="port-bg loaded" style="background-image:url('/images/gallery/Chezshot@WindsorGolfClub15.jpg.jpeg'); background-size:cover; background-position:top center;"></div>
         <div class="port-overlay">
           <div class="port-label">
             <small>VIP Protocol</small>
@@ -579,7 +579,7 @@
         </div>
       </div>
       <div class="port-item" onclick="openLightbox('/images/gallery/Chezshot@WindsorGolfClub18.jpg.jpeg', 'Luxury Outdoor Event Setup & Ushering', 'Social & Private')">
-        <div class="port-bg loaded" style="background-image:url('/images/gallery/Chezshot@WindsorGolfClub18.jpg.jpeg'); background-size:cover; background-position:center;"></div>
+        <div class="port-bg loaded" style="background-image:url('/images/gallery/Chezshot@WindsorGolfClub18.jpg.jpeg'); background-size:cover; background-position:top center;"></div>
         <div class="port-overlay">
           <div class="port-label">
             <small>Social &amp; Private</small>
@@ -588,7 +588,7 @@
         </div>
       </div>
       <div class="port-item" onclick="openLightbox('/images/gallery/Chezshot@WindsorGolfClub19.jpg.jpeg', 'Prestigious Country Club Gathering', 'VIP Protocol')">
-        <div class="port-bg loaded" style="background-image:url('/images/gallery/Chezshot@WindsorGolfClub19.jpg.jpeg'); background-size:cover; background-position:center;"></div>
+        <div class="port-bg loaded" style="background-image:url('/images/gallery/Chezshot@WindsorGolfClub19.jpg.jpeg'); background-size:cover; background-position:top center;"></div>
         <div class="port-overlay">
           <div class="port-label">
             <small>VIP Protocol</small>
@@ -597,7 +597,7 @@
         </div>
       </div>
       <div class="port-item" onclick="openLightbox('/images/gallery/Chezshot@WindsorGolfClub20.jpg.jpeg', 'Bespoke Event Coordination & Elegance', 'Corporate & VIP')">
-        <div class="port-bg loaded" style="background-image:url('/images/gallery/Chezshot@WindsorGolfClub20.jpg.jpeg'); background-size:cover; background-position:center;"></div>
+        <div class="port-bg loaded" style="background-image:url('/images/gallery/Chezshot@WindsorGolfClub20.jpg.jpeg'); background-size:cover; background-position:top center;"></div>
         <div class="port-overlay">
           <div class="port-label">
             <small>Corporate &amp; VIP</small>
@@ -876,7 +876,7 @@
           const items = data.gallery.slice(0, 5);
           grid.innerHTML = items.map((item) => `
             <div class="port-item" onclick="openLightbox('${item.url}', '${(item.caption || '').replace(/'/g, "\\'")}', '${(item.eventType || '').replace(/'/g, "\\'")}')">
-              <div class="port-bg loaded" style="background-image:url('${item.url}');background-size:cover;background-position:center;"></div>
+              <div class="port-bg loaded" style="background-image:url('${item.url}');background-size:cover;background-position:top center;"></div>
               <div class="port-overlay">
                 <div class="port-label">
                   <small>${item.eventType || 'Portfolio'}</small>

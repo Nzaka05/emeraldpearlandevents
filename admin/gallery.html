@@ -270,12 +270,12 @@
         html.dark-mode .image-card { background: var(--bg-card); border-color: var(--border-color); }
 
         .image-card-thumb {
-            position: relative; width: 100%; padding-top: 66%;
+            position: relative; width: 100%; padding-top: 100%;
             background: var(--bg-primary); overflow: hidden;
         }
         .image-card-thumb img {
             position: absolute; inset: 0; width: 100%; height: 100%;
-            object-fit: cover; transition: transform 0.4s ease;
+            object-fit: cover; object-position: top center; transition: transform 0.4s ease;
         }
         .image-card:hover .image-card-thumb img { transform: scale(1.04); }
 
