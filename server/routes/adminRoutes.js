@@ -614,9 +614,10 @@ router.get('/public/gallery', async (req, res) => {
         const cached = await getCache('cache:gallery:list');
         if (cached) return res.json(cached);
 
+        const limit = parseInt(req.query.limit) || 100;
         const gallery = await Gallery.find()
             .sort({ order: 1, uploadedAt: -1 })
-            .limit(9)
+            .limit(limit)
             .lean();
         const result = { success: true, gallery };
         await setCache('cache:gallery:list', result, 300);

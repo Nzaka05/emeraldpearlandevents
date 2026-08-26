@@ -454,7 +454,7 @@
     <div class="gallery-container">
       <div class="gallery-stats-bar">
         <span>Displaying authentic highlights from our latest event coordination</span>
-        <span class="gallery-count-badge" id="imageCountBadge"><i class="fa-solid fa-images"></i> 12 Photographs</span>
+        <span class="gallery-count-badge" id="imageCountBadge"><i class="fa-solid fa-images"></i> 31 Photographs</span>
       </div>
 
       <div class="gallery-grid" id="galleryGrid">
@@ -554,68 +554,44 @@
   </div>
 
   <script>
-    // Initial Seed Dataset (Instant Load & Fallback)
+    // Initial Dataset of all 31 event images (Instant Load & Fallback)
     const initialImages = [
-      {
-        url: '/images/gallery/Chezshot@WindsorGolfClub14.jpg.jpeg',
-        caption: 'Windsor Golf Club VIP Gala Reception',
-        eventType: 'Corporate & VIP'
-      },
-      {
-        url: '/images/gallery/Chezshot@WindsorGolfClub15.jpg.jpeg',
-        caption: 'Executive Protocol & Guest Hospitality',
-        eventType: 'VIP Protocol'
-      },
-      {
-        url: '/images/gallery/Chezshot@WindsorGolfClub16.jpg.jpeg',
-        caption: 'Evening Banquet Service & Coordination',
-        eventType: 'Corporate & VIP'
-      },
-      {
-        url: '/images/gallery/Chezshot@WindsorGolfClub18.jpg.jpeg',
-        caption: 'Luxury Outdoor Event Setup & Ushering',
-        eventType: 'Social & Private'
-      },
-      {
-        url: '/images/gallery/Chezshot@WindsorGolfClub19.jpg.jpeg',
-        caption: 'Prestigious Country Club Gathering',
-        eventType: 'VIP Protocol'
-      },
-      {
-        url: '/images/gallery/Chezshot@WindsorGolfClub20.jpg.jpeg',
-        caption: 'Bespoke Event Coordination & Elegance',
-        eventType: 'Corporate & VIP'
-      },
-      {
-        url: '/images/gallery/Birthday%20Party.jpg',
-        caption: 'Milestone Celebration & Private Party Hosting',
-        eventType: 'Social & Private'
-      },
-      {
-        url: '/images/gallery/353106.jpg',
-        caption: 'High-End Corporate Hospitality Team',
-        eventType: 'Corporate & VIP'
-      },
-      {
-        url: '/images/gallery/353109.jpg',
-        caption: 'Impeccable Guest Welcoming & Protocol',
-        eventType: 'VIP Protocol'
-      },
-      {
-        url: '/images/gallery/353112.jpg',
-        caption: 'Professional Event Staffing & Registration',
-        eventType: 'Event Staffing'
-      },
-      {
-        url: '/images/gallery/353115.jpg',
-        caption: 'Elegant Wedding Coordination & Guest Ushering',
-        eventType: 'Weddings'
-      },
-      {
-        url: '/images/gallery/353124.jpg',
-        caption: 'Executive Hospitality & Brand Ambassadorship',
-        eventType: 'Event Staffing'
-      }
+      // Windsor Golf Club VIP Events
+      { url: '/images/gallery/Chezshot@WindsorGolfClub14.jpg.jpeg', caption: 'Windsor Golf Club VIP Gala Reception', eventType: 'Corporate & VIP' },
+      { url: '/images/gallery/Chezshot@WindsorGolfClub15.jpg.jpeg', caption: 'Executive Protocol & Guest Hospitality', eventType: 'VIP Protocol' },
+      { url: '/images/gallery/Chezshot@WindsorGolfClub16.jpg.jpeg', caption: 'Evening Banquet Service & Coordination', eventType: 'Corporate & VIP' },
+      { url: '/images/gallery/Chezshot@WindsorGolfClub18.jpg.jpeg', caption: 'Luxury Outdoor Event Setup & Ushering', eventType: 'Social & Private' },
+      { url: '/images/gallery/Chezshot@WindsorGolfClub19.jpg.jpeg', caption: 'Prestigious Country Club Gathering', eventType: 'VIP Protocol' },
+      { url: '/images/gallery/Chezshot@WindsorGolfClub20.jpg.jpeg', caption: 'Bespoke Event Coordination & Elegance', eventType: 'Corporate & VIP' },
+      
+      // Celebrations & Hostesses
+      { url: '/images/gallery/Birthday%20Party.jpg', caption: 'Milestone Celebration & Private Party Hosting', eventType: 'Social & Private' },
+      { url: '/images/gallery/353106.jpg', caption: 'High-End Corporate Hospitality Team', eventType: 'Corporate & VIP' },
+      { url: '/images/gallery/353109.jpg', caption: 'Impeccable Guest Welcoming & Protocol', eventType: 'VIP Protocol' },
+      { url: '/images/gallery/353112.jpg', caption: 'Professional Event Staffing & Registration', eventType: 'Event Staffing' },
+      { url: '/images/gallery/353115.jpg', caption: 'Elegant Wedding Coordination & Guest Ushering', eventType: 'Weddings' },
+      { url: '/images/gallery/353124.jpg', caption: 'Executive Hospitality & Brand Ambassadorship', eventType: 'Event Staffing' },
+
+      // High-Profile Ceremonies & Social Archive
+      { url: '/images/gallery/WhatsApp%20Image%202025-10-01%20at%2000.29.40.jpeg', caption: 'Traditional Celebration & Royal Attire Ushering', eventType: 'Weddings' },
+      { url: '/images/gallery/WhatsApp%20Image%202025-10-01%20at%2000.29.42.jpeg', caption: 'Luxury Ceremony Hostesses in Traditional Regalia', eventType: 'Weddings' },
+      { url: '/images/gallery/WhatsApp%20Image%202025-10-01%20at%2000.29.42%20(1).jpeg', caption: 'Distinguished Guest Protocol & Cultural Gala', eventType: 'VIP Protocol' },
+      { url: '/images/gallery/WhatsApp%20Image%202025-10-01%20at%2000.29.43.jpeg', caption: 'Traditional Wedding Protocol Officers', eventType: 'Weddings' },
+      { url: '/images/gallery/WhatsApp%20Image%202025-10-01%20at%2000.30.39.jpeg', caption: 'Black-Tie Corporate Banquet Management', eventType: 'Corporate & VIP' },
+      { url: '/images/gallery/WhatsApp%20Image%202025-10-01%20at%2000.30.40.jpeg', caption: 'VIP Red Carpet Guest Management', eventType: 'VIP Protocol' },
+      { url: '/images/gallery/WhatsApp%20Image%202025-10-01%20at%2000.30.40%20(1).jpeg', caption: 'Executive Dinner Coordination & Service', eventType: 'Corporate & VIP' },
+      { url: '/images/gallery/WhatsApp%20Image%202025-10-01%20at%2000.30.41.jpeg', caption: 'Elegant Ballroom Ushering Team', eventType: 'Event Staffing' },
+      { url: '/images/gallery/WhatsApp%20Image%202025-10-01%20at%2000.30.42.jpeg', caption: 'Premium Banquet Escort & Hostess Service', eventType: 'Event Staffing' },
+      { url: '/images/gallery/WhatsApp%20Image%202025-10-01%20at%2000.30.43.jpeg', caption: 'Corporate Gala Stage & Protocol Management', eventType: 'Corporate & VIP' },
+      { url: '/images/gallery/WhatsApp%20Image%202025-10-01%20at%2000.30.44.jpeg', caption: 'High-Level Dignitary Welcoming Team', eventType: 'VIP Protocol' },
+      { url: '/images/gallery/WhatsApp%20Image%202025-10-01%20at%2000.30.45.jpeg', caption: 'Bespoke Private Event Service Staff', eventType: 'Social & Private' },
+      { url: '/images/gallery/WhatsApp%20Image%202025-10-01%20at%2000.30.46.jpeg', caption: 'Evening Gala Receptionists & Hostesses', eventType: 'Corporate & VIP' },
+      { url: '/images/gallery/WhatsApp%20Image%202025-10-01%20at%2000.30.47.jpeg', caption: 'Luxury Social Soirée Coordination', eventType: 'Social & Private' },
+      { url: '/images/gallery/WhatsApp%20Image%202025-10-01%20at%2000.30.48.jpeg', caption: 'VIP Lounge Coordination & Hospitality', eventType: 'VIP Protocol' },
+      { url: '/images/gallery/WhatsApp%20Image%202025-10-01%20at%2000.30.49.jpeg', caption: 'Grand Ceremony Ushering Squadron', eventType: 'Event Staffing' },
+      { url: '/images/gallery/WhatsApp%20Image%202025-10-01%20at%2000.30.51.jpeg', caption: 'Formal Gala Entrance Management', eventType: 'Corporate & VIP' },
+      { url: '/images/gallery/WhatsApp%20Image%202025-10-01%20at%2000.30.52.jpeg', caption: 'Executive Event Registration Desk Team', eventType: 'Event Staffing' },
+      { url: '/images/gallery/WhatsApp%20Image%202025-10-01%20at%2000.30.53.jpeg', caption: 'Luxury Gala Farewell & Departure Protocol', eventType: 'VIP Protocol' }
     ];
 
     let currentImages = [...initialImages];
