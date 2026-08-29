@@ -810,9 +810,9 @@
     "semantic_hash": "f5acc234bd266f2d9505ac81354a6a37"
   },
   "server/routes/adminRoutes.js": {
-    "mtime": 1787785139.8787558,
-    "ast_hash": "7314048818586edff1f47528b6c11422",
-    "semantic_hash": ""
+    "mtime": 1782956896.757387,
+    "ast_hash": "d64b37bede316d56125ddffa2546b148",
+    "semantic_hash": "d64b37bede316d56125ddffa2546b148"
   },
   "server/routes/bookingRoutes.js": {
     "mtime": 1782944911.3974724,
@@ -2405,8 +2405,8 @@
     "semantic_hash": "56da679db17df5ed000826654eaa0b0d"
   },
   "seed_gallery.js": {
-    "mtime": 1788013434.7722137,
-    "ast_hash": "ffd93e2561c2489887d32c0b0ac7693a",
+    "mtime": 1787782000.5600288,
+    "ast_hash": "e32224ee3d77da98888c6ae660350a65",
     "semantic_hash": ""
   },
   ".agents/rules/graphify.md": {
@@ -2685,8 +2685,8 @@
     "semantic_hash": ""
   },
   "admin/gallery.html": {
-    "mtime": 1787782783.6803489,
-    "ast_hash": "f2d7983af12e71c74e3cfdb57f22a120",
+    "mtime": 1782956896.7204642,
+    "ast_hash": "78ba8d45143a7ffabc2fb12c73f32709",
     "semantic_hash": ""
   },
   "admin/login.html": {
@@ -2785,8 +2785,8 @@
     "semantic_hash": ""
   },
   "gallery.html": {
-    "mtime": 1788013454.9748764,
-    "ast_hash": "bad994cb47c8da435fc0eb087543158b",
+    "mtime": 1787782127.401163,
+    "ast_hash": "62134b93dc4d7df115cc48e72587e46f",
     "semantic_hash": ""
   },
   "git_log.txt": {
@@ -2800,8 +2800,8 @@
     "semantic_hash": ""
   },
   "index.html": {
-    "mtime": 1787782765.488964,
-    "ast_hash": "4cd3a5525e7aa2f4fc8d164bdd43ff2d",
+    "mtime": 1787782104.0041575,
+    "ast_hash": "2292bf25e566a2202a6fcd69f30f0895",
     "semantic_hash": ""
   },
   "phase4-smoke-checklist.md": {
@@ -3217,401 +3217,6 @@
   "staff-system/public/uploads/staff/staff-1773366529025-WhatsApp_Image_2025_09_30_at_21.20.59__1_.jpeg": {
     "mtime": 1773366529.0365736,
     "ast_hash": "23529729f1c9aa9fdd5a842874fb6fae",
-    "semantic_hash": ""
-  },
-  "images/gallery/WhatsApp Image 2026-08-27 at 20.05.44 (1).jpeg": {
-    "mtime": 1788013186.4746122,
-    "ast_hash": "a96222cfe8b83afa7fd84ba5ec43f5c9",
-    "semantic_hash": ""
-  },
-  "images/gallery/WhatsApp Image 2026-08-27 at 20.05.44 (2).jpeg": {
-    "mtime": 1788013186.5573459,
-    "ast_hash": "ef9babfce2ab301f46afd18859c6b34c",
-    "semantic_hash": ""
-  },
-  "images/gallery/WhatsApp Image 2026-08-27 at 20.05.44 (3).jpeg": {
-    "mtime": 1788013186.6492448,
-    "ast_hash": "60b4cb7d598803d78c42c763d947d43a",
-    "semantic_hash": ""
-  },
-  "images/gallery/WhatsApp Image 2026-08-27 at 20.05.44.jpeg": {
-    "mtime": 1788013186.3018157,
-    "ast_hash": "5cab39e8788ecb24bd2b2af586325602",
-    "semantic_hash": ""
-  },
-  "images/gallery/WhatsApp Image 2026-08-27 at 20.13.18 (1).jpeg": {
-    "mtime": 1788013211.0482693,
-    "ast_hash": "7ce55f315cb59ca6f993ed21a79fecdf",
-    "semantic_hash": ""
-  },
-  "images/gallery/WhatsApp Image 2026-08-27 at 20.13.18 (2).jpeg": {
-    "mtime": 1788013211.2854466,
-    "ast_hash": "d3e69674a36e1186c447fa86c2a6eadd",
-    "semantic_hash": ""
-  },
-  "images/gallery/WhatsApp Image 2026-08-27 at 20.13.18.jpeg": {
-    "mtime": 1788013210.8492384,
-    "ast_hash": "79c84f27459cc9f6100352d0cc2ffe49",
-    "semantic_hash": ""
-  },
-  "images/gallery/WhatsApp Image 2026-08-27 at 20.13.19 (1).jpeg": {
-    "mtime": 1788013211.7097292,
-    "ast_hash": "88edd8dda5516468d54e6522e64552da",
-    "semantic_hash": ""
-  },
-  "images/gallery/WhatsApp Image 2026-08-27 at 20.13.19 (2).jpeg": {
-    "mtime": 1788013212.0312364,
-    "ast_hash": "69a6154ffff0ec4d3ca9e51ce54a59eb",
-    "semantic_hash": ""
-  },
-  "images/gallery/WhatsApp Image 2026-08-27 at 20.13.19 (3).jpeg": {
-    "mtime": 1788013212.3135972,
-    "ast_hash": "0f7021570e657f4e7f0bab7790e0647e",
-    "semantic_hash": ""
-  },
-  "images/gallery/WhatsApp Image 2026-08-27 at 20.13.19 (4).jpeg": {
-    "mtime": 1788013212.5032587,
-    "ast_hash": "1726148e4cf52151f0d5e3c0ce4d548e",
-    "semantic_hash": ""
-  },
-  "images/gallery/WhatsApp Image 2026-08-27 at 20.13.19.jpeg": {
-    "mtime": 1788013211.5185184,
-    "ast_hash": "ff4236b932eeb6da12ffbd7337ca6e8a",
-    "semantic_hash": ""
-  },
-  "images/gallery/WhatsApp Image 2026-08-27 at 20.13.20 (1).jpeg": {
-    "mtime": 1788013212.8362067,
-    "ast_hash": "fbaf857ff32cc0e2d89c135041e274ca",
-    "semantic_hash": ""
-  },
-  "images/gallery/WhatsApp Image 2026-08-27 at 20.13.20 (2).jpeg": {
-    "mtime": 1788013213.0269268,
-    "ast_hash": "27cd38a20f10961b76a61af332e09a76",
-    "semantic_hash": ""
-  },
-  "images/gallery/WhatsApp Image 2026-08-27 at 20.13.20 (3).jpeg": {
-    "mtime": 1788013213.1473987,
-    "ast_hash": "192daecd03c7013b00e54518ab5d6e8a",
-    "semantic_hash": ""
-  },
-  "images/gallery/WhatsApp Image 2026-08-27 at 20.13.20.jpeg": {
-    "mtime": 1788013212.716189,
-    "ast_hash": "1423b2772e1d0d3e1c9cb12edbea4fd5",
-    "semantic_hash": ""
-  },
-  "images/gallery/WhatsApp Image 2026-08-27 at 20.13.21 (1).jpeg": {
-    "mtime": 1788013213.591651,
-    "ast_hash": "a19e088265be597ce5a7e2b7eff39c0e",
-    "semantic_hash": ""
-  },
-  "images/gallery/WhatsApp Image 2026-08-27 at 20.13.21.jpeg": {
-    "mtime": 1788013213.4182346,
-    "ast_hash": "b2cd306c209c6fd3f2ac8c800b5329b7",
-    "semantic_hash": ""
-  },
-  "images/gallery/WhatsApp Image 2026-08-27 at 20.13.22 (1).jpeg": {
-    "mtime": 1788013214.1002846,
-    "ast_hash": "e5c98d67591ae11fe8d8976ce28215b1",
-    "semantic_hash": ""
-  },
-  "images/gallery/WhatsApp Image 2026-08-27 at 20.13.22 (2).jpeg": {
-    "mtime": 1788013214.193525,
-    "ast_hash": "0d9b333c2fcdfa20fd9079e35b27d635",
-    "semantic_hash": ""
-  },
-  "images/gallery/WhatsApp Image 2026-08-27 at 20.13.22 (3).jpeg": {
-    "mtime": 1788013214.3179376,
-    "ast_hash": "acf7f5517aad37919f6c6ebf3e93a5fa",
-    "semantic_hash": ""
-  },
-  "images/gallery/WhatsApp Image 2026-08-27 at 20.13.22.jpeg": {
-    "mtime": 1788013213.8537197,
-    "ast_hash": "f4077b709385da39f644940a3423acb3",
-    "semantic_hash": ""
-  },
-  "images/gallery/WhatsApp Image 2026-08-27 at 20.13.23.jpeg": {
-    "mtime": 1788013214.3979502,
-    "ast_hash": "e6102f046c67793780e0a9f228efe82e",
-    "semantic_hash": ""
-  },
-  "images/gallery/WhatsApp Image 2026-08-27 at 20.13.24.jpeg": {
-    "mtime": 1788013214.476487,
-    "ast_hash": "c62c6dca71dc4ec2b5662fb9ce00f0ce",
-    "semantic_hash": ""
-  },
-  "images/gallery/WhatsApp Image 2026-08-27 at 20.15.37 (1).jpeg": {
-    "mtime": 1788012907.0582526,
-    "ast_hash": "690742aff002095489f9d27ea5557ba5",
-    "semantic_hash": ""
-  },
-  "images/gallery/WhatsApp Image 2026-08-27 at 20.15.37.jpeg": {
-    "mtime": 1788012901.3074968,
-    "ast_hash": "d3226d56ebe921d45ef1e9f533217aea",
-    "semantic_hash": ""
-  },
-  "images/gallery/WhatsApp Image 2026-08-27 at 20.15.38 (1).jpeg": {
-    "mtime": 1788012921.2084181,
-    "ast_hash": "c35247800356a89f41b835b243faf421",
-    "semantic_hash": ""
-  },
-  "images/gallery/WhatsApp Image 2026-08-27 at 20.15.38 (2).jpeg": {
-    "mtime": 1788012927.4001372,
-    "ast_hash": "d3077161334f2f167393d22385318d0c",
-    "semantic_hash": ""
-  },
-  "images/gallery/WhatsApp Image 2026-08-27 at 20.15.38.jpeg": {
-    "mtime": 1788012911.5204926,
-    "ast_hash": "7596bbe75ebd7ad029f1e0cce3e5af9e",
-    "semantic_hash": ""
-  },
-  "images/gallery/WhatsApp Image 2026-08-27 at 20.21.41.jpeg": {
-    "mtime": 1788012931.161767,
-    "ast_hash": "bd8f4994c3913c6e6d7741d4b1d72829",
-    "semantic_hash": ""
-  },
-  "public/images/gallery/WhatsApp Image 2025-10-01 at 00.29.40.jpeg": {
-    "mtime": 1771522427.3939157,
-    "ast_hash": "8d4112df7f8cb6c9e7664c1fb71a7f6e",
-    "semantic_hash": ""
-  },
-  "public/images/gallery/WhatsApp Image 2025-10-01 at 00.29.42 (1).jpeg": {
-    "mtime": 1771522427.4022527,
-    "ast_hash": "a129664a16c07e62e0602e0b54548268",
-    "semantic_hash": ""
-  },
-  "public/images/gallery/WhatsApp Image 2025-10-01 at 00.29.42.jpeg": {
-    "mtime": 1771522427.411729,
-    "ast_hash": "e706a0baf1d3ceb73d379975795d3507",
-    "semantic_hash": ""
-  },
-  "public/images/gallery/WhatsApp Image 2025-10-01 at 00.29.43.jpeg": {
-    "mtime": 1771522427.4188678,
-    "ast_hash": "fa534ff149284324e292d296a22a1ad1",
-    "semantic_hash": ""
-  },
-  "public/images/gallery/WhatsApp Image 2025-10-01 at 00.30.39.jpeg": {
-    "mtime": 1771522427.4246616,
-    "ast_hash": "7a879f08b00e80a1213a874b3c2b0945",
-    "semantic_hash": ""
-  },
-  "public/images/gallery/WhatsApp Image 2025-10-01 at 00.30.40 (1).jpeg": {
-    "mtime": 1771522427.4307444,
-    "ast_hash": "64bbcb36586c69c1470fb087c2d52856",
-    "semantic_hash": ""
-  },
-  "public/images/gallery/WhatsApp Image 2025-10-01 at 00.30.40.jpeg": {
-    "mtime": 1771522427.4362936,
-    "ast_hash": "b0338280caebc01e1f6dd891f2c10fbf",
-    "semantic_hash": ""
-  },
-  "public/images/gallery/WhatsApp Image 2025-10-01 at 00.30.41.jpeg": {
-    "mtime": 1771522427.4406953,
-    "ast_hash": "384399ddaeb7b6b3db08bdb9b186af26",
-    "semantic_hash": ""
-  },
-  "public/images/gallery/WhatsApp Image 2025-10-01 at 00.30.42.jpeg": {
-    "mtime": 1771522427.446752,
-    "ast_hash": "d23809d2a6a1b2843489cec5d7c12c9c",
-    "semantic_hash": ""
-  },
-  "public/images/gallery/WhatsApp Image 2025-10-01 at 00.30.43.jpeg": {
-    "mtime": 1771522427.454782,
-    "ast_hash": "ed01b039393134c9d4600c6ec54f8d37",
-    "semantic_hash": ""
-  },
-  "public/images/gallery/WhatsApp Image 2025-10-01 at 00.30.44.jpeg": {
-    "mtime": 1771522427.4616387,
-    "ast_hash": "323761f7f8a6a212e8e266e50a19d420",
-    "semantic_hash": ""
-  },
-  "public/images/gallery/WhatsApp Image 2025-10-01 at 00.30.45.jpeg": {
-    "mtime": 1771522427.465686,
-    "ast_hash": "c8c1a577c0dfd5c3d1ff9e2ba1702e6c",
-    "semantic_hash": ""
-  },
-  "public/images/gallery/WhatsApp Image 2025-10-01 at 00.30.46.jpeg": {
-    "mtime": 1771522427.4708717,
-    "ast_hash": "e59a8ec7eb343c88f3aa3a5b876610cc",
-    "semantic_hash": ""
-  },
-  "public/images/gallery/WhatsApp Image 2025-10-01 at 00.30.47.jpeg": {
-    "mtime": 1771522427.476007,
-    "ast_hash": "3aead2ef648b2a27472e833c0d00becd",
-    "semantic_hash": ""
-  },
-  "public/images/gallery/WhatsApp Image 2025-10-01 at 00.30.48.jpeg": {
-    "mtime": 1771522427.4819522,
-    "ast_hash": "161c12be488d6a95c10cef6f66fba8da",
-    "semantic_hash": ""
-  },
-  "public/images/gallery/WhatsApp Image 2025-10-01 at 00.30.49.jpeg": {
-    "mtime": 1771522427.4885402,
-    "ast_hash": "f3378fe6fabbe859a6d436995506a676",
-    "semantic_hash": ""
-  },
-  "public/images/gallery/WhatsApp Image 2025-10-01 at 00.30.51.jpeg": {
-    "mtime": 1771522427.4955227,
-    "ast_hash": "7661ce2d7c8fadf95d0f42fb6060f7e1",
-    "semantic_hash": ""
-  },
-  "public/images/gallery/WhatsApp Image 2025-10-01 at 00.30.52.jpeg": {
-    "mtime": 1771522427.5005095,
-    "ast_hash": "de8fc3f2e8224f82f876339213c62232",
-    "semantic_hash": ""
-  },
-  "public/images/gallery/WhatsApp Image 2025-10-01 at 00.30.53.jpeg": {
-    "mtime": 1771522427.5081942,
-    "ast_hash": "f3378fe6fabbe859a6d436995506a676",
-    "semantic_hash": ""
-  },
-  "public/images/gallery/WhatsApp Image 2026-08-27 at 20.05.44 (1).jpeg": {
-    "mtime": 1788013186.4746122,
-    "ast_hash": "a96222cfe8b83afa7fd84ba5ec43f5c9",
-    "semantic_hash": ""
-  },
-  "public/images/gallery/WhatsApp Image 2026-08-27 at 20.05.44 (2).jpeg": {
-    "mtime": 1788013186.5573459,
-    "ast_hash": "ef9babfce2ab301f46afd18859c6b34c",
-    "semantic_hash": ""
-  },
-  "public/images/gallery/WhatsApp Image 2026-08-27 at 20.05.44 (3).jpeg": {
-    "mtime": 1788013186.6492448,
-    "ast_hash": "60b4cb7d598803d78c42c763d947d43a",
-    "semantic_hash": ""
-  },
-  "public/images/gallery/WhatsApp Image 2026-08-27 at 20.05.44.jpeg": {
-    "mtime": 1788013186.3018157,
-    "ast_hash": "5cab39e8788ecb24bd2b2af586325602",
-    "semantic_hash": ""
-  },
-  "public/images/gallery/WhatsApp Image 2026-08-27 at 20.13.18 (1).jpeg": {
-    "mtime": 1788013211.0482693,
-    "ast_hash": "7ce55f315cb59ca6f993ed21a79fecdf",
-    "semantic_hash": ""
-  },
-  "public/images/gallery/WhatsApp Image 2026-08-27 at 20.13.18 (2).jpeg": {
-    "mtime": 1788013211.2854466,
-    "ast_hash": "d3e69674a36e1186c447fa86c2a6eadd",
-    "semantic_hash": ""
-  },
-  "public/images/gallery/WhatsApp Image 2026-08-27 at 20.13.18.jpeg": {
-    "mtime": 1788013210.8492384,
-    "ast_hash": "79c84f27459cc9f6100352d0cc2ffe49",
-    "semantic_hash": ""
-  },
-  "public/images/gallery/WhatsApp Image 2026-08-27 at 20.13.19 (1).jpeg": {
-    "mtime": 1788013211.7097292,
-    "ast_hash": "88edd8dda5516468d54e6522e64552da",
-    "semantic_hash": ""
-  },
-  "public/images/gallery/WhatsApp Image 2026-08-27 at 20.13.19 (2).jpeg": {
-    "mtime": 1788013212.0312364,
-    "ast_hash": "69a6154ffff0ec4d3ca9e51ce54a59eb",
-    "semantic_hash": ""
-  },
-  "public/images/gallery/WhatsApp Image 2026-08-27 at 20.13.19 (3).jpeg": {
-    "mtime": 1788013212.3135972,
-    "ast_hash": "0f7021570e657f4e7f0bab7790e0647e",
-    "semantic_hash": ""
-  },
-  "public/images/gallery/WhatsApp Image 2026-08-27 at 20.13.19 (4).jpeg": {
-    "mtime": 1788013212.5032587,
-    "ast_hash": "1726148e4cf52151f0d5e3c0ce4d548e",
-    "semantic_hash": ""
-  },
-  "public/images/gallery/WhatsApp Image 2026-08-27 at 20.13.19.jpeg": {
-    "mtime": 1788013211.5185184,
-    "ast_hash": "ff4236b932eeb6da12ffbd7337ca6e8a",
-    "semantic_hash": ""
-  },
-  "public/images/gallery/WhatsApp Image 2026-08-27 at 20.13.20 (1).jpeg": {
-    "mtime": 1788013212.8362067,
-    "ast_hash": "fbaf857ff32cc0e2d89c135041e274ca",
-    "semantic_hash": ""
-  },
-  "public/images/gallery/WhatsApp Image 2026-08-27 at 20.13.20 (2).jpeg": {
-    "mtime": 1788013213.0269268,
-    "ast_hash": "27cd38a20f10961b76a61af332e09a76",
-    "semantic_hash": ""
-  },
-  "public/images/gallery/WhatsApp Image 2026-08-27 at 20.13.20 (3).jpeg": {
-    "mtime": 1788013213.1473987,
-    "ast_hash": "192daecd03c7013b00e54518ab5d6e8a",
-    "semantic_hash": ""
-  },
-  "public/images/gallery/WhatsApp Image 2026-08-27 at 20.13.20.jpeg": {
-    "mtime": 1788013212.716189,
-    "ast_hash": "1423b2772e1d0d3e1c9cb12edbea4fd5",
-    "semantic_hash": ""
-  },
-  "public/images/gallery/WhatsApp Image 2026-08-27 at 20.13.21 (1).jpeg": {
-    "mtime": 1788013213.591651,
-    "ast_hash": "a19e088265be597ce5a7e2b7eff39c0e",
-    "semantic_hash": ""
-  },
-  "public/images/gallery/WhatsApp Image 2026-08-27 at 20.13.21.jpeg": {
-    "mtime": 1788013213.4182346,
-    "ast_hash": "b2cd306c209c6fd3f2ac8c800b5329b7",
-    "semantic_hash": ""
-  },
-  "public/images/gallery/WhatsApp Image 2026-08-27 at 20.13.22 (1).jpeg": {
-    "mtime": 1788013214.1002846,
-    "ast_hash": "e5c98d67591ae11fe8d8976ce28215b1",
-    "semantic_hash": ""
-  },
-  "public/images/gallery/WhatsApp Image 2026-08-27 at 20.13.22 (2).jpeg": {
-    "mtime": 1788013214.193525,
-    "ast_hash": "0d9b333c2fcdfa20fd9079e35b27d635",
-    "semantic_hash": ""
-  },
-  "public/images/gallery/WhatsApp Image 2026-08-27 at 20.13.22 (3).jpeg": {
-    "mtime": 1788013214.3179376,
-    "ast_hash": "acf7f5517aad37919f6c6ebf3e93a5fa",
-    "semantic_hash": ""
-  },
-  "public/images/gallery/WhatsApp Image 2026-08-27 at 20.13.22.jpeg": {
-    "mtime": 1788013213.8537197,
-    "ast_hash": "f4077b709385da39f644940a3423acb3",
-    "semantic_hash": ""
-  },
-  "public/images/gallery/WhatsApp Image 2026-08-27 at 20.13.23.jpeg": {
-    "mtime": 1788013214.3979502,
-    "ast_hash": "e6102f046c67793780e0a9f228efe82e",
-    "semantic_hash": ""
-  },
-  "public/images/gallery/WhatsApp Image 2026-08-27 at 20.13.24.jpeg": {
-    "mtime": 1788013214.476487,
-    "ast_hash": "c62c6dca71dc4ec2b5662fb9ce00f0ce",
-    "semantic_hash": ""
-  },
-  "public/images/gallery/WhatsApp Image 2026-08-27 at 20.15.37 (1).jpeg": {
-    "mtime": 1788012907.0582526,
-    "ast_hash": "690742aff002095489f9d27ea5557ba5",
-    "semantic_hash": ""
-  },
-  "public/images/gallery/WhatsApp Image 2026-08-27 at 20.15.37.jpeg": {
-    "mtime": 1788012901.3074968,
-    "ast_hash": "d3226d56ebe921d45ef1e9f533217aea",
-    "semantic_hash": ""
-  },
-  "public/images/gallery/WhatsApp Image 2026-08-27 at 20.15.38 (1).jpeg": {
-    "mtime": 1788012921.2084181,
-    "ast_hash": "c35247800356a89f41b835b243faf421",
-    "semantic_hash": ""
-  },
-  "public/images/gallery/WhatsApp Image 2026-08-27 at 20.15.38 (2).jpeg": {
-    "mtime": 1788012927.4001372,
-    "ast_hash": "d3077161334f2f167393d22385318d0c",
-    "semantic_hash": ""
-  },
-  "public/images/gallery/WhatsApp Image 2026-08-27 at 20.15.38.jpeg": {
-    "mtime": 1788012911.5204926,
-    "ast_hash": "7596bbe75ebd7ad029f1e0cce3e5af9e",
-    "semantic_hash": ""
-  },
-  "public/images/gallery/WhatsApp Image 2026-08-27 at 20.21.41.jpeg": {
-    "mtime": 1788012931.161767,
-    "ast_hash": "bd8f4994c3913c6e6d7741d4b1d72829",
     "semantic_hash": ""
   }
 }

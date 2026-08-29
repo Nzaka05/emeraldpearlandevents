@@ -225,6 +225,218 @@ const allGalleryData = [
     caption: 'Luxury Gala Farewell & Guest Departure Protocol',
     eventType: 'VIP Protocol',
     order: 31
+  },
+
+  // ── New 2026 Live Event & Protocol Highlights ──
+  {
+    filename: 'WhatsApp Image 2026-08-27 at 20.05.44.jpeg',
+    url: '/images/gallery/WhatsApp%20Image%202026-08-27%20at%2020.05.44.jpeg',
+    caption: 'Signature Emerald Welcome & Executive Guest Hospitality',
+    eventType: 'Corporate & VIP',
+    order: 32
+  },
+  {
+    filename: 'WhatsApp Image 2026-08-27 at 20.05.44 (1).jpeg',
+    url: '/images/gallery/WhatsApp%20Image%202026-08-27%20at%2020.05.44%20(1).jpeg',
+    caption: 'Grand Ballroom Entrance & VIP Concierge Squad',
+    eventType: 'VIP Protocol',
+    order: 33
+  },
+  {
+    filename: 'WhatsApp Image 2026-08-27 at 20.05.44 (2).jpeg',
+    url: '/images/gallery/WhatsApp%20Image%202026-08-27%20at%2020.05.44%20(2).jpeg',
+    caption: 'Distinguished Gala Coordination & Red Carpet Hosting',
+    eventType: 'Corporate & VIP',
+    order: 34
+  },
+  {
+    filename: 'WhatsApp Image 2026-08-27 at 20.05.44 (3).jpeg',
+    url: '/images/gallery/WhatsApp%20Image%202026-08-27%20at%2020.05.44%20(3).jpeg',
+    caption: 'Bespoke Evening Banquet & Protocol Management',
+    eventType: 'VIP Protocol',
+    order: 35
+  },
+  {
+    filename: 'WhatsApp Image 2026-08-27 at 20.13.18.jpeg',
+    url: '/images/gallery/WhatsApp%20Image%202026-08-27%20at%2020.13.18.jpeg',
+    caption: 'Luxury Wedding Hostesses & Guest Registration',
+    eventType: 'Weddings',
+    order: 36
+  },
+  {
+    filename: 'WhatsApp Image 2026-08-27 at 20.13.18 (1).jpeg',
+    url: '/images/gallery/WhatsApp%20Image%202026-08-27%20at%2020.13.18%20(1).jpeg',
+    caption: 'Traditional Ceremony Protocol & Dignitary Ushering',
+    eventType: 'Weddings',
+    order: 37
+  },
+  {
+    filename: 'WhatsApp Image 2026-08-27 at 20.13.18 (2).jpeg',
+    url: '/images/gallery/WhatsApp%20Image%202026-08-27%20at%2020.13.18%20(2).jpeg',
+    caption: 'Royal Wedding Reception Coordination Team',
+    eventType: 'Weddings',
+    order: 38
+  },
+  {
+    filename: 'WhatsApp Image 2026-08-27 at 20.13.19.jpeg',
+    url: '/images/gallery/WhatsApp%20Image%202026-08-27%20at%2020.13.19.jpeg',
+    caption: 'High-Level Corporate Summit Staffing & Registration',
+    eventType: 'Event Staffing',
+    order: 39
+  },
+  {
+    filename: 'WhatsApp Image 2026-08-27 at 20.13.19 (1).jpeg',
+    url: '/images/gallery/WhatsApp%20Image%202026-08-27%20at%2020.13.19%20(1).jpeg',
+    caption: 'Executive Conference Hosts & Information Desk',
+    eventType: 'Event Staffing',
+    order: 40
+  },
+  {
+    filename: 'WhatsApp Image 2026-08-27 at 20.13.19 (2).jpeg',
+    url: '/images/gallery/WhatsApp%20Image%202026-08-27%20at%2020.13.19%20(2).jpeg',
+    caption: 'VIP Lounge Protocol & Exclusive Service Team',
+    eventType: 'VIP Protocol',
+    order: 41
+  },
+  {
+    filename: 'WhatsApp Image 2026-08-27 at 20.13.19 (3).jpeg',
+    url: '/images/gallery/WhatsApp%20Image%202026-08-27%20at%2020.13.19%20(3).jpeg',
+    caption: 'Prestigious Award Ceremony Stage & Ushering Crew',
+    eventType: 'Corporate & VIP',
+    order: 42
+  },
+  {
+    filename: 'WhatsApp Image 2026-08-27 at 20.13.19 (4).jpeg',
+    url: '/images/gallery/WhatsApp%20Image%202026-08-27%20at%2020.13.19%20(4).jpeg',
+    caption: 'Formal Diplomatic Dinner & Protocol Escorts',
+    eventType: 'VIP Protocol',
+    order: 43
+  },
+  {
+    filename: 'WhatsApp Image 2026-08-27 at 20.13.20.jpeg',
+    url: '/images/gallery/WhatsApp%20Image%202026-08-27%20at%2020.13.20.jpeg',
+    caption: 'Luxury Social Soirée & Cocktail Reception Team',
+    eventType: 'Social & Private',
+    order: 44
+  },
+  {
+    filename: 'WhatsApp Image 2026-08-27 at 20.13.20 (1).jpeg',
+    url: '/images/gallery/WhatsApp%20Image%202026-08-27%20at%2020.13.20%20(1).jpeg',
+    caption: 'Private Birthday Celebration & Exclusive Hostesses',
+    eventType: 'Social & Private',
+    order: 45
+  },
+  {
+    filename: 'WhatsApp Image 2026-08-27 at 20.13.20 (2).jpeg',
+    url: '/images/gallery/WhatsApp%20Image%202026-08-27%20at%2020.13.20%20(2).jpeg',
+    caption: 'Evening Gala Champagne & Service Ambassadorship',
+    eventType: 'Social & Private',
+    order: 46
+  },
+  {
+    filename: 'WhatsApp Image 2026-08-27 at 20.13.20 (3).jpeg',
+    url: '/images/gallery/WhatsApp%20Image%202026-08-27%20at%2020.13.20%20(3).jpeg',
+    caption: 'Executive Gala Hall Coordination & Guest Assistance',
+    eventType: 'Corporate & VIP',
+    order: 47
+  },
+  {
+    filename: 'WhatsApp Image 2026-08-27 at 20.13.21.jpeg',
+    url: '/images/gallery/WhatsApp%20Image%202026-08-27%20at%2020.13.21.jpeg',
+    caption: 'Corporate Brand Activation & Experience Ambassadors',
+    eventType: 'Event Staffing',
+    order: 48
+  },
+  {
+    filename: 'WhatsApp Image 2026-08-27 at 20.13.21 (1).jpeg',
+    url: '/images/gallery/WhatsApp%20Image%202026-08-27%20at%2020.13.21%20(1).jpeg',
+    caption: 'Premier Product Launch & VIP Reception Staff',
+    eventType: 'Corporate & VIP',
+    order: 49
+  },
+  {
+    filename: 'WhatsApp Image 2026-08-27 at 20.13.22.jpeg',
+    url: '/images/gallery/WhatsApp%20Image%202026-08-27%20at%2020.13.22.jpeg',
+    caption: 'Luxury Garden Party Coordination & Guest Welcoming',
+    eventType: 'Social & Private',
+    order: 50
+  },
+  {
+    filename: 'WhatsApp Image 2026-08-27 at 20.13.22 (1).jpeg',
+    url: '/images/gallery/WhatsApp%20Image%202026-08-27%20at%2020.13.22%20(1).jpeg',
+    caption: 'Bespoke Outdoor Celebration Protocol Officers',
+    eventType: 'Social & Private',
+    order: 51
+  },
+  {
+    filename: 'WhatsApp Image 2026-08-27 at 20.13.22 (2).jpeg',
+    url: '/images/gallery/WhatsApp%20Image%202026-08-27%20at%2020.13.22%20(2).jpeg',
+    caption: 'Distinguished State & Corporate Banquet Ushers',
+    eventType: 'VIP Protocol',
+    order: 52
+  },
+  {
+    filename: 'WhatsApp Image 2026-08-27 at 20.13.22 (3).jpeg',
+    url: '/images/gallery/WhatsApp%20Image%202026-08-27%20at%2020.13.22%20(3).jpeg',
+    caption: 'Grand Gala Dinner Seating & Protocol Direction',
+    eventType: 'Corporate & VIP',
+    order: 53
+  },
+  {
+    filename: 'WhatsApp Image 2026-08-27 at 20.13.23.jpeg',
+    url: '/images/gallery/WhatsApp%20Image%202026-08-27%20at%2020.13.23.jpeg',
+    caption: 'Executive Protocol Squadron in Custom Uniforms',
+    eventType: 'Event Staffing',
+    order: 54
+  },
+  {
+    filename: 'WhatsApp Image 2026-08-27 at 20.13.24.jpeg',
+    url: '/images/gallery/WhatsApp%20Image%202026-08-27%20at%2020.13.24.jpeg',
+    caption: 'Impeccable Wedding Guest Escort & Ceremony Ushering',
+    eventType: 'Weddings',
+    order: 55
+  },
+  {
+    filename: 'WhatsApp Image 2026-08-27 at 20.15.37.jpeg',
+    url: '/images/gallery/WhatsApp%20Image%202026-08-27%20at%2020.15.37.jpeg',
+    caption: 'Traditional Bridal Ceremony Hosts & Ushering',
+    eventType: 'Weddings',
+    order: 56
+  },
+  {
+    filename: 'WhatsApp Image 2026-08-27 at 20.15.37 (1).jpeg',
+    url: '/images/gallery/WhatsApp%20Image%202026-08-27%20at%2020.15.37%20(1).jpeg',
+    caption: 'Cultural Celebration Hostesses in Bespoke Attire',
+    eventType: 'Weddings',
+    order: 57
+  },
+  {
+    filename: 'WhatsApp Image 2026-08-27 at 20.15.38.jpeg',
+    url: '/images/gallery/WhatsApp%20Image%202026-08-27%20at%2020.15.38.jpeg',
+    caption: 'VIP Dignitary Welcoming Line & Stage Escort',
+    eventType: 'VIP Protocol',
+    order: 58
+  },
+  {
+    filename: 'WhatsApp Image 2026-08-27 at 20.15.38 (1).jpeg',
+    url: '/images/gallery/WhatsApp%20Image%202026-08-27%20at%2020.15.38%20(1).jpeg',
+    caption: 'Annual Corporate Convention Logistics & Staffing',
+    eventType: 'Event Staffing',
+    order: 59
+  },
+  {
+    filename: 'WhatsApp Image 2026-08-27 at 20.15.38 (2).jpeg',
+    url: '/images/gallery/WhatsApp%20Image%202026-08-27%20at%2020.15.38%20(2).jpeg',
+    caption: 'High-Profile Event Management & Floor Direction',
+    eventType: 'Corporate & VIP',
+    order: 60
+  },
+  {
+    filename: 'WhatsApp Image 2026-08-27 at 20.21.41.jpeg',
+    url: '/images/gallery/WhatsApp%20Image%202026-08-27%20at%2020.21.41.jpeg',
+    caption: 'Luxury Gala Grand Finale & Guest Farewell Protocol',
+    eventType: 'VIP Protocol',
+    order: 61
   }
 ];
 

@@ -1,16 +1,16 @@
-# Graph Report - emerald  (2026-08-29)
+# Graph Report - emerald  (2026-08-27)
 
 ## Corpus Check
-- 535 files · ~3,126,474 words
+- 535 files · ~2,448,879 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 4437 nodes · 5578 edges · 452 communities (302 shown, 150 thin omitted)
+- 4437 nodes · 5578 edges · 453 communities (302 shown, 151 thin omitted)
 - Extraction: 96% EXTRACTED · 4% INFERRED · 0% AMBIGUOUS · INFERRED: 202 edges (avg confidence: 0.53)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `5f41d1d2`
+- Built from commit: `8e4792d1`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -257,6 +257,7 @@
 - [[_COMMUNITY_Analytics Data Schema|Analytics Data Schema]]
 - [[_COMMUNITY_Audit Log Schema|Audit Log Schema]]
 - [[_COMMUNITY_Gallery Media Schema|Gallery Media Schema]]
+- [[_COMMUNITY_WebAuthn Challenge Schema|WebAuthn Challenge Schema]]
 - [[_COMMUNITY_Booking Data Validation|Booking Data Validation]]
 - [[_COMMUNITY_Emergency Fund Audit Schema|Emergency Fund Audit Schema]]
 - [[_COMMUNITY_Event Performance Schema|Event Performance Schema]]
@@ -505,7 +506,7 @@
 - **Test Environment Seed Dependencies** — test_environment_seed, mongoose, dotenv, staff_system, mongodb, node [EXTRACTED 1.00]
 - **Graphify Workflow** — agents_rules_graphify, agents_workflows_graphify, graphify_out_graph [EXTRACTED 0.75]
 
-## Communities (452 total, 150 thin omitted)
+## Communities (453 total, 151 thin omitted)
 
 ### Community 0 - "BM25 Search Indexing"
 Cohesion: 0.05
@@ -804,8 +805,13 @@ Cohesion: 0.12
 Nodes (12): clientAuditLogSchema, mongoose, clientEmailLogSchema, mongoose, clientSessionSchema, mongoose, ClientAccount, ClientAuditLog (+4 more)
 
 ### Community 76 - "WebAuthn Registration Service"
-Cohesion: 0.18
-Nodes (15): mongoose, webAuthnChallengeSchema, Admin, AdminWebAuthnCredential, base64urlToBuffer(), bufferToBase64url(), crypto, generateAuthenticationOptions() (+7 more)
+Cohesion: 0.23
+Nodes (13): Admin, AdminWebAuthnCredential, base64urlToBuffer(), bufferToBase64url(), crypto, generateAuthenticationOptions(), generateRegistrationOptions(), {
+    generateRegistrationOptions,
+    verifyRegistrationResponse,
+    generateAuthenticationOptions,
+    verifyAuthenticationResponse
+} (+5 more)
 
 ### Community 77 - "Cache Management Utility"
 Cohesion: 0.24
@@ -1038,7 +1044,7 @@ Nodes (7): background_color, display, icons, name, short_name, start_url, theme_
 
 ### Community 137 - "User Authentication Models"
 Cohesion: 0.15
-Nodes (9): Admin, allGalleryData, Gallery, mongoose, AdminSchema, bcrypt, mongoose, GallerySchema (+1 more)
+Nodes (9): Admin, Gallery, galleryData, mongoose, AdminSchema, bcrypt, mongoose, GallerySchema (+1 more)
 
 ### Community 138 - "Cron Scheduling Service"
 Cohesion: 0.09
@@ -1627,12 +1633,12 @@ Nodes (3): Event Assignment Workflow, New Staff Onboarding, Staff Workflow
 ## Knowledge Gaps
 - **2723 isolated node(s):** `store`, `state`, `fs`, `path`, `dir` (+2718 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **150 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **151 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `Mongoose` connect `Database Migrations` to `AdminWebAuthnCredential.js`, `M-Pesa Payment Processing`, `Admin Event Routes`, `Admin Express Routes`, `Bookings Repository`, `AI Learning Service`, `Core Dependencies`, `User Authentication Models`, `Development Server Configuration`, `Production Server Configuration`, `Booking Validation Routes`, `Admin Settings Schema`, `Redis Mocking Utility`, `AI Assistant Service`, `Invoice Backfill Scripts`, `Command Center Controller`, `AI and Auth Dependencies`, `Database Seeding Scripts`, `Booking Route Tests`, `CSRF Protection Tests`, `WebAuthn Security Service`, `Admin View Data Service`, `Invoice Management Controller`, `Live Event Monitoring`, `Booking Lifecycle Tests`, `Queue Health Monitoring`, `Paystack Payment Integration`, `Emergency Fund Schemas`, `Staff Performance Service`, `Booking Service Logic`, `M-Pesa Webhook Routes`, `Staff Password Recovery`, `Event Prediction Service`, `ETR Generation Service`, `Event Snapshot Schemas`, `Socket Real-time Updates`, `Attendance and Communication Schemas`, `Event Team Service`, `Client Audit Schemas`, `WebAuthn Registration Service`, `Staff Intelligence Service`, `aiAlertService.js`, `Financial Transaction Schemas`, `Token Refresh Tests`, `Job Logging Middleware`, `Dead Letter Queue`, `Payment Worker Service`, `Stripe Payment Integration`, `Staff Attendance Monitoring`, `Booking Status Management`, `AuditLog.js`, `Notification Worker Service`, `System Audit Logging`, `Supervisor Rating Schema`, `Staff Performance Reviews`, `Proximity and Spoof Detection`, `Payment Callback Testing`, `WebAuthn Credential Schema`, `Analytics Data Schema`, `Booking API Tests`, `CRM Data Reconciliation`, `Client ETR Management`, `Event Performance Schema`, `Event Financial Services`, `Ledger Transaction Service`, `Environment Configuration`, `Admin.js`?**
+- **Why does `Mongoose` connect `Database Migrations` to `AdminWebAuthnCredential.js`, `M-Pesa Payment Processing`, `Admin Event Routes`, `Admin Express Routes`, `Bookings Repository`, `AI Learning Service`, `Core Dependencies`, `User Authentication Models`, `Development Server Configuration`, `Production Server Configuration`, `Booking Validation Routes`, `Admin Settings Schema`, `Redis Mocking Utility`, `AI Assistant Service`, `Invoice Backfill Scripts`, `Command Center Controller`, `AI and Auth Dependencies`, `Database Seeding Scripts`, `Booking Route Tests`, `CSRF Protection Tests`, `WebAuthn Security Service`, `Admin View Data Service`, `Invoice Management Controller`, `Live Event Monitoring`, `Booking Lifecycle Tests`, `Queue Health Monitoring`, `Paystack Payment Integration`, `Emergency Fund Schemas`, `Staff Performance Service`, `Booking Service Logic`, `M-Pesa Webhook Routes`, `Staff Password Recovery`, `Event Prediction Service`, `ETR Generation Service`, `Event Snapshot Schemas`, `Socket Real-time Updates`, `Attendance and Communication Schemas`, `Event Team Service`, `Client Audit Schemas`, `Staff Intelligence Service`, `aiAlertService.js`, `Financial Transaction Schemas`, `Token Refresh Tests`, `Job Logging Middleware`, `Dead Letter Queue`, `Payment Worker Service`, `Stripe Payment Integration`, `Staff Attendance Monitoring`, `Booking Status Management`, `AuditLog.js`, `Notification Worker Service`, `System Audit Logging`, `Supervisor Rating Schema`, `Staff Performance Reviews`, `Proximity and Spoof Detection`, `Payment Callback Testing`, `WebAuthn Credential Schema`, `Analytics Data Schema`, `Booking API Tests`, `WebAuthn Challenge Schema`, `CRM Data Reconciliation`, `Client ETR Management`, `Event Performance Schema`, `Event Financial Services`, `Ledger Transaction Service`, `Environment Configuration`, `Admin.js`?**
   _High betweenness centrality (0.115) - this node is a cross-community bridge._
 - **Why does `Express` connect `Finance Route Protection` to `Admin Event Routes`, `Admin Staff Assignment`, `Admin Express Routes`, `Staff Portal Controller`, `Production Server Configuration`, `Development Server Configuration`, `Booking Validation Routes`, `Redis Mocking Utility`, `Admin Settings Schema`, `CSRF and JWT Middleware`, `Authentication Controller`, `Queue Health Monitoring`, `Client Portal Middleware`, `Paystack Payment Integration`, `Supervisor Event Management`, `Request Validation Utilities`, `M-Pesa Webhook Routes`, `Staff Password Recovery`, `Admin Payout Routes`, `Admin Finance Routes`, `Stripe Payment Integration`, `Admin Authentication Routes`?**
   _High betweenness centrality (0.025) - this node is a cross-community bridge._
